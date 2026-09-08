@@ -1,0 +1,78 @@
+# StackFit — Security Solution Advisor & Budget Portal
+
+Pre-sales tool. An analyst enters a prospective client's environment (assets, headcount,
+compliance, budget); the portal recommends a security stack (SIEM / EDR / PAM / IAM / VM /
+NDR / email / SOAR / backup / MDR), costs it over 3 years, and exports a proposal.
+
+Full requirements: `@PROJECT_SPEC.md` — read it when starting a phase, not every session.
+Current phase and open threads: `@docs/STATUS.md`
+
+## Commands
+
+```
+pnpm dev                # Next.js dev server
+pnpm test               # all tests
+pnpm test:engine        # engine unit tests only (fast, use this while iterating)
+pnpm typecheck
+pnpm lint
+pnpm catalog:validate   # Zod-validate every YAML in data/
+pnpm db:push            # apply Prisma schema to local SQLite
+```
+
+## Architecture
+
+- `packages/engine` — pure TypeScript. No React, no DB, no `fetch`, no `fs`, no `Date.now()`,
+  no randomness. Same input must always produce the same output.
+- `packages/schema` — Zod schemas are the single source of truth. Infer TS types from Zod;
+  never hand-write a type that duplicates a schema.
+- `apps/web` — Next.js App Router. Presentation and orchestration only.
+- `data/catalog/*.yaml` — product records, one file per category.
+- `data/config/*.yaml` — tunable assumptions (sizing coefficients, labour rates, FX, MSSP rates).
+- `data/frameworks/*.yaml` — compliance control mappings.
+
+Engine pipeline, each stage a pure function: `sizing → cost → scoring → portfolio → coverage`.
+
+## Hard rules
+
+1. **Money is an integer in minor units plus an ISO currency code.** Never a float, never a
+   bare number. All arithmetic in minor units; format only at the render boundary.
+2. **Never invent a price, a vendor capability, or a compliance mapping.** If it cannot be
+   sourced: `pricingConfidence: 'placeholder'` plus a `TODO` note. Say so in your summary.
+3. Every price entry carries `sources: [{ url, asOf }]`.
+4. **No business logic in React components.** If it computes money, a score, or a
+   recommendation, it belongs in `packages/engine`.
+5. Every engine output carries `rationale: string[]`. A number with no explanation does not ship.
+6. Tunable assumptions live in `data/config/`, never as literals in code.
+7. No new dependency without a one-line justification in the commit message.
+8. Open-source products cost money. `opsBurden` FTE and implementation effort are mandatory
+   fields; a TCO that omits them is a bug, not a simplification.
+
+## Testing
+
+- Any engine change ships with Vitest tests in the same commit.
+- The acceptance scenarios in `packages/engine/test/scenarios/` (PROJECT_SPEC §12) must stay
+  green. Do not edit an acceptance test to make a change pass — fix the code or raise it with me.
+- A determinism test (same input twice → identical output) must exist and stay green.
+- Run `pnpm test` before claiming a phase is complete. Paste the output.
+
+## Conventions
+
+- Conventional commits (`feat:`, `fix:`, `data:`, `test:`, `chore:`). One logical change per commit.
+- Catalog and config edits are `data:` commits, never mixed with code changes.
+- Files kebab-case, types PascalCase. No default exports outside Next.js route files.
+- Comments explain *why*, not *what*.
+- Prefer boring, readable code. This repo is maintained by a security engineer, not a
+  full-time frontend developer.
+
+## Working agreement
+
+- Work one phase at a time (PROJECT_SPEC §11). Stop at the end of a phase and wait for review.
+- Ambiguity → ask one focused question. Do not guess across five files.
+- Do not refactor or reformat code outside the current phase's scope.
+- Update `docs/STATUS.md` at the end of every phase.
+- When you learn something non-obvious about this codebase, append it to Gotchas below
+  instead of rediscovering it next session.
+
+## Gotchas
+
+<!-- append as we hit them, one line each -->
