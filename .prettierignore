@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+coverage/
+.next/
+pnpm-lock.yaml
+
+# Hand-authored prose. Prettier's Markdown reflow fights manual tables and
+# wrapping; formatting-check these by eye, not by tool.
+*.md

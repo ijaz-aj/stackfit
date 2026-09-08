@@ -1,0 +1,10 @@
+{
+  // Solution-style root config. It builds nothing itself; `tsc --build` walks the
+  // references. Each package and the scripts folder owns its own tsconfig.
+  "files": [],
+  "references": [
+    { "path": "./packages/schema" },
+    { "path": "./packages/engine" },
+    { "path": "./tsconfig.scripts.json" }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "stackfit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Security Solution Advisor & Budget Portal — pre-sales stack recommendation and TCO engine",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "echo \"pnpm dev: Next.js app is scaffolded in Phase 5\" && exit 0",
+    "build": "tsc --build",
+    "test": "vitest run",
+    "test:engine": "vitest run --project engine",
+    "typecheck": "tsc --build --force",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "catalog:validate": "tsx scripts/validate-catalog.ts",
+    "db:push": "echo \"pnpm db:push: Prisma schema is scaffolded in Phase 5\" && exit 0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "eslint": "^10.10.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.70.0",
+    "vite": "^7.3.6",
+    "vitest": "^4.1.11",
+    "yaml": "^2.6.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

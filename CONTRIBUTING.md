@@ -46,6 +46,10 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
 7. No new dependency without a one-line justification in the commit message.
 8. Open-source products cost money. `opsBurden` FTE and implementation effort are mandatory
    fields; a TCO that omits them is a bug, not a simplification.
+9. **OWASP Top 10 is a baseline, not a phase.** Zod-validate every external input. All DB
+   access through Prisma — no raw or string-built SQL. Security headers + CSP configured in
+   the web app. Every mutation behind the server-action layer so authz has one home. No
+   secrets in the repo; keep `pnpm audit` clean.
 
 ## Testing
 
@@ -76,3 +80,21 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
 ## Gotchas
 
 <!-- append as we hit them, one line each -->
+
+- Workspace packages (`@stackfit/engine`, `@stackfit/schema`) expose raw TS via
+  `"exports": "./src/index.ts"` — no build step needed to consume them. Vitest, tsx and
+  (later) Next.js `transpilePackages` handle it. `tsc --build` still emits to `dist/`
+  (gitignored) for typechecking only.
+- `tsconfig.base.json` sets `module: NodeNext`, so relative imports need explicit `.js`
+  extensions even from `.ts` files (e.g. `import { x } from '../src/index.js'`).
+- `pnpm dev` / `pnpm db:push` are placeholder scripts until Phase 5 (no Next.js app or
+  Prisma schema yet).
+- `pnpm` is a user-scoped global (`npm i -g pnpm@9.15.0`), not corepack — corepack needs
+  admin on this machine. Node is v24 (winget LTS). Re-open the shell after any Node reinstall
+  so `PATH` refreshes.
+- `pnpm install` only runs `esbuild`'s post-install script (`package.json` →
+  `pnpm.onlyBuiltDependencies`). Add a package there only with a reason, same bar as a new
+  dependency.
+- Keep `pnpm audit` clean (hard rule 9). The Vitest/Vite/esbuild chain is the usual source
+  of noise — `vite` is pinned as a direct devDependency so it resolves to a patched major
+  instead of a stale transitive one.
