@@ -120,9 +120,9 @@ const msspCard: MsspRateCard = {
   perServerMonthly: usd(2000),
   perGbDayMonthly: usd(5000),
   serviceLevels: [
-    { level: 'monitoring', multiplier: 1, basis: 'test fixture' },
-    { level: 'mdr', multiplier: 1.5, basis: 'test fixture' },
-    { level: 'managed_security', multiplier: 2, basis: 'test fixture' },
+    { level: 'monitoring', multiplier: 1, coveredCategories: ['siem', 'mdr'], basis: 'test fixture' },
+    { level: 'mdr', multiplier: 1.5, coveredCategories: ['siem', 'mdr', 'edr', 'soar', 'ndr'], basis: 'test fixture' },
+    { level: 'managed_security', multiplier: 2, coveredCategories: ['siem', 'mdr', 'edr', 'soar', 'ndr', 'ngfw'], basis: 'test fixture' },
   ],
   minimumMonthly: usd(50_000),
 };
@@ -156,6 +156,7 @@ function buildInputs(scenario: Scenario): PortfolioInputs {
     sizing,
     frameworks: scenario.frameworks ?? [],
     weights: buildScoringWeights(),
+    categoryWeights: weights,
   });
 
   const costs = new Map(
@@ -179,6 +180,7 @@ function buildInputs(scenario: Scenario): PortfolioInputs {
     assumptions,
     mssp: msspCard,
     fx: buildFxConfig(),
+    costInputs,
   };
 }
 
@@ -410,5 +412,102 @@ describe('determinism', () => {
     for (const selection of recommended.selections) {
       expect(selection.rationale.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('regressions', () => {
+  it('applies the suite discount to TCO, not just the annual figure', () => {
+    // Was: annualRecurring carried the discount and tco did not, so two fields
+    // in the same selection disagreed about the same product — and the wrong
+    // one was the headline number.
+    const inputs = buildInputs({
+      products: [
+        product('siem-a', 'siem', 10_000_00, 'Acme'),
+        product('edr-a', 'edr', 10_000_00, 'Acme'),
+      ],
+    });
+    const { recommended } = buildPortfolio(inputs);
+
+    const discounted = recommended.selections.find((s) => s.suiteDiscountApplied);
+    expect(discounted).toBeDefined();
+
+    const undiscountedTco = inputs.costs.get(discounted!.productId)!.tco.amountMinor;
+    expect(discounted!.tco.amountMinor).toBeLessThan(undiscountedTco);
+
+    // And the bundle total must reflect it too.
+    const full = recommended.selections.find((s) => !s.suiteDiscountApplied)!;
+    expect(recommended.tco.amountMinor).toBeLessThan(full.tco.amountMinor * 2);
+  });
+
+  it('surfaces a mandated category the estate has nothing for, instead of dropping it', () => {
+    // Was: mandatory required `applicable`, so a framework demand against an
+    // absent surface vanished with no output at all — the exact failure step 7
+    // exists to prevent.
+    const inputs = buildInputs({
+      products: [product('siem-a', 'siem', 100_000)],
+      frameworks: [pciMandatingSiem],
+    });
+    // Make siem inapplicable by giving the estate nothing siem can act on.
+    const stripped: PortfolioInputs = {
+      ...inputs,
+      relevance: inputs.relevance.map((entry) =>
+        entry.category === 'siem'
+          ? { ...entry, applicable: false, weight: 0, estateMultiplier: 0 }
+          : entry,
+      ),
+    };
+
+    const { rankings, recommended } = buildPortfolio(stripped);
+    const siem = rankings.find((entry) => entry.category === 'siem');
+    expect(siem?.mandatory).toBe(false);
+    expect(siem?.mandatedButNotApplicable).toBe(true);
+    expect(recommended.rationale.join(' ')).toContain('SCOPE QUESTION');
+  });
+
+  it('flags the minimum viable budget as a lower bound when a mandatory category has no product', () => {
+    // Was: a mandatory category with no candidate contributed zero, so the
+    // "minimum viable budget" could be quoted below what buys compliance.
+    const { recommended } = buildPortfolio(
+      buildInputs({ products: [product('edr-a', 'edr', 100_000)], frameworks: [pciMandatingSiem] }),
+    );
+    expect(recommended.rationale.join(' ')).toContain('LOWER BOUND');
+  });
+
+  it('does not claim the budget is tight when there is no budget cap', () => {
+    const { essential } = buildPortfolio(
+      buildInputs({ products: [product('siem-a', 'siem', 100_000)], annualCap: null }),
+    );
+    expect(essential.selections.length).toBeGreaterThan(0);
+    expect(essential.selections.map((s) => s.rationale.join(' ')).join(' ')).not.toContain(
+      'budget is tight',
+    );
+  });
+
+  it('gives a different managed alternative per bundle, with the residual named', () => {
+    // Was: msspAlternative ignored the bundle, so Essential and Ideal quoted
+    // identically and the build-vs-buy comparison could not be right for both.
+    // backup is not covered at the mdr service level, so it must show as residual.
+    const inputs = buildInputs({
+      products: [
+        product('siem-a', 'siem', 10_000_00),
+        product('backup-a', 'backup', 10_000_00),
+      ],
+    });
+    const { ideal } = buildPortfolio(inputs);
+
+    expect(ideal.mssp.coversCategories).toContain('siem');
+    expect(ideal.mssp.uncoveredCategories).toContain('backup');
+    expect(ideal.mssp.residualAnnual.amountMinor).toBeGreaterThan(0);
+    expect(ideal.mssp.totalAnnual.amountMinor).toBe(
+      ideal.mssp.annual.amountMinor + ideal.mssp.residualAnnual.amountMinor,
+    );
+    expect(ideal.mssp.rationale.join(' ')).toContain('Does NOT cover');
+  });
+
+  it('quotes an empty bundle no residual', () => {
+    const inputs = buildInputs({ products: [] });
+    const { recommended } = buildPortfolio(inputs);
+    expect(recommended.selections).toEqual([]);
+    expect(recommended.mssp.residualAnnual.amountMinor).toBe(0);
   });
 });

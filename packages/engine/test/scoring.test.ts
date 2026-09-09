@@ -18,6 +18,7 @@ import {
   type ScoringInputs,
 } from '../src/scoring.js';
 import {
+  buildCategoryWeights as buildCategoryWeightsFixture,
   buildClientProfile,
   buildProduct,
   buildScoringWeights,
@@ -40,6 +41,7 @@ function buildInputs(overrides: Partial<ScoringInputs> = {}): ScoringInputs {
     sizing: computeSizing(inv, profile, buildSizingAssumptions()),
     frameworks: [],
     weights: buildScoringWeights(),
+    categoryWeights: buildCategoryWeightsFixture(),
     ...overrides,
   };
 }
@@ -313,5 +315,57 @@ describe('the overall score', () => {
   it('is deterministic', () => {
     const inputs = buildInputs();
     expect(scoreProduct(coveringProduct(), inputs)).toEqual(scoreProduct(coveringProduct(), inputs));
+  });
+});
+
+describe('regressions', () => {
+  it('measures asset coverage in weighted units, not raw counts', () => {
+    // Was: a SIEM ingesting every server, domain controller and firewall scored
+    // 0.5/100 in a mailbox-heavy estate, because 5,000 seats outnumbered 26
+    // pieces of infrastructure one-for-one — on the heaviest-weighted dimension
+    // there is. Mailboxes are worth a fraction of a server, and coverage has to
+    // use the same weighted units the infrastructure stage does.
+    const base = buildProduct();
+    const siem: Product = {
+      ...base,
+      category: 'siem',
+      supports: {
+        ...base.supports,
+        deviceClasses: ['server', 'domain_controller', 'firewall', 'network_device'],
+      },
+    };
+    const inputs = buildInputs({
+      inventory: inventory({
+        windowsServers: 20,
+        windowsDomainControllers: 2,
+        firewalls: 4,
+        m365Seats: 5000,
+      }),
+      weights: {
+        ...buildScoringWeights(),
+        categoryRemits: buildScoringWeights().categoryRemits.map((remit) =>
+          remit.category === 'siem'
+            ? {
+                ...remit,
+                deviceClasses: ['server', 'domain_controller', 'firewall', 'mailbox'] as never,
+              }
+            : remit,
+        ),
+      },
+      categoryWeights: buildCategoryWeightsFixture({
+        windowsServers: 4,
+        windowsDomainControllers: 25,
+        firewalls: 10,
+        m365Seats: 0.15,
+      }),
+    });
+
+    const coverage = scoreProduct(siem, inputs).dimensions.find(
+      (d) => d.dimension === 'asset_coverage',
+    );
+    // 20×4 + 2×25 + 4×10 = 170 covered, against 170 + 5000×0.15 = 920 in remit.
+    expect(coverage?.score).toBeCloseTo(18.5, 0);
+    // The raw-count answer was 26/5026. Anything near that is the bug returning.
+    expect(coverage?.score).toBeGreaterThan(5);
   });
 });

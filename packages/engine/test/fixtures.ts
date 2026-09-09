@@ -18,6 +18,7 @@ import {
   type Implementation,
   type LabourRates,
   type OpsBurden,
+  type CategoryWeights,
   type DeviceClass,
   type PricingRule,
   Product,
@@ -295,5 +296,51 @@ export function buildScoringWeights(overrides: Partial<ScoringWeights> = {}): Sc
       basis,
     })),
     ...overrides,
+  };
+}
+
+/**
+ * Surface weights for tests. Every asset class weighs 1 by default, so a test
+ * asserting "30 of 40 assets = 75%" still works by hand; pass `unitWeights` to
+ * exercise the weighting itself.
+ */
+export function buildCategoryWeights(
+  unitWeights: Partial<Record<AssetClass, number>> = {},
+): CategoryWeights {
+  const basis = 'test fixture';
+  const surfaceOf = (assetClass: string): string =>
+    assetClass.includes('Endpoint')
+      ? 'endpoint'
+      : assetClass.includes('Seats') || assetClass.includes('Saas')
+        ? 'saas_identity'
+        : 'on_prem_server';
+
+  return {
+    materialSurfaceShare: 0.1,
+    otHeavyShare: 0.35,
+    dominantLocusShare: 0.6,
+    surfaceUnits: Object.fromEntries(
+      AssetClass.options.map((assetClass) => [
+        assetClass,
+        { surface: surfaceOf(assetClass), weight: unitWeights[assetClass] ?? 1, basis },
+      ]),
+    ) as CategoryWeights['surfaceUnits'],
+    categories: ProductCategory.options.map((category) => ({
+      category,
+      baseRiskReduction: 90,
+      basis,
+      requiresAnyOf: [
+        'endpoint',
+        'on_prem_server',
+        'network_edge',
+        'public_app',
+        'cloud_iaas',
+        'saas_identity',
+        'ot_ics',
+        'identity',
+      ] as CategoryWeights['categories'][number]['requiresAnyOf'],
+      affinities: [],
+    })),
+    industryModifiers: [],
   };
 }
