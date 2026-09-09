@@ -1,0 +1,320 @@
+# ISO/IEC 27001:2022 Annex A — all 93 controls across the four themes.
+#
+# All 93 are listed, including the many no product can close. That is
+# deliberate: coverage is a percentage, and a denominator that quietly omitted
+# the governance and people controls would make every bundle look far better
+# against ISO than it is.
+#
+# `satisfiedBy` is StackFit's own mapping, not part of the standard.
+#
+# Nothing is marked mandatory. ISO 27001 certification is against a scoped
+# ISMS with a Statement of Applicability — the organisation justifies which
+# Annex A controls apply. A tool cannot decide that for them.
+
+id: iso-27001-2022
+name: ISO/IEC 27001 Annex A
+sourceQuality: secondary_sources
+version: '2022'
+commonIn: [global]
+
+sources:
+  - url: https://www.iso.org/standard/27001
+    asOf: '2026-09-09'
+  - url: https://gaicc.org/blog/iso-27001-annex-a-controls-list/
+    asOf: '2026-09-09'
+
+notes: >-
+  sourceQuality is secondary_sources because ISO sells the standard rather than
+  publishing it — the control list cannot be read from the publisher without a
+  licence. The 93-control, four-theme structure and the control titles below
+  were corroborated across independent sources. Verify against a licensed copy
+  before a client-facing coverage claim.
+
+controls:
+  # --- A.5 Organizational controls (37)
+  - id: A.5.1
+    title: Policies for information security
+    satisfiedBy: []
+  - id: A.5.2
+    title: Information security roles and responsibilities
+    satisfiedBy: []
+  - id: A.5.3
+    title: Segregation of duties
+    satisfiedBy: [iam, pam]
+  - id: A.5.4
+    title: Management responsibilities
+    satisfiedBy: []
+  - id: A.5.5
+    title: Contact with authorities
+    satisfiedBy: []
+  - id: A.5.6
+    title: Contact with special interest groups
+    satisfiedBy: []
+  - id: A.5.7
+    title: Threat intelligence
+    satisfiedBy: [siem, ndr, mdr]
+  - id: A.5.8
+    title: Information security in project management
+    satisfiedBy: []
+  - id: A.5.9
+    title: Inventory of information and other associated assets
+    satisfiedBy: [asset_discovery, vulnerability_management]
+  - id: A.5.10
+    title: Acceptable use of information and other associated assets
+    satisfiedBy: []
+  - id: A.5.11
+    title: Return of assets
+    satisfiedBy: [asset_discovery]
+  - id: A.5.12
+    title: Classification of information
+    satisfiedBy: []
+  - id: A.5.13
+    title: Labelling of information
+    satisfiedBy: []
+  - id: A.5.14
+    title: Information transfer
+    satisfiedBy: [email_security]
+  - id: A.5.15
+    title: Access control
+    satisfiedBy: [iam, pam]
+  - id: A.5.16
+    title: Identity management
+    satisfiedBy: [iam]
+  - id: A.5.17
+    title: Authentication information
+    satisfiedBy: [iam, pam]
+  - id: A.5.18
+    title: Access rights
+    satisfiedBy: [iam, pam]
+  - id: A.5.19
+    title: Information security in supplier relationships
+    satisfiedBy: []
+  - id: A.5.20
+    title: Addressing information security within supplier agreements
+    satisfiedBy: []
+  - id: A.5.21
+    title: Managing information security in the ICT supply chain
+    satisfiedBy: [asset_discovery]
+  - id: A.5.22
+    title: Monitoring, review and change management of supplier services
+    satisfiedBy: []
+  - id: A.5.23
+    title: Information security for use of cloud services
+    satisfiedBy: [siem]
+  - id: A.5.24
+    title: Information security incident management planning and preparation
+    satisfiedBy: [soar, mdr]
+  - id: A.5.25
+    title: Assessment and decision on information security events
+    satisfiedBy: [siem, soar, mdr]
+  - id: A.5.26
+    title: Response to information security incidents
+    satisfiedBy: [soar, edr, mdr]
+  - id: A.5.27
+    title: Learning from information security incidents
+    satisfiedBy: []
+  - id: A.5.28
+    title: Collection of evidence
+    satisfiedBy: [siem, edr]
+  - id: A.5.29
+    title: Information security during disruption
+    satisfiedBy: [backup]
+  - id: A.5.30
+    title: ICT readiness for business continuity
+    satisfiedBy: [backup]
+  - id: A.5.31
+    title: Legal, statutory, regulatory and contractual requirements
+    satisfiedBy: []
+  - id: A.5.32
+    title: Intellectual property rights
+    satisfiedBy: []
+  - id: A.5.33
+    title: Protection of records
+    satisfiedBy: [siem, backup]
+  - id: A.5.34
+    title: Privacy and protection of PII
+    satisfiedBy: []
+  - id: A.5.35
+    title: Independent review of information security
+    satisfiedBy: []
+  - id: A.5.36
+    title: Compliance with policies, rules and standards for information security
+    satisfiedBy: [vulnerability_management]
+  - id: A.5.37
+    title: Documented operating procedures
+    satisfiedBy: []
+
+  # --- A.6 People controls (8)
+  - id: A.6.1
+    title: Screening
+    satisfiedBy: []
+  - id: A.6.2
+    title: Terms and conditions of employment
+    satisfiedBy: []
+  - id: A.6.3
+    title: Information security awareness, education and training
+    satisfiedBy: []
+  - id: A.6.4
+    title: Disciplinary process
+    satisfiedBy: []
+  - id: A.6.5
+    title: Responsibilities after termination or change of employment
+    satisfiedBy: [iam]
+  - id: A.6.6
+    title: Confidentiality or non-disclosure agreements
+    satisfiedBy: []
+  - id: A.6.7
+    title: Remote working
+    satisfiedBy: [iam, edr]
+  - id: A.6.8
+    title: Information security event reporting
+    satisfiedBy: [siem]
+
+  # --- A.7 Physical controls (14)
+  - id: A.7.1
+    title: Physical security perimeters
+    satisfiedBy: []
+  - id: A.7.2
+    title: Physical entry
+    satisfiedBy: []
+  - id: A.7.3
+    title: Securing offices, rooms and facilities
+    satisfiedBy: []
+  - id: A.7.4
+    title: Physical security monitoring
+    satisfiedBy: []
+  - id: A.7.5
+    title: Protecting against physical and environmental threats
+    satisfiedBy: []
+  - id: A.7.6
+    title: Working in secure areas
+    satisfiedBy: []
+  - id: A.7.7
+    title: Clear desk and clear screen
+    satisfiedBy: []
+  - id: A.7.8
+    title: Equipment siting and protection
+    satisfiedBy: []
+  - id: A.7.9
+    title: Security of assets off-premises
+    satisfiedBy: [edr]
+  - id: A.7.10
+    title: Storage media
+    satisfiedBy: [edr]
+  - id: A.7.11
+    title: Supporting utilities
+    satisfiedBy: []
+  - id: A.7.12
+    title: Cabling security
+    satisfiedBy: []
+  - id: A.7.13
+    title: Equipment maintenance
+    satisfiedBy: []
+  - id: A.7.14
+    title: Secure disposal or re-use of equipment
+    satisfiedBy: []
+
+  # --- A.8 Technological controls (34)
+  - id: A.8.1
+    title: User end point devices
+    satisfiedBy: [edr]
+  - id: A.8.2
+    title: Privileged access rights
+    satisfiedBy: [pam]
+  - id: A.8.3
+    title: Information access restriction
+    satisfiedBy: [iam, pam]
+  - id: A.8.4
+    title: Access to source code
+    satisfiedBy: [iam]
+  - id: A.8.5
+    title: Secure authentication
+    satisfiedBy: [iam]
+  - id: A.8.6
+    title: Capacity management
+    satisfiedBy: []
+  - id: A.8.7
+    title: Protection against malware
+    satisfiedBy: [edr, email_security]
+  - id: A.8.8
+    title: Management of technical vulnerabilities
+    satisfiedBy: [vulnerability_management]
+  - id: A.8.9
+    title: Configuration management
+    satisfiedBy: [vulnerability_management, edr]
+  - id: A.8.10
+    title: Information deletion
+    satisfiedBy: []
+  - id: A.8.11
+    title: Data masking
+    satisfiedBy: []
+  - id: A.8.12
+    title: Data leakage prevention
+    satisfiedBy: [email_security]
+  - id: A.8.13
+    title: Information backup
+    satisfiedBy: [backup]
+  - id: A.8.14
+    title: Redundancy of information processing facilities
+    satisfiedBy: [backup]
+  - id: A.8.15
+    title: Logging
+    satisfiedBy: [siem]
+  - id: A.8.16
+    title: Monitoring activities
+    satisfiedBy: [siem, ndr, edr, mdr, deception]
+  - id: A.8.17
+    title: Clock synchronization
+    satisfiedBy: []
+    notes: Config, not a purchase — but it is a precondition for A.8.15 logging being usable.
+  - id: A.8.18
+    title: Use of privileged utility programs
+    satisfiedBy: [pam, edr]
+  - id: A.8.19
+    title: Installation of software on operational systems
+    satisfiedBy: [edr]
+  - id: A.8.20
+    title: Networks security
+    satisfiedBy: [ngfw, ndr]
+  - id: A.8.21
+    title: Security of network services
+    satisfiedBy: [ngfw]
+  - id: A.8.22
+    title: Segregation of networks
+    satisfiedBy: [ngfw]
+  - id: A.8.23
+    title: Web filtering
+    satisfiedBy: [ngfw, email_security]
+  - id: A.8.24
+    title: Use of cryptography
+    satisfiedBy: []
+  - id: A.8.25
+    title: Secure development life cycle
+    satisfiedBy: []
+  - id: A.8.26
+    title: Application security requirements
+    satisfiedBy: []
+  - id: A.8.27
+    title: Secure system architecture and engineering principles
+    satisfiedBy: []
+  - id: A.8.28
+    title: Secure coding
+    satisfiedBy: []
+  - id: A.8.29
+    title: Security testing in development and acceptance
+    satisfiedBy: [vulnerability_management]
+  - id: A.8.30
+    title: Outsourced development
+    satisfiedBy: []
+  - id: A.8.31
+    title: Separation of development, test and production environments
+    satisfiedBy: []
+  - id: A.8.32
+    title: Change management
+    satisfiedBy: []
+  - id: A.8.33
+    title: Test information
+    satisfiedBy: []
+  - id: A.8.34
+    title: Protection of information systems during audit testing
+    satisfiedBy: []

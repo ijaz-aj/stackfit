@@ -1,0 +1,94 @@
+# NIS2 — Directive (EU) 2022/2555, Article 21(2).
+#
+# Article 21(2) lists ten cybersecurity risk-management measures, (a) to (j),
+# that essential and important entities must take. That list is the whole
+# technical substance of NIS2 for this tool's purposes, and it is unusually
+# well-suited to control mapping: short, closed, and written in terms of
+# outcomes rather than products.
+#
+# Control ids follow the Article structure: `21.2.a` is Article 21(2)(a).
+#
+# `satisfiedBy` is StackFit's own mapping, not part of the Directive.
+#
+# NIS2 is binding on in-scope entities, with personal liability for management
+# bodies, so the measures that no process alone closes are marked mandatory.
+
+id: nis2
+name: NIS2 Directive
+sourceQuality: secondary_sources
+version: Directive (EU) 2022/2555
+commonIn: [eu]
+
+sources:
+  - url: https://eur-lex.europa.eu/eli/dir/2022/2555/oj
+    asOf: '2026-09-09'
+  - url: https://www.nis-2-directive.com/NIS_2_Directive_Article_21.html
+    asOf: '2026-09-09'
+
+notes: >-
+  sourceQuality is secondary_sources: EUR-Lex returned empty content, so the
+  Article 21(2) wording was taken from a mirror of the Directive text. The
+  wording matched what was quoted verbatim across sources, but re-read against
+  EUR-Lex before a client-facing coverage claim.
+
+  NIS2 is a Directive, so what actually binds an entity is its member state's
+  transposition, which may go further than the minimum below. Check the
+  national law for the client's jurisdiction.
+
+controls:
+  - id: 21.2.a
+    title: Policies on risk analysis and information system security
+    satisfiedBy: []
+    notes: >-
+      A requirement to hold policies. Risk analysis is an exercise the entity
+      performs; no purchase closes it, and a scanner is not a risk assessment.
+  - id: 21.2.b
+    title: Incident handling
+    satisfiedBy: [siem, soar, edr, mdr]
+    mandatory: true
+  - id: 21.2.c
+    title: Business continuity, such as backup management and disaster recovery, and crisis management
+    satisfiedBy: [backup]
+    mandatory: true
+  - id: 21.2.d
+    title: Supply chain security
+    satisfiedBy: []
+    notes: >-
+      Covers relationships with direct suppliers and service providers, and is
+      closed by procurement process, contractual terms and supplier assessment.
+      Knowing what you own is a precondition, not the control.
+  - id: 21.2.e
+    title: >-
+      Security in network and information systems acquisition, development and
+      maintenance, including vulnerability handling and disclosure
+    satisfiedBy: [vulnerability_management]
+    mandatory: true
+  - id: 21.2.f
+    title: Policies and procedures to assess the effectiveness of cybersecurity risk-management measures
+    satisfiedBy: []
+    notes: >-
+      An audit and governance activity. Tooling produces evidence for the
+      assessment; it does not perform it.
+  - id: 21.2.g
+    title: Basic cyber hygiene practices and cybersecurity training
+    satisfiedBy: []
+    notes: >-
+      Training is a people control. Security awareness is a programme the
+      entity runs, and no category in this catalog delivers it.
+  - id: 21.2.h
+    title: Policies and procedures regarding the use of cryptography and, where appropriate, encryption
+    satisfiedBy: []
+  - id: 21.2.i
+    title: Human resources security, access control policies and asset management
+    satisfiedBy: [iam, pam, asset_discovery]
+    mandatory: true
+  - id: 21.2.j
+    title: >-
+      The use of multi-factor authentication or continuous authentication
+      solutions, secured voice, video and text communications and secured
+      emergency communication systems
+    satisfiedBy: [iam]
+    mandatory: true
+    notes: >-
+      The most directly product-shaped requirement in NIS2 — it names MFA
+      explicitly, which makes an IAM/MFA purchase difficult to argue away.

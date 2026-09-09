@@ -1,0 +1,81 @@
+# GDPR — Regulation (EU) 2016/679.
+#
+# Only the security-relevant Articles are listed. GDPR has 99 Articles, most of
+# them about lawful basis, data subject rights and cross-border transfer — none
+# of which a security product closes. Including them all would give a coverage
+# denominator this tool has no business scoring against.
+#
+# So the coverage figure here is explicitly "coverage of GDPR's *security*
+# obligations", not "GDPR coverage". A DPO would rightly object to the latter.
+#
+# `satisfiedBy` is StackFit's own mapping, not part of the Regulation. Article
+# 32 is marked mandatory because it is the one that directly compels technical
+# security measures.
+
+id: gdpr
+name: General Data Protection Regulation
+sourceQuality: secondary_sources
+version: Regulation (EU) 2016/679
+commonIn: [eu, uk, global]
+
+sources:
+  - url: https://gdpr-info.eu/art-32-gdpr/
+    asOf: '2026-09-09'
+  - url: https://eur-lex.europa.eu/eli/reg/2016/679/oj
+    asOf: '2026-09-09'
+
+notes: >-
+  sourceQuality is secondary_sources: the Article wording below was read from
+  the gdpr-info.eu mirror rather than from EUR-Lex, which is listed as the
+  authoritative text but was not the copy consulted. The Articles selected are
+  uncontroversial and the numbering is stable, so the risk here is lower than
+  for the provisional frameworks — but re-read against EUR-Lex before a
+  client-facing coverage claim.
+
+  Scoped to the security-relevant Articles only — see the file header. A
+  bundle's score against this framework must never be presented to a client as
+  "GDPR compliance"; it is coverage of the technical measures Article 32 and
+  its neighbours call for, and nothing more.
+
+controls:
+  - id: art-5
+    title: Principles relating to processing of personal data
+    satisfiedBy: []
+    notes: Article 5(1)(f) integrity and confidentiality is the security-relevant limb.
+  - id: art-25
+    title: Data protection by design and by default
+    satisfiedBy: []
+    notes: >-
+      An architectural and design obligation — data minimisation, purpose
+      limitation, defaults. Products can express it; none of them satisfies it.
+  - id: art-30
+    title: Records of processing activities
+    satisfiedBy: []
+    notes: >-
+      A documentation exercise describing processing purposes, categories of
+      data subject and recipients. An IT asset inventory is a different record
+      and does not produce a RoPA.
+  - id: art-32
+    title: Security of processing
+    satisfiedBy: [siem, edr, iam, pam, backup, vulnerability_management, ngfw]
+    mandatory: true
+    notes: >-
+      32(1)(a) pseudonymisation and encryption; (b) ongoing confidentiality,
+      integrity, availability and resilience; (c) ability to restore
+      availability after an incident; (d) a process for regularly testing and
+      evaluating effectiveness. (c) is backup, (d) is vulnerability management.
+  - id: art-33
+    title: Notification of a personal data breach to the supervisory authority
+    satisfiedBy: [siem, soar, mdr]
+    mandatory: true
+    notes: The 72-hour clock is unmeetable without detection — which is why this is a SIEM driver.
+  - id: art-34
+    title: Communication of a personal data breach to the data subject
+    satisfiedBy: []
+    notes: >-
+      Communication to affected individuals is a legal and communications
+      decision. Art. 33 keeps its detection mapping because you cannot notify
+      within 72 hours what you never detected; this one has no such dependency.
+  - id: art-35
+    title: Data protection impact assessment
+    satisfiedBy: []

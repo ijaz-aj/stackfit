@@ -1,0 +1,113 @@
+# SOC 2 — AICPA Trust Services Criteria.
+#
+# Held at criteria-series level: the nine Common Criteria (CC1–CC9) that every
+# SOC 2 engagement covers, plus the four optional categories. The 33 individual
+# points beneath the CC series are the level an auditor tests at; the series is
+# the level at which a product category is a sensible answer.
+#
+# `satisfiedBy` is StackFit's own mapping, not part of the TSC.
+#
+# Nothing is marked mandatory. SOC 2 has no prescribed control list — the
+# service organisation designs controls to meet the criteria, and an auditor
+# opines on whether they do. A tool cannot decide that a given purchase is
+# required.
+
+id: soc-2
+name: SOC 2 Trust Services Criteria
+sourceQuality: secondary_sources
+version: 2017 TSC with 2022 revised points of focus
+commonIn: [us, global]
+
+sources:
+  - url: https://www.aicpa-cima.com/resources/download/2017-trust-services-criteria-with-revised-points-of-focus-2022
+    asOf: '2026-09-09'
+  - url: https://secureframe.com/hub/soc-2/common-criteria
+    asOf: '2026-09-09'
+
+notes: >-
+  sourceQuality is secondary_sources: the AICPA page serves the criteria as a
+  PDF download that could not be parsed, so the series titles below were
+  corroborated from independent sources. The CC1–CC9 structure is stable and
+  widely published.
+
+  Security (the Common Criteria) is the only category required in every SOC 2.
+  Availability, Confidentiality, Processing Integrity and Privacy are opted
+  into, so a coverage figure against this framework depends on which categories
+  the client is actually in scope for — worth asking during intake rather than
+  assuming all five.
+
+controls:
+  # --- Common Criteria (the Security category, mandatory in every SOC 2)
+  - id: CC1
+    title: Control Environment
+    satisfiedBy: []
+  - id: CC2
+    title: Communication and Information
+    satisfiedBy: []
+  - id: CC3
+    title: Risk Assessment
+    satisfiedBy: []
+    notes: >-
+      COSO risk assessment — objectives, risk identification, fraud and change
+      analysis. Governance, and far wider than technical vulnerability.
+  - id: CC4
+    title: Monitoring Activities
+    satisfiedBy: [siem, vulnerability_management]
+  - id: CC5
+    title: Control Activities
+    satisfiedBy: []
+  - id: CC6
+    title: Logical and Physical Access Controls
+    satisfiedBy: [iam, pam, ngfw, edr]
+    notes: The largest of the common criteria, with eight points beneath it.
+  - id: CC7
+    title: System Operations
+    satisfiedBy: [siem, edr, ndr, soar, mdr, vulnerability_management]
+    notes: Covers detection and monitoring of anomalies, and incident response.
+  - id: CC8
+    title: Change Management
+    satisfiedBy: []
+    notes: >-
+      Authorising, designing, testing and approving changes. A process control
+      an auditor tests against tickets and approvals, not against a scanner.
+  - id: CC9
+    title: Risk Mitigation
+    satisfiedBy: []
+    notes: >-
+      Risk mitigation and vendor risk management. Backup serves the
+      availability criterion (A1), which is where it is claimed.
+
+  # --- Optional categories, opted into per engagement
+  - id: A1
+    title: Availability
+    satisfiedBy: [backup]
+  - id: C1
+    title: Confidentiality
+    satisfiedBy: [iam, email_security]
+  - id: PI1
+    title: Processing Integrity
+    satisfiedBy: []
+  - id: P1
+    title: 'Privacy: notice and communication of objectives'
+    satisfiedBy: []
+  - id: P2
+    title: 'Privacy: choice and consent'
+    satisfiedBy: []
+  - id: P3
+    title: 'Privacy: collection'
+    satisfiedBy: []
+  - id: P4
+    title: 'Privacy: use, retention and disposal'
+    satisfiedBy: []
+  - id: P5
+    title: 'Privacy: access'
+    satisfiedBy: [iam]
+  - id: P6
+    title: 'Privacy: disclosure and notification'
+    satisfiedBy: []
+  - id: P7
+    title: 'Privacy: quality'
+    satisfiedBy: []
+  - id: P8
+    title: 'Privacy: monitoring and enforcement'
+    satisfiedBy: [siem]

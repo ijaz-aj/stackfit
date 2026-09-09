@@ -23,6 +23,14 @@ sources:
   - url: https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf
     asOf: '2026-09-09'
 
+notes: >-
+  sourceQuality is secondary_sources: the 22 Category names below were not
+  confirmed line by line against NIST CSWP 29, which is listed above as the
+  authoritative text. The CSF Core structure is stable and very widely
+  reproduced, so this is the lowest-risk grade in the library — but it is not
+  publisher_verified, and the distinction is the point. Confirm against the
+  PDF before a client-facing coverage claim.
+
 controls:
   # GOVERN
   - id: GV.OC
@@ -43,8 +51,10 @@ controls:
     satisfiedBy: []
   - id: GV.SC
     title: Cybersecurity Supply Chain Risk Management
-    satisfiedBy: [asset_discovery]
-    notes: Tooling only helps with the inventory half; the rest is process.
+    satisfiedBy: []
+    notes: >-
+      A Govern-function outcome: supplier risk criteria, contracts and
+      oversight. Tooling helps with the inventory half; the control is the rest.
 
   # IDENTIFY
   - id: ID.AM

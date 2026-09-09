@@ -1,0 +1,144 @@
+# HIPAA Security Rule — 45 CFR Part 164 Subpart C.
+#
+# Held at *standard* level, which is the level 45 CFR 164.308/310/312 is
+# organised at. Each standard has implementation specifications beneath it
+# (required or addressable); those are the level at which an auditor works, and
+# they are not the level at which "buy a SIEM" is an answer.
+#
+# Control ids use dots where the regulation uses parentheses:
+# 164.308(a)(1) is written `164.308.a.1`. The mapping is mechanical and the
+# titles below carry the official wording.
+#
+# `satisfiedBy` is StackFit's own mapping, not part of the regulation.
+#
+# HIPAA is law for covered entities and business associates, so the technical
+# safeguards that no process alone can close are marked mandatory.
+
+id: hipaa
+name: HIPAA Security Rule
+sourceQuality: secondary_sources
+version: 45 CFR Part 164 Subpart C
+commonIn: [us]
+
+sources:
+  - url: https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+    asOf: '2026-09-09'
+  - url: https://www.accountablehq.com/post/hipaa-security-rule-standards-map-linking-45-cfr-164-308-164-310-164-312-and-164-316-to-real-world-controls
+    asOf: '2026-09-09'
+
+notes: >-
+  sourceQuality is secondary_sources, not publisher_verified: hhs.gov returned
+  403 and ecfr.gov redirected to a block page, so the standard names below were
+  corroborated from independent secondary sources rather than read from the
+  regulation itself. The 164.308/310/312 structure and the standard names are
+  stable and long-established, but re-read against eCFR before a client-facing
+  coverage claim.
+
+controls:
+  # --- 164.308 Administrative safeguards
+  - id: 164.308.a.1
+    title: Security Management Process
+    satisfiedBy: [vulnerability_management, siem, asset_discovery]
+    mandatory: true
+    notes: Includes the risk analysis and risk management implementation specifications.
+  - id: 164.308.a.2
+    title: Assigned Security Responsibility
+    satisfiedBy: []
+  - id: 164.308.a.3
+    title: Workforce Security
+    satisfiedBy: [iam, pam]
+  - id: 164.308.a.4
+    title: Information Access Management
+    satisfiedBy: [iam, pam]
+    mandatory: true
+  - id: 164.308.a.5
+    title: Security Awareness and Training
+    satisfiedBy: []
+    notes: >-
+      Anti-phishing tooling supports this, but the obligation is to train the
+      workforce, and that is not a purchase. Claiming it would let an email
+      gateway score a training requirement.
+  - id: 164.308.a.6
+    title: Security Incident Procedures
+    satisfiedBy: [siem, soar, mdr]
+    mandatory: true
+  - id: 164.308.a.7
+    title: Contingency Plan
+    satisfiedBy: [backup]
+    mandatory: true
+    notes: Data backup plan and disaster recovery plan are both required specifications.
+  - id: 164.308.a.8
+    title: Evaluation
+    satisfiedBy: []
+    notes: >-
+      A periodic technical and non-technical evaluation of the whole security
+      programme. Scanning feeds it; the evaluation itself is an audit activity.
+  - id: 164.308.b.1
+    title: Business Associate Contracts and Other Arrangements
+    satisfiedBy: []
+
+  # --- 164.310 Physical safeguards
+  - id: 164.310.a.1
+    title: Facility Access Controls
+    satisfiedBy: []
+    notes: Physical control. No catalog category closes this.
+  - id: 164.310.b
+    title: Workstation Use
+    satisfiedBy: []
+    notes: >-
+      Policies and procedures specifying the proper functions and manner of
+      workstation use. A policy control, in the physical safeguards subpart.
+  - id: 164.310.c
+    title: Workstation Security
+    satisfiedBy: []
+    notes: >-
+      Physical safeguards restricting access to workstations — placement,
+      screens, locks. An endpoint agent does not close a physical control.
+  - id: 164.310.d.1
+    title: Device and Media Controls
+    satisfiedBy: []
+    notes: >-
+      Receipt, removal, disposal and re-use of hardware and electronic media.
+      Closed by process and physical custody, not by software.
+
+  # --- 164.312 Technical safeguards
+  - id: 164.312.a.1
+    title: Access Control
+    satisfiedBy: [iam, pam]
+    mandatory: true
+  - id: 164.312.b
+    title: Audit Controls
+    satisfiedBy: [siem]
+    mandatory: true
+    notes: The reason a HIPAA scope almost always needs log management.
+  - id: 164.312.c.1
+    title: Integrity
+    satisfiedBy: [siem, backup]
+    mandatory: true
+    notes: File integrity monitoring is the usual technical answer.
+  - id: 164.312.d
+    title: Person or Entity Authentication
+    satisfiedBy: [iam]
+    mandatory: true
+  - id: 164.312.e.1
+    title: Transmission Security
+    satisfiedBy: []
+    notes: >-
+      Primarily encryption in transit, which is configuration rather than a
+      product. Cryptographic requirements carry no category by design.
+
+  # --- 164.314 Organizational requirements
+  - id: 164.314.a.1
+    title: Business Associate Contracts or Other Arrangements
+    satisfiedBy: []
+  - id: 164.314.b.1
+    title: Requirements for Group Health Plans
+    satisfiedBy: []
+
+  # --- 164.316 Policies and procedures and documentation requirements
+  - id: 164.316.a
+    title: Policies and Procedures
+    satisfiedBy: []
+  - id: 164.316.b.1
+    title: Documentation
+    satisfiedBy: []

@@ -27,7 +27,22 @@ privilegedAccountsPerItStaff: 2.5 # Personal admin account + shared/service admi
 retention:
   defaultDays: 90 # Common commercial default and enough for most incident investigations.
   byFramework:
+    # Only frameworks that state an explicit log-retention period are listed.
+    # The longest applicable one wins. A framework that requires logging without
+    # naming a duration is deliberately absent rather than given a guessed
+    # number — sizing storage on an invented retention period would be exactly
+    # the fabrication hard rule 2 forbids.
     pci-dss-4.0: 365 # Requirement 10 mandates 12 months, with 3 months immediately available.
+    cert-in: 180 # 2022 Directions: rolling 180 days of ICT logs, stored within India.
+    #
+    # Deliberately NOT listed, and why:
+    #   hipaa      — 164.316(b)(2)(i)'s 6-year rule covers policies and
+    #                documentation, not audit logs. Six years is common practice
+    #                for logs but is not what the regulation says.
+    #   gdpr/nis2/ — require logging, monitoring or breach detection without
+    #   dpdp-2023    naming a retention period. The 90-day default applies.
+    #   rbi-csf    — Annex 1 could not be read (see the framework file), so no
+    #                retention figure is asserted.
 
 scaleClassThresholds:
   # Inclusive upper bound of monitored assets for each class. Above largeMax is enterprise.

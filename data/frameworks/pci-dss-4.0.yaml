@@ -22,6 +22,15 @@ sources:
   - url: https://www.pcisecuritystandards.org/document_library/
     asOf: '2026-09-09'
 
+notes: >-
+  sourceQuality is secondary_sources: the source above is the PCI SSC document
+  library landing page, not the standard. PCI DSS v4.0 is distributed through
+  that library rather than at an open URL, so the twelve Requirement titles
+  below were taken from reproductions rather than read from the document. The
+  top-level Requirement list is stable and uncontroversial; the sub-requirement
+  detail this tool does not model is where the real churn is. Re-read against
+  the standard before a client-facing coverage claim.
+
 controls:
   - id: '1'
     title: Install and Maintain Network Security Controls

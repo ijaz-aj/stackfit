@@ -1,0 +1,88 @@
+# Digital Personal Data Protection Act, 2023 (India), plus the security
+# safeguards enumerated in Rule 6 of the Digital Personal Data Protection
+# Rules, 2025.
+#
+# The Act itself is short and outcome-worded — section 8(5) says "reasonable
+# security safeguards" without listing any. Rule 6 of the 2025 Rules is what
+# turns that into a checklist, and it is unusually product-shaped: encryption,
+# access control, logging, backups. That makes it directly useful here.
+#
+# Control ids: `s-8-5` is section 8(5) of the Act; `rule-6-*` are the
+# safeguards enumerated in Rule 6 of the Rules, using StackFit's own topical
+# labels because Rule 6's clauses are lettered inconsistently across sources.
+#
+# `satisfiedBy` is StackFit's own mapping.
+
+id: dpdp-2023
+name: Digital Personal Data Protection Act
+sourceQuality: secondary_sources
+version: Act of 2023 with Rules of 2025
+commonIn: [in]
+
+sources:
+  - url: https://www.dpdpa.com/dpdpa2023/chapter-2/section8.html
+    asOf: '2026-09-09'
+  - url: https://www.seclore.com/fundamentals/dpdp-rules-2025-compliance-guide/
+    asOf: '2026-09-09'
+
+notes: >-
+  sourceQuality is secondary_sources — the Act text and Rule 6's substance were
+  corroborated across independent legal summaries rather than read from the
+  Gazette. Verify against the official publication before a client-facing
+  coverage claim, particularly the Rules, which are recent.
+
+  Two things worth raising with any Indian client in scope. First, the penalty
+  for failing to implement reasonable security safeguards is up to INR 250
+  crore — the largest in the Schedule, and larger than the penalty for failing
+  to report a breach. Second, DPDP and the CERT-In Directions apply
+  simultaneously to most organisations, and CERT-In's six-hour reporting clock
+  is far tighter than DPDP's, so CERT-In is usually the binding constraint on
+  detection capability.
+
+controls:
+  - id: s-8-4
+    title: Implement appropriate technical and organisational measures to ensure effective observance
+    satisfiedBy: []
+    mandatory: true
+
+  - id: s-8-5
+    title: Protect personal data by taking reasonable security safeguards to prevent a breach
+    satisfiedBy: [siem, edr, iam, pam, backup, email_security]
+    mandatory: true
+    notes: Rule 6 of the 2025 Rules enumerates the minimum safeguards — see below.
+
+  - id: s-8-6
+    title: Give the Data Protection Board and affected Data Principals notice of a personal data breach
+    satisfiedBy: [siem, soar, mdr]
+    mandatory: true
+    notes: >-
+      Intimate the Board without delay, then a detailed report within 72 hours,
+      and notify each affected Data Principal. Undetected breaches cannot be
+      reported, so this is a detection requirement in substance.
+
+  # --- Rule 6, DPDP Rules 2025: the minimum reasonable security safeguards
+  - id: rule-6-encryption
+    title: Encryption, obfuscation, masking or tokenisation of personal data
+    satisfiedBy: []
+    mandatory: true
+  - id: rule-6-access-control
+    title: Access control for computer resources holding personal data
+    satisfiedBy: [iam, pam]
+    mandatory: true
+  - id: rule-6-logging
+    title: >-
+      Logs and visibility of access, to enable detection, investigation and
+      remediation of unauthorised access
+    satisfiedBy: [siem]
+    mandatory: true
+    notes: >-
+      The clearest SIEM mandate in Indian data-protection law. Note it requires
+      logging to be *usable* for investigation, not merely retained.
+  - id: rule-6-backup
+    title: Backups and measures for continued processing in the event of compromise
+    satisfiedBy: [backup]
+    mandatory: true
+  - id: rule-6-processor-contracts
+    title: Contractual flow-down of equivalent safeguards to Data Processors
+    satisfiedBy: []
+    mandatory: true

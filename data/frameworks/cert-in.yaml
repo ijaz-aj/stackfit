@@ -1,0 +1,85 @@
+# CERT-In Directions, 28 April 2022 (No. 20(3)/2022-CERT-In).
+#
+# Issued under section 70B(6) of the Information Technology Act, 2000. Binding
+# on service providers, intermediaries, data centres, body corporate and
+# government organisations operating in India. In force from 27 June 2022.
+#
+# ⚠ Control ids here are StackFit's own topical labels, NOT the official
+# direction numbering. The CERT-In PDF could not be parsed and no secondary
+# source reliably mapped direction numbers to their subject matter, so
+# inventing numbers would have been a fabrication. The *substance* below is
+# well corroborated; the numbering is deliberately absent.
+#
+# `satisfiedBy` is StackFit's own mapping.
+#
+# Almost everything here is mandatory: these are directions, not guidance, and
+# non-compliance is an offence under section 70B(7).
+
+id: cert-in
+name: CERT-In Cyber Security Directions
+sourceQuality: provisional
+version: 28 April 2022
+commonIn: [in]
+
+sources:
+  - url: https://www.cert-in.org.in/PDF/CERT-In_Directions_70B_28.04.2022.pdf
+    asOf: '2026-09-09'
+  - url: https://www.azbpartners.com/bank/cert-in-directions/
+    asOf: '2026-09-09'
+
+notes: >-
+  sourceQuality is provisional. The substance of each direction is corroborated
+  across independent legal summaries, but the official direction numbering
+  could not be verified — the CERT-In PDF is not machine-readable and secondary
+  sources use their own labelling. Reconcile the ids below against the original
+  PDF before this framework appears in a client-facing coverage claim.
+
+  This is the framework most likely to change the shape of a recommended stack
+  for an Indian client: 180 days of logs held *inside India* rules out a number
+  of SaaS-only SIEM options outright, and the six-hour reporting clock is
+  unmeetable without real detection capability.
+
+controls:
+  - id: ntp-sync
+    title: Synchronise all ICT system clocks to NIC or NPL NTP servers
+    satisfiedBy: []
+    mandatory: true
+    notes: >-
+      Configuration, not a purchase — but it is a precondition for logs being
+      admissible and correlatable, so it gates the value of everything else.
+
+  - id: incident-report-6-hours
+    title: Report specified cyber incidents to CERT-In within 6 hours of noticing
+    satisfiedBy: [siem, soar, mdr, edr]
+    mandatory: true
+    notes: >-
+      Six hours is the tightest reporting clock in any framework in this
+      catalog — tighter than GDPR's 72. An organisation with no detection
+      capability cannot meet it, which makes this a genuine SIEM/MDR driver
+      rather than a paperwork exercise.
+
+  - id: point-of-contact
+    title: Designate a point of contact for liaison with CERT-In
+    satisfiedBy: []
+    mandatory: true
+
+  - id: logs-180-days-in-india
+    title: Maintain ICT system logs for a rolling 180 days, stored within India
+    satisfiedBy: [siem]
+    mandatory: true
+    notes: >-
+      The data-residency half matters as much as the retention half. It is a
+      hard constraint against SIEM platforms with no Indian region, and should
+      be treated as a deployment filter, not just a retention setting.
+
+  - id: subscriber-records
+    title: Data centre, VPS, cloud and VPN providers to retain subscriber and customer records
+    satisfiedBy: []
+    mandatory: true
+    notes: Applies to providers themselves rather than to most client organisations.
+
+  - id: vasp-kyc
+    title: Virtual asset service providers to maintain KYC and transaction records
+    satisfiedBy: []
+    mandatory: true
+    notes: Applies only to virtual asset exchanges and custodian wallet providers.

@@ -1,0 +1,132 @@
+# RBI Cyber Security Framework in Banks — circular RBI/2015-16/418,
+# DBS.CO/CSITE/BC.11/33.01.001/2015-16, dated 2 June 2016, Annex 1 baseline
+# cyber security and resilience requirements.
+#
+# ⚠ This is the least well-sourced framework in the catalog. RBI serves Annex 1
+# from a host behind a CAPTCHA, so the official control numbering could not be
+# read. The control *areas* below are corroborated across independent
+# summaries; the ids are StackFit's own topical labels, not RBI's numbering.
+# Inventing Annex 1 numbers would have been a fabrication, so there are none.
+#
+# `satisfiedBy` is StackFit's own mapping.
+#
+# Applies to scheduled commercial banks. Related and newer: the RBI Master
+# Direction on Information Technology Governance, Risk, Controls and Assurance
+# Practices (November 2023), which is not modelled here.
+
+id: rbi-csf
+name: RBI Cyber Security Framework in Banks
+sourceQuality: provisional
+version: Circular RBI/2015-16/418, 2 June 2016
+commonIn: [in]
+
+sources:
+  - url: https://rbidocs.rbi.org.in/rdocs/content/pdfs/CSFB020616_AN1.pdf
+    asOf: '2026-09-09'
+  - url: https://www.upguard.com/blog/rbi-cybersecurity-framework-baseline-requirements
+    asOf: '2026-09-09'
+
+notes: >-
+  sourceQuality is provisional, and more provisional than cert-in. The RBI PDF
+  is behind a CAPTCHA and could not be read; the control areas below come from
+  secondary summaries only. This framework must be reconciled against Annex 1
+  by someone with the original document before it is used in any client-facing
+  coverage claim — treat it as a shortlisting aid, not as an audit position.
+
+  Note also that the 2016 circular expects a 24x7 Security Operations Centre
+  and annual penetration testing. For a bank, that is a staffing and services
+  commitment well beyond the product spend this tool models, and it should be
+  raised explicitly rather than buried in a bundle price.
+
+controls:
+  - id: asset-inventory
+    title: Inventory management of business IT assets
+    satisfiedBy: [asset_discovery, vulnerability_management]
+    mandatory: true
+  - id: network-management
+    title: Network management and security
+    satisfiedBy: [ngfw, ndr]
+    mandatory: true
+  - id: network-segmentation
+    title: Network segregation and segmentation
+    satisfiedBy: [ngfw]
+    mandatory: true
+  - id: secure-configuration
+    title: Secure configuration of systems
+    satisfiedBy: [vulnerability_management, edr]
+    mandatory: true
+  - id: patch-management
+    title: Patch and vulnerability management
+    satisfiedBy: [vulnerability_management]
+    mandatory: true
+  - id: user-access-control
+    title: User access control and management
+    satisfiedBy: [iam]
+    mandatory: true
+  - id: privileged-access
+    title: Privileged access management
+    satisfiedBy: [pam]
+    mandatory: true
+  - id: anti-malware
+    title: Advanced real-time threat defence and management
+    satisfiedBy: [edr, email_security]
+    mandatory: true
+  - id: removable-media
+    title: Removable media controls
+    satisfiedBy: [edr]
+  - id: data-leak-prevention
+    title: Data leak prevention strategy
+    satisfiedBy: []
+    mandatory: true
+    notes: >-
+      This catalog has no DLP category. Email security covers one egress
+      channel; endpoint, web and cloud are the others, so claiming it here
+      would present a partial control as a whole strategy. Mandatory is kept:
+      the obligation stands and the gap should show up as a gap.
+  - id: encryption
+    title: Encryption of data at rest and in transit
+    satisfiedBy: []
+  - id: secure-messaging
+    title: Secure mail and messaging systems
+    satisfiedBy: [email_security]
+    mandatory: true
+  - id: audit-logs
+    title: Maintenance, monitoring and analysis of audit logs
+    satisfiedBy: [siem]
+    mandatory: true
+  - id: soc
+    title: Security Operations Centre with 24x7 monitoring
+    satisfiedBy: [siem, mdr, soar]
+    mandatory: true
+    notes: >-
+      A 24x7 SOC is a people commitment first. For most banks this is the single
+      largest line in the whole programme, and it is the clearest case in this
+      catalog for costing an MDR alternative against building in-house.
+  - id: incident-response
+    title: Incident response and management
+    satisfiedBy: [soar, mdr, siem]
+    mandatory: true
+  - id: backup-restoration
+    title: Backup and restoration
+    satisfiedBy: [backup]
+    mandatory: true
+  - id: vendor-risk
+    title: Vendor and outsourcing risk management
+    satisfiedBy: []
+  - id: environmental-controls
+    title: Environmental and physical controls
+    satisfiedBy: []
+  - id: user-awareness
+    title: User and customer awareness programmes
+    satisfiedBy: []
+  - id: penetration-testing
+    title: Vulnerability assessment and penetration testing
+    satisfiedBy: [vulnerability_management]
+    mandatory: true
+  - id: anti-phishing
+    title: Anti-phishing and brand protection
+    satisfiedBy: [email_security]
+    mandatory: true
+  - id: forensics
+    title: Forensic readiness and evidence preservation
+    satisfiedBy: [siem, edr]

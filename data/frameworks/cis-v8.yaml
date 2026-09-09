@@ -27,7 +27,11 @@ controls:
     satisfiedBy: [asset_discovery, edr]
   - id: '3'
     title: Data Protection
-    satisfiedBy: [backup]
+    satisfiedBy: []
+    notes: >-
+      Data classification, retention, disposal, encryption and DLP. Control 11
+      is where backup is claimed; counting it here as well would score one
+      purchase against two controls.
   - id: '4'
     title: Secure Configuration of Enterprise Assets and Software
     satisfiedBy: [vulnerability_management, edr]
