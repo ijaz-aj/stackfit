@@ -1,0 +1,105 @@
+# NIST Cybersecurity Framework 2.0 — the 22 Categories of the CSF Core.
+#
+# Controls are held at Category level, not Subcategory. Categories are the
+# granularity at which a product category ("a SIEM") is a meaningful answer;
+# the 106 Subcategories are the granularity at which a control statement is.
+#
+# `satisfiedBy` is StackFit's own judgement about which product categories
+# materially contribute to a Category. It is not part of the published
+# framework and an analyst should be willing to argue with it.
+#
+# CSF 2.0 is voluntary guidance, so no Category is marked mandatory: nothing
+# here compels a purchase the way PCI DSS does.
+
+id: nist-csf-2.0
+name: NIST Cybersecurity Framework
+version: '2.0'
+commonIn: [us, global]
+
+sources:
+  - url: https://www.nist.gov/cyberframework
+    asOf: '2026-09-09'
+  - url: https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf
+    asOf: '2026-09-09'
+
+controls:
+  # GOVERN
+  - id: GV.OC
+    title: Organizational Context
+    satisfiedBy: []
+    notes: Governance outcome. No tool satisfies this.
+  - id: GV.RM
+    title: Risk Management Strategy
+    satisfiedBy: []
+  - id: GV.RR
+    title: Roles, Responsibilities, and Authorities
+    satisfiedBy: []
+  - id: GV.PO
+    title: Policy
+    satisfiedBy: []
+  - id: GV.OV
+    title: Oversight
+    satisfiedBy: []
+  - id: GV.SC
+    title: Cybersecurity Supply Chain Risk Management
+    satisfiedBy: [asset_discovery]
+    notes: Tooling only helps with the inventory half; the rest is process.
+
+  # IDENTIFY
+  - id: ID.AM
+    title: Asset Management
+    satisfiedBy: [asset_discovery, vulnerability_management]
+  - id: ID.RA
+    title: Risk Assessment
+    satisfiedBy: [vulnerability_management]
+  - id: ID.IM
+    title: Improvement
+    satisfiedBy: []
+
+  # PROTECT
+  - id: PR.AA
+    title: Identity Management, Authentication, and Access Control
+    satisfiedBy: [iam, pam]
+  - id: PR.AT
+    title: Awareness and Training
+    satisfiedBy: []
+  - id: PR.DS
+    title: Data Security
+    satisfiedBy: [backup]
+    notes: PR.DS-11 covers creating, protecting and testing backups.
+  - id: PR.PS
+    title: Platform Security
+    satisfiedBy: [edr, vulnerability_management]
+  - id: PR.IR
+    title: Technology Infrastructure Resilience
+    satisfiedBy: [ngfw, ndr, backup]
+
+  # DETECT
+  - id: DE.CM
+    title: Continuous Monitoring
+    satisfiedBy: [siem, edr, ndr, email_security, deception]
+  - id: DE.AE
+    title: Adverse Event Analysis
+    satisfiedBy: [siem, soar, mdr]
+
+  # RESPOND
+  - id: RS.MA
+    title: Incident Management
+    satisfiedBy: [soar, mdr]
+  - id: RS.AN
+    title: Incident Analysis
+    satisfiedBy: [siem, edr, mdr]
+  - id: RS.CO
+    title: Incident Response Reporting and Communication
+    satisfiedBy: [soar]
+  - id: RS.MI
+    title: Incident Mitigation
+    satisfiedBy: [edr, soar, ngfw]
+
+  # RECOVER
+  - id: RC.RP
+    title: Incident Recovery Plan Execution
+    satisfiedBy: [backup]
+  - id: RC.CO
+    title: Incident Recovery Communication
+    satisfiedBy: []

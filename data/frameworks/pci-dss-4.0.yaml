@@ -1,0 +1,72 @@
+# PCI DSS 4.0 — the 12 top-level Requirements.
+#
+# Unlike NIST CSF and CIS, PCI DSS is contractually binding on anyone handling
+# card data, so `mandatory: true` is used here and means it: if the analyst
+# ticks PCI DSS, the portfolio stage must fund these categories before it funds
+# anything discretionary, and must report a shortfall rather than quietly drop
+# one (PROJECT_SPEC §7.4 step 7).
+#
+# `satisfiedBy` is StackFit's own mapping of Requirements to product
+# categories, not part of the published standard. It is deliberately
+# conservative: Requirements satisfied by process, physical control or
+# cryptography carry no product category at all, because no purchase closes
+# them and pretending otherwise would overstate a bundle's coverage.
+
+id: pci-dss-4.0
+name: Payment Card Industry Data Security Standard
+version: '4.0'
+commonIn: [global]
+
+sources:
+  - url: https://www.pcisecuritystandards.org/document_library/
+    asOf: '2026-09-09'
+
+controls:
+  - id: '1'
+    title: Install and Maintain Network Security Controls
+    satisfiedBy: [ngfw]
+    mandatory: true
+  - id: '2'
+    title: Apply Secure Configurations to All System Components
+    satisfiedBy: [vulnerability_management]
+    notes: Configuration standards are process-led; scanning evidences them.
+  - id: '3'
+    title: Protect Stored Account Data
+    satisfiedBy: []
+    notes: Encryption and key management. No catalog category closes this.
+  - id: '4'
+    title: Protect Cardholder Data with Strong Cryptography During Transmission Over Open, Public Networks
+    satisfiedBy: []
+  - id: '5'
+    title: Protect All Systems and Networks from Malicious Software
+    satisfiedBy: [edr]
+    mandatory: true
+  - id: '6'
+    title: Develop and Maintain Secure Systems and Software
+    satisfiedBy: [vulnerability_management]
+  - id: '7'
+    title: Restrict Access to System Components and Cardholder Data by Business Need to Know
+    satisfiedBy: [iam, pam]
+    mandatory: true
+  - id: '8'
+    title: Identify Users and Authenticate Access to System Components
+    satisfiedBy: [iam, pam]
+    mandatory: true
+    notes: 4.0 extends MFA to all access into the cardholder data environment.
+  - id: '9'
+    title: Restrict Physical Access to Cardholder Data
+    satisfiedBy: []
+    notes: Physical control. No catalog category closes this.
+  - id: '10'
+    title: Log and Monitor All Access to System Components and Cardholder Data
+    satisfiedBy: [siem]
+    mandatory: true
+    notes: Drives log retention and daily review — the usual reason a SIEM is non-negotiable.
+  - id: '11'
+    title: Test Security of Systems and Networks Regularly
+    satisfiedBy: [vulnerability_management, ndr, siem]
+    mandatory: true
+    notes: 11.5 change-detection / FIM is commonly served by the SIEM agent rather than a separate tool.
+  - id: '12'
+    title: Support Information Security with Organizational Policies and Programs
+    satisfiedBy: []

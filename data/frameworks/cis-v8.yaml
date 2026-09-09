@@ -1,0 +1,74 @@
+# CIS Critical Security Controls v8 — the 18 top-level Controls.
+#
+# Held at Control level rather than Safeguard level, for the same reason as
+# NIST CSF: a product category answers "Control 8, Audit Log Management", not
+# "Safeguard 8.2". Implementation Groups (IG1/IG2/IG3) select Safeguards, so
+# IG filtering arrives when Safeguards do.
+#
+# `satisfiedBy` is StackFit's own mapping, not part of the published Controls.
+# CIS is voluntary, so nothing here is marked mandatory.
+
+id: cis-v8
+name: CIS Critical Security Controls
+version: v8
+commonIn: [global]
+
+sources:
+  - url: https://www.cisecurity.org/controls/cis-controls-list
+    asOf: '2026-09-09'
+
+controls:
+  - id: '1'
+    title: Inventory and Control of Enterprise Assets
+    satisfiedBy: [asset_discovery, vulnerability_management]
+  - id: '2'
+    title: Inventory and Control of Software Assets
+    satisfiedBy: [asset_discovery, edr]
+  - id: '3'
+    title: Data Protection
+    satisfiedBy: [backup]
+  - id: '4'
+    title: Secure Configuration of Enterprise Assets and Software
+    satisfiedBy: [vulnerability_management, edr]
+  - id: '5'
+    title: Account Management
+    satisfiedBy: [iam, pam]
+  - id: '6'
+    title: Access Control Management
+    satisfiedBy: [iam, pam]
+  - id: '7'
+    title: Continuous Vulnerability Management
+    satisfiedBy: [vulnerability_management]
+  - id: '8'
+    title: Audit Log Management
+    satisfiedBy: [siem]
+  - id: '9'
+    title: Email and Web Browser Protections
+    satisfiedBy: [email_security]
+  - id: '10'
+    title: Malware Defenses
+    satisfiedBy: [edr]
+  - id: '11'
+    title: Data Recovery
+    satisfiedBy: [backup]
+  - id: '12'
+    title: Network Infrastructure Management
+    satisfiedBy: [ngfw]
+  - id: '13'
+    title: Network Monitoring and Defense
+    satisfiedBy: [ndr, siem, deception]
+  - id: '14'
+    title: Security Awareness and Skills Training
+    satisfiedBy: []
+  - id: '15'
+    title: Service Provider Management
+    satisfiedBy: []
+  - id: '16'
+    title: Application Software Security
+    satisfiedBy: []
+  - id: '17'
+    title: Incident Response Management
+    satisfiedBy: [soar, mdr]
+  - id: '18'
+    title: Penetration Testing
+    satisfiedBy: []

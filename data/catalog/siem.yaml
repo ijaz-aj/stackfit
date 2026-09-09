@@ -1,0 +1,260 @@
+# SIEM / log management.
+#
+# Prices are in minor units (CONTRIBUTING.md hard rule 1): `amountMinor: 5900` with
+# `currency: USD` is USD 59.00. No float ever enters the repo.
+#
+# opsBurden and implementation figures are analyst estimates, not vendor
+# claims. They are the most opinionated numbers in this file and the ones most
+# worth arguing about — they are also what stops "Wazuh is free" from being the
+# answer to every question (hard rule 8).
+
+category: siem
+
+products:
+  - id: wazuh
+    name: Wazuh
+    vendor: Wazuh, Inc.
+    category: siem
+    subcategory: open-source SIEM + XDR platform
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: Wazuh (self-managed)
+        capabilities:
+          - Log collection and correlation
+          - File integrity monitoring
+          - Security configuration assessment
+          - Vulnerability detection from package inventory
+          - Agent-based endpoint telemetry
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            sources:
+              - url: https://github.com/wazuh/wazuh/blob/main/LICENSE
+                asOf: '2026-09-09'
+              - url: https://wazuh.com/
+                asOf: '2026-09-09'
+            notes: GPLv2. No licence fee at any scale; cost is entirely people and infrastructure.
+
+    supports:
+      os: [windows, linux, macos]
+      deviceClasses:
+        - server
+        - workstation
+        - domain_controller
+        - hypervisor
+        - container_node
+        - cloud_workload
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [syslog, opensearch, suricata, misp, virustotal, thehive]
+
+    controlsCovered:
+      - cis-v8:1
+      - cis-v8:4
+      - cis-v8:8
+      - cis-v8:13
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:DE.AE
+      - nist-csf-2.0:RS.AN
+      - pci-dss-4.0:10
+      - pci-dss-4.0:11
+
+    opsBurden:
+      baseFte: 0.5
+      ftePerThousandAssets: 0.3
+    implementation:
+      effortDays: 20
+      skillLevel: security_engineer
+      typicalWeeks: 8
+
+    strengths:
+      - Genuinely no licence ceiling, so ingest growth does not create a budget cliff
+      - FIM and configuration assessment built in, which covers PCI DSS 11.5 without a second tool
+      - Runs fully air-gapped
+    weaknesses:
+      - Correlation content is basic next to a commercial SIEM; detection engineering is on you
+      - Cluster and index tuning is a standing operational job, not a one-off
+      - Community support only unless a support contract is bought separately
+    bestFor:
+      - Teams with at least one engineer who can own the platform
+      - Air-gapped or data-residency-constrained environments
+      - PCI DSS scopes needing log retention and FIM on a tight budget
+    avoidWhen:
+      - Security staffing is at or near zero FTE
+      - The client expects vendor-supplied detections to work on day one
+
+    sources:
+      - url: https://documentation.wazuh.com/current/getting-started/index.html
+        asOf: '2026-09-09'
+    notes: >-
+      opsBurden and implementation are analyst estimates for a self-managed
+      single-node-to-small-cluster deployment, not vendor figures.
+
+  - id: graylog-open
+    name: Graylog Open
+    vendor: Graylog, Inc.
+    category: siem
+    subcategory: open-core log management
+    licenceModel: open_core
+    maturity: established
+
+    tiers:
+      - id: open
+        name: Graylog Open
+        capabilities:
+          - Centralised log ingestion, parsing and search
+          - Stream routing and alerting
+          - Dashboards and saved searches
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            sources:
+              - url: https://graylog.org/products/open/
+                asOf: '2026-09-09'
+            notes: >-
+              SSPL, free of charge with no per-user fee and no ingestion cap.
+              SSPL is not an OSI-approved licence, hence licenceModel open_core.
+
+    supports:
+      os: [windows, linux, macos, network_os]
+      deviceClasses:
+        - server
+        - workstation
+        - network_device
+        - firewall
+        - container_node
+        - cloud_workload
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [syslog, cef, opensearch, otel]
+
+    controlsCovered:
+      - cis-v8:8
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:DE.AE
+      - pci-dss-4.0:10
+
+    opsBurden:
+      baseFte: 0.4
+      ftePerThousandAssets: 0.25
+    implementation:
+      effortDays: 12
+      skillLevel: security_engineer
+      typicalWeeks: 5
+
+    strengths:
+      - Strong log parsing and search ergonomics for the price
+      - Simpler to operate than a full Elastic stack
+    weaknesses:
+      - Log management, not detection — no agent, no FIM, no bundled detection content
+      - 'Deliberately gated: FIM, correlation and compliance reporting sit in the paid tiers'
+    bestFor:
+      - Clients whose immediate obligation is log centralisation and retention
+      - Environments that already have EDR and need somewhere to send everything else
+    avoidWhen:
+      - The client needs FIM or configuration assessment from the same tool
+      - Detection content is expected out of the box
+
+    sources:
+      - url: https://graylog.org/products/open/
+        asOf: '2026-09-09'
+    notes: >-
+      Only the free Open tier is catalogued. Graylog Security and Enterprise
+      are quote-based and land in the Phase 7 catalog expansion.
+
+  - id: microsoft-sentinel
+    name: Microsoft Sentinel
+    vendor: Microsoft
+    category: siem
+    subcategory: cloud-native SIEM
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: pay-as-you-go
+        name: Pay-as-you-go (Analytics Logs)
+        capabilities:
+          - Cloud-native log ingestion and analytics
+          - Built-in analytics rules and UEBA
+          - Native Microsoft 365 and Entra ID connectors
+          - Playbook automation via Logic Apps
+        pricing:
+          - model: consumption
+            consumptionUnit: GB ingested into Analytics Logs
+            unitPrice:
+              amountMinor: 99999999
+              currency: USD
+            pricingConfidence: placeholder
+            sources: []
+            notes: >-
+              TODO: Microsoft no longer publishes a flat per-GB list rate on the
+              Sentinel pricing page; it redirects to the Azure pricing calculator,
+              which is region- and commitment-tier specific. Pull the pay-as-you-go
+              and commitment-tier rates for the client's Azure region before any
+              number from this product reaches a proposal.
+
+    supports:
+      os: [windows, linux, macos]
+      deviceClasses:
+        - server
+        - workstation
+        - domain_controller
+        - cloud_workload
+        - saas_tenant
+        - identity
+      cloudPlatforms: [azure, aws, gcp, m365]
+      deploymentModes: [cloud]
+      scaleFloor: mid
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [syslog, cef, otel, microsoft-defender-for-endpoint]
+
+    controlsCovered:
+      - cis-v8:8
+      - cis-v8:13
+      - cis-v8:17
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:DE.AE
+      - nist-csf-2.0:RS.AN
+      - nist-csf-2.0:RS.MA
+      - pci-dss-4.0:10
+
+    opsBurden:
+      baseFte: 0.3
+      ftePerThousandAssets: 0.2
+    implementation:
+      effortDays: 15
+      skillLevel: security_engineer
+      typicalWeeks: 6
+
+    strengths:
+      - No platform to run; ingest scales without a capacity project
+      - Best-in-class coverage of Microsoft 365 and Entra ID estates
+      - Detection content and playbooks ship with the product
+    weaknesses:
+      - Consumption pricing makes cost a function of log volume, which clients underestimate
+      - SaaS-only, so it is eliminated outright in air-gapped scopes
+      - Cost control becomes its own engineering task at scale
+    bestFor:
+      - Microsoft-heavy estates already paying for Entra ID and Microsoft 365
+      - Teams that want detection content without staffing detection engineering
+    avoidWhen:
+      - The environment is air-gapped or has data-residency constraints Azure cannot meet
+      - Log volume is high and the budget is fixed
+
+    sources:
+      - url: https://learn.microsoft.com/en-us/azure/sentinel/overview
+        asOf: '2026-09-09'
+    notes: Pricing is unsourced. Do not quote this product until the TODO above is closed.

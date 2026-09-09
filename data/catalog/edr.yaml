@@ -1,0 +1,233 @@
+# EDR / XDR.
+#
+# Prices are in minor units (hard rule 1). opsBurden and implementation are
+# analyst estimates, not vendor figures.
+
+category: edr
+
+products:
+  - id: crowdstrike-falcon-go
+    name: CrowdStrike Falcon Go
+    vendor: CrowdStrike
+    category: edr
+    subcategory: SMB endpoint protection bundle
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: go
+        name: Falcon Go
+        capabilities:
+          - Next-generation antivirus
+          - Device control
+          - Express support
+        pricing:
+          - model: per_endpoint_year
+            unitPrice:
+              amountMinor: 5999
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            sources:
+              - url: https://www.crowdstrike.com/products/bundles/falcon-go/
+                asOf: '2026-09-09'
+            notes: USD 59.99 per device, billed annually, at published list. Volume discounting not modelled here.
+
+    supports:
+      os: [windows, macos]
+      deviceClasses: [server, workstation]
+      cloudPlatforms: []
+      deploymentModes: [cloud]
+      scaleFloor: small
+      scaleCeiling: mid
+      airGapCapable: false
+
+    integrations: [syslog]
+
+    controlsCovered:
+      - cis-v8:2
+      - cis-v8:10
+      - nist-csf-2.0:PR.PS
+      - nist-csf-2.0:DE.CM
+      - pci-dss-4.0:5
+
+    opsBurden:
+      baseFte: 0.1
+      ftePerThousandAssets: 0.1
+    implementation:
+      effortDays: 3
+      skillLevel: generalist
+      typicalWeeks: 2
+
+    strengths:
+      - Deploys in days with almost no tuning
+      - Published list price, so budgeting does not need a vendor conversation
+      - Very low operational burden — viable for teams with no security FTE
+    weaknesses:
+      - 'Go is the entry bundle: no threat hunting, no managed detection, limited telemetry retention'
+      - Linux is not covered in this bundle
+      - SaaS-only console
+    bestFor:
+      - Small Windows and macOS estates with little or no security staff
+      - Clients who need defensible endpoint protection quickly
+    avoidWhen:
+      - The estate is Linux-heavy
+      - Air-gapped, or full EDR telemetry and hunting are required
+
+    sources:
+      - url: https://www.crowdstrike.com/products/bundles/falcon-go/
+        asOf: '2026-09-09'
+
+  - id: velociraptor
+    name: Velociraptor
+    vendor: Rapid7 (Velocidex)
+    category: edr
+    subcategory: open-source endpoint DFIR and hunting
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: Velociraptor (self-hosted)
+        capabilities:
+          - Endpoint artefact collection at fleet scale
+          - VQL hunting across the estate
+          - Live forensic triage and remote acquisition
+          - Client-side monitoring rules
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            sources:
+              - url: https://github.com/Velocidex/velociraptor/blob/master/LICENSE
+                asOf: '2026-09-09'
+            notes: AGPLv3. No licence fee; cost is the analyst time to write and run hunts.
+
+    supports:
+      os: [windows, linux, macos]
+      deviceClasses: [server, workstation, domain_controller]
+      cloudPlatforms: []
+      deploymentModes: [on_prem, hybrid, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [syslog, wazuh, thehive, elasticsearch]
+
+    controlsCovered:
+      - cis-v8:2
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:RS.AN
+      - nist-csf-2.0:RS.MI
+
+    opsBurden:
+      baseFte: 0.4
+      ftePerThousandAssets: 0.2
+    implementation:
+      effortDays: 8
+      skillLevel: specialist
+      typicalWeeks: 4
+
+    strengths:
+      - Exceptional incident-response and hunting reach for zero licence cost
+      - Single lightweight agent, scales to large fleets on modest hardware
+      - Runs air-gapped
+    weaknesses:
+      - Not a preventive control — it does not block or quarantine malware
+      - VQL is a real skill; an unstaffed deployment produces nothing
+      - No vendor SLA
+    bestFor:
+      - Pairing with a preventive AV/EDR to add hunting and DFIR depth
+      - Teams with a skilled responder and no budget for a hunting platform
+    avoidWhen:
+      - It is being considered as the *only* endpoint control
+      - Nobody on the team can write or adapt a hunt
+
+    sources:
+      - url: https://docs.velociraptor.app/docs/overview/
+        asOf: '2026-09-09'
+    notes: >-
+      Deliberately catalogued as a complement, not a replacement, for preventive
+      EDR. Scoring must not treat it as covering malware defence (CIS Control 10)
+      or PCI DSS requirement 5.
+
+  - id: microsoft-defender-for-endpoint
+    name: Microsoft Defender for Endpoint
+    vendor: Microsoft
+    category: edr
+    subcategory: enterprise EDR/XDR
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: plan-2
+        name: Defender for Endpoint Plan 2
+        capabilities:
+          - Next-generation antivirus and attack surface reduction
+          - Endpoint detection and response with automated investigation
+          - Threat and vulnerability management
+          - Advanced hunting
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 99999999
+              currency: USD
+            pricingConfidence: placeholder
+            sources: []
+            notes: >-
+              TODO: Microsoft does not publish standalone list pricing for
+              Defender for Endpoint Plan 1 or Plan 2 on the product page — it
+              lists only the bundled Defender Suite at USD 12.00 per user per
+              month billed yearly, which is a different SKU. Get per-plan pricing
+              from the Microsoft 365 licensing page or the client's reseller, and
+              note that most clients reach P2 through an E5 bundle rather than
+              standalone, which changes the marginal cost to near zero.
+
+    supports:
+      os: [windows, linux, macos, ios, android]
+      deviceClasses: [server, workstation, domain_controller, mobile]
+      cloudPlatforms: [azure, m365]
+      deploymentModes: [cloud, hybrid]
+      scaleFloor: mid
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [microsoft-sentinel, syslog]
+
+    controlsCovered:
+      - cis-v8:2
+      - cis-v8:4
+      - cis-v8:7
+      - cis-v8:10
+      - nist-csf-2.0:PR.PS
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:RS.AN
+      - nist-csf-2.0:RS.MI
+      - pci-dss-4.0:5
+
+    opsBurden:
+      baseFte: 0.25
+      ftePerThousandAssets: 0.15
+    implementation:
+      effortDays: 10
+      skillLevel: security_engineer
+      typicalWeeks: 4
+
+    strengths:
+      - Often already licensed via Microsoft 365 E5, making the marginal cost near zero
+      - Built-in vulnerability management removes the need for a separate VM tool in some scopes
+      - Deep integration with Sentinel and Entra ID
+    weaknesses:
+      - Licensing is genuinely hard to price without a reseller conversation
+      - Best value is locked to committing to the wider Microsoft estate
+      - SaaS-only management plane
+    bestFor:
+      - Clients already on or moving to Microsoft 365 E5
+      - Mixed Windows/Linux/macOS estates needing one agent
+    avoidWhen:
+      - Air-gapped environments
+      - The client has no Microsoft 365 relationship, where standalone pricing rarely wins
+
+    sources:
+      - url: https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint
+        asOf: '2026-09-09'
+    notes: Pricing is unsourced. Do not quote this product until the TODO above is closed.
