@@ -21,6 +21,16 @@ export default defineConfig({
           include: ['test/**/*.test.ts'],
         },
       },
+      {
+        // Validates the committed data/ tree. Lives at the repo root because it
+        // reads files, which package-level tests deliberately do not.
+        test: {
+          name: 'data',
+          root: './',
+          environment: 'node',
+          include: ['test/**/*.test.ts'],
+        },
+      },
     ],
   },
 });
