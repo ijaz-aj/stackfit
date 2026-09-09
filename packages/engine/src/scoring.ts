@@ -10,6 +10,7 @@
 import type {
   AssetClass,
   AssetInventory,
+  CategoryWeights,
   ClientProfile,
   DeviceClass,
   Framework,
@@ -34,6 +35,16 @@ export interface ScoringInputs {
   /** The frameworks the analyst ticked, already loaded. Empty is normal. */
   readonly frameworks: readonly Framework[];
   readonly weights: ScoringWeights;
+  /**
+   * Surface weights, shared with the infrastructure stage.
+   *
+   * Asset coverage is measured in weighted surface units, not raw counts, for
+   * exactly the reason `surfaceUnits` exists: 5,000 mailboxes is not more
+   * estate than 4 firewalls. Counting raw assets here scored a SIEM that
+   * ingested every server, domain controller and firewall at 0.5/100 in a
+   * mailbox-heavy estate, on the heaviest-weighted dimension there is.
+   */
+  readonly categoryWeights: CategoryWeights;
 }
 
 export interface DimensionScore {
@@ -99,7 +110,7 @@ export function effectiveWeights(weights: ScoringWeights, profile: ClientProfile
 
 /**
  * Asset units this product reaches, and the units its category is expected to
- * reach, both measured in raw asset counts.
+ * reach, both in weighted surface units rather than raw counts.
  *
  * Measured against the category's remit rather than the whole estate: an email
  * gateway covers mailboxes and nothing else, and scoring it against every asset
@@ -110,6 +121,7 @@ function assetCoverage(
   product: Product,
   inventory: AssetInventory,
   weights: ScoringWeights,
+  categoryWeights: CategoryWeights,
 ): { covered: number; inRemit: number; missedClasses: AssetClass[] } {
   const remit = weights.categoryRemits.find((entry) => entry.category === product.category);
   const remitClasses = new Set<DeviceClass>(remit?.deviceClasses ?? []);
@@ -126,9 +138,13 @@ function assetCoverage(
     const deviceClass = weights.assetClassDeviceClass[assetClass];
     if (deviceClass === undefined || !remitClasses.has(deviceClass)) continue;
 
-    inRemit += count;
+    // Weighted units, not raw counts — the same measure the infrastructure
+    // stage uses, so a domain controller is not one mailbox.
+    const units = count * (categoryWeights.surfaceUnits[assetClass]?.weight ?? 1);
+
+    inRemit += units;
     if (supported.has(deviceClass)) {
-      covered += count;
+      covered += units;
     } else {
       missedClasses.push(assetClass);
     }
@@ -274,7 +290,7 @@ function opsFit(
  * deployment-fit dimension is for.
  */
 export function hardFilter(product: Product, inputs: ScoringInputs): string[] {
-  const { profile, inventory, sizing, weights } = inputs;
+  const { profile, inventory, sizing, weights, categoryWeights } = inputs;
   const reasons: string[] = [];
 
   if (profile.excludedProducts.includes(product.id)) {
@@ -307,7 +323,7 @@ export function hardFilter(product: Product, inputs: ScoringInputs): string[] {
   // platform" filter in the only form that is safe to automate: if a product
   // reaches none of the assets its own category exists to protect, it does
   // nothing here.
-  const coverage = assetCoverage(product, inventory, weights);
+  const coverage = assetCoverage(product, inventory, weights, categoryWeights);
   if (coverage.inRemit > 0 && coverage.covered === 0) {
     reasons.push(
       `Supports none of the ${coverage.inRemit} asset(s) a ${product.category} product would be ` +
@@ -320,7 +336,7 @@ export function hardFilter(product: Product, inputs: ScoringInputs): string[] {
 
 /** Pass 2 (§7.3): weighted score out of 100 over the surviving products. */
 export function scoreProduct(product: Product, inputs: ScoringInputs): ProductScore {
-  const { profile, inventory, sizing, frameworks, weights } = inputs;
+  const { profile, inventory, sizing, frameworks, weights, categoryWeights } = inputs;
 
   const opsFte = operationalFteFor(product, sizing.monitoredAssetCount);
   const eliminationReasons = hardFilter(product, inputs);
@@ -340,12 +356,12 @@ export function scoreProduct(product: Product, inputs: ScoringInputs): ProductSc
 
   const weightFor = effectiveWeights(weights, profile);
 
-  const coverage = assetCoverage(product, inventory, weights);
+  const coverage = assetCoverage(product, inventory, weights, categoryWeights);
   const coverageScore = coverage.inRemit === 0 ? 100 : (coverage.covered / coverage.inRemit) * 100;
   const coverageNote =
     coverage.inRemit === 0
       ? `No assets in this category's remit were captured, so coverage is not a differentiator here and is scored neutral.`
-      : `Reaches ${coverage.covered} of ${coverage.inRemit} asset(s) in a ${product.category}'s remit` +
+      : `Reaches ${round(coverage.covered, 1)} of ${round(coverage.inRemit, 1)} weighted asset unit(s) in a ${product.category}'s remit` +
         (coverage.missedClasses.length > 0 ? `; misses ${coverage.missedClasses.join(', ')}.` : '.');
 
   const compliance = complianceCoverage(product, frameworks);

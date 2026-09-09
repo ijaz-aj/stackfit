@@ -21,15 +21,16 @@ import type {
   ClientProfile,
   CurrencyCode,
   Framework,
+  FxConfig,
   Money,
   MsspRateCard,
   PortfolioAssumptions,
   Product,
   ProductCategory,
 } from '@stackfit/schema';
-import { ProductCategory as ProductCategoryEnum, ScaleClass } from '@stackfit/schema';
+import { ProductCategory as ProductCategoryEnum } from '@stackfit/schema';
 
-import type { ProductCost } from './cost.js';
+import { computeProductCost, type CostInputs, type ProductCost } from './cost.js';
 import type { CategoryRelevance } from './infrastructure.js';
 import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money.js';
 import type { ProductScore } from './scoring.js';
@@ -46,6 +47,14 @@ export interface CategoryRanking {
   readonly mandatedBy: readonly string[];
   /** Weight is at or above `essentialWeightFloor`. */
   readonly essential: boolean;
+  /**
+   * A framework demands this category but the estate has nothing for it to
+   * protect. Not treated as mandatory — that would demand a purchase covering
+   * nothing — but never silently dropped either: a compliance obligation
+   * disappearing without a word is the exact failure §7.4 step 7 exists to
+   * prevent. It surfaces as a scoping question instead.
+   */
+  readonly mandatedButNotApplicable: boolean;
   readonly rationale: readonly string[];
 }
 
@@ -82,6 +91,16 @@ export interface MsspAlternative {
   readonly annual: Money;
   readonly overHorizon: Money;
   readonly serviceLevel: string;
+  /** Bundle categories this service level actually operates. */
+  readonly coversCategories: readonly ProductCategory[];
+  /** Bundle categories it does not — still the client's to buy. */
+  readonly uncoveredCategories: readonly ProductCategory[];
+  /** Annual licence and ops for the uncovered categories, on top of the fee. */
+  readonly residualAnnual: Money;
+  /** Managed fee plus residual: the real number to compare against the bundle. */
+  readonly totalAnnual: Money;
+  /** Annual recurring cost of the bundle this replaces, for the comparison. */
+  readonly buildAnnual: Money;
   readonly rationale: readonly string[];
 }
 
@@ -121,7 +140,13 @@ export interface PortfolioInputs {
   readonly categoryWeights: CategoryWeights;
   readonly assumptions: PortfolioAssumptions;
   readonly mssp: MsspRateCard;
-  readonly fx: import('@stackfit/schema').FxConfig;
+  readonly fx: FxConfig;
+  /**
+   * Needed to re-cost a product when the §7.4 suite discount applies. The
+   * discount goes through the cost engine rather than being applied to one
+   * figure here, so licence, support, cash-flow and TCO all move together.
+   */
+  readonly costInputs: CostInputs;
 }
 
 function round(value: number, decimals: number): number {
@@ -176,21 +201,33 @@ export function rankCategoriesForClient(inputs: PortfolioInputs): readonly Categ
         }
       }
 
-      if (mandates.length > 0) {
+      const mandatedButNotApplicable = mandates.length > 0 && !applicable;
+
+      if (mandates.length > 0 && applicable) {
         rationale.push(
           `Mandatory: ${mandates.join(', ')} require${mandates.length === 1 ? 's' : ''} a ` +
             `${category} control, so this must be funded before anything discretionary.`,
+        );
+      }
+      if (mandatedButNotApplicable) {
+        rationale.push(
+          `⚠ ${mandates.join(', ')} require${mandates.length === 1 ? 's' : ''} a ${category} ` +
+            'control, but nothing in the captured inventory needs one. This has NOT been funded ' +
+            'and is NOT a satisfied requirement — either the inventory is incomplete, or the ' +
+            'control is out of scope for this client and the assessor needs to say so. Confirm ' +
+            'before the proposal goes out.',
         );
       }
 
       return {
         category,
         weight: round(weight, 1),
-        // A framework cannot mandate a category the estate has nothing for —
-        // that would demand a purchase protecting nothing.
+        // Not mandatory: buying this would protect nothing. Reported instead,
+        // via mandatedButNotApplicable, so the obligation cannot vanish.
         mandatory: mandates.length > 0 && applicable,
         mandatedBy: mandates,
         essential: applicable && weight >= assumptions.essentialWeightFloor,
+        mandatedButNotApplicable,
         rationale,
       };
     })
@@ -305,15 +342,23 @@ function select(
           100,
           candidate.fitScore + (suite ? assumptions.suiteIntegrationBonusPoints : 0),
         );
-        const discount = suite ? assumptions.suiteDiscountRate : 0;
-        const annualCost = scaleMoney(candidate.cost.annualRecurring, 1 - discount);
-        const oneTimeCost = addMoney(
-          candidate.cost.implementationOneTime,
-          candidate.cost.trainingOneTime,
-        );
-        const density =
-          (ranking.weight * effectiveFit) / annualisedMinor(candidate.cost, assumptions);
-        return { candidate, suite, discount, annualCost, oneTimeCost, density };
+
+        // Re-cost through the cost engine rather than discounting one figure
+        // here, so the annual, the cash-flow and the TCO all agree.
+        const product = productById.get(candidate.productId);
+        const tier = product?.tiers.find((entry) => entry.id === candidate.cost.tierId);
+        const cost =
+          suite && product !== undefined && tier !== undefined
+            ? computeProductCost(product, tier, inputs.sizing, profile, inputs.costInputs, {
+                rate: assumptions.suiteDiscountRate,
+                label: 'suite discount assumption',
+              })
+            : candidate.cost;
+
+        const annualCost = cost.annualRecurring;
+        const oneTimeCost = addMoney(cost.implementationOneTime, cost.trainingOneTime);
+        const density = (ranking.weight * effectiveFit) / annualisedMinor(cost, assumptions);
+        return { candidate, suite, cost, annualCost, oneTimeCost, density };
       });
 
       scored.sort((a, b) =>
@@ -368,8 +413,11 @@ function select(
       }
       if (options.cheapestFirst) {
         rationale.push(
-          'Chosen as the cheapest acceptable option for this category, because the budget is tight ' +
-            'and this category has to be funded.',
+          profile.budget.annualCap === null
+            ? 'Chosen as the cheapest acceptable option for this category, because this bundle is ' +
+              'the minimum defensible posture rather than the best available one.'
+            : 'Chosen as the cheapest acceptable option for this category, so the stated budget ' +
+              'stretches to cover everything that has to be funded.',
         );
       }
 
@@ -385,7 +433,7 @@ function select(
         valueDensity: round(picked.density, 6),
         annualRecurring: picked.annualCost,
         oneTime: picked.oneTimeCost,
-        tco: picked.candidate.cost.tco,
+        tco: picked.cost.tco,
         suiteDiscountApplied: picked.suite,
         rationale,
       });
@@ -400,8 +448,21 @@ function select(
   return { selections, unfundedMandatory, annual, oneTime };
 }
 
-/** Step 6: the same coverage bought as a managed service. */
-export function msspAlternative(inputs: PortfolioInputs, serviceLevel = 'mdr'): MsspAlternative {
+/**
+ * Step 6: the same coverage bought as a managed service.
+ *
+ * Takes the bundle, because a managed alternative that ignores what the bundle
+ * contains is one figure repeated three times, and the build-vs-buy comparison
+ * §7.4 step 6 asks for is then meaningless. A provider does not run the
+ * client's backups or their identity platform: whatever the service level does
+ * not cover stays the client's to buy, and is reported as residual cost so the
+ * two sides of the comparison are actually like for like.
+ */
+export function msspAlternative(
+  inputs: PortfolioInputs,
+  selections: readonly BundleSelection[] = [],
+  serviceLevel = 'mdr',
+): MsspAlternative {
   const { profile, sizing, mssp, fx } = inputs;
   const currency = profile.budget.currency;
   const to = (amount: Money): Money => convertMoney(amount, currency, fx);
@@ -409,6 +470,25 @@ export function msspAlternative(inputs: PortfolioInputs, serviceLevel = 'mdr'): 
   const tier = mssp.tiers.find((entry) => entry.scaleClass === sizing.scaleClass);
   const level = mssp.serviceLevels.find((entry) => entry.level === serviceLevel);
   const multiplier = level?.multiplier ?? 1;
+  const covered = new Set<ProductCategory>(level?.coveredCategories ?? []);
+
+  const coversCategories = selections
+    .map((selection) => selection.category)
+    .filter((category) => covered.has(category));
+  const uncoveredCategories = selections
+    .map((selection) => selection.category)
+    .filter((category) => !covered.has(category));
+
+  const residualAnnual = sumMoney(
+    currency,
+    selections
+      .filter((selection) => !covered.has(selection.category))
+      .map((selection) => selection.annualRecurring),
+  );
+  const buildAnnual = sumMoney(
+    currency,
+    selections.map((selection) => selection.annualRecurring),
+  );
 
   const base = to(tier?.basePlatformFeeMonthly ?? zeroMoney(mssp.currency));
   const endpoints = scaleMoney(to(mssp.perEndpointMonthly), sizing.endpointCount);
@@ -422,21 +502,54 @@ export function msspAlternative(inputs: PortfolioInputs, serviceLevel = 'mdr'): 
 
   const annual = scaleMoney(monthly, 12);
 
+  const totalAnnual = addMoney(annual, residualAnnual);
+
+  const rationale: string[] = [
+    `Managed alternative at the "${serviceLevel}" service level, for a ${sizing.scaleClass} estate.`,
+    `Base platform fee, plus ${sizing.endpointCount} endpoint(s), ${sizing.serverCount} server(s) ` +
+      `and ${round(sizing.gbPerDay, 2)} GB/day of ingest, × ${multiplier} for the service level.`,
+    monthly.amountMinor === floor.amountMinor
+      ? 'The per-unit maths fell below the rate card minimum, so the minimum is quoted.'
+      : 'Above the rate card minimum, so the per-unit figure stands.',
+  ];
+
+  if (selections.length > 0) {
+    rationale.push(
+      coversCategories.length > 0
+        ? `Replaces ${coversCategories.join(', ')} from this bundle.`
+        : 'Replaces nothing in this bundle — none of its categories are delivered at this service level.',
+    );
+    if (uncoveredCategories.length > 0) {
+      rationale.push(
+        `Does NOT cover ${uncoveredCategories.join(', ')}. Those stay the client's to buy and run, ` +
+          `at a residual ${residualAnnual.amountMinor / 100} ${currency} a year on top of the ` +
+          'managed fee. Comparing the fee alone against the bundle would flatter the managed option.',
+      );
+    }
+    rationale.push(
+      `Build ${buildAnnual.amountMinor / 100} ${currency}/yr against buy ` +
+        `${totalAnnual.amountMinor / 100} ${currency}/yr (fee plus residual). ` +
+        'Neither figure includes the client\'s own staff time for the build option beyond the ' +
+        'ops FTE already costed.',
+    );
+  }
+
+  rationale.push(
+    `⚠ The MSSP rate card is ${mssp.confidence.replace('_', ' ')} — no provider publishes one. ` +
+      'Treat this as a comparison, not a quote.',
+  );
+
   return {
     monthly,
     annual,
     overHorizon: scaleMoney(annual, profile.budget.horizonYears),
     serviceLevel,
-    rationale: [
-      `Managed alternative at the "${serviceLevel}" service level, for a ${sizing.scaleClass} estate.`,
-      `Base platform fee, plus ${sizing.endpointCount} endpoint(s), ${sizing.serverCount} server(s) ` +
-        `and ${round(sizing.gbPerDay, 2)} GB/day of ingest, × ${multiplier} for the service level.`,
-      monthly.amountMinor === floor.amountMinor
-        ? 'The per-unit maths fell below the rate card minimum, so the minimum is quoted.'
-        : 'Above the rate card minimum, so the per-unit figure stands.',
-      `⚠ The MSSP rate card is ${mssp.confidence.replace('_', ' ')} — no provider publishes one. ` +
-        'Treat this as a comparison, not a quote.',
-    ],
+    coversCategories,
+    uncoveredCategories,
+    residualAnnual,
+    totalAnnual,
+    buildAnnual,
+    rationale,
   };
 }
 
@@ -462,6 +575,13 @@ function buildBundle(
 
   // §7.4 step 7. What would it take to cover everything mandatory?
   const mandatoryCategories = rankings.filter((ranking) => ranking.mandatory);
+  // Mandatory categories with nothing in the catalog to buy. Their cost is
+  // unknown, not zero, so the floor below is a lower bound and says so —
+  // quoting it as a minimum viable budget would understate what compliance costs.
+  const mandatoryWithoutCandidates = mandatoryCategories
+    .filter((ranking) => !candidates.some((candidate) => candidate.category === ranking.category))
+    .map((ranking) => ranking.category);
+
   const mandatoryFloor = sumMoney(
     currency,
     mandatoryCategories.map((ranking) => {
@@ -514,6 +634,24 @@ function buildBundle(
         `${(cap?.amountMinor ?? 0) / 100} ${currency}. That cap cannot buy compliance.`,
     );
   }
+  if (mandatoryWithoutCandidates.length > 0) {
+    rationale.push(
+      `⚠ The minimum viable budget is a LOWER BOUND: ${mandatoryWithoutCandidates.join(', ')} ` +
+        `${mandatoryWithoutCandidates.length === 1 ? 'is' : 'are'} mandatory but ` +
+        `${mandatoryWithoutCandidates.length === 1 ? 'has' : 'have'} no candidate product in the ` +
+        'catalog, so nothing is included for them. The real figure is higher by whatever they cost.',
+    );
+  }
+
+  const notApplicableButMandated = rankings.filter((ranking) => ranking.mandatedButNotApplicable);
+  if (notApplicableButMandated.length > 0) {
+    rationale.push(
+      `⚠ SCOPE QUESTION: ${notApplicableButMandated.map((r) => r.category).join(', ')} ` +
+        `${notApplicableButMandated.length === 1 ? 'is' : 'are'} required by the selected ` +
+        'frameworks but nothing in the captured inventory needs one. Not funded and not satisfied — ' +
+        'confirm whether the inventory is incomplete or the control is genuinely out of scope.',
+    );
+  }
   if (result.selections.length > 0) {
     rationale.push(
       `Bundle needs ${round(totalOpsFte, 2)} FTE to run against ${profile.securityStaffFte} available.`,
@@ -539,7 +677,7 @@ function buildBundle(
     unfundedMandatory: result.unfundedMandatory,
     annualShortfall: mandatoryUnaffordable && cap !== null ? subtractMoney(mandatoryFloor, cap) : null,
     minimumViableAnnual: mandatoryCategories.length > 0 ? mandatoryFloor : null,
-    mssp: msspAlternative(inputs),
+    mssp: msspAlternative(inputs, result.selections),
     rationale,
   };
 }
@@ -575,6 +713,3 @@ export function buildPortfolio(inputs: PortfolioInputs): {
     }),
   };
 }
-
-/** Scale classes, exported for callers building their own MSSP comparisons. */
-export const SCALE_ORDER = ScaleClass.options;

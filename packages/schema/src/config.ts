@@ -7,7 +7,7 @@
 
 import { z } from 'zod';
 
-import { CurrencyCode, PricingConfidence, ScaleClass } from './enums.js';
+import { CurrencyCode, PricingConfidence, ProductCategory, ScaleClass } from './enums.js';
 import { NonNegativeMoney } from './money.js';
 import { IsoDate, Source } from './pricing.js';
 
@@ -104,6 +104,17 @@ export const MsspServiceLevelRate = z
      * is people, and people are what an MSSP is really selling.
      */
     multiplier: z.number().positive(),
+    /**
+     * Categories a provider at this service level actually operates.
+     *
+     * Without this, a "managed alternative" is one figure repeated against
+     * every bundle, and §7.4 step 6's build-vs-buy comparison is meaningless:
+     * an MDR provider does not run the client's backups, and a bundle of eight
+     * categories is not replaced by the same service as a bundle of two.
+     * Whatever is not on this list stays the client's to buy, and is reported
+     * as residual cost alongside the managed figure.
+     */
+    coveredCategories: z.array(ProductCategory).min(1),
     basis: z.string().min(1),
   })
   .strict();

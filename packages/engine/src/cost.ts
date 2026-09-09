@@ -275,6 +275,15 @@ export function computeProductCost(
   sizing: SizingResult,
   profile: ClientProfile,
   inputs: CostInputs,
+  /**
+   * A further discount on top of the volume band — the §7.4 suite discount.
+   *
+   * Taken here rather than applied by the caller so that licence, support,
+   * cash-flow and TCO all move together. Discounting one figure downstream and
+   * leaving the TCO alone produced two numbers in the same object that
+   * disagreed about the same product.
+   */
+  extraDiscount?: { rate: number; label: string },
 ): ProductCost {
   const currency = profile.budget.currency;
   const { labourRates, costAssumptions, fx, freshnessPolicy, today } = inputs;
@@ -298,11 +307,20 @@ export function computeProductCost(
 
   const licenceListAnnual = sumMoney(currency, licenceParts);
 
-  const { rate: discountRate, label: discountLabel } = selectDiscount(
+  const { rate: bandRate, label: bandLabel } = selectDiscount(
     licenceListAnnual,
     costAssumptions,
     fx,
   );
+
+  // A second discount (the §7.4 suite discount) stacks multiplicatively rather
+  // than by addition, which is how vendors actually apply them: 25% then a
+  // further 10% is 32.5% off, not 35%.
+  const extraDiscountRate = Math.min(Math.max(extraDiscount?.rate ?? 0, 0), 1);
+  const discountRate = 1 - (1 - bandRate) * (1 - extraDiscountRate);
+  const discountLabel =
+    extraDiscountRate > 0 ? `${bandLabel} + ${extraDiscount?.label ?? 'additional'}` : bandLabel;
+
   const discountAmount = scaleMoney(licenceListAnnual, discountRate);
   const licenceAnnual = subtractMoney(licenceListAnnual, discountAmount);
 
