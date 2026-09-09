@@ -16,6 +16,7 @@ import {
   FxConfig,
   LabourRates,
   MsspRateCard,
+  PortfolioAssumptions,
   ScoringWeights,
   SizingAssumptions,
   type Product,
@@ -52,6 +53,10 @@ export function loadMsspRateCard(dataDir: string): MsspRateCard {
 
 export function loadScoringWeights(dataDir: string): ScoringWeights {
   return ScoringWeights.parse(readYaml(join(dataDir, 'config', 'scoring-weights.yaml')));
+}
+
+export function loadPortfolioAssumptions(dataDir: string): PortfolioAssumptions {
+  return PortfolioAssumptions.parse(readYaml(join(dataDir, 'config', 'portfolio-assumptions.yaml')));
 }
 
 export function loadFxConfig(dataDir: string): FxConfig {

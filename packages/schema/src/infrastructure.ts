@@ -16,7 +16,7 @@
 import { z } from 'zod';
 
 import { AssetClass } from './asset-inventory.js';
-import { ProductCategory } from './enums.js';
+import { Industry, ProductCategory } from './enums.js';
 
 /**
  * The attack surfaces an estate can present. Every asset class maps to exactly
@@ -137,6 +137,21 @@ export const CategoryWeight = z
   });
 export type CategoryWeight = z.infer<typeof CategoryWeight>;
 
+/**
+ * Sector-specific adjustment to a category's weight (§7.4 step 1 asks for
+ * "adjusted by industry and compliance"). Only deviations from neutral are
+ * written down, same as surface affinities.
+ */
+export const IndustryModifier = z
+  .object({
+    industry: Industry,
+    category: ProductCategory,
+    multiplier: z.number().nonnegative(),
+    basis: z.string().min(1),
+  })
+  .strict();
+export type IndustryModifier = z.infer<typeof IndustryModifier>;
+
 export const CategoryWeights = z
   .object({
     notes: z.string().min(1).optional(),
@@ -154,6 +169,7 @@ export const CategoryWeights = z
     dominantLocusShare: z.number().min(0).max(1),
     surfaceUnits: z.record(AssetClass, SurfaceUnit),
     categories: z.array(CategoryWeight).min(1),
+    industryModifiers: z.array(IndustryModifier).default([]),
   })
   .strict()
   .superRefine((config, ctx) => {
