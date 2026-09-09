@@ -1,0 +1,171 @@
+// Shared vocabularies. Every enum here is a closed set on purpose: a typo in a
+// catalog YAML should fail `pnpm catalog:validate`, not silently create a new
+// category that nothing else in the engine knows how to score.
+
+import { z } from 'zod';
+
+/** ISO 4217. Currency is per-scenario, not global (see docs/STATUS.md decisions). */
+export const CurrencyCode = z.enum(['USD', 'INR', 'EUR']);
+export type CurrencyCode = z.infer<typeof CurrencyCode>;
+
+/**
+ * Region is a hint, never a constraint: it pre-selects likely frameworks and
+ * suggests a currency + labour rate, all of which the analyst can override.
+ */
+export const Region = z.enum(['in', 'us', 'eu', 'uk', 'apac', 'mena', 'other']);
+export type Region = z.infer<typeof Region>;
+
+export const Industry = z.enum([
+  'retail',
+  'healthcare',
+  'bfsi',
+  'manufacturing',
+  'saas',
+  'education',
+  'govt',
+  'other',
+]);
+export type Industry = z.infer<typeof Industry>;
+
+export const ProductCategory = z.enum([
+  'siem',
+  'edr',
+  'ndr',
+  'pam',
+  'iam',
+  'vulnerability_management',
+  'email_security',
+  'soar',
+  'backup',
+  'ngfw',
+  'asset_discovery',
+  'deception',
+  'mdr',
+]);
+export type ProductCategory = z.infer<typeof ProductCategory>;
+
+export const LicenceModel = z.enum([
+  'commercial',
+  'open_source',
+  'open_core',
+  'freemium',
+  'managed_service',
+]);
+export type LicenceModel = z.infer<typeof LicenceModel>;
+
+export const DeploymentMode = z.enum(['cloud', 'on_prem', 'hybrid', 'air_gapped']);
+export type DeploymentMode = z.infer<typeof DeploymentMode>;
+
+export const OsFamily = z.enum(['windows', 'linux', 'macos', 'ios', 'android', 'network_os']);
+export type OsFamily = z.infer<typeof OsFamily>;
+
+export const DeviceClass = z.enum([
+  'server',
+  'workstation',
+  'domain_controller',
+  'hypervisor',
+  'container_node',
+  'network_device',
+  'firewall',
+  'database',
+  'web_app',
+  'cloud_workload',
+  'saas_tenant',
+  'ot_ics',
+  'iot',
+  'mobile',
+  'identity',
+  'mailbox',
+]);
+export type DeviceClass = z.infer<typeof DeviceClass>;
+
+export const CloudPlatform = z.enum(['aws', 'azure', 'gcp', 'oci', 'm365', 'google_workspace']);
+export type CloudPlatform = z.infer<typeof CloudPlatform>;
+
+export const NetworkVendor = z.enum([
+  'cisco',
+  'fortinet',
+  'juniper',
+  'mikrotik',
+  'aruba',
+  'palo_alto',
+  'sophos',
+  'other',
+]);
+export type NetworkVendor = z.infer<typeof NetworkVendor>;
+
+export const Maturity = z.enum(['emerging', 'established', 'legacy']);
+export type Maturity = z.infer<typeof Maturity>;
+
+export const SkillLevel = z.enum(['generalist', 'security_engineer', 'specialist']);
+export type SkillLevel = z.infer<typeof SkillLevel>;
+
+export const ScaleClass = z.enum(['small', 'mid', 'large', 'enterprise']);
+export type ScaleClass = z.infer<typeof ScaleClass>;
+
+export const RiskTolerance = z.enum(['low', 'medium', 'high']);
+export type RiskTolerance = z.infer<typeof RiskTolerance>;
+
+export const DataSensitivity = z.enum(['public', 'internal', 'regulated', 'critical']);
+export type DataSensitivity = z.infer<typeof DataSensitivity>;
+
+export const SocPosture = z.enum(['none', 'business_hours', '24x7', 'outsourced']);
+export type SocPosture = z.infer<typeof SocPosture>;
+
+export const ProcurementBias = z.enum(['commercial', 'open_source_first', 'no_preference']);
+export type ProcurementBias = z.infer<typeof ProcurementBias>;
+
+/**
+ * Compliance frameworks the analyst can tick during intake (PROJECT_SPEC §5.4).
+ * The id is also the namespace prefix for that framework's control ids, e.g.
+ * `nist-csf-2.0:DE.CM`.
+ */
+export const FrameworkId = z.enum([
+  'pci-dss-4.0',
+  'hipaa',
+  'iso-27001-2022',
+  'soc-2',
+  'gdpr',
+  'nist-csf-2.0',
+  'cis-v8',
+  'nis2',
+  'cert-in',
+  'rbi-csf',
+  'dpdp-2023',
+]);
+export type FrameworkId = z.infer<typeof FrameworkId>;
+
+/**
+ * How a product charges. `zero_licence` is the honest open-source case: the
+ * licence line is genuinely 0, and the cost shows up in opsBurden and
+ * implementation instead (CONTRIBUTING.md hard rule 8).
+ */
+export const PricingModel = z.enum([
+  'per_endpoint_year',
+  'per_user_year',
+  'per_gb_day_year',
+  'per_eps_year',
+  'per_node_year',
+  'per_privileged_user_year',
+  'per_asset_year',
+  'per_mailbox_year',
+  'flat_tiered',
+  'consumption',
+  'zero_licence',
+]);
+export type PricingModel = z.infer<typeof PricingModel>;
+
+/**
+ * Provenance of a price. Anything below `analyst_estimate` must not reach a
+ * client-facing number without a visible warning (PROJECT_SPEC §6).
+ */
+export const PricingConfidence = z.enum([
+  'public_list',
+  'vendor_quote',
+  'analyst_estimate',
+  'placeholder',
+]);
+export type PricingConfidence = z.infer<typeof PricingConfidence>;
+
+export const AssetCriticality = z.enum(['low', 'medium', 'high', 'crown_jewel']);
+export type AssetCriticality = z.infer<typeof AssetCriticality>;
