@@ -46,7 +46,7 @@ describe('framework coverage of PROJECT_SPEC §5.4', () => {
         "hipaa": "secondary_sources",
         "iso-27001-2022": "secondary_sources",
         "nis2": "secondary_sources",
-        "nist-csf-2.0": "secondary_sources",
+        "nist-csf-2.0": "publisher_verified",
         "pci-dss-4.0": "secondary_sources",
         "rbi-csf": "provisional",
         "soc-2": "secondary_sources",
