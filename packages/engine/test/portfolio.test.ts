@@ -322,7 +322,13 @@ describe('steps 3 and 4 — selection', () => {
       }),
     );
     expect(recommended.withinAnnualCap).toBe(true);
-    expect(recommended.annualRecurring.amountMinor).toBeLessThanOrEqual(15_000_00);
+    // The cap constrains procurement spend, not total cost: salary is not
+    // procurement, and charging it to the purchase order priced open source out
+    // of every budget. Total cost including people is asserted separately.
+    expect(recommended.annualSpend.amountMinor).toBeLessThanOrEqual(15_000_00);
+    expect(recommended.annualRecurring.amountMinor).toBeGreaterThanOrEqual(
+      recommended.annualSpend.amountMinor,
+    );
   });
 });
 

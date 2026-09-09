@@ -12,6 +12,7 @@ import {
   CatalogFile,
   CategoryWeights,
   CostAssumptions,
+  Framework,
   FreshnessPolicy,
   FxConfig,
   LabourRates,
@@ -76,4 +77,23 @@ export function loadCatalog(dataDir: string): Map<string, Product> {
   }
 
   return products;
+}
+
+/**
+ * Every framework in data/frameworks, keyed by id.
+ *
+ * The engine takes only the frameworks the analyst ticked, so callers filter
+ * this map rather than handing the whole library to the scoring stage.
+ */
+export function loadFrameworks(dataDir: string): Map<string, Framework> {
+  const frameworksDir = join(dataDir, 'frameworks');
+  const frameworks = new Map<string, Framework>();
+
+  for (const name of readdirSync(frameworksDir).sort()) {
+    if (!name.endsWith('.yaml') && !name.endsWith('.yml')) continue;
+    const framework = Framework.parse(readYaml(join(frameworksDir, name)));
+    frameworks.set(framework.id, framework);
+  }
+
+  return frameworks;
 }

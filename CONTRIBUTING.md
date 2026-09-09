@@ -60,8 +60,10 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
 ## Testing
 
 - Any engine change ships with Vitest tests in the same commit.
-- The acceptance scenarios in `packages/engine/test/scenarios/` (PROJECT_SPEC §12) must stay
-  green. Do not edit an acceptance test to make a change pass — fix the code or raise it with me.
+- The acceptance scenarios in `test/scenarios/` (PROJECT_SPEC §12) must stay green. Do not edit
+  an acceptance test to make a change pass — fix the code or raise it with me.
+  (They live at the repo root, not in `packages/engine/test/`, because they run the *committed*
+  data — and package-level tests deliberately do not read files. See `vitest.config.ts`.)
 - A determinism test (same input twice → identical output) must exist and stay green.
 - Run `pnpm test` before claiming a phase is complete. Paste the output.
 
