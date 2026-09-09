@@ -13,3 +13,4 @@ export * from './asset-inventory.js';
 export * from './client-profile.js';
 export * from './config.js';
 export * from './sizing.js';
+export * from './cost.js';
