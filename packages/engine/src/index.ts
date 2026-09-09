@@ -3,10 +3,11 @@
 // Hard constraints (CONTRIBUTING.md): no React, no DB, no fetch, no fs, no Date.now(),
 // no randomness. The same input must always produce the same output.
 //
-// Pipeline, each stage a pure function (built out in Phases 2–4):
+// Pipeline, each stage a pure function:
 //   sizing → cost → scoring → portfolio → coverage
 //
-// Nothing real lives here yet. This constant exists only so Phase 0 has a unit
-// under test and a green `pnpm test`.
+// Stages are added phase by phase; `cost` onward are still to come.
 
 export const ENGINE_VERSION = '0.0.0';
+
+export * from './sizing.js';
