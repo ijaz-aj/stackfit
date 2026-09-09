@@ -1,0 +1,498 @@
+# How much each product category is worth to *this* client's estate.
+#
+# PROJECT_SPEC §7.4 step 1 ranks categories by "risk-reduction weight, adjusted
+# by industry and compliance". That leaves a client with no compliance
+# obligation ranked on generic weights alone, so an all-SaaS consultancy and an
+# all-on-prem manufacturer get the same stack. Infrastructure is the missing
+# term. For an unregulated client it is the *only* term that should drive the
+# recommendation.
+#
+# Two ideas:
+#
+#   surfaceUnits  — every asset class maps to one attack surface, with a weight
+#                   saying how much surface one unit of it represents. Raw
+#                   counts cannot be compared (5,000 mailboxes is not "more
+#                   estate" than 4 firewalls), so these weights are what make a
+#                   share-of-estate figure mean anything.
+#
+#   categories    — a base risk-reduction weight, plus affinities saying how
+#                   that value scales with the surfaces actually present.
+#                   1.0 is neutral; only deviations are written down.
+#
+# `requiresAnyOf` is the sharp end: a category whose surfaces are all absent is
+# dropped as not applicable, with a reason. Selling network detection to a
+# company with no network is not a cheaper recommendation, it is a wrong one.
+#
+# EVIDENCE BASE. The affinities below are analyst judgement, but the direction
+# of the big ones is taken from published incident data:
+#
+#   - Mandiant M-Trends 2025: exploits are the top initial infection vector at
+#     33%, stolen credentials second at 16% (up from 10%).
+#   - Verizon DBIR 2025: credential abuse 22%, vulnerability exploitation 20%,
+#     phishing 16%. 22% of exploitation breaches targeted edge infrastructure —
+#     firewalls, VPN concentrators, remote access gateways — an eightfold
+#     year-on-year rise. This is why network_edge carries a high surface weight
+#     and a high vulnerability_management affinity.
+#   - Verizon DBIR 2026: 31% of breaches now begin with a software
+#     vulnerability, overtaking stolen credentials as the top entry point.
+#   - M-Trends 2025 reports a different vector mix for cloud environments —
+#     phishing first, stolen credentials second — against an exploit-led mix
+#     overall. This is the single most important asymmetry in this file: a
+#     SaaS-shaped estate is attacked through identity and mail, an owned estate
+#     through exploitable services. ⚠ Those cloud-specific percentages come
+#     from secondary reporting of M-Trends, not from Mandiant's own summary,
+#     which states only the overall figures. The direction is well corroborated;
+#     treat the exact split as unverified.
+#
+# Everything here is tunable and meant to be argued with in a scoping call.
+
+notes: >-
+  Analyst estimates throughout, grounded in the incident data cited in the file
+  header. No figure here is a measured coefficient. The numbers that move an
+  answer most are the surface weights for firewalls, vpnConcentrators, cloud
+  accounts and M365 seats — tune those first when a result looks wrong.
+
+# A surface holding at least this share of total units counts as material when
+# naming the estate shape.
+materialSurfaceShare: 0.1
+
+# OT/ICS at or above this share makes the estate read as ot_heavy, because at
+# that point safety and availability outrank confidentiality.
+otHeavyShare: 0.35
+
+# Of the workload-bearing estate — owned infrastructure, cloud tenancy, SaaS —
+# one of the three must reach this share to name the shape. Below it the client
+# has to defend more than one front, which is what "hybrid" means.
+dominantLocusShare: 0.6
+
+# ---------------------------------------------------------------------------
+# Asset class → surface, and how much surface one unit represents.
+# A Windows endpoint is the reference unit at 1.0.
+# ---------------------------------------------------------------------------
+surfaceUnits:
+  windowsEndpoints:
+    surface: endpoint
+    weight: 1
+    basis: The reference unit. Where most malware ultimately executes.
+  macosEndpoints:
+    surface: endpoint
+    weight: 1
+    basis: Same exposure as a Windows endpoint; a smaller commodity malware ecosystem, but the same user behind it.
+  linuxEndpoints:
+    surface: endpoint
+    weight: 1
+    basis: Rarely targeted by commodity malware, but usually operated by someone with elevated access.
+  windowsServers:
+    surface: on_prem_server
+    weight: 4
+    basis: Multi-user, holds data, and a larger blast radius than any one workstation.
+  windowsDomainControllers:
+    surface: on_prem_server
+    weight: 25
+    basis: Compromise of a DC is compromise of the estate. The highest per-unit weight outside cloud tenancy.
+  linuxServers:
+    surface: on_prem_server
+    weight: 4
+    basis: As Windows servers. Often the application and database tier.
+  hypervisors:
+    surface: on_prem_server
+    weight: 15
+    basis: One host carries many workloads, and hypervisor-level ransomware encrypts all of them at once.
+  containerNodes:
+    surface: on_prem_server
+    weight: 4
+    basis: Comparable to a server, with a faster rate of change and more moving parts.
+  routers:
+    surface: network_edge
+    weight: 5
+    basis: Traffic-bearing, often long-lived firmware, rarely patched on a schedule.
+  switches:
+    surface: network_edge
+    weight: 2
+    basis: Mostly internal; matters for segmentation rather than as an entry point.
+  wirelessControllers:
+    surface: network_edge
+    weight: 3
+    basis: Manages the least-trusted network segment most organisations run.
+  firewalls:
+    surface: network_edge
+    weight: 10
+    basis: >-
+      Internet-facing by definition. DBIR 2025 puts 22% of exploitation breaches
+      against edge infrastructure, an eightfold rise year on year.
+  vpnConcentrators:
+    surface: network_edge
+    weight: 12
+    basis: >-
+      The most consistently exploited class of edge device in current incident
+      data, and a direct path to the internal network when it fails.
+  loadBalancers:
+    surface: network_edge
+    weight: 5
+    basis: Internet-facing, terminates TLS, and often sees traffic in the clear.
+  databases:
+    surface: on_prem_server
+    weight: 10
+    basis: The thing an attacker is usually after. Weighted well above a general-purpose server.
+  fileServers:
+    surface: on_prem_server
+    weight: 8
+    basis: Concentrates unstructured data and is the classic ransomware payday.
+  internalWebApps:
+    surface: on_prem_server
+    weight: 3
+    basis: Exploitable, but reachable only after a foothold already exists.
+  publicWebApps:
+    surface: public_app
+    weight: 12
+    basis: >-
+      Internet-facing and directly attackable. DBIR reports 88% of basic web
+      application attacks involve stolen credentials.
+  otIcsScadaDevices:
+    surface: ot_ics
+    weight: 3
+    basis: >-
+      Individually simple, but unpatchable in practice, long-lived, and with a
+      safety consequence no IT asset carries. Deliberately above an endpoint.
+  iotCctvPosDevices:
+    surface: ot_ics
+    weight: 1
+    basis: Numerous and weakly maintained, but each one is a small foothold rather than a safety risk.
+  awsAccounts:
+    surface: cloud_iaas
+    weight: 20
+    basis: An account is a whole environment with its own identity boundary, not a single machine.
+  azureSubscriptions:
+    surface: cloud_iaas
+    weight: 20
+    basis: As AWS accounts.
+  gcpProjects:
+    surface: cloud_iaas
+    weight: 20
+    basis: As AWS accounts.
+  cloudWorkloads:
+    surface: cloud_iaas
+    weight: 2
+    basis: Individually cheap and replaceable; the tenancy around them carries the real weight.
+  m365Seats:
+    surface: saas_identity
+    weight: 0.15
+    basis: >-
+      Per seat, so a 5,000-seat tenant reads as 750 units — comparable to a
+      substantial owned estate, which is the intended calibration.
+  googleWorkspaceSeats:
+    surface: saas_identity
+    weight: 0.15
+    basis: As M365 seats.
+  otherCriticalSaasApps:
+    surface: saas_identity
+    weight: 6
+    basis: >-
+      Each app is a separate identity boundary and a separate copy of company
+      data, typically with no logging the client controls.
+  remoteUsers:
+    surface: identity
+    weight: 0.3
+    basis: Adds exposure per user, but far less than the device they work on, which is already counted.
+  privilegedAccounts:
+    surface: identity
+    weight: 3
+    basis: The account an attacker escalates to. Weighted well above an ordinary user.
+  serviceAccounts:
+    surface: identity
+    weight: 1
+    basis: Non-interactive, rarely rotated, frequently over-permissioned, and almost never watched.
+
+# ---------------------------------------------------------------------------
+# Product categories.
+# ---------------------------------------------------------------------------
+categories:
+  - category: edr
+    baseRiskReduction: 90
+    basis: >-
+      Both leading initial access vectors — exploitation and stolen credentials —
+      terminate in code running on a host. The single highest-value control for
+      most estates.
+    requiresAnyOf: [endpoint, on_prem_server]
+    affinities:
+      - surface: endpoint
+        multiplier: 1.8
+        basis: Its home ground.
+      - surface: on_prem_server
+        multiplier: 1.4
+        basis: Server EDR catches the lateral movement and the ransomware detonation.
+      - surface: saas_identity
+        multiplier: 0.2
+        basis: No agent can be installed in someone else's SaaS tenant.
+      - surface: network_edge
+        multiplier: 0.1
+        basis: An appliance will not run an endpoint agent.
+      - surface: ot_ics
+        multiplier: 0.3
+        basis: Most OT devices cannot take an agent, and vendor support contracts often forbid it.
+
+  - category: iam
+    baseRiskReduction: 85
+    basis: >-
+      Credential abuse is the top or second initial access vector in every
+      current dataset, and MFA is the control that closes most of it.
+    requiresAnyOf: [saas_identity, cloud_iaas, identity, on_prem_server]
+    affinities:
+      - surface: saas_identity
+        multiplier: 1.9
+        basis: >-
+          With no owned network, identity is the entire perimeter. M-Trends
+          reports cloud compromise led by phishing and stolen credentials.
+      - surface: cloud_iaas
+        multiplier: 1.6
+        basis: Console and API access is the control plane for the whole environment.
+      - surface: identity
+        multiplier: 1.5
+        basis: Directly proportional to the number of accounts worth stealing.
+      - surface: ot_ics
+        multiplier: 0.5
+        basis: OT authentication is frequently shared, local, or absent by design.
+
+  - category: backup
+    baseRiskReduction: 85
+    basis: >-
+      The only control that still works after everything else has failed, and
+      the difference between an incident and an extinction event.
+    requiresAnyOf: [on_prem_server, cloud_iaas, saas_identity, endpoint]
+    affinities:
+      - surface: on_prem_server
+        multiplier: 1.5
+        basis: Where the data that must survive actually lives.
+      - surface: saas_identity
+        multiplier: 1.2
+        basis: >-
+          SaaS data still needs backup. The shared responsibility model is
+          widely misread as the provider covering it, and it does not.
+      - surface: cloud_iaas
+        multiplier: 1.2
+        basis: Snapshots in the same account as the workload are not a backup.
+      - surface: endpoint
+        multiplier: 0.7
+        basis: Endpoints should be rebuildable rather than restorable.
+      - surface: network_edge
+        multiplier: 0.3
+        basis: Configuration backup only, which most estates handle without a product.
+
+  - category: vulnerability_management
+    baseRiskReduction: 80
+    basis: >-
+      DBIR 2026 puts software vulnerabilities at 31% of breaches, the top entry
+      point; M-Trends 2025 puts exploits first at 33%. Patching is the answer,
+      and knowing what to patch is the prerequisite.
+    requiresAnyOf: [on_prem_server, network_edge, public_app, cloud_iaas, endpoint, ot_ics]
+    affinities:
+      - surface: network_edge
+        multiplier: 1.8
+        basis: >-
+          The eightfold rise in edge-device exploitation makes unpatched
+          firewalls and VPNs the highest-yield finding a scanner can produce.
+      - surface: public_app
+        multiplier: 1.7
+        basis: Internet-facing and continuously probed.
+      - surface: on_prem_server
+        multiplier: 1.4
+        basis: Large, varied, and patched on someone's schedule rather than the vendor's.
+      - surface: ot_ics
+        multiplier: 1.2
+        basis: >-
+          Finds plenty and fixes little — OT rarely takes a patch — but knowing
+          the exposure is what justifies compensating controls.
+      - surface: saas_identity
+        multiplier: 0.3
+        basis: Patching someone else's SaaS is not the client's job or ability.
+
+  - category: email_security
+    baseRiskReduction: 75
+    basis: >-
+      Phishing is a top-three initial access vector overall, and M-Trends
+      reports it as the leading one for cloud environments.
+    requiresAnyOf: [saas_identity, endpoint]
+    affinities:
+      - surface: saas_identity
+        multiplier: 1.9
+        basis: >-
+          Mail is the front door of a SaaS-shaped estate, and the tenant's own
+          filtering is the control most often found underconfigured.
+      - surface: on_prem_server
+        multiplier: 0.6
+        basis: >-
+          ⚠ The inventory has no on-premises mail server class, so a client
+          running their own Exchange registers no mailboxes here. Down-weighted
+          rather than eliminated for exactly that reason. Known gap.
+      - surface: network_edge
+        multiplier: 0.2
+        basis: Nothing to protect on an appliance.
+      - surface: ot_ics
+        multiplier: 0.1
+        basis: OT devices do not read mail.
+
+  - category: pam
+    baseRiskReduction: 70
+    basis: >-
+      Privilege is what turns a foothold into a breach, and standing admin
+      access is the most common way that step is made easy.
+    requiresAnyOf: [on_prem_server, cloud_iaas, saas_identity, identity, ot_ics]
+    affinities:
+      - surface: on_prem_server
+        multiplier: 1.6
+        basis: Domain administration is the classic escalation path and the classic ransomware enabler.
+      - surface: identity
+        multiplier: 1.6
+        basis: The category scales directly with the number of privileged and service accounts.
+      - surface: cloud_iaas
+        multiplier: 1.4
+        basis: Root and owner roles across accounts, usually with weaker controls than the on-prem equivalent.
+      - surface: endpoint
+        multiplier: 0.6
+        basis: Local admin removal matters, but it is usually a configuration change rather than a purchase.
+
+  - category: asset_discovery
+    baseRiskReduction: 60
+    basis: >-
+      CIS Control 1 is first for a reason: every other control is scoped by an
+      inventory, and an unknown asset is an unprotected one.
+    requiresAnyOf: [on_prem_server, network_edge, cloud_iaas, endpoint, ot_ics, public_app]
+    affinities:
+      - surface: ot_ics
+        multiplier: 1.7
+        basis: >-
+          OT estates are the least well documented and the least tolerant of
+          active scanning, so passive discovery carries real weight.
+      - surface: cloud_iaas
+        multiplier: 1.4
+        basis: Cloud estates change without anyone updating a spreadsheet.
+      - surface: network_edge
+        multiplier: 1.2
+        basis: Finds the appliance nobody remembered was still exposed.
+      - surface: saas_identity
+        multiplier: 0.8
+        basis: Shadow SaaS is a real problem, but a different product class from network asset discovery.
+
+  - category: ngfw
+    baseRiskReduction: 65
+    basis: Segmentation and egress control, and the thing that contains lateral movement.
+    requiresAnyOf: [network_edge, on_prem_server, public_app, ot_ics]
+    affinities:
+      - surface: network_edge
+        multiplier: 1.8
+        basis: Its home ground.
+      - surface: ot_ics
+        multiplier: 1.7
+        basis: >-
+          Segmentation is the primary OT control precisely because the devices
+          themselves cannot be patched or agented.
+      - surface: public_app
+        multiplier: 1.4
+        basis: Inspects and rate-limits what reaches the application.
+      - surface: on_prem_server
+        multiplier: 1.3
+        basis: East-west segmentation between server tiers.
+      - surface: saas_identity
+        multiplier: 0.15
+        basis: >-
+          There is no network to put a firewall on. This is the clearest case in
+          the file of a category that a SaaS-shaped estate should not buy.
+      - surface: cloud_iaas
+        multiplier: 0.7
+        basis: Cloud-native security groups already do much of this without a separate purchase.
+
+  - category: siem
+    baseRiskReduction: 75
+    basis: >-
+      The substrate detection and response are built on, and the only place a
+      cross-estate question can be answered. Costly in licence and in people.
+    requiresAnyOf: [on_prem_server, network_edge, cloud_iaas, saas_identity, endpoint, ot_ics, public_app]
+    affinities:
+      - surface: on_prem_server
+        multiplier: 1.3
+        basis: The richest log sources, and the ones nobody else is watching.
+      - surface: cloud_iaas
+        multiplier: 1.2
+        basis: Control-plane logs are the only record of what happened in an account.
+      - surface: saas_identity
+        multiplier: 1.1
+        basis: >-
+          Tenant sign-in logs are the highest-value feed for an estate whose
+          perimeter is identity.
+      - surface: endpoint
+        multiplier: 0.8
+        basis: EDR telemetry is better consumed in the EDR console first; the SIEM adds correlation, not detection.
+
+  - category: mdr
+    baseRiskReduction: 65
+    basis: >-
+      Supplies the thing every other category quietly assumes — someone looking
+      at the alerts at 3am. Weighted for a buyer, not for a capability.
+    requiresAnyOf: [endpoint, on_prem_server, cloud_iaas, saas_identity, network_edge, ot_ics, public_app]
+    affinities:
+      - surface: ot_ics
+        multiplier: 0.8
+        basis: Most MDR providers have limited OT coverage; verify before promising it.
+
+  - category: ndr
+    baseRiskReduction: 50
+    basis: >-
+      Sees what agents cannot — unmanaged devices, appliances, and lateral
+      movement between them. Entirely dependent on there being a network.
+    requiresAnyOf: [network_edge, on_prem_server, ot_ics, cloud_iaas]
+    affinities:
+      - surface: ot_ics
+        multiplier: 1.9
+        basis: >-
+          The primary OT detection method, because passive traffic analysis is
+          the only monitoring most OT devices will tolerate.
+      - surface: network_edge
+        multiplier: 1.6
+        basis: Needs a span port and a network worth spanning.
+      - surface: on_prem_server
+        multiplier: 1.3
+        basis: East-west visibility between server tiers.
+      - surface: saas_identity
+        multiplier: 0.1
+        basis: >-
+          There is no traffic to inspect. Combined with requiresAnyOf, this is
+          why a SaaS-only client is never sold NDR.
+      - surface: endpoint
+        multiplier: 0.5
+        basis: Roaming endpoints spend most of their time off the monitored network.
+      - surface: cloud_iaas
+        multiplier: 0.6
+        basis: Possible via traffic mirroring, but usually expensive relative to what it adds.
+
+  - category: soar
+    baseRiskReduction: 45
+    basis: >-
+      A force multiplier for a team that already exists. Bought before there is
+      a process to automate, it becomes shelfware.
+    requiresAnyOf: [on_prem_server, cloud_iaas, saas_identity, endpoint, network_edge, ot_ics, public_app]
+    affinities:
+      - surface: cloud_iaas
+        multiplier: 1.2
+        basis: Cloud APIs make automated containment genuinely achievable.
+      - surface: ot_ics
+        multiplier: 0.4
+        basis: Automated response against a physical process is a safety decision, not a security one.
+
+  - category: deception
+    baseRiskReduction: 25
+    basis: >-
+      Very low false-positive rate and cheap to run, but covers little on its
+      own. A supplement, never a foundation.
+    requiresAnyOf: [on_prem_server, network_edge, ot_ics]
+    affinities:
+      - surface: ot_ics
+        multiplier: 1.8
+        basis: >-
+          High value where nothing else can be instrumented, and where any
+          interaction with a decoy is unambiguously hostile.
+      - surface: on_prem_server
+        multiplier: 1.5
+        basis: Decoy hosts and credentials sit naturally in a server estate.
+      - surface: saas_identity
+        multiplier: 0.2
+        basis: Little to decoy in someone else's tenant.

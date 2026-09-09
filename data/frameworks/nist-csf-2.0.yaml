@@ -13,7 +13,7 @@
 
 id: nist-csf-2.0
 name: NIST Cybersecurity Framework
-sourceQuality: secondary_sources
+sourceQuality: publisher_verified
 version: '2.0'
 commonIn: [us, global]
 
@@ -22,14 +22,18 @@ sources:
     asOf: '2026-09-09'
   - url: https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf
     asOf: '2026-09-09'
+  - url: https://csrc.nist.gov/extensions/nudp/services/json/csf/download?olirids=all
+    asOf: '2026-09-09'
 
 notes: >-
-  sourceQuality is secondary_sources: the 22 Category names below were not
-  confirmed line by line against NIST CSWP 29, which is listed above as the
-  authoritative text. The CSF Core structure is stable and very widely
-  reproduced, so this is the lowest-risk grade in the library — but it is not
-  publisher_verified, and the distinction is the point. Confirm against the
-  PDF before a client-facing coverage claim.
+  sourceQuality is publisher_verified. Every Category id and name below was
+  diffed against NIST's own machine-readable CSF 2.0 Core workbook, downloaded
+  from the CSRC endpoint listed above. All 22 match verbatim.
+
+  That workbook is the "with withdrawn CSF 1.1 elements" edition, so it also
+  contains ID.BE, ID.GV, ID.RM, ID.SC, PR.AC, PR.IP, PR.MA, PR.PT, DE.DP,
+  RS.RP, RS.IM and RC.IM. Those are withdrawn 1.1 categories and are correctly
+  absent here — if a future diff shows them as missing, that is the reason.
 
 controls:
   # GOVERN

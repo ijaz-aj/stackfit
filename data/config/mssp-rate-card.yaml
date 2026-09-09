@@ -1,0 +1,117 @@
+# MSSP / MDR rate card — the build-vs-buy side of PROJECT_SPEC §7.4 step 6.
+#
+# ANSWERS §13 Q2. Yes, an MSSP alternative ships in v1, and the shape is a
+# blend: a base platform fee that varies by scale class, plus per-endpoint,
+# per-server and per-GB/day components, times a service-level multiplier.
+#
+# Why a blend rather than flat tiers or a pure per-endpoint rate:
+#
+#   Published SMB quotes decide it. A 50-endpoint client is quoted roughly USD
+#   1,500–5,000 a month, which a per-endpoint rate of USD 8–35 cannot reach on
+#   its own — 50 × 35 is 1,750 at the very top of the range, and the typical
+#   quote is well above that. Most of a small engagement is fixed platform and
+#   staffing cost that does not care how many endpoints there are. A model with
+#   no base fee understates small clients badly and overstates large ones.
+#
+#   Flat tiers by scale class were the alternative and were rejected: a client
+#   one endpoint over a tier boundary gets a step change in cost that is not
+#   real, and the whole point of §7.4 step 6 is a like-for-like comparison
+#   against a bundle that scales smoothly.
+#
+# ⚠ CONFIDENCE. This is `analyst_estimate` and it will stay that way. No MSSP
+# publishes a rate card; these figures are synthesised from the ranges reported
+# by pricing aggregators and buyer guides, cross-checked for internal
+# consistency against the worked examples below. They are for comparison, never
+# for quoting. Replace the whole file with real numbers the moment an actual
+# MSSP quote exists — and note that the in-house MSSP option (§13 Q2's original
+# framing) would use this same shape with the client's own cost base.
+#
+# Worked checks against the published bands, at the `monitoring` service level:
+#
+#   50 endpoints, 5 servers, 2 GB/day, small
+#     1,200 + 700 + 225 + 180  = USD 2,305/mo   (band: 1,500–5,000) ✓
+#   300 endpoints, 30 servers, 15 GB/day, mid
+#     3,500 + 4,200 + 1,350 + 1,350 = USD 10,400/mo  (band: 5,000–15,000) ✓
+#   5,000 endpoints, 400 servers, 200 GB/day, enterprise
+#     18,000 + 70,000 + 18,000 + 18,000 = USD 124,000/mo  (band: 20,000–100,000+) ✓
+#
+# Money is in minor units, so amountMinor 140000 is USD 1,400.00.
+
+currency: USD
+asOf: '2026-09-09'
+confidence: analyst_estimate
+
+notes: >-
+  Synthesised from published MDR and MSSP pricing ranges, not from any vendor's
+  rate card, because none is published. Re-read before any proposal that shows
+  a build-vs-buy comparison; MDR pricing has been falling as the market
+  commoditises, and a year-old figure will overstate the managed option.
+
+sources:
+  - url: https://mdrproviders.io/pricing
+    asOf: '2026-09-09'
+  - url: https://securityoperationscost.com/mdr-pricing
+    asOf: '2026-09-09'
+  - url: https://msspproviders.io/resources/managed-security-services-pricing/
+    asOf: '2026-09-09'
+  - url: https://bcs365.com/insights/managed-detection-and-response-pricing-buyers-guide
+    asOf: '2026-09-09'
+
+# Fixed monthly charge before any per-unit component. This is the platform, the
+# tenancy, and the share of a 24x7 rota that every client pays for whether they
+# have 40 endpoints or 400.
+tiers:
+  - scaleClass: small
+    basePlatformFeeMonthly: { amountMinor: 120000, currency: USD }
+    basis: >-
+      Backed out of the reported USD 1,500–5,000/month for 10–50 endpoints. At
+      that size the fixed cost is most of the bill.
+  - scaleClass: mid
+    basePlatformFeeMonthly: { amountMinor: 350000, currency: USD }
+    basis: >-
+      Backed out of the reported USD 5,000–15,000/month for 75–400 endpoints,
+      leaving room for the per-unit components to carry the rest.
+  - scaleClass: large
+    basePlatformFeeMonthly: { amountMinor: 800000, currency: USD }
+    basis: >-
+      Interpolated. Dedicated analyst time and named escalation contacts start
+      appearing at this size, which is a step up in fixed cost.
+  - scaleClass: enterprise
+    basePlatformFeeMonthly: { amountMinor: 1800000, currency: USD }
+    basis: >-
+      Anchored on the bottom of the reported USD 20,000–100,000+/month
+      enterprise band, with the per-unit components supplying the range.
+
+perEndpointMonthly:
+  amountMinor: 1400
+  currency: USD
+perServerMonthly:
+  amountMinor: 4500
+  currency: USD
+perGbDayMonthly:
+  amountMinor: 9000
+  currency: USD
+
+serviceLevels:
+  - level: monitoring
+    multiplier: 1
+    basis: >-
+      The baseline the rates above are expressed in. Alerts are triaged and
+      handed over; the client still does the responding.
+  - level: mdr
+    multiplier: 1.35
+    basis: >-
+      Adds active containment. The uplift is people and out-of-hours capacity,
+      which is what the reported spread between "monitoring" and "response"
+      offerings mostly reflects.
+  - level: managed_security
+    multiplier: 1.7
+    basis: >-
+      Adds management of the underlying devices — policy changes, tuning,
+      upgrades. Closer to outsourced operations than to detection.
+
+# No engagement is quoted below this, whatever the per-unit maths produces.
+# Matches the floor of the reported SMB range.
+minimumMonthly:
+  amountMinor: 150000
+  currency: USD

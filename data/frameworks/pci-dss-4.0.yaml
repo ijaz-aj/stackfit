@@ -23,13 +23,18 @@ sources:
     asOf: '2026-09-09'
 
 notes: >-
-  sourceQuality is secondary_sources: the source above is the PCI SSC document
-  library landing page, not the standard. PCI DSS v4.0 is distributed through
-  that library rather than at an open URL, so the twelve Requirement titles
-  below were taken from reproductions rather than read from the document. The
-  top-level Requirement list is stable and uncontroversial; the sub-requirement
-  detail this tool does not model is where the real churn is. Re-read against
-  the standard before a client-facing coverage claim.
+  sourceQuality is secondary_sources, and this one cannot currently be raised.
+  The standard is gated: fetching PCI-DSS-v4_0_1.pdf from the PCI SSC document
+  server returns HTTP 403 without accepting the licence agreement, so the
+  twelve Requirement titles below were corroborated from reproductions rather
+  than read from the document. Requirements 4, 8, 9, 10, 11 and 12 were matched
+  verbatim against titles quoted in PCI SSC's own published SAQ documents; the
+  rest are consistent across independent sources.
+
+  The top-level Requirement list is stable and uncontroversial. The
+  sub-requirement detail this tool does not model is where the real churn is —
+  and note that v4.0.1 is now the current revision, so re-read against it, with
+  a licensed copy, before a client-facing coverage claim.
 
 controls:
   - id: '1'
