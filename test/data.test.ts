@@ -30,13 +30,9 @@ describe('committed data/ tree', () => {
   it('lists every placeholder-priced tier so none can hide', () => {
     // Not a failure — placeholders are legitimate and expected. This exists so
     // the count changing is visible in a diff, and so docs/STATUS.md can be
-    // checked against it.
-    expect(result.placeholders.map((entry) => `${entry.productId}/${entry.tierId}`).sort())
-      .toMatchInlineSnapshot(`
-      [
-        "microsoft-defender-for-endpoint/plan-2",
-        "microsoft-sentinel/pay-as-you-go",
-      ]
-    `);
+    // checked against it. Currently empty: every seeded price is sourced.
+    expect(
+      result.placeholders.map((entry) => `${entry.productId}/${entry.tierId}`).sort(),
+    ).toMatchInlineSnapshot(`[]`);
   });
 });

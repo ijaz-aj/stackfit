@@ -191,18 +191,32 @@ products:
           - Playbook automation via Logic Apps
         pricing:
           - model: consumption
-            consumptionUnit: GB ingested into Analytics Logs
+            consumptionUnit: GB ingested into Analytics logs
             unitPrice:
-              amountMinor: 99999999
+              amountMinor: 430
               currency: USD
-            pricingConfidence: placeholder
-            sources: []
+            pricingConfidence: public_list
+            sources:
+              - url: https://prices.azure.com/api/retail/prices?$filter=serviceName%20eq%20%27Sentinel%27%20and%20armRegionName%20eq%20%27eastus%27
+                asOf: '2026-09-09'
+              - url: https://learn.microsoft.com/en-us/azure/sentinel/billing
+                asOf: '2026-09-09'
             notes: >-
-              TODO: Microsoft no longer publishes a flat per-GB list rate on the
-              Sentinel pricing page; it redirects to the Azure pricing calculator,
-              which is region- and commitment-tier specific. Pull the pay-as-you-go
-              and commitment-tier rates for the client's Azure region before any
-              number from this product reaches a proposal.
+              USD 4.30 per GB, the "Pay-as-you-go Analysis" meter for East US,
+              read from the Azure Retail Prices API — Microsoft's own
+              authoritative price feed. The Sentinel pricing page and the
+              learn.microsoft.com billing article both decline to quote a
+              figure, so the API is the primary source.
+
+              Two things this rate does NOT capture, both of which move a real
+              bill a long way. Confirm both before quoting.
+              (1) Region. East US is at the cheap end; other regions run higher,
+              so re-read the API with the client's own armRegionName.
+              (2) Commitment tiers. From 100 GB/day the simplified commitment
+              meters are roughly 30% below pay-as-you-go (100 GB/day was
+              USD 296.00/day, i.e. USD 2.96/GB, in the same API response). Any
+              client ingesting over 100 GB/day should be costed on a commitment
+              tier, not on this rate.
 
     supports:
       os: [windows, linux, macos]
@@ -257,4 +271,15 @@ products:
     sources:
       - url: https://learn.microsoft.com/en-us/azure/sentinel/overview
         asOf: '2026-09-09'
-    notes: Pricing is unsourced. Do not quote this product until the TODO above is closed.
+      - url: https://learn.microsoft.com/en-us/azure/sentinel/billing
+        asOf: '2026-09-09'
+    notes: >-
+      Microsoft Sentinel moves to the Microsoft Defender portal only after
+      31 March 2027; the Azure portal experience is being retired. Worth raising
+      on any engagement whose horizon crosses that date.
+
+      Sizing note that materially changes the cost: Microsoft Defender XDR
+      alerts, Microsoft 365 audit logs (SharePoint, Exchange, Teams) and Azure
+      Activity logs ingest free. For a Microsoft-heavy client a large slice of
+      the estimated GB/day may be free, so Sentinel can come out cheaper than a
+      naive per-GB calculation suggests.

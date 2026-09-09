@@ -159,28 +159,68 @@ products:
     maturity: established
 
     tiers:
-      - id: plan-2
-        name: Defender for Endpoint Plan 2
+      - id: plan-1
+        name: Defender for Endpoint Plan 1
         capabilities:
-          - Next-generation antivirus and attack surface reduction
-          - Endpoint detection and response with automated investigation
-          - Threat and vulnerability management
-          - Advanced hunting
+          - Next-generation antivirus
+          - Attack surface reduction rules
+          - Device control
+          - Web protection
         pricing:
           - model: per_user_year
             unitPrice:
-              amountMinor: 99999999
+              amountMinor: 3600
               currency: USD
-            pricingConfidence: placeholder
-            sources: []
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            sources:
+              - url: https://redresscompliance.com/microsoft-defender-for-endpoint-licensing-p1-vs-p2
+                asOf: '2026-09-09'
+              - url: https://agileit.com/news/defender-endpoint-p1-pricing-features-comparison/
+                asOf: '2026-09-09'
             notes: >-
-              TODO: Microsoft does not publish standalone list pricing for
-              Defender for Endpoint Plan 1 or Plan 2 on the product page — it
-              lists only the bundled Defender Suite at USD 12.00 per user per
-              month billed yearly, which is a different SKU. Get per-plan pricing
-              from the Microsoft 365 licensing page or the client's reseller, and
-              note that most clients reach P2 through an E5 bundle rather than
-              standalone, which changes the marginal cost to near zero.
+              USD 3.00 per user per month, i.e. USD 36.00 per user per year.
+              Marked analyst_estimate rather than public_list deliberately:
+              Microsoft does not publish standalone per-plan pricing on any of
+              its own pages — the product page quotes only the bundled Defender
+              Suite at USD 12.00 per user per month. This figure is the widely
+              and consistently reported list rate from licensing specialists,
+              corroborated across independent sources, but it is not
+              vendor-published. Confirm with the client's reseller before it
+              reaches a proposal. P1 is included in Microsoft 365 E3.
+
+      - id: plan-2
+        name: Defender for Endpoint Plan 2
+        capabilities:
+          - Everything in Plan 1
+          - Endpoint detection and response with live response
+          - Automated investigation and remediation
+          - Threat and vulnerability management
+          - Advanced hunting with six months of telemetry retention
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 6240
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            sources:
+              - url: https://redresscompliance.com/microsoft-defender-for-endpoint-licensing-p1-vs-p2
+                asOf: '2026-09-09'
+              - url: https://costbench.com/software/endpoint-security/microsoft-defender-endpoint/
+                asOf: '2026-09-09'
+            notes: >-
+              USD 5.20 per user per month, i.e. USD 62.40 per user per year.
+              analyst_estimate for the same reason as Plan 1 — not published by
+              Microsoft directly.
+
+              Licensing reality that usually decides this product: P2 is
+              included in Microsoft 365 E5. A client already on E5 pays nothing
+              marginal for it, which is why Defender frequently wins on price
+              against a technically stronger competitor. From an E3 base,
+              reaching P2 means either the E5 Security add-on or a full E5
+              upgrade — a much larger number than the standalone rate above.
+              Establish which base the client is on before costing this.
 
     supports:
       os: [windows, linux, macos, ios, android]
@@ -230,4 +270,7 @@ products:
     sources:
       - url: https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-endpoint
         asOf: '2026-09-09'
-    notes: Pricing is unsourced. Do not quote this product until the TODO above is closed.
+    notes: >-
+      Both tier prices are analyst_estimate, not vendor-published. The number
+      that actually matters on most deals is whether the client is on E3 or E5,
+      not the standalone rate — see the Plan 2 pricing note.
