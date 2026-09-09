@@ -13,6 +13,7 @@
 
 id: nist-csf-2.0
 name: NIST Cybersecurity Framework
+sourceQuality: secondary_sources
 version: '2.0'
 commonIn: [us, global]
 

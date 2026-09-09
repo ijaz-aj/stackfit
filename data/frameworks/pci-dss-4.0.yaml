@@ -14,6 +14,7 @@
 
 id: pci-dss-4.0
 name: Payment Card Industry Data Security Standard
+sourceQuality: secondary_sources
 version: '4.0'
 commonIn: [global]
 

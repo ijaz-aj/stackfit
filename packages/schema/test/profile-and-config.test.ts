@@ -156,6 +156,7 @@ describe('Framework', () => {
     const result = Framework.safeParse({
       id: 'cis-v8',
       name: 'CIS Critical Security Controls',
+      sourceQuality: 'publisher_verified',
       version: 'v8',
       controls: [
         { id: '1', title: 'Inventory and Control of Enterprise Assets' },
@@ -170,6 +171,7 @@ describe('Framework', () => {
     const framework = Framework.parse({
       id: 'cis-v8',
       name: 'CIS Critical Security Controls',
+      sourceQuality: 'publisher_verified',
       version: 'v8',
       controls: [{ id: '8', title: 'Audit Log Management', satisfiedBy: ['siem'] }],
       sources: [{ url: 'https://example.com/controls', asOf: '2026-09-09' }],

@@ -34,10 +34,32 @@ export const Control = z
   .strict();
 export type Control = z.infer<typeof Control>;
 
+/**
+ * How well-sourced a framework's control list is — the compliance equivalent of
+ * `pricingConfidence`, and it exists for the same reason. Some publishers put
+ * their control list behind a paywall, a CAPTCHA or an unparseable PDF, and a
+ * coverage claim built on a secondary source should not look identical to one
+ * read from the standard itself.
+ */
+export const FrameworkSourceQuality = z.enum([
+  /** Control list read directly from the publisher's own document. */
+  'publisher_verified',
+  /** Corroborated across independent secondary sources, not read from the publisher. */
+  'secondary_sources',
+  /**
+   * Structure understood, exact control identifiers unverified. Usable for
+   * shortlisting; must be reconciled against the standard before any
+   * client-facing coverage claim.
+   */
+  'provisional',
+]);
+export type FrameworkSourceQuality = z.infer<typeof FrameworkSourceQuality>;
+
 export const Framework = z
   .object({
     id: FrameworkId,
     name: z.string().min(1),
+    sourceQuality: FrameworkSourceQuality,
     /** The published edition these controls were read from. */
     version: z.string().min(1),
     /** Regions where this framework is commonly in scope; a hint for intake defaults. */

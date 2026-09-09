@@ -10,6 +10,7 @@
 
 id: cis-v8
 name: CIS Critical Security Controls
+sourceQuality: publisher_verified
 version: v8
 commonIn: [global]
 
