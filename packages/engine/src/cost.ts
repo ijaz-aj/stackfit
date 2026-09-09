@@ -23,7 +23,7 @@ import type {
 } from '@stackfit/schema';
 
 import { assessTierFreshness, needsRecheck, type PriceFreshness } from './freshness.js';
-import { convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money.js';
+import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money.js';
 import type { SizingResult } from './sizing.js';
 
 const DAYS_PER_YEAR = 365;
@@ -71,6 +71,22 @@ export interface ProductCost {
   readonly year1: Money;
   /** Steady-state annual cost, before the year-on-year uplift compounds. */
   readonly annualRecurring: Money;
+  /**
+   * Money that actually leaves the business each year: licence, support and
+   * infrastructure. Excludes operational FTE.
+   *
+   * Separate from `annualRecurring` because a stated security budget is a
+   * *procurement* figure, and salary is not procurement. Testing a budget cap
+   * against a total that includes people charges the analyst's own team to the
+   * purchase order — and charges them once per product, for staff who are
+   * already on payroll. It also prices open source out of every budget, which
+   * inverts hard rule 8: that rule exists to stop open source looking free, not
+   * to make it unbuyable. People are constrained separately, against available
+   * FTE, which is a different question with a different answer.
+   *
+   * TCO is unaffected and still includes operational FTE (§7.2).
+   */
+  readonly procurementAnnual: Money;
   /** Year 1 first, then each subsequent year with uplift applied. */
   readonly cashflowByYear: readonly Money[];
   readonly tco: Money;
@@ -380,12 +396,10 @@ export function computeProductCost(
     trainingOneTime,
   ]);
 
-  const annualRecurring = sumMoney(currency, [
-    licenceAnnual,
-    supportAnnual,
-    infraAnnual,
-    opsFteAnnual,
-  ]);
+  // What the business spends. People are excluded on purpose — see the field doc.
+  const procurementAnnual = sumMoney(currency, [licenceAnnual, supportAnnual, infraAnnual]);
+
+  const annualRecurring = addMoney(procurementAnnual, opsFteAnnual);
 
   const cashflowByYear: Money[] = [year1];
   for (let year = 2; year <= horizonYears; year += 1) {
@@ -456,6 +470,7 @@ export function computeProductCost(
     trainingOneTime,
     year1,
     annualRecurring,
+    procurementAnnual,
     cashflowByYear,
     tco,
     horizonYears,

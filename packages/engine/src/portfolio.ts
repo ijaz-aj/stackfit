@@ -78,8 +78,14 @@ export interface BundleSelection {
   readonly categoryWeight: number;
   readonly mandatory: boolean;
   readonly valueDensity: number;
-  /** Licence after any suite discount; equals the costed licence when none applied. */
+  /** Total recurring cost including operational FTE — the honest §7.2 figure. */
   readonly annualRecurring: Money;
+  /**
+   * Money leaving the business: licence, support, infrastructure. This is what
+   * the budget cap constrains, because a stated security budget is a
+   * procurement figure and salary is not procurement.
+   */
+  readonly annualSpend: Money;
   readonly oneTime: Money;
   readonly tco: Money;
   readonly suiteDiscountApplied: boolean;
@@ -108,7 +114,10 @@ export interface Bundle {
   readonly kind: BundleKind;
   readonly currency: CurrencyCode;
   readonly selections: readonly BundleSelection[];
+  /** Total recurring cost including people. */
   readonly annualRecurring: Money;
+  /** Procurement spend only — what `withinAnnualCap` is judged against. */
+  readonly annualSpend: Money;
   readonly oneTime: Money;
   readonly tco: Money;
   readonly totalOpsFte: number;
@@ -301,6 +310,7 @@ function select(
   selections: BundleSelection[];
   unfundedMandatory: ProductCategory[];
   annual: Money;
+  spend: Money;
   oneTime: Money;
 } {
   const { profile, assumptions } = inputs;
@@ -313,6 +323,7 @@ function select(
   const filledCategories = new Set<ProductCategory>();
 
   let annual = zeroMoney(currency);
+  let spend = zeroMoney(currency);
   let oneTime = zeroMoney(currency);
 
   // Mandatory first, then the rest by category weight. Within each pass the
@@ -356,14 +367,15 @@ function select(
             : candidate.cost;
 
         const annualCost = cost.annualRecurring;
+        const spendCost = cost.procurementAnnual;
         const oneTimeCost = addMoney(cost.implementationOneTime, cost.trainingOneTime);
         const density = (ranking.weight * effectiveFit) / annualisedMinor(cost, assumptions);
-        return { candidate, suite, cost, annualCost, oneTimeCost, density };
+        return { candidate, suite, cost, annualCost, spendCost, oneTimeCost, density };
       });
 
       scored.sort((a, b) =>
         options.cheapestFirst
-          ? a.annualCost.amountMinor - b.annualCost.amountMinor ||
+          ? a.spendCost.amountMinor - b.spendCost.amountMinor ||
             b.candidate.fitScore - a.candidate.fitScore
           : b.density - a.density || b.candidate.fitScore - a.candidate.fitScore,
       );
@@ -373,7 +385,7 @@ function select(
       const affordable = scored.find((entry) => {
         if (options.ignoreBudget) return true;
         return (
-          withinCap(addMoney(annual, entry.annualCost), profile.budget.annualCap) &&
+          withinCap(addMoney(spend, entry.spendCost), profile.budget.annualCap) &&
           withinCap(addMoney(oneTime, entry.oneTimeCost), profile.budget.oneTimeCap)
         );
       });
@@ -381,11 +393,11 @@ function select(
       let picked = affordable;
       if (picked === undefined && ranking.mandatory && !options.ignoreBudget) {
         const cheapest = [...scored].sort(
-          (a, b) => a.annualCost.amountMinor - b.annualCost.amountMinor,
+          (a, b) => a.spendCost.amountMinor - b.spendCost.amountMinor,
         )[0];
         if (
           cheapest !== undefined &&
-          withinCap(addMoney(annual, cheapest.annualCost), profile.budget.annualCap) &&
+          withinCap(addMoney(spend, cheapest.spendCost), profile.budget.annualCap) &&
           withinCap(addMoney(oneTime, cheapest.oneTimeCost), profile.budget.oneTimeCap)
         ) {
           picked = cheapest;
@@ -432,6 +444,7 @@ function select(
         mandatory: ranking.mandatory,
         valueDensity: round(picked.density, 6),
         annualRecurring: picked.annualCost,
+        annualSpend: picked.spendCost,
         oneTime: picked.oneTimeCost,
         tco: picked.cost.tco,
         suiteDiscountApplied: picked.suite,
@@ -439,13 +452,14 @@ function select(
       });
 
       annual = addMoney(annual, picked.annualCost);
+      spend = addMoney(spend, picked.spendCost);
       oneTime = addMoney(oneTime, picked.oneTimeCost);
       chosenVendors.add(picked.candidate.vendor);
       filledCategories.add(ranking.category);
     }
   }
 
-  return { selections, unfundedMandatory, annual, oneTime };
+  return { selections, unfundedMandatory, annual, spend, oneTime };
 }
 
 /**
@@ -588,9 +602,9 @@ function buildBundle(
       const forCategory = candidates.filter((candidate) => candidate.category === ranking.category);
       if (forCategory.length === 0) return zeroMoney(currency);
       const cheapest = [...forCategory].sort(
-        (a, b) => a.cost.annualRecurring.amountMinor - b.cost.annualRecurring.amountMinor,
+        (a, b) => a.cost.procurementAnnual.amountMinor - b.cost.procurementAnnual.amountMinor,
       )[0];
-      return cheapest?.cost.annualRecurring ?? zeroMoney(currency);
+      return cheapest?.cost.procurementAnnual ?? zeroMoney(currency);
     }),
   );
 
@@ -654,6 +668,12 @@ function buildBundle(
   }
   if (result.selections.length > 0) {
     rationale.push(
+      `Annual spend ${result.spend.amountMinor / 100} ${currency} (licence, support, infrastructure) ` +
+        `against a total annual cost of ${result.annual.amountMinor / 100} ${currency} once ` +
+        'operational people are counted. The budget cap is judged against spend, because a stated ' +
+        'security budget is a procurement figure; the people are constrained separately, below.',
+    );
+    rationale.push(
       `Bundle needs ${round(totalOpsFte, 2)} FTE to run against ${profile.securityStaffFte} available.`,
     );
     if (profile.securityStaffFte > 0 && totalOpsFte > profile.securityStaffFte) {
@@ -669,10 +689,11 @@ function buildBundle(
     currency,
     selections: result.selections,
     annualRecurring: result.annual,
+    annualSpend: result.spend,
     oneTime: result.oneTime,
     tco,
     totalOpsFte: round(totalOpsFte, 3),
-    withinAnnualCap: withinCap(result.annual, profile.budget.annualCap),
+    withinAnnualCap: withinCap(result.spend, profile.budget.annualCap),
     withinOneTimeCap: withinCap(result.oneTime, profile.budget.oneTimeCap),
     unfundedMandatory: result.unfundedMandatory,
     annualShortfall: mandatoryUnaffordable && cap !== null ? subtractMoney(mandatoryFloor, cap) : null,
