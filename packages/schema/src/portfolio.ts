@@ -38,6 +38,21 @@ export const PortfolioAssumptions = z
      * floored at this many minor units.
      */
     minimumAnnualisedCostMinor: z.number().int().positive(),
+    /**
+     * Points added when ranking an open-source or open-core product for a
+     * client whose `procurementBias` is `open_source_first`.
+     *
+     * §7.3 has that bias *raise* the ops-fit weight, which is honest — the
+     * failure mode of open source is operational — but on its own it penalises
+     * open source, because operability is exactly where it is weakest. Nothing
+     * then acted on the "first" in the field's name, and §12.3's acceptance
+     * criterion ("OSS stack recommended") went unmet.
+     *
+     * Applied to the ranking only, never written back into the published fit
+     * score: a stated preference is a reason to rank something higher, not a
+     * reason to claim it fits better than it does.
+     */
+    openSourcePreferencePoints: z.number().min(0).max(25),
     basis: z.string().min(1),
   })
   .strict();

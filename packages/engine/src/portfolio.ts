@@ -22,6 +22,7 @@ import type {
   CurrencyCode,
   Framework,
   FxConfig,
+  LicenceModel,
   Money,
   MsspRateCard,
   PortfolioAssumptions,
@@ -62,6 +63,7 @@ export interface Candidate {
   readonly productId: string;
   readonly category: ProductCategory;
   readonly vendor: string;
+  readonly licenceModel: LicenceModel;
   readonly fitScore: number;
   readonly cost: ProductCost;
   /** (weight × fitScore) / annualised TCO, in whole currency units. */
@@ -273,6 +275,7 @@ export function buildCandidates(
       productId: product.id,
       category: product.category,
       vendor: product.vendor,
+      licenceModel: product.licenceModel,
       fitScore: score.score,
       cost,
       valueDensity: density,
@@ -349,9 +352,19 @@ function select(
       // ranking bonus. The bonus never touches the published fit score.
       const scored = forCategory.map((candidate) => {
         const suite = chosenVendors.has(candidate.vendor);
+
+        // A stated open-source preference tilts the ranking. The ops-fit weight
+        // is still raised for this bias (§7.3), so a tool the client cannot
+        // operate still loses — this only decides close calls.
+        const openSourcePreferred =
+          profile.procurementBias === 'open_source_first' &&
+          (candidate.licenceModel === 'open_source' || candidate.licenceModel === 'open_core');
+
         const effectiveFit = Math.min(
           100,
-          candidate.fitScore + (suite ? assumptions.suiteIntegrationBonusPoints : 0),
+          candidate.fitScore +
+            (suite ? assumptions.suiteIntegrationBonusPoints : 0) +
+            (openSourcePreferred ? assumptions.openSourcePreferencePoints : 0),
         );
 
         // Re-cost through the cost engine rather than discounting one figure
@@ -370,7 +383,7 @@ function select(
         const spendCost = cost.procurementAnnual;
         const oneTimeCost = addMoney(cost.implementationOneTime, cost.trainingOneTime);
         const density = (ranking.weight * effectiveFit) / annualisedMinor(cost, assumptions);
-        return { candidate, suite, cost, annualCost, spendCost, oneTimeCost, density };
+        return { candidate, suite, openSourcePreferred, cost, annualCost, spendCost, oneTimeCost, density };
       });
 
       scored.sort((a, b) =>
@@ -421,6 +434,14 @@ function select(
             `${round(assumptions.suiteDiscountRate * 100, 0)}% suite discount is applied and ` +
             `${assumptions.suiteIntegrationBonusPoints} integration points were added when ranking. ` +
             'This is an assumption, not a quoted discount.',
+        );
+      }
+      if (picked.openSourcePreferred) {
+        rationale.push(
+          `Ranked up by ${assumptions.openSourcePreferencePoints} points: the client asked for an ` +
+            'open-source-first stack, and this is ' +
+            `${picked.candidate.licenceModel.replace('_', ' ')}. The operability weighting is still ` +
+            'raised for that preference, so this had to earn the place on ops fit too.',
         );
       }
       if (options.cheapestFirst) {
@@ -703,6 +724,64 @@ function buildBundle(
   };
 }
 
+/**
+ * The Recommended bundle, guarding against a greedy-knapsack pathology.
+ *
+ * Ranking purely by value density lets an expensive high-density product take
+ * the budget early and starve every category after it. Observed on a real
+ * scenario: a USD 15,000 cap bought one product, while a USD 8,000 cap bought
+ * three. A client whose budget went *up* would have been shown a worse stack,
+ * which is indefensible.
+ *
+ * §7.4 step 3 already anticipates this — "cheapest acceptable option if budget
+ * is tight" — so the fix is to run that strategy too and keep whichever covers
+ * more of the estate's weighted need. Density still wins ties, so an
+ * unconstrained budget is unaffected and still gets the better products.
+ */
+function buildRecommended(
+  inputs: PortfolioInputs,
+  rankings: readonly CategoryRanking[],
+  candidates: readonly Candidate[],
+): Bundle {
+  const eligible = (ranking: CategoryRanking): boolean => ranking.weight > 0;
+
+  const byDensity = buildBundle('recommended', inputs, rankings, candidates, {
+    ignoreBudget: false,
+    eligible,
+    cheapestFirst: false,
+  });
+
+  // No cap means nothing can be starved, so there is nothing to repair.
+  if (inputs.profile.budget.annualCap === null && inputs.profile.budget.oneTimeCap === null) {
+    return byDensity;
+  }
+
+  const byCheapest = buildBundle('recommended', inputs, rankings, candidates, {
+    ignoreBudget: false,
+    eligible,
+    cheapestFirst: true,
+  });
+
+  const coveredWeight = (bundle: Bundle): number =>
+    bundle.selections.reduce((sum, selection) => sum + selection.categoryWeight, 0);
+
+  // Strictly more, so density keeps ties and the better-product bias.
+  if (coveredWeight(byCheapest) > coveredWeight(byDensity)) {
+    return {
+      ...byCheapest,
+      rationale: [
+        ...byCheapest.rationale,
+        'Built from the cheapest acceptable option in each category rather than the highest value ' +
+          'density: at this budget, ranking on value alone let one expensive product take the ' +
+          'money and leave whole categories unfunded. §7.4 step 3 calls for exactly this when the ' +
+          'budget is tight.',
+      ],
+    };
+  }
+
+  return byDensity;
+}
+
 /** Step 5: the three bundles, each with its MSSP alternative. */
 export function buildPortfolio(inputs: PortfolioInputs): {
   rankings: readonly CategoryRanking[];
@@ -722,11 +801,7 @@ export function buildPortfolio(inputs: PortfolioInputs): {
       eligible: (ranking) => ranking.mandatory || ranking.essential,
       cheapestFirst: true,
     }),
-    recommended: buildBundle('recommended', inputs, rankings, candidates, {
-      ignoreBudget: false,
-      eligible: (ranking) => ranking.weight > 0,
-      cheapestFirst: false,
-    }),
+    recommended: buildRecommended(inputs, rankings, candidates),
     ideal: buildBundle('ideal', inputs, rankings, candidates, {
       ignoreBudget: true,
       eligible: (ranking) => ranking.weight > 0,
