@@ -16,6 +16,7 @@ import { describe, expect, it } from 'vitest';
 import {
   loadCatalog,
   loadCostAssumptions,
+  loadFreshnessPolicy,
   loadFxConfig,
   loadLabourRates,
   loadSizingAssumptions,
@@ -25,10 +26,17 @@ const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data');
 
 const sizingAssumptions = loadSizingAssumptions(DATA_DIR);
 const catalog = loadCatalog(DATA_DIR);
+// Pinned rather than read from the clock, so these snapshots stay stable as
+// the committed prices age. The staleness of the real catalog is asserted
+// separately, in test/staleness.test.ts.
+const AS_AT = '2026-09-15';
+
 const costInputs = {
   labourRates: loadLabourRates(DATA_DIR),
   costAssumptions: loadCostAssumptions(DATA_DIR),
   fx: loadFxConfig(DATA_DIR),
+  freshnessPolicy: loadFreshnessPolicy(DATA_DIR),
+  today: AS_AT,
 };
 
 /** Renders minor units as a readable major-unit figure for the snapshots. */

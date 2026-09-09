@@ -12,6 +12,7 @@ import {
   type ClientProfile,
   type CostAssumptions,
   type DeploymentMode,
+  type FreshnessPolicy,
   type FxConfig,
   type Implementation,
   type LabourRates,
@@ -134,11 +135,29 @@ export function buildCostAssumptions(overrides: Partial<CostAssumptions> = {}): 
   };
 }
 
+export function buildFreshnessPolicy(overrides: Partial<FreshnessPolicy> = {}): FreshnessPolicy {
+  return {
+    asOf: '2026-01-01',
+    maxAgeDaysByConfidence: {
+      public_list: 90,
+      vendor_quote: 180,
+      analyst_estimate: 120,
+      placeholder: 60,
+    },
+    warnAtFraction: 0.75,
+    ...overrides,
+  };
+}
+
 export function buildCostInputs(overrides: Partial<CostInputs> = {}): CostInputs {
   return {
     labourRates: buildLabourRates(),
     costAssumptions: buildCostAssumptions(),
     fx: buildFxConfig(),
+    freshnessPolicy: buildFreshnessPolicy(),
+    // Fixture prices are dated 2026-01-01, so this keeps them fresh unless a
+    // test deliberately moves the clock forward.
+    today: '2026-01-15',
     ...overrides,
   };
 }
