@@ -17,6 +17,7 @@ import {
   FxConfig,
   LabourRates,
   MsspRateCard,
+  ScoringWeights,
   SizingAssumptions,
 } from '@stackfit/schema';
 import { parse as parseYaml } from 'yaml';
@@ -198,6 +199,8 @@ export function validateDataTree(dataDir: string): DataValidationResult {
       validate(file, CategoryWeights, raw);
     } else if (file.endsWith('mssp-rate-card.yaml')) {
       validate(file, MsspRateCard, raw);
+    } else if (file.endsWith('scoring-weights.yaml')) {
+      validate(file, ScoringWeights, raw);
     } else {
       report(file, '(root)', 'no schema is wired up for this config file, so it is unvalidated');
     }

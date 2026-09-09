@@ -15,3 +15,4 @@ export * from './money.js';
 export * from './freshness.js';
 export * from './cost.js';
 export * from './infrastructure.js';
+export * from './scoring.js';

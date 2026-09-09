@@ -103,6 +103,21 @@ function worstConfidence(rules: readonly PricingRule[]): PricingConfidence {
 }
 
 /**
+ * FTE this product consumes to run, from its opsBurden and the size of the
+ * estate it is watching.
+ *
+ * Exported because scoring's ops-fit dimension (§7.3) asks the same question
+ * costing does, and the two must never drift apart: a product scored as
+ * operable and then costed as needing twice the team would be worse than
+ * either answer alone.
+ */
+export function operationalFteFor(product: Product, monitoredAssetCount: number): number {
+  return (
+    product.opsBurden.baseFte + (product.opsBurden.ftePerThousandAssets * monitoredAssetCount) / 1000
+  );
+}
+
+/**
  * How many billable units this pricing model sees in this environment.
  *
  * Getting these mappings wrong is the easiest way to be confidently incorrect,
@@ -308,9 +323,7 @@ export function computeProductCost(
 
   // ---- Operational people. The line that makes open source comparable.
   const regionRate = labourRates.byRegion[profile.region];
-  const opsFte =
-    product.opsBurden.baseFte +
-    (product.opsBurden.ftePerThousandAssets * sizing.monitoredAssetCount) / 1000;
+  const opsFte = operationalFteFor(product, sizing.monitoredAssetCount);
   const opsFteAnnual = scaleMoney(convertMoney(regionRate.loadedAnnualCost, currency, fx), opsFte);
 
   rationale.push(

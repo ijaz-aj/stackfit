@@ -16,6 +16,7 @@ import {
   FxConfig,
   LabourRates,
   MsspRateCard,
+  ScoringWeights,
   SizingAssumptions,
   type Product,
 } from '@stackfit/schema';
@@ -47,6 +48,10 @@ export function loadCategoryWeights(dataDir: string): CategoryWeights {
 
 export function loadMsspRateCard(dataDir: string): MsspRateCard {
   return MsspRateCard.parse(readYaml(join(dataDir, 'config', 'mssp-rate-card.yaml')));
+}
+
+export function loadScoringWeights(dataDir: string): ScoringWeights {
+  return ScoringWeights.parse(readYaml(join(dataDir, 'config', 'scoring-weights.yaml')));
 }
 
 export function loadFxConfig(dataDir: string): FxConfig {

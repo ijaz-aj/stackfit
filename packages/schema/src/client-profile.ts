@@ -62,6 +62,16 @@ export const ClientProfile = z
     procurementBias: ProcurementBias,
     /** Product ids they already own and will keep; scored for integration fit. */
     retainedTools: z.array(Slug).default([]),
+    /**
+     * Product ids the analyst has ruled out for this client — an incumbent
+     * relationship gone bad, a failed PoC, a vendor the board will not approve.
+     * A §7.3 hard filter.
+     *
+     * This is a per-scenario judgement and not the vendor include/exclude list
+     * that was ruled out for v1: every vendor stays eligible in the catalog,
+     * and this only records what a particular client has already rejected.
+     */
+    excludedProducts: z.array(Slug).default([]),
   })
   .strict();
 export type ClientProfile = z.infer<typeof ClientProfile>;
