@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 3d — infrastructure fit + open decisions closed (in review)
+**Current phase:** 4 — scoring + portfolio (in review)
 **Last updated:** 2026-09-09
 
 ## Phase log
@@ -14,7 +14,7 @@
 | 3b Price freshness (**inserted, not in PROJECT_SPEC §11**) | in review | Prices now age and say so. `catalog:staleness` + `prices:refresh`. Verified live against the Azure meter feed. Inserted ahead of catalog expansion on purpose — see the decision below. |
 | 3c Framework library (**inserted**) | in review | The remaining 8 frameworks written; all 11 now ship, 240 controls. Every framework carries a `sourceQuality` grade. Coverage-inflation guard reshaped to per-framework. |
 | 3d Infrastructure fit (**inserted**) | in review | `infrastructure.ts` — estate shape and per-category relevance from the asset inventory. `category-weights.yaml`, `mssp-rate-card.yaml`. Q2 answered, §7.2 deviation decided, NIST regraded. |
-| 4 `scoring.ts` + `portfolio.ts` + tests | not started | This is the phase that produces the Essential / Recommended / Ideal bundles. **No longer blocked** — frameworks landed in 3c, the MSSP rate card and infrastructure weighting in 3d. |
+| 4 `scoring.ts` + `portfolio.ts` + tests | in review | Both stages plus all seven §7.4 steps. `scoring-weights.yaml`, `portfolio-assumptions.yaml`. 237 tests green. |
 | 5 Intake wizard UI | not started | Also scaffolds apps/web (Next.js) + Prisma/SQLite + server-action mutation layer. |
 | 6 Results dashboard | not started | |
 | 7 Catalog expansion (≥5 per category) | not started | |
@@ -240,6 +240,55 @@ agent on a PLC. That result comes entirely from the inventory, with no complianc
 - The computed weight is a **relative ranking score, not a percentage** — it exceeds 100 when
   affinities are favourable (iam 130 for the cloud-native estate). Fine for ranking; do not
   render it as "% risk reduced".
+
+### Phase 4 — fit scoring and portfolio assembly
+
+- 2026-09-09 — **Asset coverage is scored against a category's remit, not the whole estate.**
+  §7.3 says "% of their inventory the product actually protects" without saying what the
+  denominator is. Taken literally it would be the whole estate, which makes an email gateway
+  permanently unbuyable: it covers mailboxes, so it would score ~5% on the largest-weighted
+  dimension, and §7.4 step 2 compares fit scores *across* categories when ranking value
+  density. `categoryRemits` in `scoring-weights.yaml` is the denominator instead, so a gateway
+  covering every mailbox scores 100.
+- 2026-09-09 — **The hard filters are deliberately narrower than §7.3's list**, because a
+  filtered product is invisible to the analyst in a way a low score is not.
+  `deploymentPreference` only eliminates when it is `air_gapped` — that is a requirement, and a
+  SaaS product in an air-gapped site cannot work at all, whereas an on-prem product for a
+  cloud-preferring client is merely not what they asked for, which is what deployment fit
+  scores. The "unsupported OS / device class / cloud platform" filter is applied only in the
+  form that is safe to automate: a product reaching *none* of the assets its own category
+  exists to protect.
+- 2026-09-09 — **Ops fit degrades linearly rather than falling off a cliff**, and the
+  zero-security-staff case is explicit. Zero FTE is valid, common (§5.1 says so), and would
+  otherwise divide by zero. It scores 15, not 0 — such a client can still buy something, it
+  just cannot be something they operate, and the §7.4 step 6 managed alternative is the honest
+  answer for them.
+- 2026-09-09 — **`operationalFteFor` is shared between costing and scoring.** A product scored
+  as operable and then costed as needing twice the team would be worse than either answer
+  alone, so there is one definition.
+- 2026-09-09 — **`ClientProfile` gains `excludedProducts`** for the §7.3 analyst-exclusion
+  filter. This is a per-scenario judgement — a failed PoC, a vendor the board will not approve
+  — and not the vendor include/exclude list ruled out for v1. Every vendor stays eligible in
+  the catalog.
+- 2026-09-09 — **"Avoid two products doing the same job" is structural, not a penalty.** One
+  product per category. Two SIEMs is not a bundle worth costing.
+- 2026-09-09 — **The suite integration bonus never reaches the published fit score.** It ranks
+  candidates during assembly only, because a fit score has to keep meaning "fit for this
+  client" rather than "fit given what we happened to pick first". The suite discount is
+  announced as an assumption wherever it applies, per §6 rule 5.
+- 2026-09-09 — **A framework cannot mandate a category the estate has nothing for.** Mandatory
+  requires the category to be applicable to the infrastructure *and* required by the framework;
+  otherwise the tool would demand a purchase that protects nothing.
+- 2026-09-09 — **"Minimum defensible posture" (§7.4 step 5) is defined as a weight floor**, not
+  a fixed list, because the weight already accounts for infrastructure. A SaaS-only company's
+  essentials are then genuinely different from a manufacturer's, rather than both getting the
+  same five boxes.
+
+**⚠ A fixture bug worth knowing about.** `buildProduct` was casting rather than parsing, so a
+pricing rule written with the wrong keys (`bands`/`amount` instead of `tiers`/`flatPrice`)
+priced silently at **zero** — which made every portfolio budget assertion vacuous while the
+tests still passed. It now parses through the `Product` schema. Worth checking any other
+fixture that casts.
 
 ## Open questions
 - **opsBurden and implementation figures have no confidence field.** Every one in the seed catalog is an analyst estimate, flagged in each product's `notes`, but the schema cannot distinguish an estimate from a measured figure the way `pricingConfidence` does for prices. Worth adding an `opsBurdenConfidence` before the catalog grows in Phase 7.
