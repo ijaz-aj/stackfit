@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 3b — price freshness (in review)
+**Current phase:** 3c — framework library (in review)
 **Last updated:** 2026-09-09
 
 ## Phase log
@@ -12,7 +12,8 @@
 | 2 `sizing.ts` + tests | done | `computeSizing` + `data/config/sizing-assumptions.yaml` (30 asset-class coefficients, each with a stated basis). Determinism test in place. 3 worked examples in `test/sizing-worked-examples.test.ts`. |
 | 3 `cost.ts` + tests | in review | `computeProductCost` covering all 11 pricing models, plus money arithmetic in BigInt. `fx.yaml`, `labour-rates.yaml`, `cost-assumptions.yaml` written. Every catalog price is now sourced — no placeholders left. 145 tests green. |
 | 3b Price freshness (**inserted, not in PROJECT_SPEC §11**) | in review | Prices now age and say so. `catalog:staleness` + `prices:refresh`. Verified live against the Azure meter feed. Inserted ahead of catalog expansion on purpose — see the decision below. |
-| 4 `scoring.ts` + `portfolio.ts` + tests | not started | This is the phase that produces the Essential / Recommended / Ideal bundles. **Blocked on two things**: the remaining 8 frameworks, and Q2 (MSSP rate card) for the §7.4 step 6 build-vs-buy alternative. |
+| 3c Framework library (**inserted**) | in review | The remaining 8 frameworks written; all 11 now ship, 240 controls. Every framework carries a `sourceQuality` grade. Coverage-inflation guard reshaped to per-framework. |
+| 4 `scoring.ts` + `portfolio.ts` + tests | not started | This is the phase that produces the Essential / Recommended / Ideal bundles. **Now blocked on one thing**: Q2 (MSSP rate card) for the §7.4 step 6 build-vs-buy alternative. The framework half of this blocker cleared in Phase 3c. |
 | 5 Intake wizard UI | not started | Also scaffolds apps/web (Next.js) + Prisma/SQLite + server-action mutation layer. |
 | 6 Results dashboard | not started | |
 | 7 Catalog expansion (≥5 per category) | not started | |
@@ -41,7 +42,7 @@
 - 2026-09-09 — **`satisfiedBy` on a control is StackFit's own mapping, not part of any published standard**, and is stated as such in every framework file. It is deliberately conservative: requirements closed by process, physical control or cryptography carry no product category at all, so a bundle cannot claim coverage a purchase does not buy.
 - 2026-09-09 — **`maxScaleHint` from PROJECT_SPEC §5.3 became `scaleFloor` + `scaleCeiling`.** §7.3 hard-filters on both a floor and a ceiling, and a single hint cannot express a floor.
 - 2026-09-09 — **AssetInventory is flat and fully optional.** Flat because the sizing coefficients in `data/config/sizing-assumptions.yaml` will be keyed by the same key set; optional because scoping calls do not produce clean data, and an absent class means "not asked", read as zero.
-- 2026-09-09 — **⚠ Amends the day-one frameworks decision: 3 of 11 frameworks shipped, not all 11.** `nist-csf-2.0`, `cis-v8` and `pci-dss-4.0` are in, because those are what the seed catalog maps against and their control lists were verified against the publishers. The other 8 (HIPAA, ISO 27001:2022, SOC 2, GDPR, NIS2, CERT-In, RBI, DPDP 2023) are **outstanding and must land before Phase 4**, which is where framework selection actually promotes a category to mandatory. Writing 8 more mapping files in Phase 1 without sourcing each one would have been exactly the fabrication hard rule 2 forbids.
+- 2026-09-09 — **⚠ Amends the day-one frameworks decision: 3 of 11 frameworks shipped, not all 11.** `nist-csf-2.0`, `cis-v8` and `pci-dss-4.0` are in, because those are what the seed catalog maps against and their control lists were verified against the publishers. The other 8 (HIPAA, ISO 27001:2022, SOC 2, GDPR, NIS2, CERT-In, RBI, DPDP 2023) are **outstanding and must land before Phase 4**, which is where framework selection actually promotes a category to mandatory. Writing 8 more mapping files in Phase 1 without sourcing each one would have been exactly the fabrication hard rule 2 forbids. — **Closed in Phase 3c**: all 11 now ship, each carrying a `sourceQuality` grade that records how well-sourced it actually is.
 
 ### Phase 2
 
@@ -89,6 +90,62 @@ Wazuh has a zero licence fee and the highest three-year cost in the table — 4.
 **Verified end to end.** Tampering the committed Sentinel rate to USD 3.90 and running
 `pnpm prices:refresh` reported `DRIFT ... USD 3.90 → 4.30 (10.3%)` against Microsoft's live
 feed, and `--write` corrected it.
+
+### Phase 3c — framework library (inserted phase)
+
+- 2026-09-09 — **All 11 frameworks now ship**, closing the Phase 1 amendment. 240 controls
+  across HIPAA, ISO 27001:2022, SOC 2, GDPR, NIS2, CERT-In, RBI CSF and DPDP 2023, alongside
+  the three seeded in Phase 1. ISO carries all 93 Annex A controls, not just the
+  technological ones — omitting the governance and people controls would shrink the
+  denominator and make every bundle look better against ISO than it is.
+- 2026-09-09 — **Frameworks now carry a `sourceQuality` grade**, the compliance equivalent of
+  `pricingConfidence`: `publisher_verified`, `secondary_sources` or `provisional`. Some
+  publishers put their control list behind a paywall, a CAPTCHA or an unparseable PDF, and a
+  coverage claim built on a secondary source should not look identical to one read from the
+  standard itself. Anything below `publisher_verified` must say why in its `notes`, and a
+  test enforces that. **Only `cis-v8` is `publisher_verified`.**
+- 2026-09-09 — **`cert-in` and `rbi-csf` are `provisional`** — structure understood, exact
+  control identifiers unverified. Usable for shortlisting; **must be reconciled against the
+  originals before any client-facing coverage claim.** The CERT-In directions PDF is not
+  machine-readable and secondary sources use their own labelling; RBI Annex 1 could not be
+  read.
+- 2026-09-09 — **⚠ `nist-csf-2.0` and `pci-dss-4.0` were graded `secondary_sources` without a
+  recorded reason.** Notes were written stating what is checkable — that the control lists
+  were not confirmed line by line against CSWP 29 and the PCI SSC document library — rather
+  than asserting a retrieval failure nobody observed. **Worth your eye**: if these were in
+  fact read from the publisher, they should be regraded `publisher_verified`.
+- 2026-09-09 — **19 over-broad mappings removed.** Each claimed a product for a control closed
+  by policy, training, physical custody or cryptography — the rule `pci-dss-4.0.yaml`'s own
+  header already stated. Two files argued against themselves: HIPAA's Security Awareness and
+  Training mapped `email_security` under a note reading *"the training obligation itself is
+  not a purchase"*, and Transmission Security mapped `ngfw` under *"encryption in transit,
+  which is configuration rather than a product"*. Three HIPAA physical safeguards
+  (164.310.b/c/d.1) mapped to EDR while `164.310.a.1` in the same subpart correctly refused a
+  category. Also dropped: CIS Control 3 (Control 11 already claims backup — one purchase was
+  scoring against two controls) and RBI's DLP strategy (**this catalog has no DLP category**;
+  email security covers one egress channel of four, and the gap should show as a gap).
+- 2026-09-09 — **The coverage-inflation guard is per-framework, not library-wide.** The
+  original test asserted that fewer than half of all controls map to a product. That premise
+  holds for the broad standards — ISO 47%, HIPAA 41%, SOC 2 35% — but not for frameworks
+  written for practitioners: RBI 77%, CIS 72%, PCI DSS 67% are largely lists of technical
+  controls, where a high rate is honest. The library sits at **125/240 (52%)** and a
+  library-wide average is the wrong instrument at any threshold, because inflation happens in
+  one file and ten conservative files will hide it. Replaced with a per-framework ceiling of
+  85% (RBI, the densest honest file, is at 77%) plus the original strict assertion kept for
+  ISO / HIPAA / SOC 2, where it is actually true. GDPR and NIS2 are excluded from the strict
+  half: they are scoped to their security articles, so the denominator was filtered on
+  purpose and a high rate there means nothing.
+- 2026-09-09 — **Retention gained one entry, and the absences are documented.** `cert-in: 180`
+  (2022 Directions, rolling 180 days, stored within India). HIPAA is deliberately *not*
+  listed: 164.316(b)(2)(i)'s six-year rule covers policies and documentation, not audit logs.
+  GDPR, NIS2 and DPDP require logging without naming a period, so the 90-day default applies.
+  Sizing storage on an invented retention period would be exactly the fabrication hard rule 2
+  forbids.
+
+**Worth eyeballing.** Two clients with identical inventories but different frameworks now
+produce genuinely different mandatory sets, which is what the Phase 1 day-one decision was
+for. The mapping is conservative by design: a bundle cannot claim coverage a purchase does
+not buy, and 115 of 240 controls map to nothing at all.
 
 ## Open questions
 
