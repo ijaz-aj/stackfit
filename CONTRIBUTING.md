@@ -108,6 +108,14 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
 - Control ids are `<framework-id>:<control>` (`pci-dss-4.0:10`). `catalog:validate` fails if a
   product claims a control that no file in `data/frameworks/` defines, so adding a mapping
   means adding the control in the open.
+- **The Azure Retail Prices API (`https://prices.azure.com/api/retail/prices?$filter=...`) is
+  Microsoft's authoritative, unauthenticated price feed.** Use it for any Azure or Sentinel
+  price. The Sentinel pricing page and the `learn.microsoft.com` billing article both refuse to
+  quote figures on purpose. Microsoft does *not* publish standalone Defender for Endpoint P1/P2
+  pricing anywhere on its own site — only the bundled Defender Suite, a different SKU.
+- Money in the engine is integer minor units end to end. **Currency conversion is done in
+  BigInt**: INR minor units × a rate in millionths passes 2^53 at around INR 100 million.
+  Rounding is half-away-from-zero, not `Math.round`, which biases negative amounts.
 - `scripts/lib/validate-data.ts` holds the data-validation rules; `scripts/validate-catalog.ts`
   is a thin CLI over it and `test/data.test.ts` asserts the committed tree is clean. So
   `pnpm test` fails on a bad `data:` commit, not just the command someone forgot to run.

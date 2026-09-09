@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 2 — `sizing.ts` (in review)
+**Current phase:** 3 — `cost.ts` (in review)
 **Last updated:** 2026-09-09
 
 ## Phase log
@@ -9,9 +9,9 @@
 |---|---|---|
 | 0 Scaffold + CONTRIBUTING.md + tooling | done | pnpm monorepo, Vitest projects, engine + schema skeletons, 3 green smoke tests. `pnpm audit` clean. Next.js app + Prisma deferred to Phase 5. |
 | 1 Schemas + catalog format + 8 seed products | done | `packages/schema` populated; 3 frameworks + 3 catalog files + 8 products; real `catalog:validate`. Q2 (MSSP) did **not** block this phase — see below. |
-| 2 `sizing.ts` + tests | in review | `computeSizing` + `data/config/sizing-assumptions.yaml` (30 asset-class coefficients, each with a stated basis). Determinism test in place. 3 worked examples in `test/sizing-worked-examples.test.ts` with snapshotted figures to sanity-check. 100 tests green. |
-| 3 `cost.ts` + tests | not started | Needs `data/config/fx.yaml` + `labour-rates.yaml`. Q2 must be answered before the MSSP alternative can be costed. |
-| 4 `scoring.ts` + `portfolio.ts` + tests | not started | **Remaining 8 frameworks must land before this phase** — see decisions. |
+| 2 `sizing.ts` + tests | done | `computeSizing` + `data/config/sizing-assumptions.yaml` (30 asset-class coefficients, each with a stated basis). Determinism test in place. 3 worked examples in `test/sizing-worked-examples.test.ts`. |
+| 3 `cost.ts` + tests | in review | `computeProductCost` covering all 11 pricing models, plus money arithmetic in BigInt. `fx.yaml`, `labour-rates.yaml`, `cost-assumptions.yaml` written. Every catalog price is now sourced — no placeholders left. 145 tests green. |
+| 4 `scoring.ts` + `portfolio.ts` + tests | not started | This is the phase that produces the Essential / Recommended / Ideal bundles. **Blocked on two things**: the remaining 8 frameworks, and Q2 (MSSP rate card) for the §7.4 step 6 build-vs-buy alternative. |
 | 5 Intake wizard UI | not started | Also scaffolds apps/web (Next.js) + Prisma/SQLite + server-action mutation layer. |
 | 6 Results dashboard | not started | |
 | 7 Catalog expansion (≥5 per category) | not started | |
@@ -54,6 +54,28 @@
 
 **Worth eyeballing in the worked examples:** example A (60-staff retailer, PCI DSS) shows *more* storage than example B (320-staff firm) — 2.03 TB against 1.30 TB — despite less than half the ingest, purely because PCI DSS forces 365-day retention against B's 90. That is the tool working correctly, and it is exactly the kind of result that is worth being able to point at during a scoping call.
 
+### Phase 3
+
+- 2026-09-09 — **⚠ Deliberate deviation from the §7.2 formula: operational FTE is included in year 1.** The spec's `Year1 = licence + implementationServices + trainingCost + infraCost + hardwareCost` omits it, and `TCO(n) = Year1 + Σ Annual(2..n)` therefore counts ops FTE only from year 2. You are running the tool in year 1 too, and leaving it out understates exactly the open-source options hard rule 8 exists to keep honest — on the worked example it would have hidden about a third of Wazuh's three-year cost. **Flagging for your decision**: say the word and I will match the spec exactly instead.
+- 2026-09-09 — **Currency conversion is done in BigInt.** An amount in INR minor units multiplied by a rate in millionths passes 2^53 at around INR 100 million, where JavaScript numbers stop being exact. Acceptance test §12.7 forbids that drift, so there is a test converting 10^10 minor units and asserting the exact result.
+- 2026-09-09 — **Rounding is half-away-from-zero, not `Math.round`.** `Math.round(-0.5)` is `-0` and biases negative amounts (credits, discounts) upward. Every money figure is a whole number of minor units, asserted in the determinism test.
+- 2026-09-09 — **Infrastructure is charged only for products that can be self-hosted** (`on_prem` or `air_gapped` in their deployment modes) and is sized from GB/day and storage TB. A SaaS product carries no infra line because the vendor is already charging for theirs.
+- 2026-09-09 — **The discount assumption is applied and announced, never applied silently** (§6 rule 5). Bands are matched on annual list licence spend, and whenever one bites the rationale says "This is an assumption, not a quoted discount."
+- 2026-09-09 — **The licence uplift compounds on licence and support only.** People and infrastructure are re-costed each year from current rates rather than inflated, because the rate cards are the thing that should be re-read, not multiplied.
+- 2026-09-09 — **Every pricing model's billable unit is an explicit mapping**, not a guess: per-endpoint uses `endpointCount`, per-node uses `serverCount`, per-asset uses `monitoredAssetCount`, consumption uses `gbPerDay × 365`. Getting these wrong is the easiest way to be confidently incorrect, so each is named in code and tested individually.
+
+**Worth eyeballing in `test/cost-worked-examples.test.ts`.** The real catalog costed for the 60-staff PCI DSS retailer, US rates, USD, 3-year TCO:
+
+| | Licence/yr | Ops FTE | 3-yr TCO |
+|---|---|---|---|
+| CrowdStrike Falcon Go | 2,700 | 0.11 | **71,180** |
+| Nessus Professional | 4,790 | 0.23 | 144,232 |
+| Greenbone OpenVAS (free) | 0 | 0.29 | 166,452 |
+| Microsoft Sentinel | 17,833 | 0.32 | 252,957 |
+| Wazuh | 0 | 0.53 | **322,867** |
+
+Wazuh has a zero licence fee and the highest three-year cost in the table — 4.5× CrowdStrike — entirely on people. That is the comparison the tool exists to make. Re-run in INR at Indian labour rates and the ordering changes, which is the regional rate card doing its job.
+
 ## Open questions
 
 - **PROJECT_SPEC §13 Q2 — In-house MSSP provider.** Include in v1? If yes, what shape is `data/config/mssp-rate-card.yaml`: per endpoint/month, per GB/day ingested/month, flat tiers by scale class, or a blend (base platform fee + per-endpoint add-on + per-GB/day ingest)? **Did not block Phase 1** — the `mdr` product category exists in the schema and no MSSP record was seeded. It **does** block the §7.4 step 6 "MSSP alternative per bundle" work, so it must be answered before Phase 3 costing.
@@ -62,17 +84,43 @@
 ## Known placeholders
 
 <!-- every catalog entry still on placeholder pricing, so they can be chased down before any client sees output -->
-<!-- `pnpm catalog:validate` prints this list; keep the two in sync -->
+<!-- `pnpm catalog:validate` prints this list; keep it in sync -->
 
-| Product | Tier | Why | What to chase |
-|---|---|---|---|
-| `microsoft-sentinel` | `pay-as-you-go` | Microsoft retired the flat per-GB list rate from the Sentinel pricing page; it now redirects to the Azure pricing calculator, which is region- and commitment-tier specific. | Pay-as-you-go and commitment-tier per-GB rates for the client's Azure region. |
-| `microsoft-defender-for-endpoint` | `plan-2` | No standalone list price published for P1 or P2. The product page lists only the bundled Defender Suite at USD 12.00/user/month billed yearly, which is a different SKU. | Per-plan pricing from Microsoft 365 licensing or the reseller. Note most clients reach P2 via an E5 bundle, which makes the marginal cost near zero. |
+**None.** Both Phase 1 placeholders were closed by research on 2026-09-09:
+
+- `microsoft-sentinel` — now `public_list` at USD 4.30/GB, read from the **Azure Retail Prices
+  API** (`prices.azure.com`), which is Microsoft's own authoritative price feed. Both the
+  Sentinel pricing page and the `learn.microsoft.com` billing article deliberately decline to
+  quote a figure, so the API is the only primary source. Two caveats are recorded on the entry:
+  the rate is region-specific (East US is at the cheap end) and anything over 100 GB/day should
+  be costed on a commitment tier instead, which ran about 30% cheaper in the same API response.
+- `microsoft-defender-for-endpoint` — now `analyst_estimate`, P1 at USD 3.00 and P2 at USD 5.20
+  per user per month, with a P1 tier added. **Deliberately not `public_list`:** Microsoft
+  publishes no standalone per-plan price on any of its own pages, only the bundled Defender
+  Suite at USD 12.00/user/month, which is a different SKU. These are the consistently reported
+  list rates from licensing specialists, corroborated across independent sources, but they are
+  not vendor-published. The entry says so.
+
+### Sourced, but still worth arguing with
+
+Nothing below is a placeholder; all of it is sourced or reasoned. It is listed because it is
+where the model is most likely to be *wrong* rather than merely uncertain.
+
+| What | Confidence | Why it matters |
+|---|---|---|
+| `labour-rates.yaml` | analyst estimate | Decides whether open source looks cheap or expensive. Salary aggregators disagree wildly — PayScale puts a UK security engineer at GBP 39,123, which looks low against the London market, so that figure is set above the aggregator average deliberately. The `apac` row is the weakest in the file. |
+| `cost-assumptions.yaml` discount bands | analyst estimate | 0% / 15% / 25% by deal size. Stated out loud in the rationale whenever applied, never silent. |
+| `cost-assumptions.yaml` infra rates | analyst estimate | Crude on purpose. The point is that self-hosting is never free, not vCPU-level accuracy. |
+| MDE P1/P2 rates | analyst estimate | See above. The number that usually decides the deal is whether the client is on E3 or E5, not the standalone rate. |
+| `sizing-assumptions.yaml` coefficients | analyst estimate | Ranked below. |
 
 Also outstanding (not placeholders, simply not written yet):
 
-- `data/config/fx.yaml` — schema shipped, data deferred to Phase 3. An FX rate committed now would be stale before the code that reads it exists, and it has to be sourced on the day it is used.
-- `data/config/labour-rates.yaml` — Phase 3.
+- `data/config/fx.yaml` — **written**, USD base, rates read 2026-09-09 (1 USD = 94.843169 INR,
+  0.860279 EUR). ⚠ Already going stale. Re-read before any proposal goes out; a three-year TCO
+  quoted at a year-old rate is wrong by however much the currency has moved.
+- GBP is **not** a supported scenario currency, so the UK labour rate is held in USD. Worth
+  adding if UK engagements are likely.
 
 `data/config/sizing-assumptions.yaml` is written, but **every coefficient in it is an
 analyst estimate**, not a measured figure. The ones most worth arguing with, in order of
