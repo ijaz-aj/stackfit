@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 4 — scoring + portfolio, reviewed and fixed (in review)
+**Current phase:** 4 — scoring + portfolio, reviewed, fixed, acceptance-tested (in review)
 **Last updated:** 2026-09-09
 
 ## Phase log
@@ -316,6 +316,58 @@ All seven are fixed and each is pinned by a regression test that names the wrong
 established in one stage was not carried into the next*. Weighted units and
 discount-consistency were each solved once and dropped a file later. Worth checking for
 explicitly when `coverage.ts` and the web app land.
+
+### Phase 4 — §12 acceptance scenarios, and the defect they found
+
+- 2026-09-09 — **The PROJECT_SPEC §12 acceptance scenarios now exist**, in `test/scenarios/`.
+  CONTRIBUTING.md has treated them as a standing gate since Phase 0 and they had never been written —
+  scenarios 1–5 all need `scoring.ts` and `portfolio.ts`, which only landed in Phase 4. Until
+  now the engine had 244 unit tests over fixtures and **nothing that ran the pipeline end to
+  end against committed data**, which is exactly where both Phase 4 review defects lived.
+- 2026-09-09 — **They live at the repo root, not `packages/engine/test/scenarios/`** as CONTRIBUTING.md
+  originally said. `vitest.config.ts` records a deliberate convention that package-level tests do
+  not read files, and an acceptance scenario that does not run the committed catalog is not an
+  acceptance scenario. CONTRIBUTING.md's path reference was updated to match.
+- 2026-09-09 — **⚠ They found a third defect on first run: the budget cap was being tested
+  against a total that included salary.** `annualRecurring` includes operational FTE, and §7.4's
+  knapsack compared it to `budget.annualCap` — charging the client's own security team to a
+  purchase order, once per product, for staff already on payroll. On the §12.1 retail scenario
+  at a USD 25k/yr cap:
+
+  | product | licence | ops FTE cost | annualRecurring |
+  |---|---|---|---|
+  | wazuh | 0 | 89,519 | **92,194** |
+  | crowdstrike-falcon-go | 2,700 | 18,573 | **21,273** |
+
+  Every open-source option was unaffordable on salary alone and CrowdStrike was the only product
+  in the catalog that fitted. **The tool was telling a 60-person retailer it could not afford a
+  free SIEM** — inverting hard rule 8, which exists to stop open source looking free, not to
+  price it out of a purchase order.
+
+- 2026-09-09 — **Money is now constrained against money, and people against people.**
+  `ProductCost.procurementAnnual` (licence + support + infrastructure) is what the budget cap,
+  the cheapest-acceptable ordering, the mandatory floor and the shortfall are judged against.
+  People remain constrained via the ops-fit score and the bundle FTE warning. **TCO is unchanged
+  and still includes operational FTE** (§7.2, hard rule 8) — and so is the MSSP build-vs-buy
+  comparison, deliberately: a managed service replaces staff effort, so a build figure excluding
+  people would flatter the managed option.
+
+  The same scenario now returns Nessus + CrowdStrike + Graylog at **USD 12,840/yr spend**, states
+  **USD 141,178/yr total** once people are counted, warns 0.76 FTE is needed against 0.5
+  available, and reports ngfw/iam/pam/ndr unfunded because the catalog has no product for them.
+
+**⚠ Two scenarios are limited by the catalog** (8 products, 3 categories). §12.1 cannot verify a
+firewall or IAM selection; §12.2 cannot verify that MDR outranks a self-hosted SIEM, because no
+MDR product exists. Each asserts what is verifiable today and names what is not — **both must be
+tightened when Phase 7 lands**, and the tests say so inline.
+
+**Worth deciding before Phase 7:** `procurementBias: 'open_source_first'` currently only shifts
+scoring weights, and per §7.3 it *raises* the ops-fit weight — which penalises open source,
+because operability is its weak point. That is what the spec asks for and it is honest, but it
+means nothing in the tool actually prefers open source for a buyer who asked for it: §12.3 now
+returns Graylog alongside two commercial products. Either the field is a *guard* (current
+behaviour, and the name is misleading) or it should also give OSS licence models a modest
+ranking preference. Not changed unilaterally — it directly alters what clients get recommended.
 
 ## Open questions
 - **opsBurden and implementation figures have no confidence field.** Every one in the seed catalog is an analyst estimate, flagged in each product's `notes`, but the schema cannot distinguish an estimate from a measured figure the way `pricingConfidence` does for prices. Worth adding an `opsBurdenConfidence` before the catalog grows in Phase 7.
