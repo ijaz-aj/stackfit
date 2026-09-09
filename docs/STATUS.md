@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 4 — scoring + portfolio (in review)
+**Current phase:** 4 — scoring + portfolio, reviewed and fixed (in review)
 **Last updated:** 2026-09-09
 
 ## Phase log
@@ -14,7 +14,7 @@
 | 3b Price freshness (**inserted, not in PROJECT_SPEC §11**) | in review | Prices now age and say so. `catalog:staleness` + `prices:refresh`. Verified live against the Azure meter feed. Inserted ahead of catalog expansion on purpose — see the decision below. |
 | 3c Framework library (**inserted**) | in review | The remaining 8 frameworks written; all 11 now ship, 240 controls. Every framework carries a `sourceQuality` grade. Coverage-inflation guard reshaped to per-framework. |
 | 3d Infrastructure fit (**inserted**) | in review | `infrastructure.ts` — estate shape and per-category relevance from the asset inventory. `category-weights.yaml`, `mssp-rate-card.yaml`. Q2 answered, §7.2 deviation decided, NIST regraded. |
-| 4 `scoring.ts` + `portfolio.ts` + tests | in review | Both stages plus all seven §7.4 steps. `scoring-weights.yaml`, `portfolio-assumptions.yaml`. 237 tests green. |
+| 4 `scoring.ts` + `portfolio.ts` + tests | in review | Both stages plus all seven §7.4 steps. `scoring-weights.yaml`, `portfolio-assumptions.yaml`. **Reviewed; 7 defects found and fixed**, each pinned by a regression. 244 tests green. |
 | 5 Intake wizard UI | not started | Also scaffolds apps/web (Next.js) + Prisma/SQLite + server-action mutation layer. |
 | 6 Results dashboard | not started | |
 | 7 Catalog expansion (≥5 per category) | not started | |
@@ -289,6 +289,33 @@ pricing rule written with the wrong keys (`bands`/`amount` instead of `tiers`/`f
 priced silently at **zero** — which made every portfolio budget assertion vacuous while the
 tests still passed. It now parses through the `Product` schema. Worth checking any other
 fixture that casts.
+
+### Phase 4 review — seven defects found and fixed
+
+A deliberate review pass over the engine, verified by running the code rather than reading it.
+All seven are fixed and each is pinned by a regression test that names the wrong answer.
+
+| # | Severity | Defect |
+|---|---|---|
+| 1 | High | **Asset coverage counted raw assets.** A SIEM ingesting every server, DC and firewall scored **0.5/100** in a 5,000-seat estate — mailboxes outnumbered infrastructure one-for-one, on the heaviest-weighted dimension. Now uses weighted surface units: the same case scores **18.5**, a real gap rather than a headcount artefact. |
+| 2 | High | **The suite discount reached `annualRecurring` but not `tco`.** Two fields in one selection disagreed about the same product, and the wrong one was the headline number. The discount now goes through `computeProductCost`, so licence, support, cash-flow and TCO move together. |
+| 3 | Medium | **The MSSP alternative ignored the bundle**, so Essential and Ideal quoted identically. Service levels now declare which categories they operate; the alternative reports what it replaces, what it does not, and the residual. |
+| 4 | Medium | **A mandated category the estate had nothing for vanished silently** — neither mandatory nor reported. Now surfaces as an explicit scope question. |
+| 5 | Low | **`minimumViableAnnual` counted a mandatory category with no candidate as zero**, so it could be quoted below what buys compliance. Now declared a lower bound, with the missing categories named. |
+| 6 | Low | **Essential claimed "the budget is tight" with no cap set** — false client-facing text. |
+| 7 | Trivial | Dead `SCALE_ORDER` export; inline import type. |
+
+- 2026-09-09 — **Stacked discounts multiply, they do not add.** 25% then a further 10% is 32.5%
+  off, not 35%. Relevant now that the suite discount composes with the volume band.
+- 2026-09-09 — **MSSP service levels declare `coveredCategories`.** Deliberately conservative:
+  identity, privileged access and backup are excluded at every level, because providers will
+  monitor them but running them is rarely on the contract. That is the line buyers most often
+  assume is further right than it is, and getting it wrong flatters the managed option.
+
+**The pattern worth remembering:** findings 1 and 2 share a root cause — *a principle
+established in one stage was not carried into the next*. Weighted units and
+discount-consistency were each solved once and dropped a file later. Worth checking for
+explicitly when `coverage.ts` and the web app land.
 
 ## Open questions
 - **opsBurden and implementation figures have no confidence field.** Every one in the seed catalog is an analyst estimate, flagged in each product's `notes`, but the schema cannot distinguish an estimate from a measured figure the way `pricingConfidence` does for prices. Worth adding an `opsBurdenConfidence` before the catalog grows in Phase 7.
