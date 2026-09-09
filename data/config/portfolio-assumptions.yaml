@@ -35,6 +35,21 @@ suiteIntegrationBonusPoints: 5
 # already in the TCO.
 minimumAnnualisedCostMinor: 100
 
+# Ranking points for an open-source or open-core product when the client's
+# procurementBias is open_source_first.
+#
+# §7.3 has that bias raise the ops-fit weight, which is honest — the failure
+# mode of open source is operational — but on its own it *penalises* open
+# source, because operability is where it is weakest. The result was that a
+# buyer who asked for open source got commercial recommendations, and §12.3's
+# "OSS stack recommended" went unmet.
+#
+# Set at 8: enough to win a close call, not enough to overturn a product that is
+# materially better for this client. A stated preference should tilt a
+# recommendation, not dictate it — and the ops-fit weight is still raised, so an
+# open-source tool the client cannot operate still loses.
+openSourcePreferencePoints: 8
+
 basis: >-
   The 10% suite discount is the low end of what vendors typically concede for a
   second product on the same paper, chosen low deliberately: overstating it
