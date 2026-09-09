@@ -1,13 +1,18 @@
 // PROJECT_SPEC §12.6 and CONTRIBUTING.md: same input twice → identical output.
 //
 // This test must stay green for the life of the project. It grows a case per
-// pipeline stage as each one lands; today that is sizing.
+// pipeline stage as each one lands; today that is sizing and cost.
 
 import type { AssetInventory } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { computeSizing } from '../src/index.js';
-import { buildClientProfile, buildSizingAssumptions } from './fixtures.js';
+import { computeProductCost, computeSizing } from '../src/index.js';
+import {
+  buildClientProfile,
+  buildCostInputs,
+  buildProduct,
+  buildSizingAssumptions,
+} from './fixtures.js';
 
 const assumptions = buildSizingAssumptions({
   windowsEndpoints: { eventsPerSecond: 0.2, role: 'endpoint', monitored: true },
@@ -82,5 +87,70 @@ describe('determinism', () => {
     const fromReordered = computeSizing(reordered, profile, assumptions);
 
     expect(JSON.stringify(fromReordered)).toBe(JSON.stringify(fromOriginal));
+  });
+});
+
+describe('determinism — cost', () => {
+  const sizing = computeSizing(inventory, profile, assumptions);
+  const costInputs = buildCostInputs();
+
+  // Awkward per-unit prices, so any rounding drift would compound visibly
+  // rather than cancelling on round numbers.
+  const product = buildProduct({
+    pricing: [
+      { model: 'per_endpoint_year', unitPrice: { amountMinor: 5999, currency: 'USD' } },
+      {
+        model: 'consumption',
+        consumptionUnit: 'GB',
+        unitPrice: { amountMinor: 433, currency: 'USD' },
+      },
+    ],
+    deploymentModes: ['on_prem', 'air_gapped'],
+    opsBurden: { baseFte: 0.37, ftePerThousandAssets: 0.23 },
+    implementation: { effortDays: 17, skillLevel: 'security_engineer', typicalWeeks: 7 },
+  });
+
+  const tier = product.tiers[0];
+  if (tier === undefined) throw new Error('fixture product has no tiers');
+
+  it('produces a byte-identical cost for the same input', () => {
+    const first = computeProductCost(product, tier, sizing, profile, costInputs);
+    const second = computeProductCost(product, tier, sizing, profile, costInputs);
+
+    expect(JSON.stringify(second)).toBe(JSON.stringify(first));
+  });
+
+  it('produces the same result from a structurally identical but distinct input', () => {
+    const first = computeProductCost(product, tier, sizing, profile, costInputs);
+    const second = computeProductCost(
+      structuredClone(product),
+      structuredClone(tier),
+      structuredClone(sizing),
+      structuredClone(profile),
+      structuredClone(costInputs),
+    );
+
+    expect(JSON.stringify(second)).toBe(JSON.stringify(first));
+  });
+
+  it('keeps every money figure an integer number of minor units (hard rule 1)', () => {
+    const cost = computeProductCost(product, tier, sizing, profile, costInputs);
+    const amounts = [
+      cost.licenceListAnnual,
+      cost.licenceAnnual,
+      cost.supportAnnual,
+      cost.infraAnnual,
+      cost.opsFteAnnual,
+      cost.implementationOneTime,
+      cost.trainingOneTime,
+      cost.year1,
+      cost.annualRecurring,
+      cost.tco,
+      ...cost.cashflowByYear,
+    ];
+
+    for (const amount of amounts) {
+      expect(Number.isSafeInteger(amount.amountMinor)).toBe(true);
+    }
   });
 });

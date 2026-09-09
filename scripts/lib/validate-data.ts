@@ -8,7 +8,14 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { CatalogFile, Framework, FxConfig, SizingAssumptions } from '@stackfit/schema';
+import {
+  CatalogFile,
+  CostAssumptions,
+  Framework,
+  FxConfig,
+  LabourRates,
+  SizingAssumptions,
+} from '@stackfit/schema';
 import { parse as parseYaml } from 'yaml';
 
 export interface ValidationIssue {
@@ -178,6 +185,10 @@ export function validateDataTree(dataDir: string): DataValidationResult {
       validate(file, FxConfig, raw);
     } else if (file.endsWith('sizing-assumptions.yaml')) {
       validate(file, SizingAssumptions, raw);
+    } else if (file.endsWith('labour-rates.yaml')) {
+      validate(file, LabourRates, raw);
+    } else if (file.endsWith('cost-assumptions.yaml')) {
+      validate(file, CostAssumptions, raw);
     } else {
       report(file, '(root)', 'no schema is wired up for this config file, so it is unvalidated');
     }
