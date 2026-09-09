@@ -20,7 +20,7 @@ import {
   type OpsBurden,
   type DeviceClass,
   type PricingRule,
-  type Product,
+  Product,
   type ScoringWeights,
   type SizingAssumptions,
 } from '@stackfit/schema';
@@ -180,6 +180,12 @@ interface ProductOverrides {
  * with a source and confidence, so a test says only what it cares about.
  */
 export function buildProduct(overrides: ProductOverrides = {}): Product {
+  // Parsed rather than cast: a malformed fixture (a pricing rule with the wrong
+  // key, say) would otherwise price at zero and quietly make a test vacuous.
+  return Product.parse(buildProductShape(overrides));
+}
+
+function buildProductShape(overrides: ProductOverrides = {}): unknown {
   const pricing = (overrides.pricing ?? [{ model: 'zero_licence' }]).map((rule) => ({
     termYears: 1,
     pricingConfidence: 'public_list' as const,
