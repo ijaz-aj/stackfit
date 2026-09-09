@@ -98,3 +98,17 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
 - Keep `pnpm audit` clean (hard rule 9). The Vitest/Vite/esbuild chain is the usual source
   of noise — `vite` is pinned as a direct devDependency so it resolves to a patched major
   instead of a stale transitive one.
+- **Catalog YAML writes money in minor units**: `unitPrice: { amountMinor: 5999, currency: USD }`
+  is USD 59.99. Placeholder prices must use the sentinel `99999999` *and* a note containing
+  `TODO`; the `PricingRule` schema rejects a plausible-looking invented number wearing the
+  placeholder flag.
+- **A YAML list item containing `": "` becomes a map, not a string.** Bit us on
+  `- Go is the entry bundle: no threat hunting`. Quote any bullet with a colon in it.
+  `catalog:validate` catches it as `Expected string, received object`.
+- Control ids are `<framework-id>:<control>` (`pci-dss-4.0:10`). `catalog:validate` fails if a
+  product claims a control that no file in `data/frameworks/` defines, so adding a mapping
+  means adding the control in the open.
+- `scripts/lib/validate-data.ts` holds the data-validation rules; `scripts/validate-catalog.ts`
+  is a thin CLI over it and `test/data.test.ts` asserts the committed tree is clean. So
+  `pnpm test` fails on a bad `data:` commit, not just the command someone forgot to run.
+  That root-level `test/` directory is its own Vitest project, named `data`.

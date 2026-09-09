@@ -1,17 +1,17 @@
 # Status
 
-**Current phase:** 0 — scaffold (in review)
+**Current phase:** 1 — schemas + catalog format + seed products (in review)
 **Last updated:** 2026-09-09
 
 ## Phase log
 
 | Phase | State | Notes |
 |---|---|---|
-| 0 Scaffold + CONTRIBUTING.md + tooling | in review | pnpm monorepo, Vitest projects, engine + schema skeletons, 3 green smoke tests. `pnpm audit` clean. Next.js app + Prisma deferred to Phase 5. |
-| 1 Schemas + catalog format + 8 seed products | not started | Needs Q2 (MSSP rate-card shape) answered first. |
-| 2 `sizing.ts` + tests | not started | Determinism test lands here. |
-| 3 `cost.ts` + tests | not started | |
-| 4 `scoring.ts` + `portfolio.ts` + tests | not started | |
+| 0 Scaffold + CONTRIBUTING.md + tooling | done | pnpm monorepo, Vitest projects, engine + schema skeletons, 3 green smoke tests. `pnpm audit` clean. Next.js app + Prisma deferred to Phase 5. |
+| 1 Schemas + catalog format + 8 seed products | in review | `packages/schema` populated; 3 frameworks + 3 catalog files + 8 products; real `catalog:validate`. 58 tests green. Q2 (MSSP) did **not** block this phase — see below. |
+| 2 `sizing.ts` + tests | not started | Determinism test lands here. Needs `data/config/sizing-assumptions.yaml`. |
+| 3 `cost.ts` + tests | not started | Needs `data/config/fx.yaml` + `labour-rates.yaml`. Q2 must be answered before the MSSP alternative can be costed. |
+| 4 `scoring.ts` + `portfolio.ts` + tests | not started | **Remaining 8 frameworks must land before this phase** — see decisions. |
 | 5 Intake wizard UI | not started | Also scaffolds apps/web (Next.js) + Prisma/SQLite + server-action mutation layer. |
 | 6 Results dashboard | not started | |
 | 7 Catalog expansion (≥5 per category) | not started | |
@@ -30,15 +30,38 @@
 - 2026-09-09 — **No vendor include/exclude list.** Every vendor is eligible; recommendations are on merit + infra fit (on-prem / SaaS / cloud / hybrid / air-gapped) + framework fit, each with an operations-cost estimate. A `partnerStatus` field can be added later if reseller economics start to matter. (Q5)
 - 2026-09-09 — **Phase 0 scope trimmed to the spec §11 DoD.** `apps/web` (Next.js, Tailwind, shadcn/ui, Recharts, Zustand) and Prisma/SQLite deferred to Phase 5; `docx`/`react-pdf`/`xlsx` to Phase 8; real `catalog:validate` logic to Phase 1 (stubbed now). `pnpm dev` and `pnpm db:push` are placeholder scripts until Phase 5.
 
+### Phase 1
+
+- 2026-09-09 — **Catalog YAML writes prices in minor units**, e.g. `unitPrice: { amountMinor: 5999, currency: USD }` for USD 59.99. Less readable than `59.99`, and deliberately so: hard rule 1 says no float, and this way no parse step ever has to round one.
+- 2026-09-09 — **Placeholder pricing must use the sentinel `99999999` plus a note containing `TODO`.** Enforced in the `PricingRule` schema, so an invented-but-plausible number cannot hide behind the placeholder flag. `zero_licence` still requires a source — a free licence is a claim about the licence, and needs a link to it.
+- 2026-09-09 — **Price sources and capability sources are separate.** `PricingRule.sources` backs the number; `Product.sources` backs the platform-support and licence-model claims. Both are mandatory. PROJECT_SPEC §5.3 put a single `sources` at product level; §6 requires one per price, and §6 wins.
+- 2026-09-09 — **Control ids are namespaced `<framework-id>:<control>`** (`nist-csf-2.0:DE.CM`, `pci-dss-4.0:10`). `catalog:validate` fails if a product claims a control that does not exist in `data/frameworks/` — hard rule 2 covers invented compliance mappings, not just invented prices.
+- 2026-09-09 — **Frameworks are held at Category / Control / Requirement level, not Subcategory / Safeguard level.** A product category ("a SIEM") is a meaningful answer to "NIST CSF DE.CM" and not to "DE.CM-01". CIS Implementation Groups (IG1/IG2/IG3) select Safeguards, so IG filtering arrives if and when Safeguards do.
+- 2026-09-09 — **`satisfiedBy` on a control is StackFit's own mapping, not part of any published standard**, and is stated as such in every framework file. It is deliberately conservative: requirements closed by process, physical control or cryptography carry no product category at all, so a bundle cannot claim coverage a purchase does not buy.
+- 2026-09-09 — **`maxScaleHint` from PROJECT_SPEC §5.3 became `scaleFloor` + `scaleCeiling`.** §7.3 hard-filters on both a floor and a ceiling, and a single hint cannot express a floor.
+- 2026-09-09 — **AssetInventory is flat and fully optional.** Flat because the sizing coefficients in `data/config/sizing-assumptions.yaml` will be keyed by the same key set; optional because scoping calls do not produce clean data, and an absent class means "not asked", read as zero.
+- 2026-09-09 — **⚠ Amends the day-one frameworks decision: 3 of 11 frameworks shipped, not all 11.** `nist-csf-2.0`, `cis-v8` and `pci-dss-4.0` are in, because those are what the seed catalog maps against and their control lists were verified against the publishers. The other 8 (HIPAA, ISO 27001:2022, SOC 2, GDPR, NIS2, CERT-In, RBI, DPDP 2023) are **outstanding and must land before Phase 4**, which is where framework selection actually promotes a category to mandatory. Writing 8 more mapping files in Phase 1 without sourcing each one would have been exactly the fabrication hard rule 2 forbids.
+
 ## Open questions
 
-- **PROJECT_SPEC §13 Q2 — In-house MSSP provider.** Include in v1? If yes, what shape is `data/config/mssp-rate-card.yaml`: per endpoint/month, per GB/day ingested/month, flat tiers by scale class, or a blend (base platform fee + per-endpoint add-on + per-GB/day ingest)? Needed before Phase 1 catalog work.
+- **PROJECT_SPEC §13 Q2 — In-house MSSP provider.** Include in v1? If yes, what shape is `data/config/mssp-rate-card.yaml`: per endpoint/month, per GB/day ingested/month, flat tiers by scale class, or a blend (base platform fee + per-endpoint add-on + per-GB/day ingest)? **Did not block Phase 1** — the `mdr` product category exists in the schema and no MSSP record was seeded. It **does** block the §7.4 step 6 "MSSP alternative per bundle" work, so it must be answered before Phase 3 costing.
+- **opsBurden and implementation figures have no confidence field.** Every one in the seed catalog is an analyst estimate, flagged in each product's `notes`, but the schema cannot distinguish an estimate from a measured figure the way `pricingConfidence` does for prices. Worth adding an `opsBurdenConfidence` before the catalog grows in Phase 7.
 
 ## Known placeholders
 
 <!-- every catalog entry still on placeholder pricing, so they can be chased down before any client sees output -->
+<!-- `pnpm catalog:validate` prints this list; keep the two in sync -->
 
-_None yet — catalog starts in Phase 1._
+| Product | Tier | Why | What to chase |
+|---|---|---|---|
+| `microsoft-sentinel` | `pay-as-you-go` | Microsoft retired the flat per-GB list rate from the Sentinel pricing page; it now redirects to the Azure pricing calculator, which is region- and commitment-tier specific. | Pay-as-you-go and commitment-tier per-GB rates for the client's Azure region. |
+| `microsoft-defender-for-endpoint` | `plan-2` | No standalone list price published for P1 or P2. The product page lists only the bundled Defender Suite at USD 12.00/user/month billed yearly, which is a different SKU. | Per-plan pricing from Microsoft 365 licensing or the reseller. Note most clients reach P2 via an E5 bundle, which makes the marginal cost near zero. |
+
+Also outstanding (not placeholders, simply not written yet):
+
+- `data/config/fx.yaml` — schema shipped, data deferred to Phase 3. An FX rate committed now would be stale before the code that reads it exists, and it has to be sourced on the day it is used.
+- `data/config/sizing-assumptions.yaml` — Phase 2.
+- `data/config/labour-rates.yaml` — Phase 3.
 
 ## Environment notes
 
