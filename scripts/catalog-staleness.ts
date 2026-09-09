@@ -7,8 +7,8 @@
  */
 import { join } from 'node:path';
 
-import { loadCatalog, loadFreshnessPolicy } from './lib/load-config.js';
-import { assessCatalogStaleness, type PriceStatus } from './lib/staleness.js';
+import { loadCatalog, loadFreshnessPolicy, loadFxConfig, loadMsspRateCard } from './lib/load-config.js';
+import { assessCatalogStaleness, assessConfigStaleness, type PriceStatus } from './lib/staleness.js';
 
 /** Today, read once here — the boundary where a clock is allowed. */
 function today(): string {
@@ -34,7 +34,32 @@ function describe(status: PriceStatus): string {
 
 const DATA_DIR = join(process.cwd(), 'data');
 const asOf = today();
-const report = assessCatalogStaleness(loadCatalog(DATA_DIR), asOf, loadFreshnessPolicy(DATA_DIR));
+const policy = loadFreshnessPolicy(DATA_DIR);
+const report = assessCatalogStaleness(loadCatalog(DATA_DIR), asOf, policy);
+
+// Config-level prices. These are prices too, and before they were walked here
+// they aged silently — the MSSP rate card and the FX table both carry an asOf.
+const msspCard = loadMsspRateCard(DATA_DIR);
+const fx = loadFxConfig(DATA_DIR);
+const configReport = assessConfigStaleness(
+  [
+    {
+      file: 'config/mssp-rate-card.yaml',
+      confidence: msspCard.confidence,
+      sources: msspCard.sources,
+      checkUrl: msspCard.sources[0]?.url,
+    },
+    {
+      // FX is a public list price by nature: the rate is published, not estimated.
+      file: 'config/fx.yaml',
+      confidence: 'public_list',
+      sources: [{ asOf: fx.asOf }, ...fx.sources],
+      checkUrl: fx.sources[0]?.url,
+    },
+  ],
+  asOf,
+  policy,
+);
 
 console.log(`catalog:staleness — ${report.all.length} price(s) assessed as at ${asOf}\n`);
 
@@ -66,14 +91,32 @@ if (report.undeclared.length > 0) {
   console.log('');
 }
 
-const fresh =
-  report.all.length - report.stale.length - report.ageing.length - report.unknown.length;
+// ---- Config-level prices, reported separately so the two backlogs stay legible.
+console.log(`config prices — ${configReport.all.length} assessed`);
+for (const status of configReport.all) {
+  const mark =
+    status.freshness.status === 'fresh' ? 'ok  ' : status.freshness.status.toUpperCase().padEnd(4);
+  console.log(
+    `  ${mark} ${status.productId} — ${status.freshness.ageDays ?? '?'} days old, ` +
+      `allowance ${status.freshness.maxAgeDays}` +
+      (status.checkUrl !== undefined ? `\n       → ${status.checkUrl}` : ''),
+  );
+}
+console.log('');
+
+const staleCount = report.stale.length + configReport.stale.length;
+const ageingCount = report.ageing.length + configReport.ageing.length;
+const unknownCount = report.unknown.length + configReport.unknown.length;
+const total = report.all.length + configReport.all.length;
+const fresh = total - staleCount - ageingCount - unknownCount;
+
 console.log(
-  `Summary: ${fresh} fresh, ${report.ageing.length} ageing, ${report.stale.length} stale, ` +
-    `${report.unknown.length} undateable. ${report.machineRefreshable.length} can be refreshed automatically.`,
+  `Summary: ${fresh} fresh, ${ageingCount} ageing, ${staleCount} stale, ${unknownCount} undateable, ` +
+    `across ${report.all.length} catalog and ${configReport.all.length} config price(s). ` +
+    `${report.machineRefreshable.length} can be refreshed automatically.`,
 );
 
-if (report.stale.length > 0 || report.unknown.length > 0) {
+if (staleCount > 0 || unknownCount > 0) {
   console.error('\ncatalog:staleness — FAILED: stale or undateable prices present.');
   process.exitCode = 1;
 }

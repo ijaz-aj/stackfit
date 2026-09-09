@@ -6,10 +6,10 @@
 // assert a byte-identical result.
 
 import type {
+  PricingConfidence,
   FreshnessPolicy,
   FreshnessStatus,
   IsoDate,
-  PricingRule,
   ProductTier,
 } from '@stackfit/schema';
 
@@ -47,23 +47,37 @@ function fromEpochDays(days: number): IsoDate {
   return iso.slice(0, 10);
 }
 
-/** The latest date among a rule's sources — the freshest evidence it has. */
-function newestSourceDate(rule: PricingRule): IsoDate | undefined {
+/** The latest date among a set of sources — the freshest evidence they carry. */
+function newestSourceDate(sources: readonly { asOf: IsoDate }[]): IsoDate | undefined {
   let newest: IsoDate | undefined;
-  for (const source of rule.sources) {
+  for (const source of sources) {
     if (newest === undefined || source.asOf > newest) newest = source.asOf;
   }
   return newest;
 }
 
+/**
+ * Anything that carries a price, a confidence and dated evidence.
+ *
+ * A catalog `PricingRule` is the usual one, but the MSSP rate card and the FX
+ * table are prices too, and they go stale in exactly the same way. Before this
+ * existed, only catalog prices were checked and the config-level ones rotted
+ * silently — which is the failure hard rule 9 exists to prevent.
+ */
+export interface DatedPrice {
+  readonly pricingConfidence: PricingConfidence;
+  readonly sources: readonly { asOf: IsoDate }[];
+  readonly refresh?: { readonly method: 'azure_retail_prices' | 'manual' } | undefined;
+}
+
 export function assessPriceFreshness(
-  rule: PricingRule,
+  rule: DatedPrice,
   today: IsoDate,
   policy: FreshnessPolicy,
 ): PriceFreshness {
   const maxAgeDays = policy.maxAgeDaysByConfidence[rule.pricingConfidence];
   const refreshMethod = rule.refresh?.method ?? 'undeclared';
-  const newest = newestSourceDate(rule);
+  const newest = newestSourceDate(rule.sources);
 
   if (newest === undefined) {
     return {
