@@ -1,0 +1,221 @@
+# Sizing coefficients (PROJECT_SPEC §7.1).
+#
+# ⚠ Every number here is an analyst estimate from common industry rules of
+# thumb, not a measured figure from a specific environment. They are the
+# defaults an analyst starts from and then overrides in the advanced-sizing
+# panel. They will be wrong for some clients — that is expected, and is why
+# they live in data/config/ rather than in the engine.
+#
+# `basis` on each asset class is mandatory: a coefficient with no stated
+# reasoning is not reviewable.
+#
+# EPS figures are per asset, per second, at default verbosity.
+
+asOf: '2026-09-09'
+
+averageEventBytes: 500 # Typical normalised syslog/WEF event lands in the 300–800 byte range.
+peakFactor: 1.5 # Peak-hour to daily-average ratio for security telemetry. Licences must cover the peak.
+compressionRatio: 0.5 # Net saving at rest after compression *and* index overhead. Deliberately conservative: raw compression is better, indexes give some of it back.
+
+verbosityFactors:
+  quiet: 0.6 # Minimal audit policy, security events only.
+  default: 1.0
+  chatty: 1.8 # Full command-line / process-creation auditing, debug-level firewall logging.
+
+privilegedAccountsPerItStaff: 2.5 # Personal admin account + shared/service admin accounts per IT staffer.
+
+retention:
+  defaultDays: 90 # Common commercial default and enough for most incident investigations.
+  byFramework:
+    pci-dss-4.0: 365 # Requirement 10 mandates 12 months, with 3 months immediately available.
+
+scaleClassThresholds:
+  # Inclusive upper bound of monitored assets for each class. Above largeMax is enterprise.
+  smallMax: 250
+  midMax: 1000
+  largeMax: 5000
+
+assetClasses:
+  # ---- Endpoints
+  windowsEndpoints:
+    eventsPerSecond: 0.2
+    role: endpoint
+    monitored: true
+    basis: Windows workstation with a standard audit policy; logon, process and Defender events.
+  macosEndpoints:
+    eventsPerSecond: 0.1
+    role: endpoint
+    monitored: true
+    basis: Quieter than Windows without a third-party agent adding telemetry.
+  linuxEndpoints:
+    eventsPerSecond: 0.1
+    role: endpoint
+    monitored: true
+    basis: auditd plus authentication events on a desktop workload.
+
+  # ---- Servers
+  windowsServers:
+    eventsPerSecond: 2.0
+    role: server
+    monitored: true
+    basis: Member server under normal load; more service and logon activity than a workstation.
+  windowsDomainControllers:
+    eventsPerSecond: 25.0
+    role: server
+    monitored: true
+    basis: >-
+      Every authentication in the estate lands here. The loudest thing in a
+      Windows environment by an order of magnitude, and the single easiest way
+      to underestimate ingest.
+  linuxServers:
+    eventsPerSecond: 1.0
+    role: server
+    monitored: true
+    basis: syslog plus auditd on a general-purpose server.
+  hypervisors:
+    eventsPerSecond: 1.5
+    role: server
+    monitored: true
+    basis: Host management, task and VM lifecycle events.
+  containerNodes:
+    eventsPerSecond: 3.0
+    role: server
+    monitored: true
+    basis: Kubernetes node — API audit plus aggregated container stdout.
+  fileServers:
+    eventsPerSecond: 5.0
+    role: server
+    monitored: true
+    basis: >-
+      Object-access auditing is very noisy when enabled, which it must be where
+      file integrity or data-access monitoring is in scope.
+
+  # ---- Network
+  routers:
+    eventsPerSecond: 2.0
+    role: network
+    monitored: true
+    basis: Interface, routing and ACL events; excludes flow data.
+  switches:
+    eventsPerSecond: 1.0
+    role: network
+    monitored: true
+    basis: Port state and authentication events on an access switch.
+  wirelessControllers:
+    eventsPerSecond: 5.0
+    role: network
+    monitored: true
+    basis: Association and de-association churn scales with client count, not controller count.
+  firewalls:
+    eventsPerSecond: 100.0
+    role: network
+    monitored: true
+    basis: >-
+      Traffic logging dominates SIEM ingest in most environments. 50–300 EPS is
+      the usual range for a mid-sized NGFW; tune this first when the estimate
+      looks wrong.
+  vpnConcentrators:
+    eventsPerSecond: 5.0
+    role: network
+    monitored: true
+    basis: Session establishment, teardown and posture checks.
+  loadBalancers:
+    eventsPerSecond: 10.0
+    role: network
+    monitored: true
+    basis: Request-level logging where enabled; health checks otherwise.
+
+  # ---- Data and applications
+  databases:
+    eventsPerSecond: 3.0
+    role: data
+    monitored: true
+    basis: Connection and privileged-statement auditing; full statement auditing is far higher.
+  internalWebApps:
+    eventsPerSecond: 2.0
+    role: application
+    monitored: true
+    basis: Application and access logs for an internally-facing app.
+  publicWebApps:
+    eventsPerSecond: 10.0
+    role: application
+    monitored: true
+    basis: Higher request volume plus continuous background scanning and attack noise.
+
+  # ---- Operational technology
+  otIcsScadaDevices:
+    eventsPerSecond: 0.2
+    role: ot
+    monitored: true
+    basis: >-
+      Chatty on the wire, quiet in logs. Most OT visibility comes from passive
+      network monitoring rather than from device logging.
+  iotCctvPosDevices:
+    eventsPerSecond: 0.3
+    role: ot
+    monitored: true
+    basis: POS terminals log transactions and updates; cameras log little.
+
+  # ---- Cloud
+  awsAccounts:
+    eventsPerSecond: 5.0
+    role: cloud
+    monitored: false
+    basis: >-
+      CloudTrail management events per account. Not counted as a monitored
+      asset — an account is a log source, not something an agent licences.
+  azureSubscriptions:
+    eventsPerSecond: 5.0
+    role: cloud
+    monitored: false
+    basis: Activity log and Entra ID sign-in events per subscription.
+  gcpProjects:
+    eventsPerSecond: 5.0
+    role: cloud
+    monitored: false
+    basis: Cloud Audit Logs admin activity per project.
+  cloudWorkloads:
+    eventsPerSecond: 0.5
+    role: cloud
+    monitored: true
+    basis: >-
+      VM or managed instance. Counted as monitored because agent-based tooling
+      is licensed per workload.
+  otherCriticalSaasApps:
+    eventsPerSecond: 1.0
+    role: cloud
+    monitored: false
+    basis: Per integrated SaaS application via API polling, not per seat.
+
+  # ---- SaaS seats
+  m365Seats:
+    eventsPerSecond: 0.05
+    role: saas_seat
+    monitored: false
+    basis: >-
+      Unified audit log activity per seat. Drives per-user licensing, not
+      per-asset, so it is not a monitored asset.
+  googleWorkspaceSeats:
+    eventsPerSecond: 0.05
+    role: saas_seat
+    monitored: false
+    basis: Admin and login audit activity per seat.
+
+  # ---- Identity
+  remoteUsers:
+    eventsPerSecond: 0.05
+    role: identity
+    monitored: false
+    basis: >-
+      Incremental VPN and conditional-access events beyond the user's endpoint,
+      which is already counted separately.
+  privilegedAccounts:
+    eventsPerSecond: 0.1
+    role: identity
+    monitored: false
+    basis: Elevation and privileged-session events. Low volume, high value.
+  serviceAccounts:
+    eventsPerSecond: 0.05
+    role: identity
+    monitored: false
+    basis: Non-interactive authentication, steady and predictable.
