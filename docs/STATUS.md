@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 1 — schemas + catalog format + seed products (in review)
+**Current phase:** 2 — `sizing.ts` (in review)
 **Last updated:** 2026-09-09
 
 ## Phase log
@@ -8,8 +8,8 @@
 | Phase | State | Notes |
 |---|---|---|
 | 0 Scaffold + CONTRIBUTING.md + tooling | done | pnpm monorepo, Vitest projects, engine + schema skeletons, 3 green smoke tests. `pnpm audit` clean. Next.js app + Prisma deferred to Phase 5. |
-| 1 Schemas + catalog format + 8 seed products | in review | `packages/schema` populated; 3 frameworks + 3 catalog files + 8 products; real `catalog:validate`. 58 tests green. Q2 (MSSP) did **not** block this phase — see below. |
-| 2 `sizing.ts` + tests | not started | Determinism test lands here. Needs `data/config/sizing-assumptions.yaml`. |
+| 1 Schemas + catalog format + 8 seed products | done | `packages/schema` populated; 3 frameworks + 3 catalog files + 8 products; real `catalog:validate`. Q2 (MSSP) did **not** block this phase — see below. |
+| 2 `sizing.ts` + tests | in review | `computeSizing` + `data/config/sizing-assumptions.yaml` (30 asset-class coefficients, each with a stated basis). Determinism test in place. 3 worked examples in `test/sizing-worked-examples.test.ts` with snapshotted figures to sanity-check. 100 tests green. |
 | 3 `cost.ts` + tests | not started | Needs `data/config/fx.yaml` + `labour-rates.yaml`. Q2 must be answered before the MSSP alternative can be costed. |
 | 4 `scoring.ts` + `portfolio.ts` + tests | not started | **Remaining 8 frameworks must land before this phase** — see decisions. |
 | 5 Intake wizard UI | not started | Also scaffolds apps/web (Next.js) + Prisma/SQLite + server-action mutation layer. |
@@ -42,6 +42,18 @@
 - 2026-09-09 — **AssetInventory is flat and fully optional.** Flat because the sizing coefficients in `data/config/sizing-assumptions.yaml` will be keyed by the same key set; optional because scoping calls do not produce clean data, and an absent class means "not asked", read as zero.
 - 2026-09-09 — **⚠ Amends the day-one frameworks decision: 3 of 11 frameworks shipped, not all 11.** `nist-csf-2.0`, `cis-v8` and `pci-dss-4.0` are in, because those are what the seed catalog maps against and their control lists were verified against the publishers. The other 8 (HIPAA, ISO 27001:2022, SOC 2, GDPR, NIS2, CERT-In, RBI, DPDP 2023) are **outstanding and must land before Phase 4**, which is where framework selection actually promotes a category to mandatory. Writing 8 more mapping files in Phase 1 without sourcing each one would have been exactly the fabrication hard rule 2 forbids.
 
+### Phase 2
+
+- 2026-09-09 — **Sizing figures are floats, not integer minor units.** Hard rule 1 is about money; EPS, GB/day and TB are physical quantities and forcing them into minor units would buy nothing. Determinism is preserved instead by always walking asset classes in `AssetClass` declaration order, so the floating-point sum is order-stable, and by rounding only at the output boundary. There is a determinism test asserting exactly this, including that a reordered inventory object gives an identical result.
+- 2026-09-09 — **A class's contribution to ingest is separate from whether it is a monitored asset.** `monitored: false` classes (AWS accounts, Azure subscriptions, GCP projects, other SaaS apps, M365/Workspace seats, remote users, privileged and service accounts) still generate EPS but do not count toward `monitoredAssetCount`. An AWS account is a log source, not something an agent is licensed onto; counting it would inflate the scale class and every per-asset ops-burden figure downstream.
+- 2026-09-09 — **Retention is derived in sizing, not in portfolio**, because it drives `storageTb`. The longest requirement among the selected frameworks wins, falling back to the 90-day default. Compliance can only lengthen retention, never shorten it. Today only PCI DSS 4.0 sets one (365 days, requirement 10); the other frameworks' periods land with the remaining framework files.
+- 2026-09-09 — **An estimated privileged-account count is flagged as estimated.** `privilegedAccountCountEstimated` is on the result and in the rationale, because that number sizes PAM licensing and analysts rarely capture it on a first call. A captured zero is deliberately distinguished from an absent count.
+- 2026-09-09 — **Every asset-class coefficient carries a mandatory `basis` string.** §7.1 asks for a comment on where each came from; making it a required schema field means a coefficient cannot be added without stating its reasoning. All 30 are analyst estimates from industry rules of thumb, flagged as such at the top of the file.
+- 2026-09-09 — **A config file with no wired-up schema is now a `catalog:validate` error**, not a warning. A new tunable cannot land in `data/config/` without a schema to check it.
+- 2026-09-09 — **The engine takes assumptions as an argument and never reads `data/`.** `scripts/lib/load-config.ts` is the loader; the web app will get its own in Phase 5. This is what keeps the engine's no-fs rule true rather than aspirational.
+
+**Worth eyeballing in the worked examples:** example A (60-staff retailer, PCI DSS) shows *more* storage than example B (320-staff firm) — 2.03 TB against 1.30 TB — despite less than half the ingest, purely because PCI DSS forces 365-day retention against B's 90. That is the tool working correctly, and it is exactly the kind of result that is worth being able to point at during a scoping call.
+
 ## Open questions
 
 - **PROJECT_SPEC §13 Q2 — In-house MSSP provider.** Include in v1? If yes, what shape is `data/config/mssp-rate-card.yaml`: per endpoint/month, per GB/day ingested/month, flat tiers by scale class, or a blend (base platform fee + per-endpoint add-on + per-GB/day ingest)? **Did not block Phase 1** — the `mdr` product category exists in the schema and no MSSP record was seeded. It **does** block the §7.4 step 6 "MSSP alternative per bundle" work, so it must be answered before Phase 3 costing.
@@ -60,8 +72,17 @@
 Also outstanding (not placeholders, simply not written yet):
 
 - `data/config/fx.yaml` — schema shipped, data deferred to Phase 3. An FX rate committed now would be stale before the code that reads it exists, and it has to be sourced on the day it is used.
-- `data/config/sizing-assumptions.yaml` — Phase 2.
 - `data/config/labour-rates.yaml` — Phase 3.
+
+`data/config/sizing-assumptions.yaml` is written, but **every coefficient in it is an
+analyst estimate**, not a measured figure. The ones most worth arguing with, in order of
+how much they move the answer:
+
+1. `firewalls: 100 EPS` — dominates ingest in every worked example (76% of example A's
+   total). Tune this first when an estimate looks wrong.
+2. `windowsDomainControllers: 25 EPS` — the loudest thing in a Windows estate and the
+   easiest to underestimate.
+3. `averageEventBytes: 500` and `peakFactor: 1.5` — scale everything downstream linearly.
 
 ## Environment notes
 
