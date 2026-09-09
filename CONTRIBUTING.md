@@ -16,6 +16,8 @@ pnpm test:engine        # engine unit tests only (fast, use this while iterating
 pnpm typecheck
 pnpm lint
 pnpm catalog:validate   # Zod-validate every YAML in data/
+pnpm catalog:staleness  # what needs re-checking and where; non-zero if anything is stale
+pnpm prices:refresh     # re-read machine-refreshable prices; --write applies drift
 pnpm db:push            # apply Prisma schema to local SQLite
 ```
 
@@ -46,7 +48,11 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
 7. No new dependency without a one-line justification in the commit message.
 8. Open-source products cost money. `opsBurden` FTE and implementation effort are mandatory
    fields; a TCO that omits them is a bug, not a simplification.
-9. **OWASP Top 10 is a baseline, not a phase.** Zod-validate every external input. All DB
+9. **Every price declares how it gets re-checked.** A new catalog price needs a `refresh`
+   block — `azure_retail_prices` where a machine can do it, `manual` with a URL plus a note on
+   what to look for otherwise. A price nobody can re-check is a price that goes stale silently.
+   `pnpm catalog:staleness` fails on anything stale or undateable.
+10. **OWASP Top 10 is a baseline, not a phase.** Zod-validate every external input. All DB
    access through Prisma — no raw or string-built SQL. Security headers + CSP configured in
    the web app. Every mutation behind the server-action layer so authz has one home. No
    secrets in the repo; keep `pnpm audit` clean.
@@ -95,7 +101,7 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
 - `pnpm install` only runs `esbuild`'s post-install script (`package.json` →
   `pnpm.onlyBuiltDependencies`). Add a package there only with a reason, same bar as a new
   dependency.
-- Keep `pnpm audit` clean (hard rule 9). The Vitest/Vite/esbuild chain is the usual source
+- Keep `pnpm audit` clean (hard rule 10). The Vitest/Vite/esbuild chain is the usual source
   of noise — `vite` is pinned as a direct devDependency so it resolves to a patched major
   instead of a stale transitive one.
 - **Catalog YAML writes money in minor units**: `unitPrice: { amountMinor: 5999, currency: USD }`

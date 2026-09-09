@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 3 — `cost.ts` (in review)
+**Current phase:** 3b — price freshness (in review)
 **Last updated:** 2026-09-09
 
 ## Phase log
@@ -11,6 +11,7 @@
 | 1 Schemas + catalog format + 8 seed products | done | `packages/schema` populated; 3 frameworks + 3 catalog files + 8 products; real `catalog:validate`. Q2 (MSSP) did **not** block this phase — see below. |
 | 2 `sizing.ts` + tests | done | `computeSizing` + `data/config/sizing-assumptions.yaml` (30 asset-class coefficients, each with a stated basis). Determinism test in place. 3 worked examples in `test/sizing-worked-examples.test.ts`. |
 | 3 `cost.ts` + tests | in review | `computeProductCost` covering all 11 pricing models, plus money arithmetic in BigInt. `fx.yaml`, `labour-rates.yaml`, `cost-assumptions.yaml` written. Every catalog price is now sourced — no placeholders left. 145 tests green. |
+| 3b Price freshness (**inserted, not in PROJECT_SPEC §11**) | in review | Prices now age and say so. `catalog:staleness` + `prices:refresh`. Verified live against the Azure meter feed. Inserted ahead of catalog expansion on purpose — see the decision below. |
 | 4 `scoring.ts` + `portfolio.ts` + tests | not started | This is the phase that produces the Essential / Recommended / Ideal bundles. **Blocked on two things**: the remaining 8 frameworks, and Q2 (MSSP rate card) for the §7.4 step 6 build-vs-buy alternative. |
 | 5 Intake wizard UI | not started | Also scaffolds apps/web (Next.js) + Prisma/SQLite + server-action mutation layer. |
 | 6 Results dashboard | not started | |
@@ -26,7 +27,7 @@
 - 2026-09-09 — **`region` on `ClientProfile` is a hint, never a constraint.** It pre-ticks the likely frameworks and suggests currency + labour rate as a convenience default; the analyst can always override. (Q1)
 - 2026-09-09 — **No auth in v1, but build the seam.** Nullable `ownerId` / `createdBy` on the `Scenario` model; every mutation goes through a thin server-action layer so a future authz check has exactly one home. No auth code yet. (Q3)
 - 2026-09-09 — **Portal is hosted, shared, multi-user (~5–6 people), on a zero-cost stack.** Keep the Prisma schema Postgres-portable; no SQLite-only features. Final host chosen in Phase 10. (Q4)
-- 2026-09-09 — **OWASP Top 10 hardening is a standing requirement**: Zod at every input boundary, Prisma-only DB access (no raw/string-built SQL), security headers + CSP in the web app, secrets never committed, `pnpm audit` kept clean. (Q4) — added as CONTRIBUTING.md hard rule 9.
+- 2026-09-09 — **OWASP Top 10 hardening is a standing requirement**: Zod at every input boundary, Prisma-only DB access (no raw/string-built SQL), security headers + CSP in the web app, secrets never committed, `pnpm audit` kept clean. (Q4) — added as CONTRIBUTING.md hard rule 10.
 - 2026-09-09 — **No vendor include/exclude list.** Every vendor is eligible; recommendations are on merit + infra fit (on-prem / SaaS / cloud / hybrid / air-gapped) + framework fit, each with an operations-cost estimate. A `partnerStatus` field can be added later if reseller economics start to matter. (Q5)
 - 2026-09-09 — **Phase 0 scope trimmed to the spec §11 DoD.** `apps/web` (Next.js, Tailwind, shadcn/ui, Recharts, Zustand) and Prisma/SQLite deferred to Phase 5; `docx`/`react-pdf`/`xlsx` to Phase 8; real `catalog:validate` logic to Phase 1 (stubbed now). `pnpm dev` and `pnpm db:push` are placeholder scripts until Phase 5.
 
@@ -75,6 +76,19 @@
 | Wazuh | 0 | 0.53 | **322,867** |
 
 Wazuh has a zero licence fee and the highest three-year cost in the table — 4.5× CrowdStrike — entirely on people. That is the comparison the tool exists to make. Re-run in INR at Indian labour rates and the ordering changes, which is the regional rate card doing its job.
+
+### Phase 3b — price freshness (inserted phase)
+
+- 2026-09-09 — **⚠ New phase inserted ahead of catalog expansion, against the stated preference to widen the catalog first.** The reasoning: a hand-researched price is correct for about a month and then quietly lies, and 50 more products would have meant 50 more rotting prices with nothing in the system that knows. Freshness also changes the *shape* of a catalog entry — every price now carries a `refresh` block — so doing it afterwards would have meant rewriting everything just added. It is the smaller piece and it makes the bigger one safe.
+- 2026-09-09 — **Prices age against a policy, not a vibe.** `freshness-policy.yaml` gives each confidence level an allowance: 90 days public list, 180 vendor quote, 120 analyst estimate, 60 placeholder. A price passes through `fresh → ageing → stale`, turning ageing at 75% of its allowance so the backlog surfaces before anything expires.
+- 2026-09-09 — **Every price declares how it gets re-checked.** `azure_retail_prices` is machine-refreshable; everything else is `manual` with a URL and a note on what to look for. Making the distinction explicit is the point: it keeps the manual backlog countable instead of hidden behind the automated majority. Currently **1 of 10 prices is machine-refreshable**.
+- 2026-09-09 — **`today` is an engine input, never a clock read.** Keeps the no-`Date.now()` rule intact, keeps the determinism test meaningful, and makes "what did this scenario look like when we quoted it in March" answerable. Date maths runs at UTC midnight so a verdict does not change with the analyst's timezone.
+- 2026-09-09 — **Freshness travels with the number.** `ProductCost` carries a `freshness` verdict and a `needsRecheck` flag, so a stale price is visible wherever the figure appears rather than only in a report nobody opens.
+- 2026-09-09 — **`prices:refresh --write` never touches the `asOf` date, the notes or the confidence.** It changes the price and stops. Accepting a vendor change stays a dated human decision reviewed in a diff. It pins on the stable meter GUID rather than the meter name, and treats a retired meter or a changed `unitOfMeasure` as an error needing a human, because at that point the price is no longer comparable.
+
+**Verified end to end.** Tampering the committed Sentinel rate to USD 3.90 and running
+`pnpm prices:refresh` reported `DRIFT ... USD 3.90 → 4.30 (10.3%)` against Microsoft's live
+feed, and `--write` corrected it.
 
 ## Open questions
 
@@ -145,7 +159,7 @@ how much they move the answer:
 - **`pnpm audit` is clean** as of 2026-09-09. Getting there required:
   - `vitest` 2 → **4.1.11** (v2's Vitest-UI file-read advisory GHSA-5xrq-8626-4rwp was
     Critical; all findings were dev-server-only and not reachable via `vitest run`, but
-    hard rule 9 says keep audit clean).
+    hard rule 10 says keep audit clean).
   - added **`vite` ^7.3.6** as an explicit devDependency — Vitest 4 makes Vite a peer and
     was otherwise resolving the vulnerable `vite@5.4.21` / `esbuild@0.21.5`.
   - `eslint` 9 → **10.10.0** (`@eslint/js` **10.0.1** — its version line diverged from
@@ -153,4 +167,4 @@ how much they move the answer:
   - root `package.json` gained **`"type": "module"`** so root-level ESM (`vitest.config.ts`,
     `scripts/`) typechecks under `verbatimModuleSyntax`.
 - **Re-run `pnpm audit` before every phase.** This tree will drift; treat a dirty audit as
-  a build break (hard rule 9).
+  a build break (hard rule 10).
