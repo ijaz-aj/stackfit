@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 3c — framework library (in review)
+**Current phase:** 3d — infrastructure fit + open decisions closed (in review)
 **Last updated:** 2026-09-09
 
 ## Phase log
@@ -13,7 +13,8 @@
 | 3 `cost.ts` + tests | in review | `computeProductCost` covering all 11 pricing models, plus money arithmetic in BigInt. `fx.yaml`, `labour-rates.yaml`, `cost-assumptions.yaml` written. Every catalog price is now sourced — no placeholders left. 145 tests green. |
 | 3b Price freshness (**inserted, not in PROJECT_SPEC §11**) | in review | Prices now age and say so. `catalog:staleness` + `prices:refresh`. Verified live against the Azure meter feed. Inserted ahead of catalog expansion on purpose — see the decision below. |
 | 3c Framework library (**inserted**) | in review | The remaining 8 frameworks written; all 11 now ship, 240 controls. Every framework carries a `sourceQuality` grade. Coverage-inflation guard reshaped to per-framework. |
-| 4 `scoring.ts` + `portfolio.ts` + tests | not started | This is the phase that produces the Essential / Recommended / Ideal bundles. **Now blocked on one thing**: Q2 (MSSP rate card) for the §7.4 step 6 build-vs-buy alternative. The framework half of this blocker cleared in Phase 3c. |
+| 3d Infrastructure fit (**inserted**) | in review | `infrastructure.ts` — estate shape and per-category relevance from the asset inventory. `category-weights.yaml`, `mssp-rate-card.yaml`. Q2 answered, §7.2 deviation decided, NIST regraded. |
+| 4 `scoring.ts` + `portfolio.ts` + tests | not started | This is the phase that produces the Essential / Recommended / Ideal bundles. **No longer blocked** — frameworks landed in 3c, the MSSP rate card and infrastructure weighting in 3d. |
 | 5 Intake wizard UI | not started | Also scaffolds apps/web (Next.js) + Prisma/SQLite + server-action mutation layer. |
 | 6 Results dashboard | not started | |
 | 7 Catalog expansion (≥5 per category) | not started | |
@@ -58,7 +59,7 @@
 
 ### Phase 3
 
-- 2026-09-09 — **⚠ Deliberate deviation from the §7.2 formula: operational FTE is included in year 1.** The spec's `Year1 = licence + implementationServices + trainingCost + infraCost + hardwareCost` omits it, and `TCO(n) = Year1 + Σ Annual(2..n)` therefore counts ops FTE only from year 2. You are running the tool in year 1 too, and leaving it out understates exactly the open-source options hard rule 8 exists to keep honest — on the worked example it would have hidden about a third of Wazuh's three-year cost. **Flagging for your decision**: say the word and I will match the spec exactly instead.
+- 2026-09-09 — **⚠ Deliberate deviation from the §7.2 formula: operational FTE is included in year 1.** The spec's `Year1 = licence + implementationServices + trainingCost + infraCost + hardwareCost` omits it, and `TCO(n) = Year1 + Σ Annual(2..n)` therefore counts ops FTE only from year 2. You are running the tool in year 1 too, and leaving it out understates exactly the open-source options hard rule 8 exists to keep honest — on the worked example it would have hidden about a third of Wazuh's three-year cost. **Flagging for your decision**: say the word and I will match the spec exactly instead. — **Decided in Phase 3d: kept.**
 - 2026-09-09 — **Currency conversion is done in BigInt.** An amount in INR minor units multiplied by a rate in millionths passes 2^53 at around INR 100 million, where JavaScript numbers stop being exact. Acceptance test §12.7 forbids that drift, so there is a test converting 10^10 minor units and asserting the exact result.
 - 2026-09-09 — **Rounding is half-away-from-zero, not `Math.round`.** `Math.round(-0.5)` is `-0` and biases negative amounts (credits, discounts) upward. Every money figure is a whole number of minor units, asserted in the determinism test.
 - 2026-09-09 — **Infrastructure is charged only for products that can be self-hosted** (`on_prem` or `air_gapped` in their deployment modes) and is sized from GB/day and storage TB. A SaaS product carries no infra line because the vendor is already charging for theirs.
@@ -113,7 +114,9 @@ feed, and `--write` corrected it.
   recorded reason.** Notes were written stating what is checkable — that the control lists
   were not confirmed line by line against CSWP 29 and the PCI SSC document library — rather
   than asserting a retrieval failure nobody observed. **Worth your eye**: if these were in
-  fact read from the publisher, they should be regraded `publisher_verified`.
+  fact read from the publisher, they should be regraded `publisher_verified`. — **Resolved in
+  Phase 3d**: NIST was verified against NIST's own workbook and regraded; PCI is genuinely
+  gated (HTTP 403) and stays `secondary_sources`.
 - 2026-09-09 — **19 over-broad mappings removed.** Each claimed a product for a control closed
   by policy, training, physical custody or cryptography — the rule `pci-dss-4.0.yaml`'s own
   header already stated. Two files argued against themselves: HIPAA's Security Awareness and
@@ -147,9 +150,98 @@ produce genuinely different mandatory sets, which is what the Phase 1 day-one de
 for. The mapping is conservative by design: a bundle cannot claim coverage a purchase does
 not buy, and 115 of 240 controls map to nothing at all.
 
-## Open questions
+### Phase 3d — infrastructure fit, and the open decisions closed
 
-- **PROJECT_SPEC §13 Q2 — In-house MSSP provider.** Include in v1? If yes, what shape is `data/config/mssp-rate-card.yaml`: per endpoint/month, per GB/day ingested/month, flat tiers by scale class, or a blend (base platform fee + per-endpoint add-on + per-GB/day ingest)? **Did not block Phase 1** — the `mdr` product category exists in the schema and no MSSP record was seeded. It **does** block the §7.4 step 6 "MSSP alternative per bundle" work, so it must be answered before Phase 3 costing.
+**⚠ This phase adds a stage PROJECT_SPEC does not describe.** §7.4 step 1 ranks categories by
+"risk-reduction weight, adjusted by industry and compliance". There is no infrastructure term
+anywhere in the ranking — infrastructure appears only as a §7.3 hard filter on individual
+products and a deployment-fit dimension weighted 10. The consequence: **a client with no
+compliance obligation was ranked on generic weights alone**, so an all-SaaS consultancy and an
+all-on-prem manufacturer got the same stack. Compliance promotes a category to mandatory;
+nothing decided whether a category was worth anything in the first place.
+
+- 2026-09-09 — **Infrastructure now drives category ranking, and for an unregulated client it
+  is the only thing that does.** New pure stage `packages/engine/src/infrastructure.ts`:
+  `computeInfrastructureProfile` derives an estate shape from the asset inventory, and
+  `computeCategoryRelevance` turns that into a weight per product category, with rationale.
+- 2026-09-09 — **Raw asset counts cannot be compared, so every class carries a surface
+  weight.** An estate with 5,000 M365 seats and 4 firewalls is not 99.9% SaaS. Each of the 30
+  asset classes maps to exactly one of eight attack surfaces with a weight saying how much
+  surface one unit represents — a Windows endpoint is the reference unit at 1.0, a domain
+  controller is 25, an AWS account is 20, an M365 seat is 0.15. Same convention as the EPS
+  coefficients: every weight carries a mandatory `basis`.
+- 2026-09-09 — **A category whose surfaces are all absent is ruled out, not ranked last.**
+  `requiresAnyOf` is the sharp end of this stage. Selling network detection to a company with
+  no network is not a cheaper recommendation, it is a wrong one. The SaaS consultancy example
+  below has NDR, NGFW and deception eliminated with a stated reason.
+- 2026-09-09 — **An absent inventory means "not asked", never "does not exist".** With no
+  counts captured the estate shape is `unknown`, the multiplier stays at 1.0, and **nothing is
+  eliminated**. Eliminating on silence would hide categories the analyst never got to discuss.
+- 2026-09-09 — **The affinity model is a weighted mean, so it cannot inflate.** Weight is
+  `baseRiskReduction × Σ(surface share × affinity)`. Shares sum to 1, so a category with no
+  stated affinities scores exactly its base weight and every deviation traces to a surface the
+  client actually has. Only deviations from neutral are written down.
+- 2026-09-09 — **The weights are grounded in published incident data, cited in the file
+  header.** M-Trends 2025 (exploits 33% of initial infection, stolen credentials 16%); DBIR
+  2025 (credential abuse 22%, exploitation 20%, phishing 16%, and **22% of exploitation
+  breaches against edge infrastructure, an eightfold rise** — this is why firewalls and VPN
+  concentrators carry high surface weights and a 1.8 vulnerability-management affinity); DBIR
+  2026 (software vulnerabilities now 31% of breaches, the top entry point). ⚠ The
+  cloud-specific vector split — phishing first, credentials second, against an exploit-led mix
+  overall — is **secondary reporting of M-Trends, not Mandiant's own summary**, which states
+  only the overall figures. The direction is well corroborated; the exact split is not
+  verified, and the file says so.
+
+**Worked examples**, same catalog and same weights, ranking driven only by what the client owns:
+
+| Estate | Shape | Top categories | Ruled out |
+|---|---|---|---|
+| SaaS consultancy, 120 staff | `saas_centric` | edr 115, **iam 111**, **email_security 91** | ndr, ngfw, deception |
+| On-prem manufacturer | `on_prem_centric` | edr 109, **vuln_mgmt 107**, iam 90, backup 88 | — |
+| OT plant, 900 SCADA devices | `ot_heavy` | **ngfw 109**, asset_discovery 100, vuln_mgmt 96, **ndr 92** | — |
+| Cloud-native startup | `cloud_native` | **iam 130**, backup 97, pam 95, edr 94 | deception |
+
+The OT plant is the one worth eyeballing: it leads with segmentation and passive network
+monitoring, and EDR falls out of the top four — which is right, because you cannot put an
+agent on a PLC. That result comes entirely from the inventory, with no compliance input.
+
+- 2026-09-09 — **§13 Q2 ANSWERED. The MSSP alternative ships in v1, and the rate card is a
+  blend**: base platform fee by scale class + per-endpoint + per-server + per-GB/day, times a
+  service-level multiplier (`monitoring` / `mdr` / `managed_security`). **Published SMB quotes
+  decide it**: a 50-endpoint client is quoted USD 1,500–5,000/month, which a per-endpoint rate
+  of USD 8–35 cannot reach — most of a small engagement is fixed cost that does not care about
+  endpoint count. Flat tiers by scale class were rejected because a client one endpoint over a
+  boundary gets a step change that is not real, and step 6 exists to compare like for like.
+  `data/config/mssp-rate-card.yaml` is checked against the published bands at three sizes in
+  its own header. **⚠ `analyst_estimate` and staying that way** — no MSSP publishes a rate
+  card, so these are synthesised from aggregator ranges. For comparison, never for quoting.
+- 2026-09-09 — **§7.2 ops-FTE deviation DECIDED: keep it.** Operational FTE stays in year 1,
+  against the spec's formula. Following the spec exactly hid about a third of Wazuh's
+  three-year cost on the worked example, which defeats hard rule 8. Recorded as a standing
+  deviation rather than an open question.
+- 2026-09-09 — **`nist-csf-2.0` regraded to `publisher_verified`.** Every Category id and name
+  was diffed against NIST's own machine-readable CSF 2.0 Core workbook (the CSRC `nudp` JSON
+  endpoint, which serves an XLSX); all 22 match verbatim. The 3c note speculating that it might
+  be misgraded is resolved — it was.
+- 2026-09-09 — **`pci-dss-4.0` stays `secondary_sources`, and this one cannot be raised.**
+  Fetching `PCI-DSS-v4_0_1.pdf` from the PCI SSC document server returns **HTTP 403** without
+  accepting the licence agreement. Requirements 4, 8, 9, 10, 11 and 12 were matched verbatim
+  against titles quoted in PCI SSC's own published SAQ documents; the rest are consistent
+  across independent sources. Note v4.0.1 is now current.
+
+**Follow-ups this phase created:**
+
+- `mssp-rate-card.yaml` carries an `asOf` and a confidence but is **not** covered by
+  `catalog:staleness`, which only walks catalog prices. It will rot silently. Worth extending
+  the staleness checker to config-level prices.
+- **The inventory has no on-premises mail server class**, so a client running their own
+  Exchange registers no mailboxes and `email_security` is down-weighted rather than eliminated
+  for exactly that reason. Noted in the config; worth an inventory field in Phase 7.
+- The computed weight is a **relative ranking score, not a percentage** — it exceeds 100 when
+  affinities are favourable (iam 130 for the cloud-native estate). Fine for ranking; do not
+  render it as "% risk reduced".
+
+## Open questions
 - **opsBurden and implementation figures have no confidence field.** Every one in the seed catalog is an analyst estimate, flagged in each product's `notes`, but the schema cannot distinguish an estimate from a measured figure the way `pricingConfidence` does for prices. Worth adding an `opsBurdenConfidence` before the catalog grows in Phase 7.
 
 ## Known placeholders
