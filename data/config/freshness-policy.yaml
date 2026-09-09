@@ -1,0 +1,38 @@
+# How long a price stays believable.
+#
+# This file is what stops the catalog from quietly lying. Without it a price
+# written today still renders confidently in a proposal two years from now.
+#
+# Allowances are deliberately shorter than "when the price probably changed".
+# The cost of re-checking a rate is ten minutes; the cost of quoting a stale one
+# to a client is the engagement.
+
+asOf: '2026-09-09'
+
+maxAgeDaysByConfidence:
+  # Published list prices move without announcement and are cheap to re-read —
+  # for Azure, `pnpm prices:refresh` does it automatically.
+  public_list: 90
+
+  # A quote was true for a named customer at a named moment. It ages more
+  # gracefully than a list price but it is also harder to refresh, so it gets
+  # longer, not indefinitely.
+  vendor_quote: 180
+
+  # Our own reasoning, not a vendor's number. It does not decay because the
+  # vendor changed something; it decays because the market moved under it.
+  analyst_estimate: 120
+
+  # A placeholder is a promise to go and find out. Two months is generous.
+  placeholder: 60
+
+# A price reads as "ageing" once it passes this fraction of its allowance, so
+# the backlog surfaces before anything actually expires rather than the day it
+# does.
+warnAtFraction: 0.75
+
+notes: >-
+  Applies to catalog prices. The rate cards in labour-rates.yaml, fx.yaml and
+  cost-assumptions.yaml carry their own asOf dates and are not covered by this
+  policy yet — fx.yaml in particular ages far faster than 90 days and should
+  arguably be re-read per proposal rather than per quarter.

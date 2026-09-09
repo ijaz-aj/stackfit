@@ -31,6 +31,10 @@ products:
         pricing:
           - model: zero_licence
             pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://wazuh.com/pricing/
+              note: Confirm the core platform is still GPLv2 and unmetered, and check what Wazuh Cloud now costs as the managed alternative.
             sources:
               - url: https://github.com/wazuh/wazuh/blob/main/LICENSE
                 asOf: '2026-09-09'
@@ -115,6 +119,10 @@ products:
         pricing:
           - model: zero_licence
             pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://graylog.org/products/open/
+              note: Watch for features moving from Open into the paid tiers — that is how open-core pricing actually changes.
             sources:
               - url: https://graylog.org/products/open/
                 asOf: '2026-09-09'
@@ -196,6 +204,11 @@ products:
               amountMinor: 430
               currency: USD
             pricingConfidence: public_list
+            refresh:
+              method: azure_retail_prices
+              meterId: 05d96412-9ca4-5926-b2a0-c646f72b2c2c
+              armRegionName: eastus
+              expectedUnitOfMeasure: 1 GB
             sources:
               - url: https://prices.azure.com/api/retail/prices?$filter=serviceName%20eq%20%27Sentinel%27%20and%20armRegionName%20eq%20%27eastus%27
                 asOf: '2026-09-09'

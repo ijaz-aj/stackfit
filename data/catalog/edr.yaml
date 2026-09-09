@@ -28,6 +28,10 @@ products:
               currency: USD
             termYears: 1
             pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.crowdstrike.com/products/bundles/falcon-go/
+              note: CrowdStrike publishes Go pricing openly; the Pro and Enterprise bundles are quote-only.
             sources:
               - url: https://www.crowdstrike.com/products/bundles/falcon-go/
                 asOf: '2026-09-09'
@@ -97,6 +101,10 @@ products:
         pricing:
           - model: zero_licence
             pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/Velocidex/velociraptor/blob/master/LICENSE
+              note: Rapid7 owns Velocidex. Watch for a licence change or a commercial edition splitting off.
             sources:
               - url: https://github.com/Velocidex/velociraptor/blob/master/LICENSE
                 asOf: '2026-09-09'
@@ -173,6 +181,14 @@ products:
               currency: USD
             termYears: 1
             pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.microsoft.com/en-us/microsoft-365/enterprise/microsoft365-plans-and-pricing
+              note: >-
+                Not machine-refreshable. Microsoft's retail price API covers Azure
+                meters, not Microsoft 365 seat SKUs, so this one needs a person —
+                ideally the client's reseller, since the E3/E5 base matters more
+                than the standalone rate.
             sources:
               - url: https://redresscompliance.com/microsoft-defender-for-endpoint-licensing-p1-vs-p2
                 asOf: '2026-09-09'
@@ -204,6 +220,14 @@ products:
               currency: USD
             termYears: 1
             pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.microsoft.com/en-us/microsoft-365/enterprise/microsoft365-plans-and-pricing
+              note: >-
+                Not machine-refreshable. Microsoft's retail price API covers Azure
+                meters, not Microsoft 365 seat SKUs, so this one needs a person —
+                ideally the client's reseller, since the E3/E5 base matters more
+                than the standalone rate.
             sources:
               - url: https://redresscompliance.com/microsoft-defender-for-endpoint-licensing-p1-vs-p2
                 asOf: '2026-09-09'
