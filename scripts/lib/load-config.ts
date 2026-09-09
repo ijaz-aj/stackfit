@@ -10,10 +10,12 @@ import { join } from 'node:path';
 
 import {
   CatalogFile,
+  CategoryWeights,
   CostAssumptions,
   FreshnessPolicy,
   FxConfig,
   LabourRates,
+  MsspRateCard,
   SizingAssumptions,
   type Product,
 } from '@stackfit/schema';
@@ -37,6 +39,14 @@ export function loadCostAssumptions(dataDir: string): CostAssumptions {
 
 export function loadFreshnessPolicy(dataDir: string): FreshnessPolicy {
   return FreshnessPolicy.parse(readYaml(join(dataDir, 'config', 'freshness-policy.yaml')));
+}
+
+export function loadCategoryWeights(dataDir: string): CategoryWeights {
+  return CategoryWeights.parse(readYaml(join(dataDir, 'config', 'category-weights.yaml')));
+}
+
+export function loadMsspRateCard(dataDir: string): MsspRateCard {
+  return MsspRateCard.parse(readYaml(join(dataDir, 'config', 'mssp-rate-card.yaml')));
 }
 
 export function loadFxConfig(dataDir: string): FxConfig {

@@ -10,11 +10,13 @@ import { join } from 'node:path';
 
 import {
   CatalogFile,
+  CategoryWeights,
   CostAssumptions,
   Framework,
   FreshnessPolicy,
   FxConfig,
   LabourRates,
+  MsspRateCard,
   SizingAssumptions,
 } from '@stackfit/schema';
 import { parse as parseYaml } from 'yaml';
@@ -192,6 +194,10 @@ export function validateDataTree(dataDir: string): DataValidationResult {
       validate(file, CostAssumptions, raw);
     } else if (file.endsWith('freshness-policy.yaml')) {
       validate(file, FreshnessPolicy, raw);
+    } else if (file.endsWith('category-weights.yaml')) {
+      validate(file, CategoryWeights, raw);
+    } else if (file.endsWith('mssp-rate-card.yaml')) {
+      validate(file, MsspRateCard, raw);
     } else {
       report(file, '(root)', 'no schema is wired up for this config file, so it is unvalidated');
     }

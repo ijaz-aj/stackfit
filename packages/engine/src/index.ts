@@ -14,3 +14,4 @@ export * from './sizing.js';
 export * from './money.js';
 export * from './freshness.js';
 export * from './cost.js';
+export * from './infrastructure.js';

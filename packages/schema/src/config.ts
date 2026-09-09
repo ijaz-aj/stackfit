@@ -7,7 +7,8 @@
 
 import { z } from 'zod';
 
-import { CurrencyCode } from './enums.js';
+import { CurrencyCode, PricingConfidence, ScaleClass } from './enums.js';
+import { NonNegativeMoney } from './money.js';
 import { IsoDate, Source } from './pricing.js';
 
 /**
@@ -69,3 +70,144 @@ export const FxConfig = z
     }
   });
 export type FxConfig = z.infer<typeof FxConfig>;
+
+// ---------------------------------------------------------------------------
+// MSSP rate card — data/config/mssp-rate-card.yaml
+//
+// PROJECT_SPEC §7.4 step 6 wants an MSSP alternative costed against every
+// bundle, so the client sees build-vs-buy on one page. That needs a rate card
+// with the same shape MSSPs actually quote in.
+//
+// The shape is a blend — a base platform fee that varies by scale class, plus
+// per-endpoint and per-GB/day components. Published SMB quotes are what force
+// this: a 50-endpoint client is quoted USD 1,500–5,000 a month, which a pure
+// per-endpoint rate of USD 8–35 cannot reach. Most of a small client's bill is
+// a fixed platform and staffing cost, and a model without a base fee
+// understates small engagements and overstates large ones.
+// ---------------------------------------------------------------------------
+
+export const MsspServiceLevel = z.enum([
+  /** Monitoring and alerting; the client still responds. */
+  'monitoring',
+  /** Monitoring plus active containment and response. */
+  'mdr',
+  /** MDR plus management of the underlying security devices. */
+  'managed_security',
+]);
+export type MsspServiceLevel = z.infer<typeof MsspServiceLevel>;
+
+export const MsspServiceLevelRate = z
+  .object({
+    level: MsspServiceLevel,
+    /**
+     * Multiplier on the whole bill relative to `monitoring`. Response capacity
+     * is people, and people are what an MSSP is really selling.
+     */
+    multiplier: z.number().positive(),
+    basis: z.string().min(1),
+  })
+  .strict();
+export type MsspServiceLevelRate = z.infer<typeof MsspServiceLevelRate>;
+
+export const MsspScaleTier = z
+  .object({
+    scaleClass: ScaleClass,
+    /** Fixed monthly platform and staffing charge before any per-unit component. */
+    basePlatformFeeMonthly: NonNegativeMoney,
+    basis: z.string().min(1),
+  })
+  .strict();
+export type MsspScaleTier = z.infer<typeof MsspScaleTier>;
+
+export const MsspRateCard = z
+  .object({
+    currency: CurrencyCode,
+    asOf: IsoDate,
+    /**
+     * Same vocabulary as a catalog price. An MSSP rate card is a price like any
+     * other and goes stale the same way.
+     */
+    confidence: PricingConfidence,
+    notes: z.string().min(1),
+    sources: z.array(Source).min(1),
+    tiers: z.array(MsspScaleTier).min(1),
+    perEndpointMonthly: NonNegativeMoney,
+    perServerMonthly: NonNegativeMoney,
+    /** Per GB/day of ingest, charged monthly. */
+    perGbDayMonthly: NonNegativeMoney,
+    serviceLevels: z.array(MsspServiceLevelRate).min(1),
+    /** No engagement is quoted below this, whatever the per-unit maths says. */
+    minimumMonthly: NonNegativeMoney,
+  })
+  .strict()
+  .superRefine((card, ctx) => {
+    const money: (keyof typeof card)[] = [
+      'perEndpointMonthly',
+      'perServerMonthly',
+      'perGbDayMonthly',
+      'minimumMonthly',
+    ];
+    for (const key of money) {
+      const value = card[key] as { currency: CurrencyCode };
+      if (value.currency !== card.currency) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key, 'currency'],
+          message: `${String(key)} is in ${value.currency} but the card is in ${card.currency}`,
+        });
+      }
+    }
+
+    const seenTiers = new Set<string>();
+    card.tiers.forEach((tier, index) => {
+      if (tier.basePlatformFeeMonthly.currency !== card.currency) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['tiers', index, 'basePlatformFeeMonthly', 'currency'],
+          message: `tier ${tier.scaleClass} is in ${tier.basePlatformFeeMonthly.currency} but the card is in ${card.currency}`,
+        });
+      }
+      if (seenTiers.has(tier.scaleClass)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['tiers', index, 'scaleClass'],
+          message: `duplicate tier for ${tier.scaleClass}`,
+        });
+      }
+      seenTiers.add(tier.scaleClass);
+    });
+
+    // Every scale class the sizing stage can emit needs a base fee, or an
+    // MSSP alternative silently cannot be quoted for that client.
+    for (const scaleClass of ScaleClass.options) {
+      if (!seenTiers.has(scaleClass)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['tiers'],
+          message: `no MSSP tier for scale class ${scaleClass}`,
+        });
+      }
+    }
+
+    const seenLevels = new Set<string>();
+    card.serviceLevels.forEach((level, index) => {
+      if (seenLevels.has(level.level)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['serviceLevels', index, 'level'],
+          message: `duplicate service level ${level.level}`,
+        });
+      }
+      seenLevels.add(level.level);
+    });
+    for (const level of MsspServiceLevel.options) {
+      if (!seenLevels.has(level)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['serviceLevels'],
+          message: `no rate for service level ${level}`,
+        });
+      }
+    }
+  });
+export type MsspRateCard = z.infer<typeof MsspRateCard>;
