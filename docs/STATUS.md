@@ -361,13 +361,53 @@ firewall or IAM selection; §12.2 cannot verify that MDR outranks a self-hosted 
 MDR product exists. Each asserts what is verifiable today and names what is not — **both must be
 tightened when Phase 7 lands**, and the tests say so inline.
 
-**Worth deciding before Phase 7:** `procurementBias: 'open_source_first'` currently only shifts
-scoring weights, and per §7.3 it *raises* the ops-fit weight — which penalises open source,
-because operability is its weak point. That is what the spec asks for and it is honest, but it
-means nothing in the tool actually prefers open source for a buyer who asked for it: §12.3 now
-returns Graylog alongside two commercial products. Either the field is a *guard* (current
-behaviour, and the name is misleading) or it should also give OSS licence models a modest
-ranking preference. Not changed unilaterally — it directly alters what clients get recommended.
+**Resolved below**: `procurementBias: 'open_source_first'` now gives open-source and open-core
+products a ranking preference as well as raising the ops-fit weight.
+
+### Phase 4 — three more defects, found by varying the scenario inputs
+
+Writing the acceptance scenarios was worth it twice over: running them at *different budgets*
+found two more defects that a single fixed scenario would never have shown.
+
+- 2026-09-09 — **⚠ A bigger budget could buy LESS.** Ranking purely by value density let an
+  expensive high-density product take the money early and starve every category after it:
+
+  | annual cap | products | categories covered |
+  |---|---|---|
+  | USD 8,000 | 3 | 3 |
+  | USD 15,000 | **1** | **1** |
+
+  A client whose budget went up would have been shown a worse stack. §7.4 step 3 already
+  anticipates this — *"cheapest acceptable option if budget is tight"* — but that only ran for
+  the mandatory fallback. Recommended now builds both ways and keeps whichever covers more
+  weighted need; density wins ties, so an unconstrained budget still gets the better products.
+  Pinned by a monotonicity test walking seven budget levels.
+
+- 2026-09-09 — **`procurementBias: 'open_source_first'` did nothing to prefer open source.**
+  §7.3 has it *raise* the ops-fit weight, which is honest, but on its own that **penalises**
+  open source because operability is where OSS is weakest. Nothing acted on the "first" in the
+  name and §12.3's "OSS stack recommended" went unmet. Now a tunable
+  `openSourcePreferencePoints` (8) tilts the ranking for open-source and open-core products
+  under that bias — applied to ranking only, never written into the published fit score, and the
+  ops-fit weight is still raised so an unoperable tool still loses. **This resolves the open
+  question raised in the previous session.**
+
+- 2026-09-09 — **Config prices were never checked for staleness.** The MSSP rate card and the
+  FX table carry an `asOf` and go stale exactly like a catalog price, but `catalog:staleness`
+  only walked the catalog — so while the catalog was policed to the day, these two aged
+  silently. A three-year TCO quoted at a year-old FX rate is wrong by however much the currency
+  moved, and nothing would have said so. `assessPriceFreshness` now takes any dated price;
+  verified that at 2027-03-28 both report STALE and the command exits non-zero.
+
+- 2026-09-09 — **§12.3's budget was not actually low.** The spec says "low budget"; USD 40k/yr
+  for a 500-asset estate comfortably affords commercial licences, so the scenario was not
+  testing what it claimed. At a genuine USD 8k/yr the engine returns a fully open-source stack
+  (Velociraptor + OpenVAS + Graylog) and the assertion is now that *every* selection is open
+  source or open core, not that at least one is.
+
+**Pattern, again:** every defect this session came from *the same principle not being carried
+between stages, or a test that was weaker than the claim it stood for*. The acceptance scenarios
+are the counter-measure, and they have now found four defects in two sittings.
 
 ## Open questions
 - **opsBurden and implementation figures have no confidence field.** Every one in the seed catalog is an analyst estimate, flagged in each product's `notes`, but the schema cannot distinguish an estimate from a measured figure the way `pricingConfidence` does for prices. Worth adding an `opsBurdenConfidence` before the catalog grows in Phase 7.
