@@ -8,7 +8,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { CatalogFile, Framework, FxConfig } from '@stackfit/schema';
+import { CatalogFile, Framework, FxConfig, SizingAssumptions } from '@stackfit/schema';
 import { parse as parseYaml } from 'yaml';
 
 export interface ValidationIssue {
@@ -168,12 +168,18 @@ export function validateDataTree(dataDir: string): DataValidationResult {
   }
 
   // ---- Config. Absent files are fine; the ones that exist must be valid.
+  // A config file with no schema yet is reported rather than waved through, so
+  // a new tunable cannot land without one.
   for (const file of yamlFilesIn(join(dataDir, 'config'))) {
     const raw = loadYaml(file);
     if (raw === undefined) continue;
 
     if (file.endsWith('fx.yaml')) {
       validate(file, FxConfig, raw);
+    } else if (file.endsWith('sizing-assumptions.yaml')) {
+      validate(file, SizingAssumptions, raw);
+    } else {
+      report(file, '(root)', 'no schema is wired up for this config file, so it is unvalidated');
     }
   }
 
