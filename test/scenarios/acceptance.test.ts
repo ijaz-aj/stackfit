@@ -143,7 +143,10 @@ describe('§12.3 — open-source-first, low budget, 2 security FTE', () => {
     securityStaffFte: 2,
     procurementBias: 'open_source_first',
     deploymentPreference: 'on_prem',
-    budget: { annualCap: usd(4_000_000), oneTimeCap: null, currency: 'USD', horizonYears: 3 },
+    // §12.3 says "low budget", and it has to actually be low: USD 8k/yr of
+    // procurement spend for a 500-asset estate is a budget that cannot buy
+    // commercial licences, which is the situation the scenario describes.
+    budget: { annualCap: usd(800_000), oneTimeCap: null, currency: 'USD', horizonYears: 3 },
   });
   const inventory = inventoryOf({
     windowsEndpoints: 350,
@@ -157,12 +160,19 @@ describe('§12.3 — open-source-first, low budget, 2 security FTE', () => {
 
   const result = runScenario(profile, inventory);
 
-  it('recommends open-source products under an open-source-first bias', () => {
-    const chosen = result.recommended.selections.map((selection) => selection.productId);
-    const openSource = result.products
-      .filter((product) => product.licenceModel === 'open_source' || product.licenceModel === 'open_core')
-      .map((product) => product.id);
-    expect(chosen.some((id) => openSource.includes(id))).toBe(true);
+  it('recommends an open-source stack, not a token open-source product', () => {
+    // §12.3: "OSS stack recommended". Every selection must be open source or
+    // open core — at this budget nothing else is affordable, and the bias
+    // resolves any remaining tie.
+    const byId = new Map(result.products.map((product) => [product.id, product]));
+    expect(result.recommended.selections.length).toBeGreaterThan(1);
+    for (const selection of result.recommended.selections) {
+      const licence = byId.get(selection.productId)?.licenceModel;
+      expect(
+        licence === 'open_source' || licence === 'open_core',
+        `${selection.productId} is ${licence}`,
+      ).toBe(true);
+    }
   });
 
   it('does NOT cost the open-source stack at zero', () => {
@@ -355,5 +365,65 @@ describe('§12.7 — currency', () => {
     const inrTotal = inInr.recommended.tco.amountMinor;
     expect(usdTotal).toBeGreaterThan(0);
     expect(inrTotal).toBeGreaterThan(usdTotal); // INR is the weaker unit
+  });
+});
+
+describe('regressions found by these scenarios', () => {
+  const inventory = inventoryOf({
+    windowsEndpoints: 350,
+    linuxServers: 80,
+    windowsServers: 40,
+    windowsDomainControllers: 2,
+    hypervisors: 8,
+    firewalls: 4,
+    databases: 12,
+  });
+
+  it('never covers less as the budget goes up', () => {
+    // Was: a USD 15,000 cap bought one product while a USD 8,000 cap bought
+    // three, because ranking purely on value density let one expensive product
+    // take the money and starve every category after it. A client whose budget
+    // went up would have been shown a worse stack.
+    const coveredWeightAt = (capMinor: number): number =>
+      runScenario(
+        profileOf({
+          employeeCount: 400,
+          itStaffCount: 12,
+          securityStaffFte: 2,
+          deploymentPreference: 'on_prem',
+          budget: { annualCap: usd(capMinor), oneTimeCap: null, currency: 'USD', horizonYears: 3 },
+        }),
+        inventory,
+      ).recommended.selections.reduce((sum, selection) => sum + selection.categoryWeight, 0);
+
+    const caps = [500_000, 800_000, 1_200_000, 1_500_000, 2_000_000, 3_000_000, 8_000_000];
+    let previous = -1;
+    for (const cap of caps) {
+      const covered = coveredWeightAt(cap);
+      expect(covered, `cap ${cap} covers less than the cap below it`).toBeGreaterThanOrEqual(
+        previous,
+      );
+      previous = covered;
+    }
+  });
+
+  it('never charges operational salary against the procurement cap', () => {
+    // Was: annualRecurring (which includes ops FTE) was tested against the cap,
+    // so every open-source product was "unaffordable" on salary alone.
+    const result = runScenario(
+      profileOf({
+        employeeCount: 400,
+        itStaffCount: 12,
+        securityStaffFte: 2,
+        budget: { annualCap: usd(800_000), oneTimeCap: null, currency: 'USD', horizonYears: 3 },
+      }),
+      inventory,
+    );
+    expect(result.recommended.selections.length).toBeGreaterThan(0);
+    expect(result.recommended.annualSpend.amountMinor).toBeLessThanOrEqual(800_000);
+    // People are still counted, just not against this cap.
+    expect(result.recommended.annualRecurring.amountMinor).toBeGreaterThan(
+      result.recommended.annualSpend.amountMinor,
+    );
   });
 });

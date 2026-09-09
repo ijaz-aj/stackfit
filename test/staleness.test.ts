@@ -14,12 +14,19 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { loadCatalog, loadFreshnessPolicy } from '../scripts/lib/load-config.js';
-import { assessCatalogStaleness } from '../scripts/lib/staleness.js';
+import {
+  loadCatalog,
+  loadFreshnessPolicy,
+  loadFxConfig,
+  loadMsspRateCard,
+} from '../scripts/lib/load-config.js';
+import { assessCatalogStaleness, assessConfigStaleness } from '../scripts/lib/staleness.js';
 
 const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data');
 const catalog = loadCatalog(DATA_DIR);
 const policy = loadFreshnessPolicy(DATA_DIR);
+const msspCard = loadMsspRateCard(DATA_DIR);
+const fx = loadFxConfig(DATA_DIR);
 
 /** Fixed, so this test asserts structure rather than the passage of time. */
 const AS_AT = '2026-09-15';
@@ -74,5 +81,40 @@ describe('the staleness report is usable as a release gate', () => {
   it('sorts the report oldest-first, so the worst offender reads first', () => {
     const ages = report.all.map((status) => status.freshness.ageDays ?? Infinity);
     expect([...ages].sort((a, b) => b - a)).toEqual(ages);
+  });
+});
+
+describe('config-level prices are checked too', () => {
+  // The MSSP rate card and the FX table are prices, they carry an asOf, and
+  // before this they were never walked — so they aged silently while the
+  // catalog was policed. Hard rule 9 covers every price, not just the ones
+  // attached to a product.
+  const configPrices = [
+    {
+      file: 'config/mssp-rate-card.yaml',
+      confidence: msspCard.confidence,
+      sources: msspCard.sources,
+      checkUrl: msspCard.sources[0]?.url,
+    },
+    {
+      file: 'config/fx.yaml',
+      confidence: 'public_list' as const,
+      sources: [{ asOf: fx.asOf }, ...fx.sources],
+      checkUrl: fx.sources[0]?.url,
+    },
+  ];
+
+  it('covers both dated config prices', () => {
+    const atWriting = assessConfigStaleness(configPrices, '2026-09-09', policy);
+    expect(atWriting.all).toHaveLength(2);
+    expect(atWriting.stale).toEqual([]);
+    expect(atWriting.unknown).toEqual([]);
+  });
+
+  it('goes stale eventually, so an FX rate cannot quietly rot', () => {
+    // A three-year TCO quoted at a year-old exchange rate is wrong by however
+    // much the currency moved.
+    const muchLater = assessConfigStaleness(configPrices, '2027-09-09', policy);
+    expect(muchLater.stale).toHaveLength(2);
   });
 });

@@ -102,6 +102,7 @@ const assumptions: PortfolioAssumptions = {
   suiteDiscountRate: 0.1,
   suiteIntegrationBonusPoints: 5,
   minimumAnnualisedCostMinor: 100,
+  openSourcePreferencePoints: 8,
   basis: 'test fixture',
 };
 
