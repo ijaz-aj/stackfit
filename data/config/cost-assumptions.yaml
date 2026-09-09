@@ -1,0 +1,57 @@
+# Commercial assumptions for the cost model (PROJECT_SPEC §7.2).
+#
+# ⚠ Analyst estimates, all of them. They are assumptions the tool states out
+# loud rather than bakes in silently — the discount bands especially, which
+# PROJECT_SPEC §6 rule 5 requires to be an explicit toggle.
+
+asOf: '2026-09-09'
+
+annualUpliftRate: 0.05 # Typical year-on-year subscription uplift. Applied to licence and support from year 2.
+supportRateOfLicence: 0.0 # Zero by default: catalog prices here are subscriptions with support bundled. Raise it for perpetual-licence products where maintenance is billed separately.
+trainingDaysRatio: 0.15 # Training days as a fraction of implementation days — roughly 3 days on a 20-day build.
+
+# Real-world discounting by deal size (§6 rule 5). Bands are matched on annual
+# list licence spend and evaluated in order; exactly one must be open-ended.
+# These are assumptions about what a competent buyer achieves, not quoted
+# discounts, and the engine says so in its rationale whenever it applies one.
+discountBands:
+  - maxAnnualSpend:
+      amountMinor: 2500000 # USD 25,000
+      currency: USD
+    discountRate: 0.0
+    label: SMB, under USD 25k annual — usually transactional list pricing
+  - maxAnnualSpend:
+      amountMinor: 10000000 # USD 100,000
+      currency: USD
+    discountRate: 0.15
+    label: mid-market, USD 25k–100k annual
+  - maxAnnualSpend: null
+    discountRate: 0.25
+    label: enterprise, over USD 100k annual
+
+# A deliberately crude cloud rate card for self-hosted tooling. Precision is not
+# the point — the point is that self-hosting is never free, and that this line
+# appears next to the zero licence fee.
+infra:
+  asOf: '2026-09-09'
+  vcpuMonth:
+    amountMinor: 2500 # USD 25.00 per vCPU per month
+    currency: USD
+  ramGbMonth:
+    amountMinor: 500 # USD 5.00 per GB RAM per month
+    currency: USD
+  storageTbMonth:
+    amountMinor: 2300 # USD 23.00 per TB per month
+    currency: USD
+  gbPerDayPerVcpu: 15 # Indexing and search throughput one vCPU sustains.
+  ramGbPerVcpu: 4 # Provisioned RAM per vCPU for a search/index workload.
+  minimumVcpu: 4 # Smallest sensible self-hosted footprint, however tiny the estate.
+  sources:
+    - url: https://aws.amazon.com/ec2/pricing/on-demand/
+      asOf: '2026-09-09'
+    - url: https://aws.amazon.com/ebs/pricing/
+      asOf: '2026-09-09'
+
+sources:
+  - url: https://aws.amazon.com/ec2/pricing/on-demand/
+    asOf: '2026-09-09'

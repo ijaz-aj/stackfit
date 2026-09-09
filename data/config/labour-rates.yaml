@@ -1,0 +1,117 @@
+# Labour rates — the cost of the people who run the tools.
+#
+# This file decides whether open source looks cheap or expensive, so it is worth
+# arguing about. `loadedAnnualCost` is fully-loaded employer cost, not base
+# salary: base plus employer taxes, benefits and overhead, which is roughly
+# 1.25–1.4× base depending on jurisdiction. Using base salary would understate
+# every self-hosted option in the catalog.
+#
+# ⚠ Every figure is an analyst estimate built from public salary aggregators for
+# a mid-level security engineer, then loaded. Salary aggregators disagree with
+# each other by wide margins — the UK figure below is a good example — so treat
+# these as starting points to override per engagement, not as facts.
+#
+# Prices are in minor units (hard rule 1). Rates are held in each region's
+# natural supported currency; the engine converts to the scenario currency.
+# GBP is not yet a supported scenario currency, so the UK rate is held in USD.
+
+asOf: '2026-09-09'
+
+sources:
+  - url: https://www.payscale.com/research/US/Job=Security_Engineer/Salary
+    asOf: '2026-09-09'
+  - url: https://www.glassdoor.com/Salaries/india-security-engineer-salary-SRCH_IL.0,5_IN115_KO6,23.htm
+    asOf: '2026-09-09'
+  - url: https://www.optimaeurope.com/recruitment-blog/cybersecurity-salary-guide-germany-2026
+    asOf: '2026-09-09'
+  - url: https://www.payscale.com/research/UK/Job=Security_Engineer/Salary
+    asOf: '2026-09-09'
+
+byRegion:
+  in:
+    loadedAnnualCost:
+      amountMinor: 134500000 # INR 1,345,000
+      currency: INR
+    implementationDayRate:
+      amountMinor: 3500000 # INR 35,000/day
+      currency: INR
+    basis: >-
+      Base around INR 1,076,000 (Glassdoor India average for a security
+      engineer, within the commonly quoted INR 800k–2,000k band), loaded ×1.25.
+      India is the widest band in this file — a Bengaluru product-security role
+      and a tier-2-city SOC role are not the same number.
+
+  us:
+    loadedAnnualCost:
+      amountMinor: 16900000 # USD 169,000
+      currency: USD
+    implementationDayRate:
+      amountMinor: 200000 # USD 2,000/day
+      currency: USD
+    basis: >-
+      Base around USD 130,000, loaded ×1.3. Aggregators spread from USD 103,000
+      (PayScale average) to a USD 152,000–170,000 median depending on source;
+      130,000 is a deliberate mid-point for a mid-level engineer rather than a
+      senior one.
+
+  eu:
+    loadedAnnualCost:
+      amountMinor: 11050000 # EUR 110,500
+      currency: EUR
+    implementationDayRate:
+      amountMinor: 140000 # EUR 1,400/day
+      currency: EUR
+    basis: >-
+      Germany as the proxy for the euro area. Base EUR 85,000, the middle of the
+      commonly quoted EUR 70,000–100,000 mid-level band, loaded ×1.3 for
+      employer social contributions.
+
+  uk:
+    loadedAnnualCost:
+      amountMinor: 8400000 # USD 84,000
+      currency: USD
+    implementationDayRate:
+      amountMinor: 160000 # USD 1,600/day
+      currency: USD
+    basis: >-
+      Held in USD because GBP is not a supported scenario currency yet. Base
+      about GBP 50,000 loaded ×1.25, converted at the fx.yaml rate. Note
+      PayScale reports a GBP 39,123 average for a UK security engineer, which
+      looks low against the London market and is why this figure is set above
+      the aggregator average rather than at it.
+
+  apac:
+    loadedAnnualCost:
+      amountMinor: 7500000 # USD 75,000
+      currency: USD
+    implementationDayRate:
+      amountMinor: 100000 # USD 1,000/day
+      currency: USD
+    basis: >-
+      Rough regional mid-point spanning Singapore and Australia at the top and
+      South-East Asia at the bottom. The weakest figure in this file; override
+      it per country wherever possible.
+
+  mena:
+    loadedAnnualCost:
+      amountMinor: 9000000 # USD 90,000
+      currency: USD
+    implementationDayRate:
+      amountMinor: 120000 # USD 1,200/day
+      currency: USD
+    basis: >-
+      Gulf-weighted estimate. Often tax-free at the employee end, which lifts
+      the headline salary while lowering employer on-costs; loading applied is
+      correspondingly lighter.
+
+  other:
+    loadedAnnualCost:
+      amountMinor: 8000000 # USD 80,000
+      currency: USD
+    implementationDayRate:
+      amountMinor: 110000 # USD 1,100/day
+      currency: USD
+    basis: >-
+      Fallback when the analyst has not set a region. Deliberately mid-range so
+      it is neither the cheapest nor the most expensive answer, and so a
+      forgotten region setting does not quietly flatter a self-hosted option.

@@ -1,0 +1,26 @@
+# Foreign exchange rates.
+#
+# Rates are integers in millionths of a unit (rateMicros), never floats:
+# 1 USD = 94.843169 INR is written 94843169. Acceptance test §12.7 requires the
+# same scenario in USD and INR to agree with no floating-point drift, and the
+# engine converts in BigInt, so the whole path from this file to a rendered
+# total is exact-integer.
+#
+# ⚠ These rates were read on the asOf date below and are already going stale.
+# Re-read them before any proposal goes out. A three-year TCO quoted at a
+# year-old rate is wrong by however much the currency has moved.
+
+base: USD
+asOf: '2026-09-09'
+
+rates:
+  - currency: USD
+    rateMicros: 1000000 # The base. Must be exactly 1.000000.
+  - currency: INR
+    rateMicros: 94843169 # 1 USD = 94.843169 INR
+  - currency: EUR
+    rateMicros: 860279 # 1 USD = 0.860279 EUR
+
+sources:
+  - url: https://open.er-api.com/v6/latest/USD
+    asOf: '2026-09-09'
