@@ -1,0 +1,188 @@
+# Fit scoring weights (PROJECT_SPEC §7.3).
+#
+# These encode a point of view, not a fact: how much worse is a tool nobody can
+# run than a tool that covers 10% less of the estate? That is an argument to
+# have with an analyst, so it lives here rather than in a scoring function.
+#
+# The seven dimensions and their default weights are exactly §7.3's table. What
+# the spec leaves open, and this file decides:
+#
+#   - `categoryRemits`. Asset coverage is measured against what a category is
+#     *supposed* to cover, not against the whole estate. An email gateway
+#     covers mailboxes; scored against every asset the client owns it would
+#     look permanently terrible, and §7.4 step 2 compares fit scores across
+#     categories when it ranks value density. Against its remit, a gateway
+#     covering every mailbox scores 100 — the honest answer.
+#
+#   - `opsFit`. §7.3 says "penalise when required FTE > available FTE" without
+#     saying how hard. The curve is below, and the zero-staff case is called out
+#     explicitly because it is common and would otherwise divide by zero.
+
+notes: >-
+  Dimension weights are PROJECT_SPEC §7.3's table unchanged. The ops-fit curve,
+  the category remits and the bias deltas are analyst judgement. Tune the
+  ops-fit curve first if open-source options look too good or too bad.
+
+dimensions:
+  - dimension: asset_coverage
+    weight: 25
+    basis: >-
+      §7.3. The largest single weight, because a product that does not reach an
+      asset does nothing for it, however good it is.
+  - dimension: compliance_fit
+    weight: 20
+    basis: §7.3. Only bites when the analyst has ticked frameworks; otherwise it is neutral for everyone.
+  - dimension: ops_fit
+    weight: 20
+    basis: >-
+      §7.3, and the reason this tool exists. A powerful tool nobody can run
+      scores badly, which is what stops "free" from winning by default.
+  - dimension: deployment_fit
+    weight: 10
+    basis: §7.3.
+  - dimension: integration_fit
+    weight: 10
+    basis: §7.3. Rewards fitting what the client already owns and is keeping.
+  - dimension: scale_fit
+    weight: 10
+    basis: §7.3. Being inside the supported band is a hard filter; this scores how centred they are in it.
+  - dimension: maturity
+    weight: 5
+    basis: §7.3. Deliberately the smallest weight — maturity is a tie-breaker, not a reason.
+
+# procurementBias shifts the weights, then everything is renormalised to 100.
+biasAdjustments:
+  - bias: open_source_first
+    deltas:
+      - dimension: ops_fit
+        delta: 10
+        basis: >-
+          §7.3 names this case: the failure mode of open source is operational,
+          not financial, so someone leaning that way needs the operability
+          question weighted harder, not softer.
+      - dimension: maturity
+        delta: -3
+        basis: A newer open-source project is a normal thing to accept when that is the stated preference.
+  - bias: commercial
+    deltas:
+      - dimension: maturity
+        delta: 4
+        basis: A buyer who has ruled out open source is usually buying support and longevity.
+      - dimension: integration_fit
+        delta: 3
+        basis: Commercial buyers tend to be consolidating on a suite, where fitting the estate matters more.
+  - bias: no_preference
+    deltas: []
+
+opsFit:
+  comfortableShareOfFte: 0.35
+  unusableShareOfFte: 1.2
+  scoreWithNoSecurityStaff: 15
+  basis: >-
+    One product may take about a third of the security team before its score
+    starts to fall, and is scored zero once it would need more than the whole
+    team — at 1.2 FTE against 1.0 available, nothing else gets run. The
+    zero-staff score is low but not zero: a client with no security staff can
+    still buy something, it just cannot be something they operate, and the MDR
+    alternative in §7.4 step 6 is the honest answer for them.
+
+maturityScores:
+  established: 100
+  emerging: 60
+  legacy: 30
+
+# Which device class each asset class is. A definition, not an estimate.
+assetClassDeviceClass:
+  windowsEndpoints: workstation
+  macosEndpoints: workstation
+  linuxEndpoints: workstation
+  windowsServers: server
+  windowsDomainControllers: domain_controller
+  linuxServers: server
+  hypervisors: hypervisor
+  containerNodes: container_node
+  routers: network_device
+  switches: network_device
+  wirelessControllers: network_device
+  firewalls: firewall
+  vpnConcentrators: network_device
+  loadBalancers: network_device
+  databases: database
+  fileServers: server
+  internalWebApps: web_app
+  publicWebApps: web_app
+  otIcsScadaDevices: ot_ics
+  iotCctvPosDevices: iot
+  awsAccounts: cloud_workload
+  azureSubscriptions: cloud_workload
+  gcpProjects: cloud_workload
+  cloudWorkloads: cloud_workload
+  m365Seats: mailbox
+  googleWorkspaceSeats: mailbox
+  otherCriticalSaasApps: saas_tenant
+  remoteUsers: identity
+  privilegedAccounts: identity
+  serviceAccounts: identity
+
+# What each category is meant to reach. Asset coverage is scored against this,
+# never against the whole estate.
+categoryRemits:
+  - category: siem
+    deviceClasses:
+      [server, workstation, domain_controller, hypervisor, container_node, network_device,
+       firewall, database, web_app, cloud_workload, saas_tenant, ot_ics, iot, identity, mailbox]
+    basis: >-
+      A SIEM ingests from everything, and is the one category whose remit really
+      is the whole estate. Anything it cannot take a log from is a genuine gap.
+  - category: edr
+    deviceClasses: [workstation, server, domain_controller, hypervisor, container_node]
+    basis: Anything that can run an agent. Deliberately excludes network gear, OT and SaaS, which cannot.
+  - category: ndr
+    deviceClasses: [network_device, firewall, server, ot_ics, iot, cloud_workload]
+    basis: >-
+      Everything that puts traffic on a wire, including the unmanaged devices
+      that are the reason to buy it. Not workstations — they are better served
+      by an agent.
+  - category: pam
+    deviceClasses: [identity, domain_controller, server, cloud_workload, database]
+    basis: Privileged accounts and the systems they are privileged on.
+  - category: iam
+    deviceClasses: [identity, saas_tenant, cloud_workload, mailbox]
+    basis: Human and machine identities, and the tenancies that authenticate them.
+  - category: vulnerability_management
+    deviceClasses:
+      [server, workstation, domain_controller, hypervisor, container_node, network_device,
+       firewall, database, web_app, cloud_workload, ot_ics, iot]
+    basis: Anything with software on it that can carry a CVE. Excludes identity and SaaS tenancies, which do not patch.
+  - category: email_security
+    deviceClasses: [mailbox]
+    basis: >-
+      Mailboxes, and nothing else. The clearest case for scoring against a remit
+      rather than the estate.
+  - category: soar
+    deviceClasses:
+      [server, workstation, domain_controller, network_device, firewall, cloud_workload,
+       saas_tenant, identity, mailbox]
+    basis: Whatever it has an API to act against. Not OT, where automated response is a safety decision.
+  - category: backup
+    deviceClasses: [server, domain_controller, hypervisor, database, workstation, cloud_workload, saas_tenant]
+    basis: Anything holding state worth restoring.
+  - category: ngfw
+    deviceClasses: [network_device, firewall, server, web_app, ot_ics]
+    basis: What sits behind or within the perimeter it enforces.
+  - category: asset_discovery
+    deviceClasses:
+      [server, workstation, domain_controller, hypervisor, container_node, network_device,
+       firewall, database, web_app, cloud_workload, saas_tenant, ot_ics, iot]
+    basis: Everything findable. Excludes identity, which is an inventory question a directory already answers.
+  - category: deception
+    deviceClasses: [server, domain_controller, network_device, ot_ics, identity]
+    basis: Where a decoy is plausible and any interaction with it is unambiguously hostile.
+  - category: mdr
+    deviceClasses:
+      [workstation, server, domain_controller, hypervisor, container_node, network_device,
+       firewall, cloud_workload, saas_tenant, identity, mailbox, ot_ics]
+    basis: >-
+      Follows the telemetry the provider is given, so its remit is close to a
+      SIEM's. OT is included but most providers cover it thinly — see the
+      category-weights.yaml affinity.
