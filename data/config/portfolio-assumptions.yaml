@@ -1,0 +1,44 @@
+# How bundles are assembled (PROJECT_SPEC §7.4).
+#
+# Procurement judgement, as opposed to risk judgement — how categories are
+# weighted lives in category-weights.yaml.
+
+notes: >-
+  Analyst estimates. The suite discount is the one most likely to be wrong for a
+  given deal, and it is announced in the rationale wherever it is applied so it
+  never silently flatters a single-vendor bundle.
+
+# §7.4 step 5 asks for a "minimum defensible posture" without defining one.
+# This is the definition: any category whose weight reaches this floor is in the
+# Essential bundle even if no framework demands it.
+#
+# A weight floor rather than a fixed list, because the weight already accounts
+# for the client's infrastructure — so a SaaS-only company's essentials are
+# genuinely different from a manufacturer's, instead of both getting the same
+# five boxes. On the current weights this selects roughly the top three or four
+# categories for a typical estate.
+essentialWeightFloor: 85
+
+# §7.4 step 4. Applied to a product's licence when another product from the same
+# vendor is already selected.
+suiteDiscountRate: 0.1
+
+# Points added to fit score when a product integrates with something already in
+# the bundle. Used only to rank value density — never written back into the
+# published fit score, which must keep meaning "fit for this client" rather than
+# "fit given what we happened to pick first".
+suiteIntegrationBonusPoints: 5
+
+# Value density divides by annualised TCO. A zero-cost product would divide by
+# zero, so the denominator is floored here — USD 1.00 in minor units. Any
+# product this cheap is dominated by its operational cost anyway, which is
+# already in the TCO.
+minimumAnnualisedCostMinor: 100
+
+basis: >-
+  The 10% suite discount is the low end of what vendors typically concede for a
+  second product on the same paper, chosen low deliberately: overstating it
+  would bias every bundle towards single-vendor consolidation, which is a
+  procurement decision the client should make rather than one the tool should
+  quietly make for them. The 5-point integration bonus is likewise small enough
+  to break a tie without overturning a materially better product.

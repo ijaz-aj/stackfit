@@ -496,3 +496,92 @@ categories:
       - surface: saas_identity
         multiplier: 0.2
         basis: Little to decoy in someone else's tenant.
+
+# ---------------------------------------------------------------------------
+# Sector adjustment (§7.4 step 1: "adjusted by industry and compliance").
+#
+# Only deviations from neutral, same convention as the surface affinities.
+# These are analyst judgement about what a sector's incidents actually look
+# like, and they are deliberately mild — infrastructure is a much stronger
+# signal than industry, and a sector modifier should nudge a ranking rather
+# than rewrite it.
+# ---------------------------------------------------------------------------
+industryModifiers:
+  - industry: healthcare
+    category: backup
+    multiplier: 1.25
+    basis: >-
+      Availability is a patient-safety property here, and healthcare is the
+      sector where ransomware most reliably stops the core business.
+  - industry: healthcare
+    category: asset_discovery
+    multiplier: 1.2
+    basis: Connected medical devices are rarely in anyone's inventory and rarely patchable.
+  - industry: healthcare
+    category: ndr
+    multiplier: 1.2
+    basis: Medical devices cannot take an agent, so passive monitoring is what is left.
+
+  - industry: bfsi
+    category: pam
+    multiplier: 1.25
+    basis: Privileged access to payment and core banking systems is the whole game.
+  - industry: bfsi
+    category: siem
+    multiplier: 1.2
+    basis: >-
+      Regulator expectation and a long tail of transaction fraud questions that
+      only a searchable log estate can answer.
+  - industry: bfsi
+    category: deception
+    multiplier: 1.2
+    basis: A sector targeted by capable, patient adversaries, where a decoy earns its keep.
+
+  - industry: manufacturing
+    category: ndr
+    multiplier: 1.25
+    basis: The OT estate is unagentable, so network visibility is the primary detection route.
+  - industry: manufacturing
+    category: ngfw
+    multiplier: 1.2
+    basis: IT/OT segmentation is the single highest-value control in a plant.
+  - industry: manufacturing
+    category: backup
+    multiplier: 1.15
+    basis: Production downtime is the loss event, and restoration speed is what bounds it.
+
+  - industry: saas
+    category: iam
+    multiplier: 1.25
+    basis: A SaaS provider's own tenancy and control plane is what an attacker is after.
+  - industry: saas
+    category: vulnerability_management
+    multiplier: 1.2
+    basis: The product is internet-facing by definition, and its exposure is the company's exposure.
+
+  - industry: retail
+    category: asset_discovery
+    multiplier: 1.2
+    basis: POS terminals and store IoT sprawl across sites nobody has walked recently.
+  - industry: retail
+    category: ngfw
+    multiplier: 1.15
+    basis: Store networks are many, thin, and rarely segmented from each other.
+
+  - industry: education
+    category: email_security
+    multiplier: 1.2
+    basis: A large, transient, low-privilege user population is a phishing surface.
+  - industry: education
+    category: edr
+    multiplier: 1.15
+    basis: Unmanaged and semi-managed devices in numbers, with little central control.
+
+  - industry: govt
+    category: pam
+    multiplier: 1.2
+    basis: Administrative access is the target in the espionage cases that define this sector's risk.
+  - industry: govt
+    category: siem
+    multiplier: 1.15
+    basis: Long dwell times make retrospective search the control that finds the intrusion.
