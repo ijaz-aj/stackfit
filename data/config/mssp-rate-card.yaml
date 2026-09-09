@@ -95,20 +95,30 @@ perGbDayMonthly:
 serviceLevels:
   - level: monitoring
     multiplier: 1
+    coveredCategories: [siem, mdr]
     basis: >-
       The baseline the rates above are expressed in. Alerts are triaged and
-      handed over; the client still does the responding.
+      handed over; the client still does the responding. The provider runs the
+      detection platform and nothing else — every other category stays the
+      client's to buy and operate.
   - level: mdr
     multiplier: 1.35
+    coveredCategories: [siem, mdr, edr, soar, ndr]
     basis: >-
-      Adds active containment. The uplift is people and out-of-hours capacity,
-      which is what the reported spread between "monitoring" and "response"
-      offerings mostly reflects.
+      Adds active containment, and with it the endpoint, network and automation
+      tooling the provider responds through. The uplift is people and
+      out-of-hours capacity, which is what the reported spread between
+      "monitoring" and "response" offerings mostly reflects. Note that identity,
+      backup, mail and vulnerability management are still the client's — this is
+      the line buyers most often assume is further right than it is.
   - level: managed_security
     multiplier: 1.7
+    coveredCategories: [siem, mdr, edr, soar, ndr, ngfw, email_security, vulnerability_management]
     basis: >-
       Adds management of the underlying devices — policy changes, tuning,
-      upgrades. Closer to outsourced operations than to detection.
+      upgrades. Closer to outsourced operations than to detection. Identity,
+      privileged access and backup are deliberately excluded: providers will
+      monitor them, but running them is rarely on the contract.
 
 # No engagement is quoted below this, whatever the per-unit maths produces.
 # Matches the floor of the reported SMB range.
