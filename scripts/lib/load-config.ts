@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import {
   CatalogFile,
   CostAssumptions,
+  FreshnessPolicy,
   FxConfig,
   LabourRates,
   SizingAssumptions,
@@ -32,6 +33,10 @@ export function loadLabourRates(dataDir: string): LabourRates {
 
 export function loadCostAssumptions(dataDir: string): CostAssumptions {
   return CostAssumptions.parse(readYaml(join(dataDir, 'config', 'cost-assumptions.yaml')));
+}
+
+export function loadFreshnessPolicy(dataDir: string): FreshnessPolicy {
+  return FreshnessPolicy.parse(readYaml(join(dataDir, 'config', 'freshness-policy.yaml')));
 }
 
 export function loadFxConfig(dataDir: string): FxConfig {

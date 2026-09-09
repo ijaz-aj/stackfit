@@ -12,6 +12,7 @@ import {
   CatalogFile,
   CostAssumptions,
   Framework,
+  FreshnessPolicy,
   FxConfig,
   LabourRates,
   SizingAssumptions,
@@ -189,6 +190,8 @@ export function validateDataTree(dataDir: string): DataValidationResult {
       validate(file, LabourRates, raw);
     } else if (file.endsWith('cost-assumptions.yaml')) {
       validate(file, CostAssumptions, raw);
+    } else if (file.endsWith('freshness-policy.yaml')) {
+      validate(file, FreshnessPolicy, raw);
     } else {
       report(file, '(root)', 'no schema is wired up for this config file, so it is unvalidated');
     }
