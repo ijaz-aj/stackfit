@@ -86,6 +86,7 @@ function retailProfile(currency: CurrencyCode, region: ClientProfile['region']):
     deploymentPreference: 'hybrid',
     procurementBias: 'no_preference',
     retainedTools: [],
+    excludedProducts: [],
   };
 }
 

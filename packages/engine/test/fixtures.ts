@@ -7,6 +7,7 @@
 
 import {
   AssetClass,
+  ProductCategory,
   Region,
   type AssetClassAssumption,
   type ClientProfile,
@@ -17,8 +18,10 @@ import {
   type Implementation,
   type LabourRates,
   type OpsBurden,
+  type DeviceClass,
   type PricingRule,
   type Product,
+  type ScoringWeights,
   type SizingAssumptions,
 } from '@stackfit/schema';
 
@@ -74,6 +77,7 @@ export function buildClientProfile(overrides: Partial<ClientProfile> = {}): Clie
     deploymentPreference: 'hybrid',
     procurementBias: 'no_preference',
     retainedTools: [],
+    excludedProducts: [],
     ...overrides,
   };
 }
@@ -213,5 +217,77 @@ export function buildProduct(overrides: ProductOverrides = {}): Product {
     bestFor: [],
     avoidWhen: [],
     sources: [{ url: 'https://example.com/docs', asOf: '2026-01-01' }],
+  };
+}
+
+/**
+ * Scoring config with the spec's default weights and deliberately simple
+ * remits, so an expected score can be worked out by hand.
+ */
+export function buildScoringWeights(overrides: Partial<ScoringWeights> = {}): ScoringWeights {
+  const basis = 'test fixture';
+  return {
+    dimensions: [
+      { dimension: 'asset_coverage', weight: 25, basis },
+      { dimension: 'compliance_fit', weight: 20, basis },
+      { dimension: 'ops_fit', weight: 20, basis },
+      { dimension: 'deployment_fit', weight: 10, basis },
+      { dimension: 'integration_fit', weight: 10, basis },
+      { dimension: 'scale_fit', weight: 10, basis },
+      { dimension: 'maturity', weight: 5, basis },
+    ],
+    biasAdjustments: [
+      { bias: 'open_source_first', deltas: [{ dimension: 'ops_fit', delta: 10, basis }] },
+      { bias: 'commercial', deltas: [] },
+      { bias: 'no_preference', deltas: [] },
+    ],
+    opsFit: {
+      comfortableShareOfFte: 0.35,
+      unusableShareOfFte: 1.2,
+      scoreWithNoSecurityStaff: 15,
+      basis,
+    },
+    maturityScores: { established: 100, emerging: 60, legacy: 30 },
+    assetClassDeviceClass: {
+      windowsEndpoints: 'workstation',
+      macosEndpoints: 'workstation',
+      linuxEndpoints: 'workstation',
+      windowsServers: 'server',
+      windowsDomainControllers: 'domain_controller',
+      linuxServers: 'server',
+      hypervisors: 'hypervisor',
+      containerNodes: 'container_node',
+      routers: 'network_device',
+      switches: 'network_device',
+      wirelessControllers: 'network_device',
+      firewalls: 'firewall',
+      vpnConcentrators: 'network_device',
+      loadBalancers: 'network_device',
+      databases: 'database',
+      fileServers: 'server',
+      internalWebApps: 'web_app',
+      publicWebApps: 'web_app',
+      otIcsScadaDevices: 'ot_ics',
+      iotCctvPosDevices: 'iot',
+      awsAccounts: 'cloud_workload',
+      azureSubscriptions: 'cloud_workload',
+      gcpProjects: 'cloud_workload',
+      cloudWorkloads: 'cloud_workload',
+      m365Seats: 'mailbox',
+      googleWorkspaceSeats: 'mailbox',
+      otherCriticalSaasApps: 'saas_tenant',
+      remoteUsers: 'identity',
+      privilegedAccounts: 'identity',
+      serviceAccounts: 'identity',
+    },
+    categoryRemits: ProductCategory.options.map((category) => ({
+      category,
+      deviceClasses:
+        category === 'email_security'
+          ? (['mailbox'] as DeviceClass[])
+          : (['server', 'workstation', 'mailbox'] as DeviceClass[]),
+      basis,
+    })),
+    ...overrides,
   };
 }

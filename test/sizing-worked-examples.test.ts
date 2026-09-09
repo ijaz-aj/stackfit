@@ -35,6 +35,7 @@ function profileFor(overrides: Partial<ClientProfile>): ClientProfile {
     deploymentPreference: 'hybrid',
     procurementBias: 'no_preference',
     retainedTools: [],
+    excludedProducts: [],
     ...overrides,
   };
 }
