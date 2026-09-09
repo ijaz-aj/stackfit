@@ -12,4 +12,5 @@ export const ENGINE_VERSION = '0.0.0';
 
 export * from './sizing.js';
 export * from './money.js';
+export * from './freshness.js';
 export * from './cost.js';

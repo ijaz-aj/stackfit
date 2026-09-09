@@ -6,14 +6,12 @@
 
 import { z } from 'zod';
 
+import { IsoDate } from './dates.js';
 import { PricingConfidence, PricingModel } from './enums.js';
+import { PriceRefresh } from './freshness.js';
 import { NonNegativeMoney } from './money.js';
 
-/** `YYYY-MM-DD`. Kept as a string so catalog data stays diffable and timezone-free. */
-export const IsoDate = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'expected an ISO date of the form YYYY-MM-DD');
-export type IsoDate = z.infer<typeof IsoDate>;
+export { IsoDate };
 
 export const Source = z
   .object({
@@ -93,6 +91,12 @@ export const PricingRule = z
     termYears: z.number().int().positive().max(5).default(1),
     pricingConfidence: PricingConfidence,
     sources: z.array(Source).default([]),
+    /**
+     * How to re-check this price. Optional so existing entries stay valid, but
+     * `pnpm catalog:staleness` lists everything missing one — a price with no
+     * declared way to re-check it is a price nobody will re-check.
+     */
+    refresh: PriceRefresh.optional(),
     notes: z.string().optional(),
   })
   .strict()

@@ -11,7 +11,9 @@ import type {
   ClientProfile,
   CostAssumptions,
   CurrencyCode,
+  FreshnessPolicy,
   FxConfig,
+  IsoDate,
   LabourRates,
   Money,
   PricingConfidence,
@@ -20,6 +22,7 @@ import type {
   ProductTier,
 } from '@stackfit/schema';
 
+import { assessTierFreshness, needsRecheck, type PriceFreshness } from './freshness.js';
 import { convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money.js';
 import type { SizingResult } from './sizing.js';
 
@@ -31,6 +34,13 @@ export interface CostInputs {
   readonly labourRates: LabourRates;
   readonly costAssumptions: CostAssumptions;
   readonly fx: FxConfig;
+  readonly freshnessPolicy: FreshnessPolicy;
+  /**
+   * The date to age prices against. Passed in rather than read from a clock so
+   * the engine stays pure, and so "what did this look like when we quoted it"
+   * is an answerable question.
+   */
+  readonly today: IsoDate;
 }
 
 export interface CostLine {
@@ -69,6 +79,10 @@ export interface ProductCost {
   /** Worst confidence across the tier's pricing rules. */
   readonly pricingConfidence: PricingConfidence;
   readonly hasPlaceholderPricing: boolean;
+  /** How old the evidence behind these numbers is. */
+  readonly freshness: PriceFreshness;
+  /** True when this figure should not reach a client without being re-checked. */
+  readonly needsRecheck: boolean;
   readonly lines: readonly CostLine[];
   readonly rationale: readonly string[];
 }
@@ -248,7 +262,7 @@ export function computeProductCost(
   inputs: CostInputs,
 ): ProductCost {
   const currency = profile.budget.currency;
-  const { labourRates, costAssumptions, fx } = inputs;
+  const { labourRates, costAssumptions, fx, freshnessPolicy, today } = inputs;
   const horizonYears = profile.budget.horizonYears;
   const rationale: string[] = [];
 
@@ -367,6 +381,17 @@ export function computeProductCost(
     );
   }
 
+  const freshness = assessTierFreshness(tier, today, freshnessPolicy);
+  const recheckNeeded = needsRecheck(freshness);
+  rationale.push(
+    recheckNeeded ? `⚠ ${freshness.explanation}` : `Price age: ${freshness.explanation}`,
+  );
+  if (recheckNeeded && freshness.refreshMethod === 'undeclared') {
+    rationale.push(
+      'No refresh method is declared for this price, so nothing will re-check it automatically. Add one.',
+    );
+  }
+
   const lines: CostLine[] = [
     { label: 'Licence (after discount assumption)', amount: licenceAnnual },
     { label: 'Support and maintenance', amount: supportAnnual },
@@ -405,6 +430,8 @@ export function computeProductCost(
     horizonYears,
     pricingConfidence,
     hasPlaceholderPricing,
+    freshness,
+    needsRecheck: recheckNeeded,
     lines,
     rationale,
   };
