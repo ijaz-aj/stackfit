@@ -22,6 +22,7 @@ import { computeSizing } from '../src/sizing.js';
 import {
   buildClientProfile,
   buildCostInputs,
+  buildFramework,
   buildFxConfig,
   buildProduct,
   buildScoringWeights,
@@ -205,15 +206,13 @@ function product(
   };
 }
 
-const pciMandatingSiem: Framework = {
+const pciMandatingSiem: Framework = buildFramework({
   id: 'pci-dss-4.0',
   name: 'PCI DSS',
   sourceQuality: 'secondary_sources',
   version: '4.0',
-  commonIn: ['global'],
   controls: [{ id: '10', title: 'Log and monitor', satisfiedBy: ['siem'], mandatory: true }],
-  sources: [{ url: 'https://example.com', asOf: '2026-01-01' }],
-} as Framework;
+});
 
 describe('step 1 — category ranking', () => {
   it('marks a category mandatory when a selected framework requires it', () => {

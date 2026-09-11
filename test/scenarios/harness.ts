@@ -18,12 +18,15 @@ import { fileURLToPath } from 'node:url';
 import {
   buildPortfolio,
   computeCategoryRelevance,
+  computeCoverage,
   computeInfrastructureProfile,
   computeProductCosts,
   computeSizing,
   scoreProducts,
   type Bundle,
   type CategoryRanking,
+  type CoverageInputs,
+  type CoverageResult,
   type InfrastructureProfile,
   type ProductCost,
   type ProductScore,
@@ -32,6 +35,7 @@ import {
 import type {
   AssetInventory,
   ClientProfile,
+  Framework,
   FrameworkId,
   Product,
   ProductCategory,
@@ -41,6 +45,7 @@ import {
   loadCatalog,
   loadCategoryWeights,
   loadCostAssumptions,
+  loadCoverageAssumptions,
   loadFrameworks,
   loadFreshnessPolicy,
   loadFxConfig,
@@ -65,7 +70,16 @@ const categoryWeights = loadCategoryWeights(DATA_DIR);
 const scoringWeights = loadScoringWeights(DATA_DIR);
 const portfolioAssumptions = loadPortfolioAssumptions(DATA_DIR);
 const msspRateCard = loadMsspRateCard(DATA_DIR);
+const coverageAssumptions = loadCoverageAssumptions(DATA_DIR);
 const frameworkLibrary = loadFrameworks(DATA_DIR);
+
+/**
+ * NIST CSF 2.0 is always reported against, selected or not: §7.5 asks for the
+ * bundle mapped to the six Functions as a way of reading any stack, which is a
+ * different question from what the client is regulated by. `inScope` on each
+ * framework's coverage is what separates the two.
+ */
+const REFERENCE_FRAMEWORK: FrameworkId = 'nist-csf-2.0';
 
 export const catalog = loadCatalog(DATA_DIR);
 
@@ -87,6 +101,15 @@ export interface ScenarioResult {
   readonly essential: Bundle;
   readonly recommended: Bundle;
   readonly ideal: Bundle;
+  /** Coverage of the Recommended bundle. Use `coverageOf` for the others. */
+  readonly coverage: CoverageResult;
+  /** Everything `computeCoverage` needs except the bundle to measure. */
+  readonly coverageInputs: Omit<CoverageInputs, 'bundle'>;
+}
+
+/** Coverage of any bundle from a scenario that has already been run. */
+export function coverageOf(result: ScenarioResult, bundle: Bundle): CoverageResult {
+  return computeCoverage({ ...result.coverageInputs, bundle });
 }
 
 /** Inventory helper: counts in, a parsed AssetInventory out. */
@@ -140,6 +163,22 @@ export function runScenario(profile: ClientProfile, inventory: AssetInventory): 
     costInputs,
   });
 
+  const coverageFrameworkIds: FrameworkId[] = [...profile.compliance];
+  if (!coverageFrameworkIds.includes(REFERENCE_FRAMEWORK)) {
+    coverageFrameworkIds.push(REFERENCE_FRAMEWORK);
+  }
+  const coverageInputs: Omit<CoverageInputs, 'bundle'> = {
+    profile,
+    products,
+    scores,
+    costs,
+    relevance,
+    frameworks: coverageFrameworkIds
+      .map((id) => frameworkLibrary.get(id))
+      .filter((framework): framework is Framework => framework !== undefined),
+    assumptions: coverageAssumptions,
+  };
+
   return {
     sizing,
     infrastructure,
@@ -150,6 +189,8 @@ export function runScenario(profile: ClientProfile, inventory: AssetInventory): 
     essential: portfolio.essential,
     recommended: portfolio.recommended,
     ideal: portfolio.ideal,
+    coverage: computeCoverage({ ...coverageInputs, bundle: portfolio.recommended }),
+    coverageInputs,
   };
 }
 

@@ -20,6 +20,7 @@ import {
 import {
   buildCategoryWeights as buildCategoryWeightsFixture,
   buildClientProfile,
+  buildFramework,
   buildProduct,
   buildScoringWeights,
   buildSizingAssumptions,
@@ -177,19 +178,17 @@ describe('asset coverage is scored against the category remit', () => {
 });
 
 describe('compliance fit', () => {
-  const framework: Framework = {
+  const framework: Framework = buildFramework({
     id: 'pci-dss-4.0',
     name: 'PCI DSS',
     sourceQuality: 'secondary_sources',
     version: '4.0',
-    commonIn: ['global'],
     controls: [
       { id: '10', title: 'Log and monitor', satisfiedBy: ['siem'], mandatory: true },
       { id: '11', title: 'Test security', satisfiedBy: ['siem'], mandatory: true },
       { id: '5', title: 'Anti-malware', satisfiedBy: ['edr'], mandatory: true },
     ],
-    sources: [{ url: 'https://example.com', asOf: '2026-01-01' }],
-  } as Framework;
+  });
 
   it('scores controls covered against controls the frameworks ask of this category', () => {
     // Two SIEM controls are asked for; this product claims one.

@@ -13,6 +13,7 @@ import {
   type ClientProfile,
   type CostAssumptions,
   type DeploymentMode,
+  Framework,
   type FreshnessPolicy,
   type FxConfig,
   type Implementation,
@@ -225,6 +226,24 @@ function buildProductShape(overrides: ProductOverrides = {}): unknown {
     avoidWhen: [],
     sources: [{ url: 'https://example.com/docs', asOf: '2026-01-01' }],
   };
+}
+
+/**
+ * A framework, parsed rather than cast.
+ *
+ * Casting one is how a fixture ends up missing a field the schema defaults —
+ * `groups`, say — and then crashes a stage that trusts the schema. Same lesson
+ * as the `buildProduct` fixture, which priced at zero while it cast.
+ */
+export function buildFramework(overrides: Record<string, unknown>): Framework {
+  return Framework.parse({
+    name: 'Test Framework',
+    version: '1.0',
+    sourceQuality: 'publisher_verified',
+    commonIn: ['global'],
+    sources: [{ url: 'https://example.com', asOf: '2026-01-01' }],
+    ...overrides,
+  });
 }
 
 /**
