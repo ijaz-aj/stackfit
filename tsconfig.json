@@ -5,6 +5,7 @@
   "references": [
     { "path": "./packages/schema" },
     { "path": "./packages/engine" },
+    { "path": "./packages/data" },
     { "path": "./tsconfig.scripts.json" }
   ]
 }

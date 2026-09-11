@@ -7,7 +7,7 @@
  */
 import { join } from 'node:path';
 
-import { loadCatalog, loadFreshnessPolicy, loadFxConfig, loadMsspRateCard } from './lib/load-config.js';
+import { loadCatalog, loadFreshnessPolicy, loadFxConfig, loadMsspRateCard } from '@stackfit/data';
 import { assessCatalogStaleness, assessConfigStaleness, type PriceStatus } from './lib/staleness.js';
 
 /** Today, read once here — the boundary where a clock is allowed. */

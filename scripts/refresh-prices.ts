@@ -14,7 +14,7 @@ import { join } from 'node:path';
 
 import type { PriceRefresh } from '@stackfit/schema';
 
-import { loadCatalog } from './lib/load-config.js';
+import { loadCatalog } from '@stackfit/data';
 
 interface AzurePriceItem {
   readonly meterId: string;

@@ -14,7 +14,7 @@ import { computeSizing, type SizingResult } from '@stackfit/engine';
 import type { AssetInventory, ClientProfile } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { loadSizingAssumptions } from '../scripts/lib/load-config.js';
+import { loadSizingAssumptions } from '@stackfit/data';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const assumptions = loadSizingAssumptions(join(REPO_ROOT, 'data'));

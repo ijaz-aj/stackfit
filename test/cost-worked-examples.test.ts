@@ -20,7 +20,7 @@ import {
   loadFxConfig,
   loadLabourRates,
   loadSizingAssumptions,
-} from '../scripts/lib/load-config.js';
+} from '@stackfit/data';
 
 const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data');
 

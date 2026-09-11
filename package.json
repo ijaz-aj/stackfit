@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@stackfit/data": "workspace:*",
     "@stackfit/engine": "workspace:*",
     "@stackfit/schema": "workspace:*",
     "@types/node": "^24.0.0",

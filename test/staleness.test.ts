@@ -19,7 +19,7 @@ import {
   loadFreshnessPolicy,
   loadFxConfig,
   loadMsspRateCard,
-} from '../scripts/lib/load-config.js';
+} from '@stackfit/data';
 import { assessCatalogStaleness, assessConfigStaleness } from '../scripts/lib/staleness.js';
 
 const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data');

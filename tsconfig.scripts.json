@@ -7,6 +7,6 @@
     "outDir": "./dist/tooling",
     "rootDir": "."
   },
-  "references": [{ "path": "./packages/schema" }],
+  "references": [{ "path": "./packages/schema" }, { "path": "./packages/data" }],
   "include": ["scripts/**/*.ts", "test/**/*.ts", "vitest.config.ts"]
 }
