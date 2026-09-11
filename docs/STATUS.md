@@ -1,7 +1,7 @@
 # Status
 
-**Current phase:** 4 — scoring + portfolio, reviewed, fixed, acceptance-tested (in review)
-**Last updated:** 2026-09-09
+**Current phase:** 4b — `coverage.ts`, the last engine stage (in review)
+**Last updated:** 2026-09-11
 
 ## Phase log
 
@@ -15,6 +15,7 @@
 | 3c Framework library (**inserted**) | in review | The remaining 8 frameworks written; all 11 now ship, 240 controls. Every framework carries a `sourceQuality` grade. Coverage-inflation guard reshaped to per-framework. |
 | 3d Infrastructure fit (**inserted**) | in review | `infrastructure.ts` — estate shape and per-category relevance from the asset inventory. `category-weights.yaml`, `mssp-rate-card.yaml`. Q2 answered, §7.2 deviation decided, NIST regraded. |
 | 4 `scoring.ts` + `portfolio.ts` + tests | in review | Both stages plus all seven §7.4 steps. `scoring-weights.yaml`, `portfolio-assumptions.yaml`. **Reviewed; 7 defects found and fixed**, each pinned by a regression. 244 tests green. |
+| 4b `coverage.ts` (**inserted**) | in review | The §7.5 stage: coverage matrix per framework, CSF Function roll-up, risk-graded gap list, costed fix plan. `coverage-assumptions.yaml`. The engine pipeline is now complete end to end. 299 tests green. |
 | 5 Intake wizard UI | not started | Also scaffolds apps/web (Next.js) + Prisma/SQLite + server-action mutation layer. |
 | 6 Results dashboard | not started | |
 | 7 Catalog expansion (≥5 per category) | not started | |
@@ -409,7 +410,95 @@ found two more defects that a single fixed scenario would never have shown.
 between stages, or a test that was weaker than the claim it stood for*. The acceptance scenarios
 are the counter-measure, and they have now found four defects in two sittings.
 
+### Phase 4b — coverage, the last engine stage
+
+`sizing → cost → scoring → portfolio → coverage` is now whole. §7.5 had no phase
+of its own in PROJECT_SPEC §11, and Phase 6's dashboard needs it (§8.4 coverage
+matrix, §8.5 gap analysis), so it was inserted ahead of the UI rather than
+discovered missing halfway through building the results page.
+
+- 2026-09-11 — **Coverage needs two signals to agree, and they are kept apart.**
+  `Control.satisfiedBy` is StackFit's category-level judgement ("a SIEM
+  satisfies this"); `Product.controlsCovered` is one product's own sourced
+  claim. Both agreeing is `covered`. The right *kind* of tool in the stack with
+  no claim on the control is `partial` — reported, counted as uncovered, and
+  never shown as coverage. A coverage figure should be the one you can defend.
+- 2026-09-11 — **Controls no purchase can satisfy are excluded from the
+  denominator.** 115 of the library's 240 controls map to no product category at
+  all — policy, training, physical custody, cryptography. Counting them would
+  peg every stack near 50% and mark a client down for not buying a policy.
+- 2026-09-11 — **⚠ Addressability is a property of the control, never of the
+  bundle.** Found while reviewing the first draft, which let a product claiming a
+  `satisfiedBy: []` control pull that control into the denominator. Two bundles
+  for the same client would then have been scored out of different totals, and
+  §8.1 puts three bundles side by side. Such a claim is now reported as a
+  conflict to settle in the data and counts neither way. Pinned by a regression.
+- 2026-09-11 — **Five committed product claims fall outside the framework's own
+  category mapping** — Wazuh claiming CIS 1 and 4, Defender claiming CIS 7,
+  Sentinel claiming CIS 17 and RS.MA. Each is arguable on the merits (Wazuh does
+  do configuration assessment; Defender does have TVM). Coverage takes the
+  product's specific sourced claim at face value and says in the rationale that
+  the category mapping is worth revisiting, rather than silently preferring
+  either signal. **Worth your eye** — the fix is in `data/frameworks/`, not code.
+- 2026-09-11 — **The six CSF Functions are declared in the framework file, not
+  parsed out of the control id.** `DE.CM` is in Detect by NIST's own identifier
+  scheme, and deriving it in code would hide a structural claim about a
+  published standard inside the engine. `Framework.groups` is generic, so PCI's
+  six goals or ISO's four themes can follow later; only NIST is grouped today.
+  Grouping is all or nothing, enforced in the schema — a half-grouped framework
+  would roll up a partial denominator and read as a coverage figure.
+- 2026-09-11 — **NIST CSF is always reported, selected or not.** §7.5 asks for
+  the Function view as a way of *reading* a stack, which is a different question
+  from what the client is regulated by. Each framework's coverage carries
+  `inScope`, and only the selected ones feed the headline summary.
+- 2026-09-11 — **§7.5's "CIS v8 safeguards" is served at Control level, not
+  Safeguard level**, per the Phase 1 decision. CIS is just another framework to
+  this stage; nothing about the 18 Controls is special-cased.
+- 2026-09-11 — **The gap list and the shopping list are two different answers,
+  and both ship.** §7.5 asks for "the cheapest product that would close it",
+  which is a per-gap question. Buying that answer gap by gap purchases a second
+  tool to do a job something already on the list does — and makes the result
+  depend on the order the gaps happen to be listed in, which the first draft did
+  (a control id sorting `13` before `8` bought a cheap NDR it did not need).
+  `remediation` is a greedy cover instead: fewest purchases closing the most
+  gaps, products that actually claim a control exhausted first. Each gap names
+  the purchase that closes it, so the two views cross-reference rather than
+  contradict.
+- 2026-09-11 — **Fix costs are procurement spend; the FTE travels beside them.**
+  The same split §7.4's knapsack makes. This is the principle the Phase 4 review
+  warned would be dropped between stages, carried deliberately rather than
+  re-decided — as is the rule that a price's confidence and freshness travel
+  with the number, so a gap priced from a stale figure says so.
+
+**Worth eyeballing.** The §12.1 retailer's stack — Nessus, CrowdStrike, Graylog —
+read against the CSF Functions:
+
+| Function | Covered |
+|---|---|
+| Govern | 0/0 — nothing here is bought, and nothing should be |
+| Identify | 2/2 |
+| Protect | 1/4 |
+| Detect | 2/2 |
+| Respond | **0/4** |
+| Recover | **0/1** |
+
+It can see and it can find. It cannot respond and it cannot recover. That is one
+line of a slide and it falls straight out of the data.
+
+PCI DSS itself scores 5 of 8 buyable controls (62.5%), with requirements 1, 7 and
+8 — firewalls, least privilege and identity — graded critical because PCI marks
+them mandatory and the client selected PCI. **All nine gaps are unclosable from
+the current three-category catalog**, and the output says exactly that rather
+than returning an empty fix list.
+
+The other worked example is the hard-rule-8 one: a 250-seat manufacturer at a
+USD 3,000/yr cap is told the two purchases that would close the most gaps are
+OpenVAS and Wazuh, **both zero-licence**, at USD 4,900/yr and 0.9 FTE between
+them. The gap analysis prices free software the same way the cost stage does.
+
+
 ## Open questions
+- **Five catalog control claims fall outside the framework's own category mapping** (Phase 4b). Wazuh claims `cis-v8:1` and `cis-v8:4`, Defender claims `cis-v8:7`, Sentinel claims `cis-v8:17` and `nist-csf-2.0:RS.MA`. Each is defensible on the merits, and each means either the framework file's `satisfiedBy` is too narrow or the product entry is too generous. Coverage reports the disagreement rather than resolving it. **Worth a decision before Phase 7 multiplies it.**
 - **opsBurden and implementation figures have no confidence field.** Every one in the seed catalog is an analyst estimate, flagged in each product's `notes`, but the schema cannot distinguish an estimate from a measured figure the way `pricingConfidence` does for prices. Worth adding an `opsBurdenConfidence` before the catalog grows in Phase 7.
 
 ## Known placeholders

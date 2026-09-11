@@ -124,6 +124,17 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
 - Money in the engine is integer minor units end to end. **Currency conversion is done in
   BigInt**: INR minor units × a rate in millionths passes 2^53 at around INR 100 million.
   Rounding is half-away-from-zero, not `Math.round`, which biases negative amounts.
+- **A framework file groups all its controls or none of them.** `groups: []` is a
+  flat list; declare one group and every control must name one, or the schema
+  rejects the file — a half-grouped framework would roll up a partial denominator
+  in `coverage.ts` and read as a coverage figure. Only `nist-csf-2.0` is grouped
+  today (the six CSF Functions); PCI's six goals and ISO's four themes could
+  follow the same way.
+- **Coverage counts a control as covered only when a selected product *claims*
+  it.** The category mapping (`satisfiedBy`) having the right kind of tool in the
+  bundle is `partial`, and controls mapping to no category at all are outside the
+  denominator entirely. Percentages are therefore lower than a category-level
+  reading would give, and deliberately so.
 - `scripts/lib/validate-data.ts` holds the data-validation rules; `scripts/validate-catalog.ts`
   is a thin CLI over it and `test/data.test.ts` asserts the committed tree is clean. So
   `pnpm test` fails on a bad `data:` commit, not just the command someone forgot to run.
