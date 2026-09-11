@@ -9,18 +9,19 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "dev": "echo \"pnpm dev: Next.js app is scaffolded in Phase 5\" && exit 0",
-    "build": "tsc --build",
+    "dev": "pnpm --filter @stackfit/web dev",
+    "build": "tsc --build && pnpm --filter @stackfit/web build",
     "test": "vitest run",
     "test:engine": "vitest run --project engine",
-    "typecheck": "tsc --build --force",
+    "typecheck": "tsc --build --force && pnpm --filter @stackfit/web typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "catalog:validate": "tsx scripts/validate-catalog.ts",
     "catalog:staleness": "tsx scripts/catalog-staleness.ts",
     "prices:refresh": "tsx scripts/refresh-prices.ts",
-    "db:push": "echo \"pnpm db:push: Prisma schema is scaffolded in Phase 5\" && exit 0"
+    "db:push": "pnpm --filter @stackfit/web db:push",
+    "db:generate": "pnpm --filter @stackfit/web db:generate"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -39,8 +40,15 @@
     "yaml": "^2.6.1"
   },
   "pnpm": {
+    "overrides": {
+      "mysql2": "^3.23.1",
+      "deepmerge-ts": "^8.0.0"
+    },
     "onlyBuiltDependencies": [
-      "esbuild"
+      "esbuild",
+      "prisma",
+      "@prisma/engines",
+      "better-sqlite3"
     ]
   }
 }

@@ -7,7 +7,16 @@ import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/build/**', '**/coverage/**', '**/.next/**', '**/node_modules/**'],
+    ignores: [
+      '**/dist/**',
+      '**/build/**',
+      '**/coverage/**',
+      '**/.next/**',
+      '**/node_modules/**',
+      // Prisma writes its client into the app's source tree; it is generated
+      // code held to the generator's standards, not this repo's.
+      'apps/web/src/generated/**',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -25,12 +34,26 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.ts'],
+    files: ['**/*.ts', '**/*.tsx'],
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+    },
+  },
+  {
+    // Next.js discovers pages, layouts, configs and middleware by default
+    // export. This is the override CONTRIBUTING.md's convention already anticipated.
+    files: [
+      'apps/web/src/app/**/{page,layout,loading,error,not-found,template,default,route}.tsx',
+      'apps/web/src/app/**/{page,layout,loading,error,not-found,template,default,route}.ts',
+      'apps/web/src/proxy.ts',
+      'apps/web/*.config.{ts,mjs}',
+      'apps/web/prisma.config.ts',
+    ],
+    rules: {
+      'no-restricted-syntax': 'off',
     },
   },
   {

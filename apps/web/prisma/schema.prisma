@@ -1,0 +1,45 @@
+// Persistence for saved scoping sessions (PROJECT_SPEC §2).
+//
+// SQLite for zero setup, and the schema is deliberately Postgres-portable: no
+// SQLite-only features, and every column type exists on both.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  runtime  = "nodejs"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// One saved scoping session: the client profile plus the inventory it was
+/// sized from. Everything else — sizing, costs, bundles, coverage — is derived
+/// by the engine on read, never stored, because a stored recommendation would
+/// go stale the moment a price or a coefficient changed.
+model Scenario {
+  id   String @id @default(cuid())
+  name String
+
+  /// ClientProfile as JSON text, Zod-parsed on the way in and on the way out.
+  ///
+  /// Text rather than a Json column because Prisma has no Json scalar on
+  /// SQLite and this schema has to run unchanged on Postgres. The validation
+  /// that matters happens in Zod either way — a Json column would only buy
+  /// database-side syntax checking of a blob the database never queries.
+  profile String
+
+  /// AssetInventory as JSON text, same reasoning.
+  inventory String
+
+  /// Auth seam (docs/STATUS.md, Q3). No auth in v1; these stay null until
+  /// there is, and exist so that adding it is a migration nobody has to think
+  /// hard about.
+  ownerId   String?
+  createdBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([updatedAt])
+}

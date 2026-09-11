@@ -1,0 +1,76 @@
+@import 'tailwindcss';
+
+/*
+ * Dark, dense, professional (PROJECT_SPEC §9). There is no light theme: this is
+ * a working tool used in a call, not a landing page, and a second palette is a
+ * second thing to keep consistent for no benefit anyone asked for.
+ *
+ * Tailwind v4 is configured in CSS, so these tokens *are* the config — every
+ * name below becomes a utility (`bg-panel`, `text-muted`, `border-line`).
+ */
+@theme {
+  --color-ground: #0a0e13;
+  --color-panel: #111820;
+  --color-panel-raised: #17202b;
+  --color-line: #22303f;
+  --color-line-strong: #33475c;
+
+  --color-ink: #e7eef6;
+  --color-muted: #93a4b8;
+  --color-faint: #64748b;
+
+  --color-accent: #58a6ff;
+  --color-accent-dim: #1f4d80;
+  --color-good: #3fb950;
+  --color-warn: #d29922;
+  --color-bad: #f85149;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, Consolas, monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers in a table have to line up, everywhere, without thinking about it. */
+.tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* One focus ring for the whole app, visible against the dark ground. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ground);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-line-strong);
+}
+
+/* Firefox has no ::-webkit-scrollbar; this is the standard property. */
+* {
+  scrollbar-color: var(--color-line) var(--color-ground);
+}
