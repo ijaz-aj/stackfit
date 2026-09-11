@@ -20,7 +20,7 @@ if (result.issues.length > 0) {
   console.log(
     `catalog:validate — OK. ${result.productCount} product(s) across ` +
       `${result.catalogFileCount} catalog file(s), ${result.controlCount} control(s) ` +
-      `across ${result.frameworkCount} framework(s).`,
+      `across ${result.frameworkCount} framework(s), ${result.presetCount} intake preset(s).`,
   );
 
   if (result.placeholders.length > 0) {

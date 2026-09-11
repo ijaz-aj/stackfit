@@ -19,6 +19,7 @@ import {
   LabourRates,
   MsspRateCard,
   PortfolioAssumptions,
+  PresetFile,
   ScoringWeights,
   SizingAssumptions,
 } from '@stackfit/schema';
@@ -46,6 +47,7 @@ export interface DataValidationResult {
   readonly catalogFileCount: number;
   readonly frameworkCount: number;
   readonly controlCount: number;
+  readonly presetCount: number;
 }
 
 /**
@@ -111,6 +113,7 @@ export function validateDataTree(dataDir: string): DataValidationResult {
       catalogFileCount: 0,
       frameworkCount: 0,
       controlCount: 0,
+      presetCount: 0,
     };
   }
 
@@ -212,6 +215,31 @@ export function validateDataTree(dataDir: string): DataValidationResult {
     }
   }
 
+  // ---- Presets. Each one is an assertion about a typical estate, so it is
+  // validated like any other data file — and a preset naming a framework that
+  // does not exist would break the wizard at the point of use.
+  const presetFiles = yamlFilesIn(join(dataDir, 'presets'));
+  const presetIds = new Map<string, string>();
+  let presetCount = 0;
+
+  for (const file of presetFiles) {
+    const raw = loadYaml(file);
+    if (raw === undefined) continue;
+
+    const parsed = validate(file, PresetFile, raw);
+    if (parsed === undefined) continue;
+
+    for (const preset of parsed.presets) {
+      presetCount += 1;
+      const firstSeenIn = presetIds.get(preset.id);
+      if (firstSeenIn !== undefined) {
+        report(file, preset.id, `duplicate preset id, already defined in ${relativeToData(firstSeenIn)}`);
+      } else {
+        presetIds.set(preset.id, file);
+      }
+    }
+  }
+
   return {
     issues,
     placeholders,
@@ -219,5 +247,6 @@ export function validateDataTree(dataDir: string): DataValidationResult {
     catalogFileCount: catalogFiles.length,
     frameworkCount: frameworkFiles.length,
     controlCount: knownControlIds.size,
+    presetCount,
   };
 }

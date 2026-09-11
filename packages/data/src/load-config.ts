@@ -19,9 +19,11 @@ import {
   LabourRates,
   MsspRateCard,
   PortfolioAssumptions,
+  PresetFile,
   ScoringWeights,
   SizingAssumptions,
   type Product,
+  type ScenarioPreset,
 } from '@stackfit/schema';
 import { parse as parseYaml } from 'yaml';
 
@@ -67,6 +69,25 @@ export function loadCoverageAssumptions(dataDir: string): CoverageAssumptions {
 
 export function loadFxConfig(dataDir: string): FxConfig {
   return FxConfig.parse(readYaml(join(dataDir, 'config', 'fx.yaml')));
+}
+
+/**
+ * Every intake preset in data/presets, in file order then declaration order.
+ *
+ * An absent directory is an error rather than an empty list: the wizard offers
+ * presets as its main path through intake, and silently offering none would
+ * look like a UI bug rather than a missing file.
+ */
+export function loadPresets(dataDir: string): ScenarioPreset[] {
+  const presetsDir = join(dataDir, 'presets');
+  const presets: ScenarioPreset[] = [];
+
+  for (const name of readdirSync(presetsDir).sort()) {
+    if (!name.endsWith('.yaml') && !name.endsWith('.yml')) continue;
+    presets.push(...PresetFile.parse(readYaml(join(presetsDir, name))).presets);
+  }
+
+  return presets;
 }
 
 /** Every product in data/catalog, keyed by id. */
