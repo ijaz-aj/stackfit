@@ -16,3 +16,4 @@ export * from './infrastructure.js';
 export * from './scoring.js';
 export * from './portfolio.js';
 export * from './coverage.js';
+export * from './pipeline.js';

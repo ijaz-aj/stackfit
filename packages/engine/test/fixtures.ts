@@ -12,8 +12,11 @@ import {
   type AssetClassAssumption,
   type ClientProfile,
   type CostAssumptions,
+  type CoverageAssumptions,
   type DeploymentMode,
   Framework,
+  type MsspRateCard,
+  type PortfolioAssumptions,
   type FreshnessPolicy,
   type FxConfig,
   type Implementation,
@@ -225,6 +228,75 @@ function buildProductShape(overrides: ProductOverrides = {}): unknown {
     bestFor: [],
     avoidWhen: [],
     sources: [{ url: 'https://example.com/docs', asOf: '2026-01-01' }],
+  };
+}
+
+/** Portfolio assumptions with round numbers, for tests that only need them wired. */
+export function buildPortfolioAssumptions(
+  overrides: Partial<PortfolioAssumptions> = {},
+): PortfolioAssumptions {
+  return {
+    essentialWeightFloor: 85,
+    suiteDiscountRate: 0.1,
+    suiteIntegrationBonusPoints: 5,
+    minimumAnnualisedCostMinor: 100,
+    openSourcePreferencePoints: 8,
+    basis: 'test fixture',
+    ...overrides,
+  };
+}
+
+export function buildCoverageAssumptions(
+  overrides: Partial<CoverageAssumptions> = {},
+): CoverageAssumptions {
+  return {
+    mandatoryControlRisk: 'critical',
+    residualRiskBands: [
+      { risk: 'high', minCategoryWeight: 85, label: 'essential here' },
+      { risk: 'medium', minCategoryWeight: 50, label: 'material here' },
+      { risk: 'low', minCategoryWeight: 0, label: 'situational here' },
+    ],
+    basis: 'test fixture',
+    ...overrides,
+  };
+}
+
+export function buildMsspRateCard(): MsspRateCard {
+  return {
+    currency: 'USD',
+    asOf: '2026-01-01',
+    confidence: 'analyst_estimate',
+    notes: 'test fixture',
+    sources: [{ url: 'https://example.com/mssp', asOf: '2026-01-01' }],
+    tiers: (['small', 'mid', 'large', 'enterprise'] as const).map((scaleClass) => ({
+      scaleClass,
+      basePlatformFeeMonthly: usd(100_000),
+      basis: 'test fixture',
+    })),
+    perEndpointMonthly: usd(1000),
+    perServerMonthly: usd(2000),
+    perGbDayMonthly: usd(5000),
+    serviceLevels: [
+      {
+        level: 'monitoring',
+        multiplier: 1,
+        coveredCategories: ['siem', 'mdr'],
+        basis: 'test fixture',
+      },
+      {
+        level: 'mdr',
+        multiplier: 1.5,
+        coveredCategories: ['siem', 'mdr', 'edr'],
+        basis: 'test fixture',
+      },
+      {
+        level: 'managed_security',
+        multiplier: 2,
+        coveredCategories: ['siem', 'mdr', 'edr', 'soar', 'ndr', 'ngfw'],
+        basis: 'test fixture',
+      },
+    ],
+    minimumMonthly: usd(50_000),
   };
 }
 

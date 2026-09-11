@@ -5,8 +5,13 @@
 // makes it a good regression net and a poor safety net: each stage was correct
 // in isolation while two defects lived in the seams between them. These
 // scenarios exist to exercise the seams — sizing feeding cost feeding scoring
-// feeding portfolio, with the real catalog, the real rate cards and the real
-// framework library.
+// feeding portfolio feeding coverage, with the real catalog, the real rate
+// cards and the real framework library.
+//
+// The wiring itself lives in `runPipeline`, in the engine, rather than here: if
+// this file assembled the stages in its own way, what these scenarios prove
+// would be a fact about a second copy of the plumbing rather than about the
+// engine the web app runs.
 //
 // ⚠ These are the tests CONTRIBUTING.md forbids editing to make a change pass. If a
 // scenario goes red, either the engine is wrong or the committed data is — fix
@@ -14,32 +19,6 @@
 
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-import {
-  buildPortfolio,
-  computeCategoryRelevance,
-  computeCoverage,
-  computeInfrastructureProfile,
-  computeProductCosts,
-  computeSizing,
-  scoreProducts,
-  type Bundle,
-  type CategoryRanking,
-  type CoverageInputs,
-  type CoverageResult,
-  type InfrastructureProfile,
-  type ProductCost,
-  type ProductScore,
-  type SizingResult,
-} from '@stackfit/engine';
-import type {
-  AssetInventory,
-  ClientProfile,
-  Framework,
-  FrameworkId,
-  Product,
-  ProductCategory,
-} from '@stackfit/schema';
 
 import {
   loadCatalog,
@@ -55,6 +34,14 @@ import {
   loadScoringWeights,
   loadSizingAssumptions,
 } from '@stackfit/data';
+import {
+  coverageOfBundle,
+  runPipeline,
+  type Bundle,
+  type CoverageResult,
+  type PipelineResult,
+} from '@stackfit/engine';
+import type { AssetInventory, ClientProfile, ProductCategory } from '@stackfit/schema';
 
 const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'data');
 
@@ -65,51 +52,31 @@ const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'data
  */
 export const AS_AT = '2026-09-15';
 
-const sizingAssumptions = loadSizingAssumptions(DATA_DIR);
-const categoryWeights = loadCategoryWeights(DATA_DIR);
-const scoringWeights = loadScoringWeights(DATA_DIR);
-const portfolioAssumptions = loadPortfolioAssumptions(DATA_DIR);
-const msspRateCard = loadMsspRateCard(DATA_DIR);
-const coverageAssumptions = loadCoverageAssumptions(DATA_DIR);
-const frameworkLibrary = loadFrameworks(DATA_DIR);
-
-/**
- * NIST CSF 2.0 is always reported against, selected or not: §7.5 asks for the
- * bundle mapped to the six Functions as a way of reading any stack, which is a
- * different question from what the client is regulated by. `inScope` on each
- * framework's coverage is what separates the two.
- */
-const REFERENCE_FRAMEWORK: FrameworkId = 'nist-csf-2.0';
-
 export const catalog = loadCatalog(DATA_DIR);
 
-const costInputs = {
-  labourRates: loadLabourRates(DATA_DIR),
-  costAssumptions: loadCostAssumptions(DATA_DIR),
-  fx: loadFxConfig(DATA_DIR),
-  freshnessPolicy: loadFreshnessPolicy(DATA_DIR),
-  today: AS_AT,
+const config = {
+  products: [...catalog.values()],
+  frameworks: loadFrameworks(DATA_DIR),
+  sizingAssumptions: loadSizingAssumptions(DATA_DIR),
+  categoryWeights: loadCategoryWeights(DATA_DIR),
+  scoringWeights: loadScoringWeights(DATA_DIR),
+  portfolioAssumptions: loadPortfolioAssumptions(DATA_DIR),
+  coverageAssumptions: loadCoverageAssumptions(DATA_DIR),
+  mssp: loadMsspRateCard(DATA_DIR),
+  costInputs: {
+    labourRates: loadLabourRates(DATA_DIR),
+    costAssumptions: loadCostAssumptions(DATA_DIR),
+    fx: loadFxConfig(DATA_DIR),
+    freshnessPolicy: loadFreshnessPolicy(DATA_DIR),
+    today: AS_AT,
+  },
 };
 
-export interface ScenarioResult {
-  readonly sizing: SizingResult;
-  readonly infrastructure: InfrastructureProfile;
-  readonly products: readonly Product[];
-  readonly scores: readonly ProductScore[];
-  readonly costs: ReadonlyMap<string, ProductCost>;
-  readonly rankings: readonly CategoryRanking[];
-  readonly essential: Bundle;
-  readonly recommended: Bundle;
-  readonly ideal: Bundle;
-  /** Coverage of the Recommended bundle. Use `coverageOf` for the others. */
-  readonly coverage: CoverageResult;
-  /** Everything `computeCoverage` needs except the bundle to measure. */
-  readonly coverageInputs: Omit<CoverageInputs, 'bundle'>;
-}
+export type ScenarioResult = PipelineResult;
 
 /** Coverage of any bundle from a scenario that has already been run. */
 export function coverageOf(result: ScenarioResult, bundle: Bundle): CoverageResult {
-  return computeCoverage({ ...result.coverageInputs, bundle });
+  return coverageOfBundle(result, bundle);
 }
 
 /** Inventory helper: counts in, a parsed AssetInventory out. */
@@ -120,78 +87,9 @@ export function inventoryOf(counts: Record<string, number>): AssetInventory {
   } as AssetInventory;
 }
 
-/** The whole pipeline, exactly as the web app will run it in Phase 5. */
+/** The whole pipeline, exactly as the web app runs it. */
 export function runScenario(profile: ClientProfile, inventory: AssetInventory): ScenarioResult {
-  const sizing = computeSizing(inventory, profile, sizingAssumptions);
-  const products = [...catalog.values()];
-
-  const frameworks = profile.compliance
-    .map((id: FrameworkId) => frameworkLibrary.get(id))
-    .filter((framework): framework is NonNullable<typeof framework> => framework !== undefined);
-
-  // Cheapest tier per product, which is what computeProductCosts sorts to.
-  const costs = new Map<string, ProductCost>();
-  for (const product of products) {
-    const [cheapest] = computeProductCosts(product, sizing, profile, costInputs);
-    if (cheapest !== undefined) costs.set(product.id, cheapest);
-  }
-
-  const scores = scoreProducts(products, {
-    profile,
-    inventory,
-    sizing,
-    frameworks,
-    weights: scoringWeights,
-    categoryWeights,
-  });
-
-  const infrastructure = computeInfrastructureProfile(inventory, categoryWeights);
-  const relevance = computeCategoryRelevance(infrastructure, categoryWeights);
-
-  const portfolio = buildPortfolio({
-    profile,
-    sizing,
-    products,
-    scores,
-    costs,
-    relevance,
-    frameworks,
-    categoryWeights,
-    assumptions: portfolioAssumptions,
-    mssp: msspRateCard,
-    fx: costInputs.fx,
-    costInputs,
-  });
-
-  const coverageFrameworkIds: FrameworkId[] = [...profile.compliance];
-  if (!coverageFrameworkIds.includes(REFERENCE_FRAMEWORK)) {
-    coverageFrameworkIds.push(REFERENCE_FRAMEWORK);
-  }
-  const coverageInputs: Omit<CoverageInputs, 'bundle'> = {
-    profile,
-    products,
-    scores,
-    costs,
-    relevance,
-    frameworks: coverageFrameworkIds
-      .map((id) => frameworkLibrary.get(id))
-      .filter((framework): framework is Framework => framework !== undefined),
-    assumptions: coverageAssumptions,
-  };
-
-  return {
-    sizing,
-    infrastructure,
-    products,
-    scores,
-    costs,
-    rankings: portfolio.rankings,
-    essential: portfolio.essential,
-    recommended: portfolio.recommended,
-    ideal: portfolio.ideal,
-    coverage: computeCoverage({ ...coverageInputs, bundle: portfolio.recommended }),
-    coverageInputs,
-  };
+  return runPipeline({ ...config, profile, inventory });
 }
 
 /** Every rationale string a bundle and its selections produced, as one blob. */
