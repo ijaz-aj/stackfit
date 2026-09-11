@@ -23,6 +23,7 @@ import type {
   Product,
   ScoringWeights,
   SizingAssumptions,
+  SizingOverrides,
 } from '@stackfit/schema';
 
 import { computeProductCosts, type CostInputs, type ProductCost } from './cost';
@@ -35,7 +36,7 @@ import {
 } from './infrastructure';
 import { buildPortfolio, type Bundle, type Candidate, type CategoryRanking } from './portfolio';
 import { scoreProducts, type ProductScore } from './scoring';
-import { computeSizing, type SizingResult } from './sizing';
+import { applySizingOverrides, computeSizing, type SizingResult } from './sizing';
 
 /**
  * Always reported against, whether or not the client selected it.
@@ -57,6 +58,12 @@ export interface PipelineInputs {
    */
   readonly frameworks: ReadonlyMap<string, Framework>;
   readonly sizingAssumptions: SizingAssumptions;
+  /**
+   * This client's own corrections to the sizing coefficients (§8.6). Optional:
+   * most scenarios have none, and a scenario with none must size identically to
+   * one that has never heard of overrides.
+   */
+  readonly sizingOverrides?: SizingOverrides | undefined;
   readonly categoryWeights: CategoryWeights;
   readonly scoringWeights: ScoringWeights;
   readonly portfolioAssumptions: PortfolioAssumptions;
@@ -68,6 +75,8 @@ export interface PipelineInputs {
 
 export interface PipelineResult {
   readonly sizing: SizingResult;
+  /** The coefficients this run actually used, overrides folded in. */
+  readonly sizingAssumptions: SizingAssumptions;
   /** The catalog this run considered, so callers can name what was on offer. */
   readonly products: readonly Product[];
   readonly infrastructure: InfrastructureProfile;
@@ -105,6 +114,7 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
     products,
     frameworks,
     sizingAssumptions,
+    sizingOverrides,
     categoryWeights,
     scoringWeights,
     portfolioAssumptions,
@@ -113,7 +123,11 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
     costInputs,
   } = inputs;
 
-  const sizing = computeSizing(inventory, profile, sizingAssumptions);
+  const effectiveAssumptions =
+    sizingOverrides === undefined
+      ? sizingAssumptions
+      : applySizingOverrides(sizingAssumptions, sizingOverrides);
+  const sizing = computeSizing(inventory, profile, effectiveAssumptions);
   const inScope = selectedFrameworks(profile, frameworks);
 
   // Cheapest tier per product, which is the order computeProductCosts returns.
@@ -168,6 +182,7 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
 
   return {
     sizing,
+    sizingAssumptions: effectiveAssumptions,
     products,
     infrastructure,
     relevance,

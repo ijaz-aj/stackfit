@@ -1,5 +1,5 @@
 import { runPipeline, type PipelineResult } from '@stackfit/engine';
-import type { AssetInventory, ClientProfile } from '@stackfit/schema';
+import type { AssetInventory, ClientProfile, SizingOverrides } from '@stackfit/schema';
 
 import { engineData, today } from './config.server';
 
@@ -11,12 +11,17 @@ import { engineData, today } from './config.server';
  * the same arguments — the mistake this repo has now corrected at three
  * different layers.
  */
-export function resultsFor(profile: ClientProfile, inventory: AssetInventory): PipelineResult {
+export function resultsFor(
+  profile: ClientProfile,
+  inventory: AssetInventory,
+  sizingOverrides?: SizingOverrides,
+): PipelineResult {
   const data = engineData();
 
   return runPipeline({
     profile,
     inventory,
+    sizingOverrides,
     products: data.catalog,
     frameworks: data.frameworks,
     sizingAssumptions: data.sizingAssumptions,

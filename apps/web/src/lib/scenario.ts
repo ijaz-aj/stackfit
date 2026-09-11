@@ -1,4 +1,11 @@
-import { AssetInventory, ClientProfile, Slug, type ScenarioPreset } from '@stackfit/schema';
+import {
+  AssetInventory,
+  ClientProfile,
+  NO_SIZING_OVERRIDES,
+  SizingOverrides,
+  Slug,
+  type ScenarioPreset,
+} from '@stackfit/schema';
 import { z } from 'zod';
 
 /**
@@ -58,12 +65,22 @@ export type CreateScenarioInput = z.infer<typeof CreateScenarioInput>;
 
 export const ScenarioId = z.object({ id: z.string().min(1).max(64) }).strict();
 
+/** What the sizing worksheet sends when an analyst corrects a coefficient (§8.6). */
+export const SizingOverrideInput = z
+  .object({
+    id: z.string().min(1).max(64),
+    overrides: SizingOverrides,
+  })
+  .strict();
+export type SizingOverrideInput = z.infer<typeof SizingOverrideInput>;
+
 export interface ScenarioRecord {
   readonly id: string;
   readonly name: string;
   readonly updatedAt: string;
   readonly profile: ClientProfile;
   readonly inventory: AssetInventory;
+  readonly overrides: SizingOverrides;
 }
 
 export interface UnreadableScenario {
@@ -78,6 +95,7 @@ export interface ScenarioRow {
   readonly name: string;
   readonly profile: string;
   readonly inventory: string;
+  readonly overrides: string;
   readonly updatedAt: Date;
 }
 
@@ -93,9 +111,11 @@ export function parseScenarioRow(row: ScenarioRow): ScenarioRecord | UnreadableS
 
   let rawProfile: unknown;
   let rawInventory: unknown;
+  let rawOverrides: unknown;
   try {
     rawProfile = JSON.parse(row.profile);
     rawInventory = JSON.parse(row.inventory);
+    rawOverrides = JSON.parse(row.overrides);
   } catch (error) {
     return { ...base, problem: `stored JSON is malformed: ${(error as Error).message}` };
   }
@@ -113,7 +133,17 @@ export function parseScenarioRow(row: ScenarioRow): ScenarioRecord | UnreadableS
     };
   }
 
-  return { ...base, profile: profile.data, inventory: inventory.data };
+  // An override that no longer parses is dropped rather than fatal: it is a
+  // convenience layer over defaults that are always valid, so losing it costs
+  // the analyst a re-type and losing the whole scenario would cost far more.
+  const overrides = SizingOverrides.safeParse(rawOverrides);
+
+  return {
+    ...base,
+    profile: profile.data,
+    inventory: inventory.data,
+    overrides: overrides.success ? overrides.data : NO_SIZING_OVERRIDES,
+  };
 }
 
 export function isUnreadable(

@@ -13,6 +13,7 @@ import {
   NEW_PROFILE,
   ScenarioDraft,
   ScenarioId,
+  SizingOverrideInput,
   profileFromPreset,
 } from './scenario';
 
@@ -103,6 +104,33 @@ export async function deleteScenario(formData: FormData): Promise<void> {
 
   await prisma.scenario.delete({ where: { id: parsed.data.id } });
   revalidatePath('/');
+}
+
+/**
+ * Save one client's corrections to the sizing coefficients (§8.6).
+ *
+ * Writes only the overrides column. The wizard's autosave writes only profile
+ * and inventory, so two tabs open on one scenario cannot undo each other's
+ * work — which they would if either wrote the whole row.
+ */
+export async function saveSizingOverrides(input: unknown): Promise<SaveResult> {
+  const parsed = SizingOverrideInput.safeParse(input);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return {
+      ok: false,
+      savedAt: new Date().toISOString(),
+      problem: issue === undefined ? 'invalid override' : `${issue.path.join('.')}: ${issue.message}`,
+    };
+  }
+
+  await prisma.scenario.update({
+    where: { id: parsed.data.id },
+    data: { overrides: JSON.stringify(parsed.data.overrides) },
+  });
+
+  revalidatePath(`/scenarios/${parsed.data.id}/results`);
+  return { ok: true, savedAt: new Date().toISOString() };
 }
 
 export interface EstimateResult {

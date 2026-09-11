@@ -15,6 +15,7 @@ import type {
   ClientProfile,
   ScaleClass,
   SizingAssumptions,
+  SizingOverrides,
 } from '@stackfit/schema';
 import { AssetClass as AssetClassEnum } from '@stackfit/schema';
 
@@ -56,6 +57,47 @@ export interface SizingResult {
   readonly perAssetClass: readonly AssetClassSizing[];
   /** Hard rule 5: a number with no explanation does not ship. */
   readonly rationale: readonly string[];
+}
+
+/**
+ * The committed assumptions with one scenario's overrides applied (§8.6).
+ *
+ * Pure, and non-destructive: the defaults are copied, never mutated, so two
+ * scenarios sized in the same process cannot leak an override into each other.
+ *
+ * `retentionDays` replaces the *default* period only. Compliance still lengthens
+ * it afterwards — an analyst deciding 30 days is enough does not exempt a PCI
+ * client from requirement 10, and the rule that compliance can only lengthen
+ * retention has to survive an override or it was never a rule.
+ */
+export function applySizingOverrides(
+  assumptions: SizingAssumptions,
+  overrides: SizingOverrides,
+): SizingAssumptions {
+  const assetClasses = { ...assumptions.assetClasses };
+  // Tolerant of a bare `{}`: overrides arrive as stored JSON, and a scenario
+  // written before this field existed has no `eventsPerSecond` at all.
+  for (const [assetClass, eventsPerSecond] of Object.entries(overrides.eventsPerSecond ?? {})) {
+    const base = assetClasses[assetClass as AssetClass];
+    if (base === undefined || eventsPerSecond === undefined) continue;
+    assetClasses[assetClass as AssetClass] = {
+      ...base,
+      eventsPerSecond,
+      basis: `Analyst override for this client (default ${base.eventsPerSecond}: ${base.basis})`,
+    };
+  }
+
+  return {
+    ...assumptions,
+    assetClasses,
+    averageEventBytes: overrides.averageEventBytes ?? assumptions.averageEventBytes,
+    peakFactor: overrides.peakFactor ?? assumptions.peakFactor,
+    compressionRatio: overrides.compressionRatio ?? assumptions.compressionRatio,
+    retention: {
+      ...assumptions.retention,
+      defaultDays: overrides.retentionDays ?? assumptions.retention.defaultDays,
+    },
+  };
 }
 
 /**

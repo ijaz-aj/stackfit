@@ -1,7 +1,11 @@
-import type { AssetInventory } from '@stackfit/schema';
+import {
+  NO_SIZING_OVERRIDES,
+  type AssetInventory,
+  type SizingOverrides,
+} from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { computeSizing } from '../src/index';
+import { applySizingOverrides, computeSizing } from '../src/index';
 import { buildClientProfile, buildSizingAssumptions } from './fixtures';
 
 const profile = buildClientProfile();
@@ -228,5 +232,81 @@ describe('computeSizing — empty inventory', () => {
     expect(result.storageTb).toBe(0);
     expect(result.perAssetClass).toEqual([]);
     expect(result.rationale.join('\n')).toContain('empty inventory, not a small environment');
+  });
+});
+
+describe('sizing overrides (§8.6)', () => {
+  const inventory = {
+    firewalls: { count: 4 },
+    windowsServers: { count: 10 },
+    networkVendors: [],
+  } as AssetInventory;
+
+  const assumptions = buildSizingAssumptions({
+    firewalls: { eventsPerSecond: 100, role: 'network', monitored: true },
+    windowsServers: { eventsPerSecond: 2, role: 'server', monitored: true },
+  });
+
+  it('changes nothing when there is nothing to change', () => {
+    const base = computeSizing(inventory, buildClientProfile(), assumptions);
+    const merged = applySizingOverrides(assumptions, NO_SIZING_OVERRIDES);
+
+    expect(JSON.stringify(computeSizing(inventory, buildClientProfile(), merged))).toBe(
+      JSON.stringify(base),
+    );
+  });
+
+  it('lets an analyst say these firewalls are quieter than that', () => {
+    // The coefficient the repo argues about once, corrected for one client on
+    // one call. 4 firewalls at 100 EPS dominate this estate; at 10 they do not.
+    const merged = applySizingOverrides(assumptions, {
+      eventsPerSecond: { firewalls: 10 },
+    });
+    const sized = computeSizing(inventory, buildClientProfile(), merged);
+
+    expect(sized.epsTotal).toBe(4 * 10 + 10 * 2);
+    // The override says so on the worksheet rather than silently replacing the
+    // reasoning behind the default.
+    expect(merged.assetClasses.firewalls.basis).toContain('Analyst override');
+    expect(merged.assetClasses.firewalls.basis).toContain('default 100');
+  });
+
+  it('does not mutate the assumptions it was given', () => {
+    const before = JSON.stringify(assumptions);
+    applySizingOverrides(assumptions, { eventsPerSecond: { firewalls: 1 }, peakFactor: 9 });
+    expect(JSON.stringify(assumptions)).toBe(before);
+  });
+
+  it('lets compliance lengthen an overridden retention, never shorten it', () => {
+    // An analyst deciding 30 days is enough does not exempt a PCI client from
+    // requirement 10. The override replaces the default; the framework still
+    // wins when it asks for more.
+    // Deliberately a bare object: this is the shape stored JSON can arrive in.
+    const merged = applySizingOverrides(assumptions, { retentionDays: 30 } as SizingOverrides);
+
+    const unregulated = computeSizing(inventory, buildClientProfile(), merged);
+    expect(unregulated.retentionDays).toBe(30);
+
+    const pci = computeSizing(
+      inventory,
+      buildClientProfile({ compliance: ['pci-dss-4.0'] }),
+      merged,
+    );
+    expect(pci.retentionDays).toBe(365);
+  });
+
+  it('applies the storage knobs', () => {
+    const merged = applySizingOverrides(assumptions, {
+      eventsPerSecond: {},
+      averageEventBytes: 2000,
+      peakFactor: 3,
+    });
+
+    const base = computeSizing(inventory, buildClientProfile(), assumptions);
+    const tuned = computeSizing(inventory, buildClientProfile(), merged);
+
+    // Fixture is 1000 bytes and peak factor 2, so both double and treble.
+    expect(tuned.gbPerDay).toBeCloseTo(base.gbPerDay * 2, 6);
+    expect(tuned.licensedGbPerDay).toBeCloseTo(tuned.gbPerDay * 3, 6);
   });
 });

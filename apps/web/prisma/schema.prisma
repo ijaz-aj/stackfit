@@ -32,6 +32,13 @@ model Scenario {
   /// AssetInventory as JSON text, same reasoning.
   inventory String
 
+  /// This client's corrections to the sizing coefficients (§8.6), as JSON text.
+  ///
+  /// Written only by the results worksheet, never by the intake wizard: two
+  /// tabs open on one scenario must not have the wizard's autosave quietly
+  /// undo an override the analyst just typed on the dashboard.
+  overrides String @default("{}")
+
   /// Auth seam (docs/STATUS.md, Q3). No auth in v1; these stay null until
   /// there is, and exist so that adding it is a migration nobody has to think
   /// hard about.

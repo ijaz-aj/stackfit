@@ -85,6 +85,7 @@ describe('the storage boundary', () => {
     name: 'Acme',
     profile: JSON.stringify(NEW_PROFILE),
     inventory: JSON.stringify(NEW_INVENTORY),
+    overrides: '{}',
     updatedAt: new Date('2026-09-11T10:00:00.000Z'),
   };
 
@@ -94,6 +95,16 @@ describe('the storage boundary', () => {
     if (isUnreadable(parsed)) return;
     expect(parsed.profile).toEqual(NEW_PROFILE);
     expect(parsed.inventory).toEqual(NEW_INVENTORY);
+  });
+
+  it('drops an unreadable override rather than losing the scenario', () => {
+    // An override is a convenience layer over defaults that are always valid.
+    // Losing one costs a re-type; refusing to open the scenario would cost far
+    // more, so the two failures are deliberately not treated alike.
+    const parsed = parseScenarioRow({ ...row, overrides: '{"peakFactor":"loud"}' });
+    expect(isUnreadable(parsed)).toBe(false);
+    if (isUnreadable(parsed)) return;
+    expect(parsed.overrides).toEqual({ eventsPerSecond: {} });
   });
 
   it('reports a row it cannot read instead of throwing', () => {

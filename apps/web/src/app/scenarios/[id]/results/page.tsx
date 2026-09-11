@@ -63,7 +63,7 @@ export default async function ResultsPage({
   }
 
   const data = engineData();
-  const result = resultsFor(scenario.profile, scenario.inventory);
+  const result = resultsFor(scenario.profile, scenario.inventory, scenario.overrides);
   const kind = bundleKindFrom(requested);
   const bundle = result[kind];
   const coverage = coverageOfBundle(result, bundle);
@@ -122,7 +122,15 @@ export default async function ResultsPage({
 
       <GapAnalysis coverage={coverage} />
 
-      <SizingWorksheet sizing={result.sizing} assumptions={data.sizingAssumptions} />
+      <SizingWorksheet
+        scenarioId={id}
+        sizing={result.sizing}
+        // The coefficients this run actually used, so an overridden row shows
+        // the number it was sized on rather than the default it replaced.
+        assumptions={result.sizingAssumptions}
+        defaults={data.sizingAssumptions}
+        overrides={scenario.overrides}
+      />
 
       <AssumptionsPanel
         result={result}

@@ -17,6 +17,7 @@ export * from './preset';
 export * from './config';
 export * from './infrastructure';
 export * from './sizing';
+export * from './sizing-overrides';
 export * from './cost';
 export * from './scoring';
 export * from './portfolio';
