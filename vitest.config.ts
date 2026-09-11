@@ -31,6 +31,19 @@ export default defineConfig({
           include: ['test/**/*.test.ts'],
         },
       },
+      {
+        // PROJECT_SPEC §3: "UI gets smoke tests only". These cover the app's
+        // logic — defaults, the storage boundary, the money boundary and the
+        // estimate projection — and deliberately not its JSX, which would need
+        // a DOM, a component library of test helpers, and would assert layout
+        // rather than behaviour.
+        test: {
+          name: 'web',
+          root: './apps/web',
+          environment: 'node',
+          include: ['test/**/*.test.ts'],
+        },
+      },
     ],
   },
 });
