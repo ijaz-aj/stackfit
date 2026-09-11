@@ -112,6 +112,16 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   filesystem, which the engine still never does.
 - **`runPipeline` in the engine is the only wiring** from sizing through to coverage. The
   acceptance harness and the web app both call it; neither assembles the stages itself.
+- **A `BundleSelection` carries the `ProductCost` it was selected on.** Never re-look-up a
+  selected product's cost by id to build a breakdown: a suite-discounted selection is costed
+  a second time inside `portfolio.ts`, and the by-id figure is the undiscounted one.
+- **Sizing assumptions are overridable per scenario** (`SizingOverrides`, stored on the
+  Scenario row, applied by `applySizingOverrides`). The committed YAML is never mutated, and
+  the results worksheet is the only writer of that column — the wizard's autosave deliberately
+  does not touch it.
+- **Restart `pnpm dev` after `prisma db push`.** The Prisma client is cached on `globalThis`
+  to survive hot reloads, so a schema change leaves the old client in memory and every write
+  to the new column fails validation until the server restarts.
 - `pnpm` is a user-scoped global (`npm i -g pnpm@9.15.0`), not corepack — corepack needs
   admin on this machine. Node is v24 (winget LTS). Re-open the shell after any Node reinstall
   so `PATH` refreshes.

@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 5 — intake wizard, web app scaffolded end to end (in review)
+**Current phase:** 6 — results dashboard, all seven sections of §8 (in review)
 **Last updated:** 2026-09-11
 
 ## Phase log
@@ -17,7 +17,7 @@
 | 4 `scoring.ts` + `portfolio.ts` + tests | in review | Both stages plus all seven §7.4 steps. `scoring-weights.yaml`, `portfolio-assumptions.yaml`. **Reviewed; 7 defects found and fixed**, each pinned by a regression. 244 tests green. |
 | 4b `coverage.ts` (**inserted**) | in review | The §7.5 stage: coverage matrix per framework, CSF Function roll-up, risk-graded gap list, costed fix plan. `coverage-assumptions.yaml`. The engine pipeline is now complete end to end. 299 tests green. |
 | 5 Intake wizard UI | in review | Next 16 + React 19 + Tailwind v4 + Prisma 7/SQLite. Six steps, presets, continuous save, live readout. `runPipeline` + `@stackfit/data` extracted so the app and the tests share one path. 325 tests green; `pnpm audit` clean. |
-| 6 Results dashboard | not started | |
+| 6 Results dashboard | in review | All seven parts of §8, server-rendered off one pipeline run. Recharts cost + cash-flow charts on a validated palette. Sizing assumptions are editable per scenario. 334 tests green. |
 | 7 Catalog expansion (≥5 per category) | not started | |
 | 8 Export (DOCX/PDF/XLSX) | not started | |
 | 9 Scenario save / clone / compare | not started | |
@@ -563,6 +563,68 @@ no charts and no export yet. The wizard's *client-side* behaviour — typing, au
 re-estimating — could not be exercised in a browser this session (no automation available),
 so it is verified through the server actions and the logic tests, not through a rendered
 click-through. **Worth a five-minute manual pass before Phase 6.**
+
+
+### Phase 6 — the results dashboard
+
+Every part of §8 ships: bundle comparison, per-category cards, cost breakdown,
+coverage matrix, gap analysis, sizing worksheet and the assumptions panel. The
+definition of done was "every number traceable to a rationale", so the rationale
+strings every stage has been carrying since Phase 2 are finally on screen.
+
+- 2026-09-11 — **The dashboard is server-rendered, and the tier lives in the URL.**
+  Everything on the page is derived from one `runPipeline` call; shipping the catalog
+  and eleven config files to the browser to re-derive it would be absurd, and putting
+  the Essential/Recommended/Ideal switch in client state would make a particular view
+  unsendable. `?bundle=ideal` is a link an analyst can paste into an email.
+- 2026-09-11 — **Two things the engine was keeping to itself are now exposed.**
+  `ProductScore` reports `coveredAssets` and `missedAssets` in the client's raw counts,
+  because §8.2 wants a card that says "covers 1,200 Windows endpoints, 90 Windows
+  servers, 10 firewalls" and the weighted surface units the score is computed from are
+  the wrong number to say out loud. `BundleSelection` now carries the `ProductCost` it
+  was selected on, so a discounted product's licence line cannot disagree with the
+  total above it — that is the Phase 4 review's finding 2, which would otherwise have
+  happened again one stage later.
+- 2026-09-11 — **Chart colour was computed, not chosen.** Four categorical slots in
+  fixed order, validated against this app's own panel surface: lightness band, chroma
+  floor, CVD separation (worst adjacent ΔE 8.4 protan), normal-vision floor (19.8) and
+  3:1 contrast all pass. Marks are capped at 24px with a 2px surface gap between
+  stacked segments, grids are solid hairlines, and the same figures appear as a table
+  underneath — a tooltip must never be the only way to read a value.
+- 2026-09-11 — **⚠ Running the HIPAA preset exposed a presentation defect.** Coverage
+  read **0%** because no catalog product claims a single HIPAA control — true, and it
+  reads as "this stack does nothing for you". The distinction that matters is between
+  a stack that covers nothing and a catalog nobody has mapped against that framework,
+  so the engine now says which it is, and the comparison table names the partials
+  beside the percentage. Fixed in `coverage.ts`, pinned by a test.
+- 2026-09-11 — **§8.6's "editable" is implemented, not deferred.** `SizingOverrides`
+  is stored with the scenario: the committed coefficients stay as they are, and an
+  analyst who knows *these* firewalls are quieter than the default says so on the call
+  and watches the whole page re-derive. An overridden row shows what it replaced, so
+  the reasoning behind the default is not thrown away.
+- 2026-09-11 — **A retention override sets the floor only.** Deciding 30 days is
+  enough does not exempt a PCI client from requirement 10's 365. The rule that
+  compliance can only lengthen retention had to survive the override or it was never
+  a rule.
+- 2026-09-11 — **Overrides are written by the worksheet alone**, and the wizard's
+  autosave never touches that column. Two tabs open on one scenario would otherwise
+  undo each other — the wizard would save a draft holding stale overrides on top of
+  one just typed on the dashboard.
+- 2026-09-11 — **An unreadable override is dropped; an unreadable profile is not.**
+  The override is a convenience over defaults that are always valid, so losing it
+  costs a re-type. Refusing to open the scenario would cost far more, and the two
+  failures are deliberately not treated alike.
+
+**Verified against the running app.** The hospital preset renders all seven sections;
+dropping its firewalls from 100 EPS to 5 through the worksheet moved the estate from
+2,786 EPS / 120.3 GB-day to 1,836 / 79.3 — exactly the 10 × 95 expected — with every
+downstream figure re-derived and the override's provenance shown on the row.
+
+**⚠ Still unverified in a browser.** No browser automation was available in this
+session, so the dashboard is verified by rendering its HTML and driving its server
+actions over HTTP, not by looking at it. The charts in particular have been validated
+for colour and written to spec but **never seen**. Worth ten minutes with `pnpm dev`
+before Phase 7.
 
 
 ## Open questions
