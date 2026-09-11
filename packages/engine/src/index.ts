@@ -5,8 +5,6 @@
 //
 // Pipeline, each stage a pure function:
 //   sizing → cost → scoring → portfolio → coverage
-//
-// Stages are added phase by phase; `cost` onward are still to come.
 
 export const ENGINE_VERSION = '0.0.0';
 
@@ -17,3 +15,4 @@ export * from './cost.js';
 export * from './infrastructure.js';
 export * from './scoring.js';
 export * from './portfolio.js';
+export * from './coverage.js';
