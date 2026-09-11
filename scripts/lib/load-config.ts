@@ -12,6 +12,7 @@ import {
   CatalogFile,
   CategoryWeights,
   CostAssumptions,
+  CoverageAssumptions,
   Framework,
   FreshnessPolicy,
   FxConfig,
@@ -58,6 +59,10 @@ export function loadScoringWeights(dataDir: string): ScoringWeights {
 
 export function loadPortfolioAssumptions(dataDir: string): PortfolioAssumptions {
   return PortfolioAssumptions.parse(readYaml(join(dataDir, 'config', 'portfolio-assumptions.yaml')));
+}
+
+export function loadCoverageAssumptions(dataDir: string): CoverageAssumptions {
+  return CoverageAssumptions.parse(readYaml(join(dataDir, 'config', 'coverage-assumptions.yaml')));
 }
 
 export function loadFxConfig(dataDir: string): FxConfig {

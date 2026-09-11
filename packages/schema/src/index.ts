@@ -19,3 +19,4 @@ export * from './sizing.js';
 export * from './cost.js';
 export * from './scoring.js';
 export * from './portfolio.js';
+export * from './coverage.js';

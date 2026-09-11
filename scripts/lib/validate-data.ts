@@ -12,6 +12,7 @@ import {
   CatalogFile,
   CategoryWeights,
   CostAssumptions,
+  CoverageAssumptions,
   Framework,
   FreshnessPolicy,
   FxConfig,
@@ -204,6 +205,8 @@ export function validateDataTree(dataDir: string): DataValidationResult {
       validate(file, ScoringWeights, raw);
     } else if (file.endsWith('portfolio-assumptions.yaml')) {
       validate(file, PortfolioAssumptions, raw);
+    } else if (file.endsWith('coverage-assumptions.yaml')) {
+      validate(file, CoverageAssumptions, raw);
     } else {
       report(file, '(root)', 'no schema is wired up for this config file, so it is unvalidated');
     }

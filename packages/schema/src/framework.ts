@@ -29,10 +29,34 @@ export const Control = z
      * req 10 and log retention. Advisory controls stay false.
      */
     mandatory: z.boolean().default(false),
+    /**
+     * The `ControlGroup` this control belongs to, if the framework declares
+     * any. Optional because most frameworks here are a flat list; NIST CSF 2.0
+     * is not, and §7.5 asks for the bundle mapped to its six Functions.
+     */
+    group: z.string().min(1).optional(),
     notes: z.string().optional(),
   })
   .strict();
 export type Control = z.infer<typeof Control>;
+
+/**
+ * A published grouping of a framework's controls — the six CSF 2.0 Functions,
+ * PCI DSS's six goals, ISO 27001's four themes.
+ *
+ * Declared in the framework file rather than derived in code, even where the
+ * control ids encode it (`DE.CM` is in Detect): the grouping is part of the
+ * published standard, and the coverage matrix rolls up against it. A framework
+ * with no groups is a flat list, which is the common case.
+ */
+export const ControlGroup = z
+  .object({
+    id: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9.-]*$/, 'expected a group id like GV or 1'),
+    name: z.string().min(1),
+    notes: z.string().optional(),
+  })
+  .strict();
+export type ControlGroup = z.infer<typeof ControlGroup>;
 
 /**
  * How well-sourced a framework's control list is — the compliance equivalent of
@@ -64,6 +88,8 @@ export const Framework = z
     version: z.string().min(1),
     /** Regions where this framework is commonly in scope; a hint for intake defaults. */
     commonIn: z.array(z.string().min(1)).default([]),
+    /** Published groupings of the controls below. Empty means a flat list. */
+    groups: z.array(ControlGroup).default([]),
     controls: z.array(Control).min(1),
     /** Where the control list came from. Hard rule 2 applies to mappings too. */
     sources: z.array(Source).min(1),
@@ -81,6 +107,40 @@ export const Framework = z
         });
       }
       seen.add(control.id);
+    });
+
+    const seenGroups = new Set<string>();
+    framework.groups.forEach((group, index) => {
+      if (seenGroups.has(group.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['groups', index, 'id'],
+          message: `duplicate group id "${group.id}" in framework "${framework.id}"`,
+        });
+      }
+      seenGroups.add(group.id);
+    });
+
+    // A half-grouped framework would roll up a partial denominator and read as
+    // a coverage figure, so grouping is all or nothing.
+    framework.controls.forEach((control, index) => {
+      if (control.group === undefined) {
+        if (framework.groups.length > 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['controls', index, 'group'],
+            message: `framework "${framework.id}" declares groups, so every control must name one`,
+          });
+        }
+        return;
+      }
+      if (!seenGroups.has(control.group)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['controls', index, 'group'],
+          message: `control "${control.id}" is in group "${control.group}", which the framework does not declare`,
+        });
+      }
     });
   });
 export type Framework = z.infer<typeof Framework>;
