@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 4b — `coverage.ts`, the last engine stage (in review)
+**Current phase:** 5 — intake wizard, web app scaffolded end to end (in review)
 **Last updated:** 2026-09-11
 
 ## Phase log
@@ -16,7 +16,7 @@
 | 3d Infrastructure fit (**inserted**) | in review | `infrastructure.ts` — estate shape and per-category relevance from the asset inventory. `category-weights.yaml`, `mssp-rate-card.yaml`. Q2 answered, §7.2 deviation decided, NIST regraded. |
 | 4 `scoring.ts` + `portfolio.ts` + tests | in review | Both stages plus all seven §7.4 steps. `scoring-weights.yaml`, `portfolio-assumptions.yaml`. **Reviewed; 7 defects found and fixed**, each pinned by a regression. 244 tests green. |
 | 4b `coverage.ts` (**inserted**) | in review | The §7.5 stage: coverage matrix per framework, CSF Function roll-up, risk-graded gap list, costed fix plan. `coverage-assumptions.yaml`. The engine pipeline is now complete end to end. 299 tests green. |
-| 5 Intake wizard UI | not started | Also scaffolds apps/web (Next.js) + Prisma/SQLite + server-action mutation layer. |
+| 5 Intake wizard UI | in review | Next 16 + React 19 + Tailwind v4 + Prisma 7/SQLite. Six steps, presets, continuous save, live readout. `runPipeline` + `@stackfit/data` extracted so the app and the tests share one path. 325 tests green; `pnpm audit` clean. |
 | 6 Results dashboard | not started | |
 | 7 Catalog expansion (≥5 per category) | not started | |
 | 8 Export (DOCX/PDF/XLSX) | not started | |
@@ -497,6 +497,74 @@ OpenVAS and Wazuh, **both zero-licence**, at USD 4,900/yr and 0.9 FTE between
 them. The gap analysis prices free software the same way the cost stage does.
 
 
+### Phase 5 — the intake wizard, and the app around it
+
+- 2026-09-11 — **The engine runs in the browser.** `computeSizing` is pure TypeScript with no
+  I/O, so the wizard imports it directly and the ingest readout moves on the keystroke with no
+  round trip. Spend needs the catalog, eleven config files and the framework library, so it
+  comes back from a server action a moment later and the readout says so while it is in
+  flight. Two clocks, one engine, no second implementation of either number.
+- 2026-09-11 — **`runPipeline` was extracted to the engine before the app could call it.** The
+  acceptance harness had the only copy of the wiring. A second copy in the app would have
+  meant the §12 scenarios proved something about the harness rather than about what an analyst
+  actually runs — the exact failure this repo has now found four times in other forms.
+- 2026-09-11 — **`@stackfit/data` is a package now**, for the same reason: scripts, repo-root
+  tests and the web app's server components all read `data/`, and a second loader is how two
+  loaders start disagreeing about which files exist. The engine still never touches the
+  filesystem; this package is the boundary that keeps that true rather than aspirational.
+- 2026-09-11 — **⚠ `module: NodeNext` had to go.** The packages' relative imports carried
+  `.js` extensions pointing at files that do not exist — correct under NodeNext, unresolvable
+  by Turbopack, and `experimental.extensionAlias` turns out to be webpack-only. Switched to
+  `module: preserve` across the repo: bundler-style resolution, specifiers as written. 45
+  files, mechanical, and one of the Phase 0 gotchas disappears with it. Nothing ever executed
+  the emitted `dist/`, which is what made this safe.
+- 2026-09-11 — **Presets are data, not component constants.** `data/presets/intake-presets.yaml`
+  holds six estates with a mandatory `basis` each, validated by `catalog:validate` like
+  everything else. A preset asserts what a typical estate looks like, which is a tunable
+  assumption and belongs where the analyst can argue with it (hard rules 4 and 6).
+- 2026-09-11 — **An empty count box is not a zero.** Blank means "not asked", a typed 0 means
+  "asked, and there are none". Sizing already reads them differently — an absent privileged
+  account count is estimated and flagged, a captured zero is trusted — and clearing a field
+  must not quietly write a captured zero.
+- 2026-09-11 — **Changing the scenario currency re-labels the caps; it never converts them.**
+  An analyst who changes the currency has almost always picked the wrong code, not asked for
+  a conversion, and a silent conversion would change a figure they typed.
+- 2026-09-11 — **A stored scenario that no longer parses is reported, not thrown.** Profiles
+  and inventories live as JSON text (Prisma has no Json scalar on SQLite, and the schema has
+  to stay Postgres-portable), and one row written before a schema change must not take out the
+  list of every other session.
+- 2026-09-11 — **⚠ A blank intake does not show zero.** With no estate captured nothing is
+  licensed, but a self-hosted tool still needs its minimum footprint and somebody still has to
+  run it — about INR 410,000/yr and 1.3 FTE on the current rate cards. The readout labels that
+  as the floor cost of owning the tools rather than leaving a suspiciously cheap stack on
+  screen. Pinned by a test.
+- 2026-09-11 — **CSP carries a per-request nonce** (`src/proxy.ts`, Next 16's rename of
+  middleware), so `script-src` is enforceable without `unsafe-inline`. `style-src` still
+  allows inline style, because Next and Tailwind both emit it during hydration and there is no
+  nonce hook — a much smaller hole, and stated rather than hidden. Every page renders
+  dynamically as a result, which costs nothing here since every page reads the database.
+- 2026-09-11 — **⚠ `prisma@latest` is an 8.0.0 release candidate.** Pinned to the stable
+  7.10.0 pair. Prisma 7 is Rust-free, so SQLite needs the better-sqlite3 driver adapter, and
+  three packages had to join the pnpm build-script allowlist (`prisma`, `@prisma/engines`,
+  `better-sqlite3`) with reasons recorded in the commit.
+- 2026-09-11 — **`pnpm audit` went dirty and is clean again.** Two advisories inside the Prisma
+  CLI's own tree — `mysql2` and `deepmerge-ts`, neither reachable from this app, both real —
+  are pinned forward through `pnpm.overrides`. Same move the repo already makes for vite.
+
+**Verified end to end against the running app**, not just in tests: the create action returns
+a 303 and a new row, the save action writes through and the list page shows the new name, the
+estimate action returns a full summary (4,780 EPS, 206.5 GB/day, 365-day retention, 1,017
+monitored assets for the retail preset), and the delete action removes the row. The CSP,
+including its nonce, is on every response.
+
+**What Phase 5 does not do.** The results dashboard is Phase 6, so the review step shows the
+three bundles and the sizing worksheet rather than §8's full output. There is no results page,
+no charts and no export yet. The wizard's *client-side* behaviour — typing, autosaving,
+re-estimating — could not be exercised in a browser this session (no automation available),
+so it is verified through the server actions and the logic tests, not through a rendered
+click-through. **Worth a five-minute manual pass before Phase 6.**
+
+
 ## Open questions
 - **Five catalog control claims fall outside the framework's own category mapping** (Phase 4b). Wazuh claims `cis-v8:1` and `cis-v8:4`, Defender claims `cis-v8:7`, Sentinel claims `cis-v8:17` and `nist-csf-2.0:RS.MA`. Each is defensible on the merits, and each means either the framework file's `satisfiedBy` is too narrow or the product entry is too generous. Coverage reports the disagreement rather than resolving it. **Worth a decision before Phase 7 multiplies it.**
 - **opsBurden and implementation figures have no confidence field.** Every one in the seed catalog is an analyst estimate, flagged in each product's `notes`, but the schema cannot distinguish an estimate from a measured figure the way `pricingConfidence` does for prices. Worth adding an `opsBurdenConfidence` before the catalog grows in Phase 7.
@@ -554,6 +622,14 @@ how much they move the answer:
 
 ## Environment notes
 
+- **Web toolchain added 2026-09-11.** Next **16.3.4** (App Router, Turbopack — webpack is no
+  longer the default and `next lint` is gone, so the repo's own flat ESLint config is the only
+  linter), React **19.3.0**, Tailwind **4.3.3** (configured in CSS, not a config file), Zustand
+  **5.0.15**, Prisma **7.10.0** with `@prisma/adapter-better-sqlite3`. `better-sqlite3` installed
+  from a prebuild — no MSVC toolchain needed on this machine.
+- **A fresh clone needs `pnpm db:generate` then `pnpm db:push`** before `pnpm dev`. The Prisma
+  client is generated into `apps/web/src/generated/` and is gitignored; the SQLite file is
+  created on first push and is gitignored too.
 - **Toolchain installed 2026-09-09.** Node **v24.19.0** (winget `OpenJS.NodeJS.LTS` now
   tracks the 24 LTS line, not 22 — `.node-version` bumped to `24`, `engines.node` is
   `>=22.12`). pnpm **9.15.0** installed via `npm install -g pnpm@9.15.0` into the

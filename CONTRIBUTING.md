@@ -18,7 +18,8 @@ pnpm lint
 pnpm catalog:validate   # Zod-validate every YAML in data/
 pnpm catalog:staleness  # what needs re-checking and where; non-zero if anything is stale
 pnpm prices:refresh     # re-read machine-refreshable prices; --write applies drift
-pnpm db:push            # apply Prisma schema to local SQLite
+pnpm db:push            # apply the Prisma schema to the local SQLite file
+pnpm db:generate        # regenerate the Prisma client (gitignored)
 ```
 
 ## Architecture
@@ -27,7 +28,11 @@ pnpm db:push            # apply Prisma schema to local SQLite
   no randomness. Same input must always produce the same output.
 - `packages/schema` — Zod schemas are the single source of truth. Infer TS types from Zod;
   never hand-write a type that duplicates a schema.
-- `apps/web` — Next.js App Router. Presentation and orchestration only.
+- `apps/web` — Next.js App Router. Presentation and orchestration only. Reads `data/`
+  through `@stackfit/data` on the server; runs the engine in the browser where a number has
+  to move as the analyst types.
+- `packages/data` — loads and Zod-validates the `data/` tree. The boundary the engine does
+  not cross: scripts, tests and the web app all read through it.
 - `data/catalog/*.yaml` — product records, one file per category.
 - `data/config/*.yaml` — tunable assumptions (sizing coefficients, labour rates, FX, MSSP rates).
 - `data/frameworks/*.yaml` — compliance control mappings.
@@ -93,10 +98,20 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   `"exports": "./src/index.ts"` — no build step needed to consume them. Vitest, tsx and
   (later) Next.js `transpilePackages` handle it. `tsc --build` still emits to `dist/`
   (gitignored) for typechecking only.
-- `tsconfig.base.json` sets `module: NodeNext`, so relative imports need explicit `.js`
-  extensions even from `.ts` files (e.g. `import { x } from '../src/index.js'`).
-- `pnpm dev` / `pnpm db:push` are placeholder scripts until Phase 5 (no Next.js app or
-  Prisma schema yet).
+- `tsconfig.base.json` sets **`module: preserve`**, so relative imports are extensionless
+  (`import { x } from '../src/index'`). It used to be `NodeNext`, which demanded `.js`
+  extensions pointing at files that do not exist — tsc understands that, Turbopack does not,
+  and `experimental.extensionAlias` is webpack-only. Nothing ever runs the emitted `dist/`.
+- **`prisma@latest` is an 8.0.0 release candidate.** The stable pair is `prisma@7.10.0` +
+  `@prisma/client@7.10.0`, both pinned. Prisma 7 is Rust-free, so SQLite needs the
+  `@prisma/adapter-better-sqlite3` driver adapter — it is not optional.
+- **The Prisma client is generated into `apps/web/src/generated/`** and gitignored. A fresh
+  clone needs `pnpm db:generate` before `pnpm dev`, and `pnpm db:push` to create the file.
+- **The web app's data loader is `@stackfit/data`**, the same one the scripts and the
+  repo-root tests use. Import it only from server components and server actions: it reads the
+  filesystem, which the engine still never does.
+- **`runPipeline` in the engine is the only wiring** from sizing through to coverage. The
+  acceptance harness and the web app both call it; neither assembles the stages itself.
 - `pnpm` is a user-scoped global (`npm i -g pnpm@9.15.0`), not corepack — corepack needs
   admin on this machine. Node is v24 (winget LTS). Re-open the shell after any Node reinstall
   so `PATH` refreshes.
