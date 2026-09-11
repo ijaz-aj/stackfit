@@ -69,6 +69,45 @@ function product(
  * `buildPortfolio`, so a coverage assertion fails for coverage reasons only.
  */
 function bundleOf(selections: readonly { id: string; category: ProductCategory }[]): Bundle {
+  // Coverage never reads the cost breakdown; it is here because a selection
+  // carries the costing it was made on, and a fixture that lied about the
+  // shape is how the last fixture bug got in.
+  const costShape = {
+    productId: 'x',
+    tierId: 'standard',
+    currency: 'USD' as const,
+    licenceListAnnual: zero,
+    discountRate: 0,
+    discountLabel: '',
+    licenceAnnual: zero,
+    supportAnnual: zero,
+    infraAnnual: zero,
+    opsFteAnnual: zero,
+    opsFte: 0,
+    implementationOneTime: zero,
+    trainingOneTime: zero,
+    year1: zero,
+    annualRecurring: zero,
+    procurementAnnual: zero,
+    cashflowByYear: [zero],
+    tco: zero,
+    horizonYears: 3,
+    pricingConfidence: 'public_list' as const,
+    hasPlaceholderPricing: false,
+    freshness: {
+      status: 'fresh' as const,
+      newestSourceDate: '2026-01-01',
+      ageDays: 0,
+      maxAgeDays: 90,
+      recheckBy: '2026-04-01',
+      refreshMethod: 'manual' as const,
+      explanation: 'test fixture',
+    },
+    needsRecheck: false,
+    lines: [],
+    rationale: [],
+  };
+
   const selection = (entry: { id: string; category: ProductCategory }): BundleSelection => ({
     category: entry.category,
     productId: entry.id,
@@ -84,6 +123,7 @@ function bundleOf(selections: readonly { id: string; category: ProductCategory }
     oneTime: zero,
     tco: zero,
     suiteDiscountApplied: false,
+    cost: { ...costShape, productId: entry.id },
     rationale: [],
   });
 

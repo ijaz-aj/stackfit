@@ -91,6 +91,15 @@ export interface BundleSelection {
   readonly oneTime: Money;
   readonly tco: Money;
   readonly suiteDiscountApplied: boolean;
+  /**
+   * The costing this selection was actually made on, suite discount included.
+   *
+   * Carried rather than looked up again by id: a discounted selection is costed
+   * a second time inside this stage, and a caller re-deriving the breakdown
+   * from the undiscounted figure would show a licence line that disagrees with
+   * the total above it. That exact drift was the Phase 4 review's finding 2.
+   */
+  readonly cost: ProductCost;
   readonly rationale: readonly string[];
 }
 
@@ -469,6 +478,7 @@ function select(
         oneTime: picked.oneTimeCost,
         tco: picked.cost.tco,
         suiteDiscountApplied: picked.suite,
+        cost: picked.cost,
         rationale,
       });
 

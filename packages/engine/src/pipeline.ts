@@ -33,7 +33,7 @@ import {
   type CategoryRelevance,
   type InfrastructureProfile,
 } from './infrastructure';
-import { buildPortfolio, type Bundle, type CategoryRanking } from './portfolio';
+import { buildPortfolio, type Bundle, type Candidate, type CategoryRanking } from './portfolio';
 import { scoreProducts, type ProductScore } from './scoring';
 import { computeSizing, type SizingResult } from './sizing';
 
@@ -76,6 +76,8 @@ export interface PipelineResult {
   /** Cheapest tier per product, keyed by product id. */
   readonly costs: ReadonlyMap<string, ProductCost>;
   readonly rankings: readonly CategoryRanking[];
+  /** Every scored, costed option, in value-density order. The runners-up. */
+  readonly candidates: readonly Candidate[];
   readonly essential: Bundle;
   readonly recommended: Bundle;
   readonly ideal: Bundle;
@@ -172,6 +174,7 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
     scores,
     costs,
     rankings: portfolio.rankings,
+    candidates: portfolio.candidates,
     essential: portfolio.essential,
     recommended: portfolio.recommended,
     ideal: portfolio.ideal,

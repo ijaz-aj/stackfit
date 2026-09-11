@@ -58,6 +58,12 @@ export interface DimensionScore {
   readonly rationale: string;
 }
 
+/** One asset class and how many of them the client has. */
+export interface AssetCount {
+  readonly assetClass: AssetClass;
+  readonly count: number;
+}
+
 export interface ProductScore {
   readonly productId: string;
   readonly category: ProductCategory;
@@ -68,6 +74,14 @@ export interface ProductScore {
   readonly score: number;
   readonly dimensions: readonly DimensionScore[];
   readonly opsFte: number;
+  /**
+   * What this product actually reaches in *their* environment, in raw counts
+   * and in AssetClass declaration order (§8.2). Empty for an eliminated
+   * product, which reaches nothing by definition.
+   */
+  readonly coveredAssets: readonly AssetCount[];
+  /** Assets in its category's remit that it does not support. */
+  readonly missedAssets: readonly AssetCount[];
   readonly rationale: readonly string[];
 }
 
@@ -122,7 +136,13 @@ function assetCoverage(
   inventory: AssetInventory,
   weights: ScoringWeights,
   categoryWeights: CategoryWeights,
-): { covered: number; inRemit: number; missedClasses: AssetClass[] } {
+): {
+  covered: number;
+  inRemit: number;
+  missedClasses: AssetClass[];
+  coveredAssets: AssetCount[];
+  missedAssets: AssetCount[];
+} {
   const remit = weights.categoryRemits.find((entry) => entry.category === product.category);
   const remitClasses = new Set<DeviceClass>(remit?.deviceClasses ?? []);
   const supported = new Set<DeviceClass>(product.supports.deviceClasses);
@@ -130,6 +150,8 @@ function assetCoverage(
   let covered = 0;
   let inRemit = 0;
   const missedClasses: AssetClass[] = [];
+  const coveredAssets: AssetCount[] = [];
+  const missedAssets: AssetCount[] = [];
 
   for (const assetClass of AssetClassEnum.options) {
     const count = countOf(inventory, assetClass);
@@ -145,12 +167,17 @@ function assetCoverage(
     inRemit += units;
     if (supported.has(deviceClass)) {
       covered += units;
+      // Raw counts alongside the weighted units: the units are what the score
+      // is computed from, and the counts are what you say out loud — "covers 38
+      // Windows servers and 40 POS terminals" (§8.2).
+      coveredAssets.push({ assetClass, count });
     } else {
       missedClasses.push(assetClass);
+      missedAssets.push({ assetClass, count });
     }
   }
 
-  return { covered, inRemit, missedClasses };
+  return { covered, inRemit, missedClasses, coveredAssets, missedAssets };
 }
 
 /** Controls the client's frameworks ask of this category, and how many this product covers. */
@@ -350,6 +377,8 @@ export function scoreProduct(product: Product, inputs: ScoringInputs): ProductSc
       score: 0,
       dimensions: [],
       opsFte: round(opsFte, 3),
+      coveredAssets: [],
+      missedAssets: [],
       rationale: [`${product.name} was ruled out before scoring.`, ...eliminationReasons],
     };
   }
@@ -433,6 +462,8 @@ export function scoreProduct(product: Product, inputs: ScoringInputs): ProductSc
     score: round(total, 1),
     dimensions,
     opsFte: round(opsFte, 3),
+    coveredAssets: coverage.coveredAssets,
+    missedAssets: coverage.missedAssets,
     rationale,
   };
 }

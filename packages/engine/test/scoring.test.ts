@@ -175,6 +175,40 @@ describe('asset coverage is scored against the category remit', () => {
     expect(coverage?.score).toBe(100);
     expect(coverage?.rationale).toContain('not a differentiator');
   });
+
+  it('names what it reaches in the client’s own counts, not in weighted units', () => {
+    // §8.2 asks the dashboard to say "covers 38 Windows servers, 12 Linux
+    // servers, 40 POS terminals". The weighted units are what the score is
+    // computed from; these are what an analyst says out loud, and the two must
+    // not be confused for one another.
+    const base = buildProduct();
+    const serversOnly: Product = {
+      ...base,
+      supports: { ...base.supports, deviceClasses: ['server'] },
+    };
+    const score = scoreProduct(
+      serversOnly,
+      buildInputs({ inventory: inventory({ windowsServers: 38, windowsEndpoints: 12 }) }),
+    );
+
+    expect(score.coveredAssets).toEqual([{ assetClass: 'windowsServers', count: 38 }]);
+    expect(score.missedAssets).toEqual([{ assetClass: 'windowsEndpoints', count: 12 }]);
+  });
+
+  it('reports nothing covered for a product that was ruled out', () => {
+    const base = buildProduct();
+    const unusable: Product = {
+      ...base,
+      supports: { ...base.supports, deviceClasses: ['ot_ics'] },
+    };
+    const score = scoreProduct(
+      unusable,
+      buildInputs({ inventory: inventory({ windowsServers: 10 }) }),
+    );
+
+    expect(score.eliminated).toBe(true);
+    expect(score.coveredAssets).toEqual([]);
+  });
 });
 
 describe('compliance fit', () => {
