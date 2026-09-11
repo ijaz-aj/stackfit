@@ -1,0 +1,50 @@
+# How an uncovered control is graded (PROJECT_SPEC §7.5).
+#
+# §7.5 requires every gap to be "tagged with the residual risk" and does not say
+# how that risk is decided. This file decides it, so the grading is arguable
+# rather than buried in the engine.
+#
+# The whole file is a judgement about severity, not a measurement. It changes
+# how a gap is *labelled*; it never changes what is covered.
+
+notes: >-
+  Two different findings share one list. A mandatory control left uncovered is a
+  stated obligation going unmet — the client signed up to it, and no amount of
+  risk argument makes it optional. Everything else is an unmitigated risk, and
+  is graded by how much the product category that would close it actually
+  reduces risk in this estate, so a gap in a category the client has nothing for
+  does not shout as loudly as one in a category they need.
+
+# An uncovered control that a framework the client actually selected marks
+# mandatory. Deliberately the top band and not subject to the weight bands
+# below: PCI DSS requirement 10 does not become a medium finding because the
+# estate is small.
+mandatoryControlRisk: critical
+
+# Otherwise, banded on the category weight computed for this client in
+# infrastructure.ts — baseRiskReduction adjusted for the estate they actually
+# have. Evaluated top down; the last band must start at 0.
+residualRiskBands:
+  # 85 is deliberately the same figure as portfolio-assumptions.yaml's
+  # essentialWeightFloor. A category strong enough to belong in the minimum
+  # defensible posture is one whose absence is a high residual risk; using a
+  # second, different number for the same idea would let the two drift.
+  - risk: high
+    minCategoryWeight: 85
+    label: a category in the minimum defensible posture for this estate
+  - risk: medium
+    minCategoryWeight: 50
+    label: a category that materially reduces risk here, but is not foundational
+  - risk: low
+    minCategoryWeight: 0
+    label: low weight in this estate, or a category the estate has nothing for
+
+basis: >-
+  The bands are read off the computed category weights, which run from about 25
+  (deception) to about 130 (identity in a cloud-native estate). 85 is the
+  essential floor, so it separates "you should own this" from "you could own
+  this". 50 separates a category that still moves the needle from one that is
+  situational — ndr at a base of 50 and soar at 45 sit either side of that line
+  on purpose. A category ruled out as inapplicable scores 0 and lands in the
+  bottom band, which is right: a gap in network detection for a client with no
+  network is not a risk finding.

@@ -35,25 +35,52 @@ notes: >-
   RS.RP, RS.IM and RC.IM. Those are withdrawn 1.1 categories and are correctly
   absent here — if a future diff shows them as missing, that is the reason.
 
+groups:
+  # The six CSF 2.0 Functions, in the published order. Every Category id below
+  # is `<Function>.<Category>`, which is NIST's own identifier scheme — the
+  # grouping is restated here rather than parsed out of the id, because
+  # coverage.ts rolls up against it and a structural claim should be declared.
+  - id: GV
+    name: Govern
+    notes: >-
+      Added in 2.0. Almost nothing here is bought: it is strategy, roles, policy
+      and oversight, so a stack will always score low against Govern and should.
+  - id: ID
+    name: Identify
+  - id: PR
+    name: Protect
+  - id: DE
+    name: Detect
+  - id: RS
+    name: Respond
+  - id: RC
+    name: Recover
+
 controls:
   # GOVERN
   - id: GV.OC
+    group: GV
     title: Organizational Context
     satisfiedBy: []
     notes: Governance outcome. No tool satisfies this.
   - id: GV.RM
+    group: GV
     title: Risk Management Strategy
     satisfiedBy: []
   - id: GV.RR
+    group: GV
     title: Roles, Responsibilities, and Authorities
     satisfiedBy: []
   - id: GV.PO
+    group: GV
     title: Policy
     satisfiedBy: []
   - id: GV.OV
+    group: GV
     title: Oversight
     satisfiedBy: []
   - id: GV.SC
+    group: GV
     title: Cybersecurity Supply Chain Risk Management
     satisfiedBy: []
     notes: >-
@@ -62,59 +89,75 @@ controls:
 
   # IDENTIFY
   - id: ID.AM
+    group: ID
     title: Asset Management
     satisfiedBy: [asset_discovery, vulnerability_management]
   - id: ID.RA
+    group: ID
     title: Risk Assessment
     satisfiedBy: [vulnerability_management]
   - id: ID.IM
+    group: ID
     title: Improvement
     satisfiedBy: []
 
   # PROTECT
   - id: PR.AA
+    group: PR
     title: Identity Management, Authentication, and Access Control
     satisfiedBy: [iam, pam]
   - id: PR.AT
+    group: PR
     title: Awareness and Training
     satisfiedBy: []
   - id: PR.DS
+    group: PR
     title: Data Security
     satisfiedBy: [backup]
     notes: PR.DS-11 covers creating, protecting and testing backups.
   - id: PR.PS
+    group: PR
     title: Platform Security
     satisfiedBy: [edr, vulnerability_management]
   - id: PR.IR
+    group: PR
     title: Technology Infrastructure Resilience
     satisfiedBy: [ngfw, ndr, backup]
 
   # DETECT
   - id: DE.CM
+    group: DE
     title: Continuous Monitoring
     satisfiedBy: [siem, edr, ndr, email_security, deception]
   - id: DE.AE
+    group: DE
     title: Adverse Event Analysis
     satisfiedBy: [siem, soar, mdr]
 
   # RESPOND
   - id: RS.MA
+    group: RS
     title: Incident Management
     satisfiedBy: [soar, mdr]
   - id: RS.AN
+    group: RS
     title: Incident Analysis
     satisfiedBy: [siem, edr, mdr]
   - id: RS.CO
+    group: RS
     title: Incident Response Reporting and Communication
     satisfiedBy: [soar]
   - id: RS.MI
+    group: RS
     title: Incident Mitigation
     satisfiedBy: [edr, soar, ngfw]
 
   # RECOVER
   - id: RC.RP
+    group: RC
     title: Incident Recovery Plan Execution
     satisfiedBy: [backup]
   - id: RC.CO
+    group: RC
     title: Incident Recovery Communication
     satisfiedBy: []
