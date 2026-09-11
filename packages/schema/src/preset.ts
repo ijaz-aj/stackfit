@@ -11,9 +11,9 @@
 
 import { z } from 'zod';
 
-import { AssetInventory } from './asset-inventory.js';
-import { ClientProfile } from './client-profile.js';
-import { Slug } from './product.js';
+import { AssetInventory } from './asset-inventory';
+import { ClientProfile } from './client-profile';
+import { Slug } from './product';
 
 export const ScenarioPreset = z
   .object({

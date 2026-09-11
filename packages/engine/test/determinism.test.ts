@@ -6,13 +6,13 @@
 import type { AssetInventory } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { computeProductCost, computeSizing } from '../src/index.js';
+import { computeProductCost, computeSizing } from '../src/index';
 import {
   buildClientProfile,
   buildCostInputs,
   buildProduct,
   buildSizingAssumptions,
-} from './fixtures.js';
+} from './fixtures';
 
 const assumptions = buildSizingAssumptions({
   windowsEndpoints: { eventsPerSecond: 0.2, role: 'endpoint', monitored: true },

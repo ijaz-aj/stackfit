@@ -8,7 +8,7 @@
 import type { AssetInventory, Framework, Product } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { computeSizing } from '../src/sizing.js';
+import { computeSizing } from '../src/sizing';
 import {
   effectiveWeights,
   hardFilter,
@@ -16,7 +16,7 @@ import {
   scoreProduct,
   scoreProducts,
   type ScoringInputs,
-} from '../src/scoring.js';
+} from '../src/scoring';
 import {
   buildCategoryWeights as buildCategoryWeightsFixture,
   buildClientProfile,
@@ -24,7 +24,7 @@ import {
   buildProduct,
   buildScoringWeights,
   buildSizingAssumptions,
-} from './fixtures.js';
+} from './fixtures';
 
 function inventory(counts: Record<string, number>): AssetInventory {
   return {

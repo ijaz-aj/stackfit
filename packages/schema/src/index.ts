@@ -4,20 +4,20 @@
 
 export const SCHEMA_PACKAGE_VERSION = '0.0.0';
 
-export * from './dates.js';
-export * from './enums.js';
-export * from './money.js';
-export * from './freshness.js';
-export * from './pricing.js';
-export * from './product.js';
-export * from './framework.js';
-export * from './asset-inventory.js';
-export * from './client-profile.js';
-export * from './preset.js';
-export * from './config.js';
-export * from './infrastructure.js';
-export * from './sizing.js';
-export * from './cost.js';
-export * from './scoring.js';
-export * from './portfolio.js';
-export * from './coverage.js';
+export * from './dates';
+export * from './enums';
+export * from './money';
+export * from './freshness';
+export * from './pricing';
+export * from './product';
+export * from './framework';
+export * from './asset-inventory';
+export * from './client-profile';
+export * from './preset';
+export * from './config';
+export * from './infrastructure';
+export * from './sizing';
+export * from './cost';
+export * from './scoring';
+export * from './portfolio';
+export * from './coverage';

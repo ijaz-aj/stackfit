@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { PLACEHOLDER_UNIT_PRICE_MINOR, PricingRule } from '../src/index.js';
+import { PLACEHOLDER_UNIT_PRICE_MINOR, PricingRule } from '../src/index';
 
 const usd = (amountMinor: number) => ({ amountMinor, currency: 'USD' as const });
 

@@ -30,7 +30,7 @@ import {
   type SizingAssumptions,
 } from '@stackfit/schema';
 
-import type { CostInputs } from '../src/index.js';
+import type { CostInputs } from '../src/index';
 
 /** Deliberately round numbers, so expected values can be worked out by hand. */
 const DEFAULT_ASSUMPTION: AssetClassAssumption = {

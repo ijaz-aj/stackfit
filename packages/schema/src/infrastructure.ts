@@ -15,8 +15,8 @@
 
 import { z } from 'zod';
 
-import { AssetClass } from './asset-inventory.js';
-import { Industry, ProductCategory } from './enums.js';
+import { AssetClass } from './asset-inventory';
+import { Industry, ProductCategory } from './enums';
 
 /**
  * The attack surfaces an estate can present. Every asset class maps to exactly

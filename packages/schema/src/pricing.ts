@@ -6,10 +6,10 @@
 
 import { z } from 'zod';
 
-import { IsoDate } from './dates.js';
-import { PricingConfidence, PricingModel } from './enums.js';
-import { PriceRefresh } from './freshness.js';
-import { NonNegativeMoney } from './money.js';
+import { IsoDate } from './dates';
+import { PricingConfidence, PricingModel } from './enums';
+import { PriceRefresh } from './freshness';
+import { NonNegativeMoney } from './money';
 
 export { IsoDate };
 

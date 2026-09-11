@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { validateDataTree } from '../scripts/lib/validate-data.js';
+import { validateDataTree } from '../scripts/lib/validate-data';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const result = validateDataTree(join(REPO_ROOT, 'data'));

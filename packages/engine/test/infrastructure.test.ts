@@ -17,7 +17,7 @@ import {
   computeCategoryRelevance,
   computeInfrastructureProfile,
   rankCategories,
-} from '../src/infrastructure.js';
+} from '../src/infrastructure';
 
 const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'data');
 

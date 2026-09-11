@@ -6,9 +6,9 @@
 
 import { z } from 'zod';
 
-import { Region } from './enums.js';
-import { NonNegativeMoney } from './money.js';
-import { IsoDate, Source } from './pricing.js';
+import { Region } from './enums';
+import { NonNegativeMoney } from './money';
+import { IsoDate, Source } from './pricing';
 
 export const RegionLabourRate = z
   .object({

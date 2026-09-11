@@ -8,7 +8,7 @@ import {
   subtractMoney,
   sumMoney,
   zeroMoney,
-} from '../src/index.js';
+} from '../src/index';
 
 const usd = (amountMinor: number) => ({ amountMinor, currency: 'USD' as const });
 const inr = (amountMinor: number) => ({ amountMinor, currency: 'INR' as const });

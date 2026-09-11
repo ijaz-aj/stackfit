@@ -7,12 +7,12 @@
 import type { CoverageAssumptions, Framework, Money, Product, ProductCategory } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { computeProductCost, type ProductCost } from '../src/cost.js';
-import { computeCoverage, type CoverageInputs } from '../src/coverage.js';
-import { computeCategoryRelevance, computeInfrastructureProfile } from '../src/infrastructure.js';
-import type { Bundle, BundleSelection } from '../src/portfolio.js';
-import { scoreProducts } from '../src/scoring.js';
-import { computeSizing } from '../src/sizing.js';
+import { computeProductCost, type ProductCost } from '../src/cost';
+import { computeCoverage, type CoverageInputs } from '../src/coverage';
+import { computeCategoryRelevance, computeInfrastructureProfile } from '../src/infrastructure';
+import type { Bundle, BundleSelection } from '../src/portfolio';
+import { scoreProducts } from '../src/scoring';
+import { computeSizing } from '../src/sizing';
 import {
   buildCategoryWeights,
   buildClientProfile,
@@ -21,7 +21,7 @@ import {
   buildProduct,
   buildScoringWeights,
   buildSizingAssumptions,
-} from './fixtures.js';
+} from './fixtures';
 
 const usd = (amountMinor: number): Money => ({ amountMinor, currency: 'USD' });
 const zero = usd(0);

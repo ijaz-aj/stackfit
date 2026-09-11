@@ -14,11 +14,11 @@ import type {
 } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { computeProductCost } from '../src/cost.js';
-import { computeCategoryRelevance, computeInfrastructureProfile } from '../src/infrastructure.js';
-import { buildPortfolio, msspAlternative, type PortfolioInputs } from '../src/portfolio.js';
-import { scoreProducts } from '../src/scoring.js';
-import { computeSizing } from '../src/sizing.js';
+import { computeProductCost } from '../src/cost';
+import { computeCategoryRelevance, computeInfrastructureProfile } from '../src/infrastructure';
+import { buildPortfolio, msspAlternative, type PortfolioInputs } from '../src/portfolio';
+import { scoreProducts } from '../src/scoring';
+import { computeSizing } from '../src/sizing';
 import {
   buildClientProfile,
   buildCostInputs,
@@ -27,7 +27,7 @@ import {
   buildProduct,
   buildScoringWeights,
   buildSizingAssumptions,
-} from './fixtures.js';
+} from './fixtures';
 
 const usd = (amountMinor: number) => ({ amountMinor, currency: 'USD' as const });
 

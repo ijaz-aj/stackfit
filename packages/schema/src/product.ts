@@ -14,8 +14,8 @@ import {
   ProductCategory,
   ScaleClass,
   SkillLevel,
-} from './enums.js';
-import { PricingRule, Source } from './pricing.js';
+} from './enums';
+import { PricingRule, Source } from './pricing';
 
 /** Lowercase kebab-case. Used for product ids, tier slugs and integration keys. */
 export const Slug = z

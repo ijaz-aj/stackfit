@@ -7,8 +7,8 @@
 
 import { z } from 'zod';
 
-import { FrameworkId, ProductCategory } from './enums.js';
-import { Source } from './pricing.js';
+import { FrameworkId, ProductCategory } from './enums';
+import { Source } from './pricing';
 
 export const Control = z
   .object({

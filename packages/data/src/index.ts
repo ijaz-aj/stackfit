@@ -8,4 +8,4 @@
 // need it — the CLI tools, the repo-root tests, and the web app's server
 // components — and a second copy is how two loaders start disagreeing about
 // which files exist.
-export * from './load-config.js';
+export * from './load-config';

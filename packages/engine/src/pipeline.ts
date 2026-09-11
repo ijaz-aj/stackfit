@@ -25,17 +25,17 @@ import type {
   SizingAssumptions,
 } from '@stackfit/schema';
 
-import { computeProductCosts, type CostInputs, type ProductCost } from './cost.js';
-import { computeCoverage, type CoverageInputs, type CoverageResult } from './coverage.js';
+import { computeProductCosts, type CostInputs, type ProductCost } from './cost';
+import { computeCoverage, type CoverageInputs, type CoverageResult } from './coverage';
 import {
   computeCategoryRelevance,
   computeInfrastructureProfile,
   type CategoryRelevance,
   type InfrastructureProfile,
-} from './infrastructure.js';
-import { buildPortfolio, type Bundle, type CategoryRanking } from './portfolio.js';
-import { scoreProducts, type ProductScore } from './scoring.js';
-import { computeSizing, type SizingResult } from './sizing.js';
+} from './infrastructure';
+import { buildPortfolio, type Bundle, type CategoryRanking } from './portfolio';
+import { scoreProducts, type ProductScore } from './scoring';
+import { computeSizing, type SizingResult } from './sizing';
 
 /**
  * Always reported against, whether or not the client selected it.

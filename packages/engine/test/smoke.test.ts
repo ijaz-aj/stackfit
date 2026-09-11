@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ENGINE_VERSION } from '../src/index.js';
+import { ENGINE_VERSION } from '../src/index';
 
 describe('engine scaffold', () => {
   it('exposes a version constant', () => {

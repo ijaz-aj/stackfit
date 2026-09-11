@@ -1,8 +1,8 @@
 import type { AssetInventory } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { computeSizing } from '../src/index.js';
-import { buildClientProfile, buildSizingAssumptions } from './fixtures.js';
+import { computeSizing } from '../src/index';
+import { buildClientProfile, buildSizingAssumptions } from './fixtures';
 
 const profile = buildClientProfile();
 

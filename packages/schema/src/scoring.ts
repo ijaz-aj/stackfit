@@ -7,8 +7,8 @@
 
 import { z } from 'zod';
 
-import { AssetClass } from './asset-inventory.js';
-import { DeviceClass, ProcurementBias, ProductCategory } from './enums.js';
+import { AssetClass } from './asset-inventory';
+import { DeviceClass, ProcurementBias, ProductCategory } from './enums';
 
 export const ScoringDimension = z.enum([
   /** Share of the assets this category is meant to cover that this product does. */

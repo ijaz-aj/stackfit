@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 
-import { AssetInventory } from './asset-inventory.js';
+import { AssetInventory } from './asset-inventory';
 import {
   CurrencyCode,
   DataSensitivity,
@@ -14,9 +14,9 @@ import {
   Region,
   RiskTolerance,
   SocPosture,
-} from './enums.js';
-import { NonNegativeMoney } from './money.js';
-import { Slug } from './product.js';
+} from './enums';
+import { NonNegativeMoney } from './money';
+import { Slug } from './product';
 
 export const Budget = z
   .object({

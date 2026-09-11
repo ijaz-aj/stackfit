@@ -11,8 +11,8 @@
 
 import { z } from 'zod';
 
-import { IsoDate } from './dates.js';
-import { PricingConfidence } from './enums.js';
+import { IsoDate } from './dates';
+import { PricingConfidence } from './enums';
 
 /**
  * How to re-check a price.

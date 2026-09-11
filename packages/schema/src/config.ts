@@ -7,9 +7,9 @@
 
 import { z } from 'zod';
 
-import { CurrencyCode, PricingConfidence, ProductCategory, ScaleClass } from './enums.js';
-import { NonNegativeMoney } from './money.js';
-import { IsoDate, Source } from './pricing.js';
+import { CurrencyCode, PricingConfidence, ProductCategory, ScaleClass } from './enums';
+import { NonNegativeMoney } from './money';
+import { IsoDate, Source } from './pricing';
 
 /**
  * Scaling factor for FX rates. Rates are stored as integers in millionths so

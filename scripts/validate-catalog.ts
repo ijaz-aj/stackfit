@@ -6,7 +6,7 @@
  */
 import { join } from 'node:path';
 
-import { validateDataTree } from './lib/validate-data.js';
+import { validateDataTree } from './lib/validate-data';
 
 const result = validateDataTree(join(process.cwd(), 'data'));
 

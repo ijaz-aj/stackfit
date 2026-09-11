@@ -10,7 +10,7 @@
 
 import { z } from 'zod';
 
-import { AssetCriticality, NetworkVendor } from './enums.js';
+import { AssetCriticality, NetworkVendor } from './enums';
 
 export const AssetLine = z
   .object({

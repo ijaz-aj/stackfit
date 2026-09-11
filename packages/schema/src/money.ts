@@ -10,7 +10,7 @@
 
 import { z } from 'zod';
 
-import { CurrencyCode } from './enums.js';
+import { CurrencyCode } from './enums';
 
 /**
  * ISO 4217 minor-unit exponents for the supported currencies. All three happen

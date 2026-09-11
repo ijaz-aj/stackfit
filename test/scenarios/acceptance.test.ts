@@ -21,7 +21,7 @@ import {
   inventoryOf,
   profileOf,
   runScenario,
-} from './harness.js';
+} from './harness';
 
 const usd = (amountMinor: number) => ({ amountMinor, currency: 'USD' as const });
 

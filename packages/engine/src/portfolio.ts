@@ -31,11 +31,11 @@ import type {
 } from '@stackfit/schema';
 import { ProductCategory as ProductCategoryEnum } from '@stackfit/schema';
 
-import { computeProductCost, type CostInputs, type ProductCost } from './cost.js';
-import type { CategoryRelevance } from './infrastructure.js';
-import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money.js';
-import type { ProductScore } from './scoring.js';
-import type { SizingResult } from './sizing.js';
+import { computeProductCost, type CostInputs, type ProductCost } from './cost';
+import type { CategoryRelevance } from './infrastructure';
+import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money';
+import type { ProductScore } from './scoring';
+import type { SizingResult } from './sizing';
 
 export type BundleKind = 'essential' | 'recommended' | 'ideal';
 

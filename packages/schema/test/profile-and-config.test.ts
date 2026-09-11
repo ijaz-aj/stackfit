@@ -7,7 +7,7 @@ import {
   Framework,
   FX_RATE_SCALE,
   FxConfig,
-} from '../src/index.js';
+} from '../src/index';
 
 const usd = (amountMinor: number) => ({ amountMinor, currency: 'USD' as const });
 

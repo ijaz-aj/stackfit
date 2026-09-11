@@ -20,7 +20,7 @@ import {
   loadFxConfig,
   loadMsspRateCard,
 } from '@stackfit/data';
-import { assessCatalogStaleness, assessConfigStaleness } from '../scripts/lib/staleness.js';
+import { assessCatalogStaleness, assessConfigStaleness } from '../scripts/lib/staleness';
 
 const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data');
 const catalog = loadCatalog(DATA_DIR);

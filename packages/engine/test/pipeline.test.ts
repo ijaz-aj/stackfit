@@ -10,7 +10,7 @@
 import type { AssetInventory, Framework, Product, ProductCategory } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { coverageOfBundle, runPipeline, type PipelineInputs } from '../src/pipeline.js';
+import { coverageOfBundle, runPipeline, type PipelineInputs } from '../src/pipeline';
 import {
   buildCategoryWeights,
   buildClientProfile,
@@ -22,7 +22,7 @@ import {
   buildProduct,
   buildScoringWeights,
   buildSizingAssumptions,
-} from './fixtures.js';
+} from './fixtures';
 
 const usd = (amountMinor: number) => ({ amountMinor, currency: 'USD' as const });
 

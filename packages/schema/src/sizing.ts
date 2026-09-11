@@ -8,9 +8,9 @@
 
 import { z } from 'zod';
 
-import { AssetClass } from './asset-inventory.js';
-import { FrameworkId } from './enums.js';
-import { IsoDate, Source } from './pricing.js';
+import { AssetClass } from './asset-inventory';
+import { FrameworkId } from './enums';
+import { IsoDate, Source } from './pricing';
 
 /**
  * What an asset class counts as when deriving headline figures. `endpoint` and

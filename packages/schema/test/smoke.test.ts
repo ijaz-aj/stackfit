@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { SCHEMA_PACKAGE_VERSION } from '../src/index.js';
+import { SCHEMA_PACKAGE_VERSION } from '../src/index';
 
 describe('schema scaffold', () => {
   it('exposes a version constant', () => {

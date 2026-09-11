@@ -25,8 +25,8 @@ import {
   ScoringDimension as DimensionEnum,
 } from '@stackfit/schema';
 
-import { operationalFteFor } from './cost.js';
-import type { SizingResult } from './sizing.js';
+import { operationalFteFor } from './cost';
+import type { SizingResult } from './sizing';
 
 export interface ScoringInputs {
   readonly profile: ClientProfile;

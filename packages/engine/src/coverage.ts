@@ -36,11 +36,11 @@ import type {
   ResidualRisk,
 } from '@stackfit/schema';
 
-import type { ProductCost } from './cost.js';
-import type { CategoryRelevance } from './infrastructure.js';
-import { sumMoney } from './money.js';
-import type { Bundle } from './portfolio.js';
-import type { ProductScore } from './scoring.js';
+import type { ProductCost } from './cost';
+import type { CategoryRelevance } from './infrastructure';
+import { sumMoney } from './money';
+import type { Bundle } from './portfolio';
+import type { ProductScore } from './scoring';
 
 /**
  * `covered` — a selected product claims this control.

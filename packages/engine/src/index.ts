@@ -8,12 +8,12 @@
 
 export const ENGINE_VERSION = '0.0.0';
 
-export * from './sizing.js';
-export * from './money.js';
-export * from './freshness.js';
-export * from './cost.js';
-export * from './infrastructure.js';
-export * from './scoring.js';
-export * from './portfolio.js';
-export * from './coverage.js';
-export * from './pipeline.js';
+export * from './sizing';
+export * from './money';
+export * from './freshness';
+export * from './cost';
+export * from './infrastructure';
+export * from './scoring';
+export * from './portfolio';
+export * from './coverage';
+export * from './pipeline';

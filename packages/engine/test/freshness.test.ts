@@ -1,8 +1,8 @@
 import type { PricingRule, ProductTier } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { assessPriceFreshness, assessTierFreshness, needsRecheck } from '../src/index.js';
-import { buildFreshnessPolicy } from './fixtures.js';
+import { assessPriceFreshness, assessTierFreshness, needsRecheck } from '../src/index';
+import { buildFreshnessPolicy } from './fixtures';
 
 const policy = buildFreshnessPolicy();
 

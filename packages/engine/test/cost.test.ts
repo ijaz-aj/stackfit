@@ -1,13 +1,13 @@
 import type { Product, ProductTier } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { computeProductCost, computeSizing } from '../src/index.js';
+import { computeProductCost, computeSizing } from '../src/index';
 import {
   buildClientProfile,
   buildCostInputs,
   buildProduct,
   buildSizingAssumptions,
-} from './fixtures.js';
+} from './fixtures';
 
 const usd = (amountMinor: number) => ({ amountMinor, currency: 'USD' as const });
 

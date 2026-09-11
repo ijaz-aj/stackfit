@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { CatalogFile, ControlId, Product, ProductSupport } from '../src/index.js';
+import { CatalogFile, ControlId, Product, ProductSupport } from '../src/index';
 
 const sources = [{ url: 'https://example.com/docs', asOf: '2026-09-09' }];
 

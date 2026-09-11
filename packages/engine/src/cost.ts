@@ -22,9 +22,9 @@ import type {
   ProductTier,
 } from '@stackfit/schema';
 
-import { assessTierFreshness, needsRecheck, type PriceFreshness } from './freshness.js';
-import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money.js';
-import type { SizingResult } from './sizing.js';
+import { assessTierFreshness, needsRecheck, type PriceFreshness } from './freshness';
+import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money';
+import type { SizingResult } from './sizing';
 
 const DAYS_PER_YEAR = 365;
 const MONTHS_PER_YEAR = 12;

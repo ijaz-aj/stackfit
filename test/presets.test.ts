@@ -12,7 +12,7 @@ import { loadFrameworks, loadPresets, loadSizingAssumptions } from '@stackfit/da
 import { computeSizing } from '@stackfit/engine';
 import { describe, expect, it } from 'vitest';
 
-import { inventoryOf, profileOf, runScenario } from './scenarios/harness.js';
+import { inventoryOf, profileOf, runScenario } from './scenarios/harness';
 
 const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data');
 

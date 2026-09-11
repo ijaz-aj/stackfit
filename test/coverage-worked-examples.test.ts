@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { coverageOf, inventoryOf, profileOf, runScenario } from './scenarios/harness.js';
+import { coverageOf, inventoryOf, profileOf, runScenario } from './scenarios/harness';
 
 const usd = (amountMinor: number) => ({ amountMinor, currency: 'USD' as const });
 

@@ -8,7 +8,7 @@
 import { join } from 'node:path';
 
 import { loadCatalog, loadFreshnessPolicy, loadFxConfig, loadMsspRateCard } from '@stackfit/data';
-import { assessCatalogStaleness, assessConfigStaleness, type PriceStatus } from './lib/staleness.js';
+import { assessCatalogStaleness, assessConfigStaleness, type PriceStatus } from './lib/staleness';
 
 /** Today, read once here — the boundary where a clock is allowed. */
 function today(): string {
