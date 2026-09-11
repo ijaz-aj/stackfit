@@ -3,11 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { runPipeline } from '@stackfit/engine';
-
-import { engineData, today } from './config.server';
+import { engineData } from './config.server';
 import { prisma } from './db';
 import { summariseEstimate, type EstimateSummary } from './estimate';
+import { resultsFor } from './results.server';
 import {
   CreateScenarioInput,
   NEW_INVENTORY,
@@ -129,20 +128,6 @@ export async function estimateScenario(input: unknown): Promise<EstimateResult> 
     };
   }
 
-  const data = engineData();
-  const result = runPipeline({
-    profile: parsed.data.profile,
-    inventory: parsed.data.inventory,
-    products: data.catalog,
-    frameworks: data.frameworks,
-    sizingAssumptions: data.sizingAssumptions,
-    categoryWeights: data.categoryWeights,
-    scoringWeights: data.scoringWeights,
-    portfolioAssumptions: data.portfolioAssumptions,
-    coverageAssumptions: data.coverageAssumptions,
-    mssp: data.mssp,
-    costInputs: { ...data.costInputsWithoutDate, today: today() },
-  });
-
+  const result = resultsFor(parsed.data.profile, parsed.data.inventory);
   return { ok: true, summary: summariseEstimate(result) };
 }

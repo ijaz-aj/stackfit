@@ -1,0 +1,173 @@
+import type { Bundle, PipelineResult } from '@stackfit/engine';
+import { coverageOfBundle } from '@stackfit/engine';
+import type { PricingConfidence } from '@stackfit/schema';
+import Link from 'next/link';
+
+import { Badge, Card } from '@/components/ui';
+import { cn } from '@/lib/cn';
+import { formatMoney, formatNumber } from '@/lib/format';
+
+const CONFIDENCE_TONE: Readonly<Record<PricingConfidence, 'good' | 'warn' | 'bad'>> = {
+  public_list: 'good',
+  vendor_quote: 'good',
+  analyst_estimate: 'warn',
+  placeholder: 'bad',
+};
+
+/**
+ * §8.1 — the three tiers side by side: year one, annual, three-year TCO,
+ * coverage and pricing confidence.
+ *
+ * The managed alternative is on the same table rather than a page of its own,
+ * because §7.4 step 6 exists to put build and buy in front of the client
+ * together. Its figure includes the residual: what the provider does not
+ * operate stays the client's to buy, and a fee-only comparison would flatter
+ * the managed option.
+ */
+export function BundleComparison({
+  result,
+  selectedKind,
+  scenarioId,
+}: {
+  result: PipelineResult;
+  selectedKind: Bundle['kind'];
+  scenarioId: string;
+}) {
+  const bundles: readonly Bundle[] = [result.essential, result.recommended, result.ideal];
+
+  const rows = bundles.map((bundle) => {
+    const confidences: readonly PricingConfidence[] = bundle.selections.map(
+      (selection) => selection.cost.pricingConfidence,
+    );
+    const worst: PricingConfidence =
+      confidences.find((entry) => entry === 'placeholder') ??
+      confidences.find((entry) => entry === 'analyst_estimate') ??
+      confidences.find((entry) => entry === 'vendor_quote') ??
+      'public_list';
+
+    return {
+      bundle,
+      coverage: coverageOfBundle(result, bundle).summary,
+      worstConfidence: worst,
+      needsRecheck: bundle.selections.some((selection) => selection.cost.needsRecheck),
+      year1: bundle.selections.reduce(
+        (total, selection) => total + selection.cost.year1.amountMinor,
+        0,
+      ),
+    };
+  });
+
+  const label = { essential: 'Essential', recommended: 'Recommended', ideal: 'Ideal' } as const;
+  const hint = {
+    essential: 'Minimum defensible posture, plus everything compliance mandates.',
+    recommended: 'Best value inside the stated budget.',
+    ideal: 'Ignores the budget cap, to quantify the gap.',
+  } as const;
+
+  return (
+    <Card
+      title="Bundle comparison"
+      hint="Three ways to answer the same brief. Click a tier to read its detail below."
+    >
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[720px] border-collapse text-[12px]">
+          <thead>
+            <tr className="text-faint text-left text-[10px] tracking-wide uppercase">
+              <th className="py-1.5 pr-3 font-medium">Tier</th>
+              <th className="py-1.5 pr-3 text-right font-medium">Year 1</th>
+              <th className="py-1.5 pr-3 text-right font-medium">Procurement / yr</th>
+              <th className="py-1.5 pr-3 text-right font-medium">All-in / yr</th>
+              <th className="py-1.5 pr-3 text-right font-medium">
+                {result.recommended.selections[0]?.cost.horizonYears ?? 3}-yr TCO
+              </th>
+              <th className="py-1.5 pr-3 text-right font-medium">Ops</th>
+              <th className="py-1.5 pr-3 text-right font-medium">Coverage</th>
+              <th className="py-1.5 pr-3 text-right font-medium">Managed / yr</th>
+              <th className="py-1.5 font-medium">Pricing</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ bundle, coverage, worstConfidence, needsRecheck, year1 }) => (
+              <tr
+                key={bundle.kind}
+                className={cn(
+                  'border-line border-t',
+                  bundle.kind === selectedKind && 'bg-accent/5',
+                )}
+              >
+                <td className="py-2 pr-3 align-top">
+                  <Link
+                    href={`/scenarios/${scenarioId}/results?bundle=${bundle.kind}`}
+                    className={cn(
+                      'text-[13px] font-medium',
+                      bundle.kind === selectedKind ? 'text-accent' : 'text-ink hover:text-accent',
+                    )}
+                  >
+                    {label[bundle.kind]}
+                  </Link>
+                  <p className="text-faint text-[11px] leading-snug">{hint[bundle.kind]}</p>
+                  <p className="text-faint text-[11px]">
+                    {bundle.selections.length} product
+                    {bundle.selections.length === 1 ? '' : 's'}
+                  </p>
+                </td>
+                <td className="tabular py-2 pr-3 text-right align-top">
+                  {formatMoney({ amountMinor: year1, currency: bundle.currency })}
+                </td>
+                <td className="tabular py-2 pr-3 text-right align-top">
+                  {formatMoney(bundle.annualSpend)}
+                  {!bundle.withinAnnualCap && (
+                    <span className="text-bad block text-[10px]">over cap</span>
+                  )}
+                </td>
+                <td className="tabular py-2 pr-3 text-right align-top">
+                  {formatMoney(bundle.annualRecurring)}
+                  <span className="text-faint block text-[10px]">incl. people</span>
+                </td>
+                <td className="tabular py-2 pr-3 text-right align-top">{formatMoney(bundle.tco)}</td>
+                <td className="tabular py-2 pr-3 text-right align-top">
+                  {formatNumber(bundle.totalOpsFte, 2)}
+                  <span className="text-faint block text-[10px]">FTE</span>
+                </td>
+                <td className="tabular py-2 pr-3 text-right align-top">
+                  {coverage.coveragePercent === null ? '—' : `${coverage.coveragePercent}%`}
+                  {/* A percentage that excludes the partials has to name them, or
+                      "0%" reads as "this stack does nothing for you". */}
+                  {coverage.partialControls > 0 && (
+                    <span className="text-warn block text-[10px]">
+                      +{coverage.partialControls} partial
+                    </span>
+                  )}
+                </td>
+                <td className="tabular py-2 pr-3 text-right align-top">
+                  {formatMoney(bundle.mssp.totalAnnual)}
+                  <span className="text-faint block text-[10px]">{bundle.mssp.serviceLevel}</span>
+                </td>
+                <td className="py-2 align-top">
+                  <Badge tone={CONFIDENCE_TONE[worstConfidence]}>
+                    {worstConfidence.replace(/_/g, ' ')}
+                  </Badge>
+                  {needsRecheck && (
+                    <span className="text-warn mt-0.5 block text-[10px]">due a re-check</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <ul className="text-faint mt-3 flex flex-col gap-1 text-[11px] leading-snug">
+        <li>
+          — Procurement is licence, support and infrastructure. All-in adds the operational FTE,
+          and so does the TCO: hard rule 8, and the reason an open-source stack is never free
+          here.
+        </li>
+        <li>
+          — The managed figure is the fee plus the residual cost of whatever the service level
+          does not operate. Comparing a fee against a whole stack would flatter it.
+        </li>
+      </ul>
+    </Card>
+  );
+}

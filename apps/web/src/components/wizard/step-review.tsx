@@ -173,9 +173,9 @@ export function StepReview({
 
       <Card title="Next">
         <p className="text-muted text-[12px] leading-snug">
-          The intake is saved as you type. The full results dashboard — per-category cards, cost
-          breakdown, coverage heatmap and gap analysis — is Phase 6; the figures above come from the
-          same engine that will render it.
+          The intake is saved as you type. <strong>Results</strong> opens the full dashboard —
+          per-category cards, cost breakdown, coverage matrix, gap analysis, the sizing worksheet
+          and the assumptions panel — off the same engine run as the figures above.
         </p>
       </Card>
     </div>

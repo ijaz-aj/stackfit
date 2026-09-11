@@ -330,6 +330,27 @@ describe('the coverage matrix', () => {
     expect(result.gaps.map((gap) => gap.controlId)).toEqual(['pci-dss-4.0:5']);
   });
 
+  it('says when a framework has no product mappings at all, rather than just 0%', () => {
+    // The difference between "this stack does nothing for you" and "nobody has
+    // mapped the catalog against this framework yet" is the whole story, and a
+    // bare 0% tells the wrong one. Seen for real on a HIPAA scenario: every
+    // catalog product claims CIS, NIST and PCI controls and none claims HIPAA.
+    const result = computeCoverage(
+      buildInputs({
+        catalog,
+        selected: [{ id: 'silent-siem', category: 'siem' }],
+        frameworks: [pci],
+        compliance: ['pci-dss-4.0'],
+      }),
+    );
+
+    expect(result.frameworks[0]!.coveredControls).toBe(0);
+    expect(result.frameworks[0]!.partialControls).toBeGreaterThan(0);
+    expect(result.frameworks[0]!.rationale.join(' ')).toContain(
+      'a mapping this catalog has not been given',
+    );
+  });
+
   it('warns when the framework itself is not publisher-verified', () => {
     const result = computeCoverage(
       buildInputs({ catalog, selected: [], frameworks: [pci], compliance: ['pci-dss-4.0'] }),

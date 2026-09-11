@@ -49,7 +49,8 @@ export function Wizard(props: WizardProps) {
   );
 }
 
-function WizardBody({ frameworks, products, sizingAssumptions }: WizardProps) {
+function WizardBody({ scenario, frameworks, products, sizingAssumptions }: WizardProps) {
+  const scenarioId = scenario.id;
   const api = useWizardApi();
   const step = useWizard((state) => state.step);
   const setStep = useWizard((state) => state.setStep);
@@ -146,7 +147,15 @@ function WizardBody({ frameworks, products, sizingAssumptions }: WizardProps) {
             {profile.orgName === '' ? 'Untitled' : profile.orgName}
           </h1>
         </div>
-        <SaveIndicator state={saveState} problem={saveProblem} />
+        <div className="flex items-center gap-3">
+          <SaveIndicator state={saveState} problem={saveProblem} />
+          <Link
+            href={`/scenarios/${scenarioId}/results`}
+            className="border-accent/60 bg-accent/10 text-accent hover:bg-accent/20 rounded border px-3 py-1.5 text-[13px] transition-colors"
+          >
+            Results →
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)_300px]">

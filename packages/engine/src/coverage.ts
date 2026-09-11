@@ -440,6 +440,17 @@ export function computeFrameworkCoverage(inputs: CoverageInputs): readonly Frame
           'figure should be the one you can defend, not the one you would like.',
       );
     }
+    if (covered.length === 0 && partial.length > 0) {
+      // The difference between "this stack does nothing for you" and "nobody has
+      // mapped the catalog against this framework yet" is the whole story, and a
+      // 0% with no explanation says the wrong one.
+      rationale.push(
+        `⚠ Nothing in this bundle claims a single ${framework.name} control, while ${partial.length} ` +
+          'of them are the kind of control its products would address. That is a mapping this ' +
+          'catalog has not been given, not a stack that does nothing — the figure to act on is ' +
+          `the ${partial.length} partial, and the fix is in the catalog entries.`,
+      );
+    }
     if (!inScope) {
       rationale.push(
         'The client did not select this framework. It is a reference view of the stack, not a ' +
