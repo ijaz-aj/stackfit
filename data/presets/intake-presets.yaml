@@ -1,0 +1,317 @@
+# Intake presets (PROJECT_SPEC §5.2).
+#
+# "Scoping calls do not produce clean data." A preset gets the analyst to a
+# plausible environment in one click, which they then edit in front of the
+# client — the difference between a 4-minute intake and a 40-minute one.
+#
+# ⚠ Every count here is an analyst estimate of what an estate of this shape
+# typically looks like. None of it is measured, none of it is any particular
+# client, and every preset states the arithmetic it was built from in `basis` so
+# it can be argued with. They are starting points, never answers.
+#
+# Budget caps are procurement spend — licence, support and infrastructure — to
+# match what the engine constrains. Salary is not procurement.
+
+notes: >-
+  Six shapes chosen to span the paths the engine actually treats differently:
+  card data, cloud-native, operational technology, protected health information,
+  an Indian regulated bank, and a small unregulated firm with no security staff
+  at all.
+
+presets:
+  - id: retail-chain-40-stores
+    name: Retail chain, 40 stores
+    description: Card data in scope, thin IT team, a firewall and a till in every store.
+    basis: >-
+      40 stores plus a head office. Per store: 6 POS terminals, 8 cameras, 3
+      back-office PCs, 1 firewall, 1 router, 2 switches. Head office adds 120
+      staff PCs, the server estate and the e-commerce front end. Staff count is
+      40 stores x 12 plus 120 at head office. The annual cap is what a retailer
+      this size typically has room for once the network refresh is paid for.
+    profile:
+      industry: retail
+      region: in
+      employeeCount: 600
+      itStaffCount: 6
+      securityStaffFte: 1
+      hasSoc: none
+      riskTolerance: medium
+      dataSensitivity: regulated
+      compliance: [pci-dss-4.0, dpdp-2023]
+      budget:
+        annualCap: { amountMinor: 600000000, currency: INR } # INR 60,00,000
+        oneTimeCap: { amountMinor: 200000000, currency: INR } # INR 20,00,000
+        currency: INR
+        horizonYears: 3
+      deploymentPreference: hybrid
+      procurementBias: no_preference
+      retainedTools: []
+      excludedProducts: []
+    inventory:
+      windowsEndpoints: { count: 240 }
+      windowsServers: { count: 14 }
+      windowsDomainControllers: { count: 2 }
+      linuxServers: { count: 8 }
+      hypervisors: { count: 4 }
+      routers: { count: 42 }
+      switches: { count: 90 }
+      wirelessControllers: { count: 4 }
+      firewalls: { count: 42, internetFacing: true }
+      databases: { count: 4, criticality: crown_jewel }
+      fileServers: { count: 3 }
+      internalWebApps: { count: 3 }
+      publicWebApps: { count: 1, internetFacing: true, criticality: crown_jewel }
+      iotCctvPosDevices: { count: 560, criticality: crown_jewel }
+      m365Seats: { count: 600 }
+      remoteUsers: { count: 60 }
+      privilegedAccounts: { count: 12 }
+      serviceAccounts: { count: 25 }
+      networkVendors: [cisco, fortinet]
+      firewallThroughputClass: under_1g
+
+  - id: saas-scale-up-120
+    name: SaaS scale-up, 120 staff
+    description: Cloud-native, no perimeter, SOC 2 audit on the calendar.
+    basis: >-
+      120 staff, mostly laptops, no office server room. AWS across 6 accounts
+      (prod, staging, dev, data, security, shared services) with roughly 180
+      workloads and a 24-node Kubernetes estate. Service accounts outnumber
+      people, which is normal here and is why identity ranks first for this
+      shape.
+    profile:
+      industry: saas
+      region: us
+      employeeCount: 120
+      itStaffCount: 4
+      securityStaffFte: 1
+      hasSoc: none
+      riskTolerance: medium
+      dataSensitivity: regulated
+      compliance: [soc-2, gdpr]
+      budget:
+        annualCap: { amountMinor: 12000000, currency: USD } # USD 120,000
+        oneTimeCap: null
+        currency: USD
+        horizonYears: 3
+      deploymentPreference: cloud
+      procurementBias: no_preference
+      retainedTools: []
+      excludedProducts: []
+    inventory:
+      macosEndpoints: { count: 95 }
+      windowsEndpoints: { count: 20 }
+      linuxEndpoints: { count: 5 }
+      containerNodes: { count: 24 }
+      loadBalancers: { count: 4 }
+      databases: { count: 8, criticality: crown_jewel }
+      internalWebApps: { count: 6 }
+      publicWebApps: { count: 3, internetFacing: true, criticality: crown_jewel }
+      awsAccounts: { count: 6 }
+      cloudWorkloads: { count: 180 }
+      googleWorkspaceSeats: { count: 120 }
+      otherCriticalSaasApps: { count: 18 }
+      remoteUsers: { count: 120 }
+      privilegedAccounts: { count: 15 }
+      serviceAccounts: { count: 60 }
+      networkVendors: []
+
+  - id: manufacturer-two-plants
+    name: Manufacturer, 2 plants
+    description: Flat OT network, NIS2 in scope, on-premises by preference.
+    basis: >-
+      Two plants plus a head office. Roughly 450 OT devices per plant — PLCs,
+      HMIs, drives, sensors — which is mid-sized for discrete manufacturing.
+      520 office PCs across 850 staff, because line workers share terminals.
+      Segmentation is the open question this shape always raises, which is why
+      the firewall and switch counts matter more here than the endpoint count.
+    profile:
+      industry: manufacturing
+      region: eu
+      employeeCount: 850
+      itStaffCount: 9
+      securityStaffFte: 1
+      hasSoc: business_hours
+      riskTolerance: medium
+      dataSensitivity: internal
+      compliance: [nis2, iso-27001-2022]
+      budget:
+        annualCap: { amountMinor: 25000000, currency: EUR } # EUR 250,000
+        oneTimeCap: null
+        currency: EUR
+        horizonYears: 3
+      deploymentPreference: on_prem
+      procurementBias: no_preference
+      retainedTools: []
+      excludedProducts: []
+    inventory:
+      windowsEndpoints: { count: 520 }
+      windowsServers: { count: 40 }
+      windowsDomainControllers: { count: 4 }
+      linuxServers: { count: 25 }
+      hypervisors: { count: 10 }
+      routers: { count: 14 }
+      switches: { count: 140 }
+      wirelessControllers: { count: 6 }
+      firewalls: { count: 12, internetFacing: true }
+      vpnConcentrators: { count: 2, internetFacing: true }
+      databases: { count: 10 }
+      fileServers: { count: 6 }
+      internalWebApps: { count: 8 }
+      otIcsScadaDevices: { count: 900, criticality: crown_jewel }
+      iotCctvPosDevices: { count: 260 }
+      m365Seats: { count: 850 }
+      remoteUsers: { count: 120 }
+      privilegedAccounts: { count: 30 }
+      serviceAccounts: { count: 70 }
+      networkVendors: [cisco, fortinet, other]
+      firewallThroughputClass: 1g_to_10g
+
+  - id: hospital-300-beds
+    name: Hospital, 300 beds
+    description: Protected health information, medical IoT, low tolerance for downtime.
+    basis: >-
+      300 beds, roughly 1,400 staff across three shifts. Clinical workstations
+      outnumber staff on duty because they live in wards and theatres rather
+      than with people. 1,600 connected devices covers infusion pumps, imaging,
+      monitors and cameras — the class that cannot take an agent, which is the
+      finding this preset exists to produce.
+    profile:
+      industry: healthcare
+      region: us
+      employeeCount: 1400
+      itStaffCount: 14
+      securityStaffFte: 2
+      hasSoc: business_hours
+      riskTolerance: low
+      dataSensitivity: critical
+      compliance: [hipaa]
+      budget:
+        annualCap: { amountMinor: 40000000, currency: USD } # USD 400,000
+        oneTimeCap: null
+        currency: USD
+        horizonYears: 3
+      deploymentPreference: hybrid
+      procurementBias: commercial
+      retainedTools: []
+      excludedProducts: []
+    inventory:
+      windowsEndpoints: { count: 1200 }
+      macosEndpoints: { count: 60 }
+      windowsServers: { count: 90 }
+      windowsDomainControllers: { count: 6 }
+      linuxServers: { count: 40 }
+      hypervisors: { count: 24 }
+      routers: { count: 12 }
+      switches: { count: 220 }
+      wirelessControllers: { count: 12 }
+      firewalls: { count: 10, internetFacing: true }
+      vpnConcentrators: { count: 2, internetFacing: true }
+      databases: { count: 30, criticality: crown_jewel }
+      fileServers: { count: 12 }
+      internalWebApps: { count: 25 }
+      publicWebApps: { count: 2, internetFacing: true }
+      otIcsScadaDevices: { count: 120 }
+      iotCctvPosDevices: { count: 1600, criticality: high }
+      m365Seats: { count: 1400 }
+      remoteUsers: { count: 250 }
+      privilegedAccounts: { count: 60 }
+      serviceAccounts: { count: 140 }
+      networkVendors: [cisco, aruba]
+      firewallThroughputClass: 1g_to_10g
+
+  - id: bank-60-branches
+    name: Bank, 60 branches
+    description: RBI cyber security framework, card data, outsourced SOC already in place.
+    basis: >-
+      60 branches and a data centre. Per branch: 25 staff PCs, an ATM, 8
+      cameras, a firewall, a router, 3 switches. Privileged and service account
+      counts are high on purpose — core banking, middleware and reconciliation
+      jobs each hold their own — and they are what size the PAM line.
+    profile:
+      industry: bfsi
+      region: in
+      employeeCount: 1800
+      itStaffCount: 25
+      securityStaffFte: 4
+      hasSoc: outsourced
+      riskTolerance: low
+      dataSensitivity: critical
+      compliance: [rbi-csf, pci-dss-4.0, dpdp-2023]
+      budget:
+        annualCap: { amountMinor: 3500000000, currency: INR } # INR 3,50,00,000
+        oneTimeCap: { amountMinor: 1000000000, currency: INR } # INR 1,00,00,000
+        currency: INR
+        horizonYears: 3
+      deploymentPreference: on_prem
+      procurementBias: no_preference
+      retainedTools: []
+      excludedProducts: []
+    inventory:
+      windowsEndpoints: { count: 1900 }
+      windowsServers: { count: 140 }
+      windowsDomainControllers: { count: 8 }
+      linuxServers: { count: 90 }
+      hypervisors: { count: 30 }
+      routers: { count: 65 }
+      switches: { count: 260 }
+      wirelessControllers: { count: 8 }
+      firewalls: { count: 70, internetFacing: true }
+      vpnConcentrators: { count: 4, internetFacing: true }
+      loadBalancers: { count: 8 }
+      databases: { count: 45, criticality: crown_jewel }
+      fileServers: { count: 10 }
+      internalWebApps: { count: 40 }
+      publicWebApps: { count: 4, internetFacing: true, criticality: crown_jewel }
+      iotCctvPosDevices: { count: 700, criticality: high }
+      m365Seats: { count: 1800 }
+      remoteUsers: { count: 200 }
+      privilegedAccounts: { count: 120 }
+      serviceAccounts: { count: 300 }
+      networkVendors: [cisco, juniper, fortinet]
+      firewallThroughputClass: over_10g
+
+  - id: professional-services-45
+    name: Professional services, 45 staff
+    description: All SaaS, no compliance obligation, nobody whose job is security.
+    basis: >-
+      45 consultants, laptops and Microsoft 365, one small AWS account for the
+      client portal. No server room, no security hire — the case §5.1 calls out
+      as valid and very important, and the one where the managed alternative
+      usually wins. Open-source-first is set deliberately: at this size the
+      question is always whether free tools are actually cheaper.
+    profile:
+      industry: other
+      region: us
+      employeeCount: 45
+      itStaffCount: 1
+      securityStaffFte: 0
+      hasSoc: none
+      riskTolerance: medium
+      dataSensitivity: internal
+      compliance: []
+      budget:
+        annualCap: { amountMinor: 1500000, currency: USD } # USD 15,000
+        oneTimeCap: null
+        currency: USD
+        horizonYears: 3
+      deploymentPreference: cloud
+      procurementBias: open_source_first
+      retainedTools: []
+      excludedProducts: []
+    inventory:
+      macosEndpoints: { count: 30 }
+      windowsEndpoints: { count: 15 }
+      switches: { count: 2 }
+      wirelessControllers: { count: 1 }
+      firewalls: { count: 1, internetFacing: true }
+      internalWebApps: { count: 1 }
+      publicWebApps: { count: 1, internetFacing: true }
+      awsAccounts: { count: 1 }
+      cloudWorkloads: { count: 6 }
+      m365Seats: { count: 45 }
+      otherCriticalSaasApps: { count: 12 }
+      remoteUsers: { count: 45 }
+      privilegedAccounts: { count: 4 }
+      serviceAccounts: { count: 8 }
+      networkVendors: [other]
+      firewallThroughputClass: under_1g
