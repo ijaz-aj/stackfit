@@ -209,3 +209,42 @@ describe('justifying a selection', () => {
     expect(JSON.stringify(justify(result))).toBe(JSON.stringify(justify(result)));
   });
 });
+
+describe('a verdict never says something a reader can disprove', () => {
+  it('does not tell a client a product costs "1 times as much"', () => {
+    // Two SKUs of the same product a few percent apart read as "costs 1 times
+    // as much a year", which makes a reader distrust the rest of the page.
+    const result = run([
+      product('siem-a', 'siem', 100_00),
+      product('siem-b', 'siem', 101_00),
+      product('edr-a', 'edr', 100_00),
+    ]);
+
+    for (const category of justify(result)) {
+      for (const alternative of category.alternatives) {
+        expect(alternative.verdict).not.toMatch(/\b1 times as much\b/);
+        expect(alternative.verdict).not.toMatch(/\b1\.0 times as much\b/);
+      }
+    }
+  });
+
+  it('does not blame value density for a product that is cheaper and better', () => {
+    // A product that costs less to own *and* scores higher has the better
+    // density by construction, so "did not win on value density" would be
+    // false. When the bundle was built on licence price, say that instead.
+    const result = run([
+      product('siem-a', 'siem', 100_00),
+      product('siem-b', 'siem', 200_00),
+      product('siem-c', 'siem', 400_00),
+    ]);
+
+    for (const category of justify(result)) {
+      const winner = category.selectedFitScore;
+      for (const alternative of category.alternatives) {
+        if (alternative.kind !== 'not_preferred') continue;
+        if (alternative.fitScore <= winner) continue;
+        expect(alternative.verdict).not.toContain('value density');
+      }
+    }
+  });
+});

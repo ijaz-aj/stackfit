@@ -115,6 +115,7 @@ function decidingDimension(
 function verdictFor(
   winner: ProductScore,
   winnerAllIn: Money,
+  winnerSpend: Money,
   loser: ProductScore,
   loserSpend: Money | null,
   loserAllIn: Money | null,
@@ -150,27 +151,52 @@ function verdictFor(
   // It scored at least as well, so the decision was cost. Stated on the basis
   // the bundle actually decided on — total annual cost, people included.
   //
-  // Procurement alone would be a lie by omission here: a self-hosted tool at
-  // $1,080 against a commercial one at $42,840 is "40 times the price" on
-  // licence and within a tenth of it once the FTE to run each is counted. The
-  // second number is the one a client can act on.
-  if (
-    loserAllIn !== null &&
-    winnerAllIn.amountMinor > 0 &&
-    loserAllIn.amountMinor > winnerAllIn.amountMinor
-  ) {
-    const multiple = round(loserAllIn.amountMinor / winnerAllIn.amountMinor, 1);
-    const licence =
-      loserSpend === null
-        ? ''
-        : ' Licence and support alone understate the gap in the other direction, because most ' +
-          'of the selection’s cost is the people who run it.';
+  // Procurement alone would be a lie by omission: a self-hosted tool at $1,080
+  // against a commercial one at $42,840 is "40 times the price" on licence and
+  // within a tenth of it once the FTE to run each is counted.
+  const ratio =
+    loserAllIn === null || winnerAllIn.amountMinor === 0
+      ? null
+      : loserAllIn.amountMinor / winnerAllIn.amountMinor;
+
+  // Below this the two cost the same for practical purposes, and "costs 1.0
+  // times as much" is a sentence that makes a reader distrust the whole page.
+  if (ratio !== null && ratio >= 1.05) {
     return {
       kind: 'costs_more',
       decidingDimension: null,
       verdict:
         `Scores ${round(loser.score, 1)}, level with or above the selection, but costs ` +
-        `${multiple} times as much a year once the people to run each are counted.${licence}`,
+        `${round(ratio, 1)} times as much a year once the people to run each are counted. ` +
+        'Licence price alone would overstate that gap: most of what a self-hosted tool costs ' +
+        'is the people who run it.',
+    };
+  }
+
+  // Same score or better, and the same money to own. Then the licence price is
+  // what separated them, and saying "did not win on value density" would be
+  // false — a product that is cheaper to own *and* scores higher has the better
+  // density by construction. What actually happened is that the bundle was
+  // built to stretch the procurement budget, and this SKU costs more to buy.
+  const spendRatio =
+    loserSpend === null || winnerSpend.amountMinor === 0
+      ? null
+      : loserSpend.amountMinor / winnerSpend.amountMinor;
+
+  if (loserSpend !== null && loserSpend.amountMinor > winnerSpend.amountMinor) {
+    // "1 times as much" is not a sentence. Below the threshold, or against a
+    // free licence where no multiple exists, state the gap in plain terms.
+    const howMuchDearer =
+      spendRatio !== null && spendRatio >= 1.05
+        ? `${round(spendRatio, 1)} times as much to buy`
+        : 'more to buy';
+    return {
+      kind: 'costs_more',
+      decidingDimension: null,
+      verdict:
+        `Scores ${round(loser.score, 1)} and costs about the same to own, but ${howMuchDearer}. ` +
+        'This bundle was built to stretch the licence budget across every category the client ' +
+        'has to cover, so the cheaper licence won. It is the upgrade to quote if the budget moves.',
     };
   }
 
@@ -178,8 +204,8 @@ function verdictFor(
     kind: 'not_preferred',
     decidingDimension: null,
     verdict:
-      `Scores ${round(loser.score, 1)} and prices comparably. Only one product per category is ` +
-      `funded, and ${loserName} did not win the ranking on value density.`,
+      `Scores ${round(loser.score, 1)} and costs much the same either way. Only one product per ` +
+      `category is funded, and ${loserName} did not win the ranking.`,
   };
 }
 
@@ -215,6 +241,7 @@ function justifyOne(selection: BundleSelection, inputs: JustificationInputs): Ca
     )?.cost;
 
   const winnerAllIn = selection.cost.annualRecurring;
+  const winnerSpend = selection.cost.procurementAnnual;
 
   const alternatives = inCategory
     .filter(
@@ -229,7 +256,7 @@ function justifyOne(selection: BundleSelection, inputs: JustificationInputs): Ca
       const decided =
         winner === undefined
           ? { kind: 'not_preferred' as const, decidingDimension: null, verdict: 'Not selected.' }
-          : verdictFor(winner, winnerAllIn, score, spend, allIn, name);
+          : verdictFor(winner, winnerAllIn, winnerSpend, score, spend, allIn, name);
 
       return {
         productId: score.productId,
