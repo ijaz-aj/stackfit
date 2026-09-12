@@ -71,9 +71,14 @@ function ChangeTable({
         <thead>
           <tr className="text-faint text-left text-2xs tracking-wide uppercase">
             <th className="py-1.5 pr-3 font-medium">{firstHeading}</th>
-            <th className="py-1.5 pr-3 text-right font-medium">{leftName}</th>
-            <th className="py-1.5 pr-3 text-right font-medium">{rightName}</th>
-            <th className="py-1.5 text-right font-medium">Difference</th>
+            <th className="max-w-[24ch] py-1.5 pr-3 text-right font-medium" title={leftName}>
+              {leftName}
+            </th>
+            <th className="max-w-[24ch] py-1.5 pr-3 text-right font-medium" title={rightName}>
+              {rightName}
+            </th>
+            {/* Never the column that gets squeezed: it is the answer. */}
+            <th className="w-[18ch] py-1.5 text-right font-medium whitespace-nowrap">Difference</th>
           </tr>
         </thead>
         <tbody>
@@ -231,7 +236,20 @@ export default async function ComparePage({
         </ul>
       </Card>
 
-      <div className="grid gap-3 xl:grid-cols-2">
+      {/*
+        Full width, not a two-column grid.
+        
+        Side by side, each table got about 520px while its own `min-w` was
+        620px, so `overflow-x-auto` clipped the right-hand Difference column
+        mid-number: ₹3,760,217 rendered as "₹3,760" and looked like a complete
+        figure. A money column that silently drops three digits is worse than
+        one that is missing — the reader has no way to tell they are reading a
+        number a thousand times too small.
+        
+        These tables carry two scenario names as column headers and are wide by
+        nature. Stacking them is what makes the numbers fit.
+      */}
+      <div className="flex flex-col gap-3">
         <Card title="Inputs that differ" hint="Everything else is identical between the two.">
           <ChangeTable
             rows={comparison.inputs}

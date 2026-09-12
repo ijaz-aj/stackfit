@@ -40,7 +40,15 @@ import {
 } from './cost';
 import { controlsClaimedBy } from './claims';
 import type { CategoryRelevance } from './infrastructure';
-import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money';
+import {
+  addMoney,
+  convertMoney,
+  moneyInWords,
+  scaleMoney,
+  subtractMoney,
+  sumMoney,
+  zeroMoney,
+} from './money';
 import type { ProductScore } from './scoring';
 import type { SizingResult } from './sizing';
 
@@ -825,13 +833,13 @@ export function msspAlternative(
     if (uncoveredCategories.length > 0) {
       rationale.push(
         `Does NOT cover ${uncoveredCategories.join(', ')}. Those stay the client's to buy and run, ` +
-          `at a residual ${residualAnnual.amountMinor / 100} ${currency} a year on top of the ` +
+          `at a residual ${moneyInWords(residualAnnual)} a year on top of the ` +
           'managed fee. Comparing the fee alone against the bundle would flatter the managed option.',
       );
     }
     rationale.push(
-      `Build ${buildAnnual.amountMinor / 100} ${currency}/yr against buy ` +
-        `${totalAnnual.amountMinor / 100} ${currency}/yr (fee plus residual). ` +
+      `Build ${moneyInWords(buildAnnual)}/yr against buy ` +
+        `${moneyInWords(totalAnnual)}/yr (fee plus residual). ` +
         'Neither figure includes the client\'s own staff time for the build option beyond the ' +
         'ops FTE already costed.',
     );
@@ -989,15 +997,15 @@ function buildBundle(
   if (mandatoryUnaffordable) {
     rationale.push(
       `The cheapest acceptable option for every mandatory category totals ` +
-        `${mandatoryFloor.amountMinor / 100} ${currency} a year, against a stated annual cap of ` +
-        `${(cap?.amountMinor ?? 0) / 100} ${currency}. That cap cannot buy compliance.`,
+        `${moneyInWords(mandatoryFloor)} a year, against a stated annual cap of ` +
+        `${cap === null ? '0' : moneyInWords(cap)}. That cap cannot buy compliance.`,
     );
   }
   if (mandatoryUnimplementable) {
     rationale.push(
       `Standing up the cheapest acceptable option for every mandatory category costs ` +
-        `${mandatoryOneTimeFloor.amountMinor / 100} ${currency} once, against a stated one-time ` +
-        `cap of ${(oneTimeCap?.amountMinor ?? 0) / 100} ${currency}. The implementation budget ` +
+        `${moneyInWords(mandatoryOneTimeFloor)} once, against a stated one-time ` +
+        `cap of ${oneTimeCap === null ? '0' : moneyInWords(oneTimeCap)}. The implementation budget ` +
         'cannot stand this stack up, whatever the annual budget is.',
     );
   }
@@ -1025,8 +1033,8 @@ function buildBundle(
     rationale.push(
       `⚠ ${blockedByOneTime.map((entry) => entry.category).join(', ')} ` +
         `${blockedByOneTime.length === 1 ? 'was' : 'were'} stopped by the ONE-TIME cap, not the ` +
-        `annual one: ${result.oneTime.amountMinor / 100} of ` +
-        `${oneTimeCap.amountMinor / 100} ${currency} implementation budget is already committed. ` +
+        `annual one: ${moneyInWords(result.oneTime)} of ` +
+        `${moneyInWords(oneTimeCap)} implementation budget is already committed. ` +
         'A bigger annual budget will not fund them; a bigger implementation budget, or fewer ' +
         'tools to stand up, is the conversation to have.',
     );
@@ -1051,15 +1059,15 @@ function buildBundle(
   }
   if (result.selections.length > 0) {
     rationale.push(
-      `Annual spend ${result.spend.amountMinor / 100} ${currency} (licence, support, infrastructure) ` +
-        `against a total annual cost of ${result.annual.amountMinor / 100} ${currency} once ` +
+      `Annual spend ${moneyInWords(result.spend)} (licence, support, infrastructure) ` +
+        `against a total annual cost of ${moneyInWords(result.annual)} once ` +
         'operational people are counted. The budget cap is judged against spend, because a stated ' +
         'security budget is a procurement figure; the people are constrained separately, below.',
     );
     if (oneTimeCap !== null) {
       rationale.push(
-        `One-time cost to stand this up: ${result.oneTime.amountMinor / 100} ${currency} against ` +
-          `a cap of ${oneTimeCap.amountMinor / 100} ${currency}. Implementation is a separate ` +
+        `One-time cost to stand this up: ${moneyInWords(result.oneTime)} against ` +
+          `a cap of ${moneyInWords(oneTimeCap)}. Implementation is a separate ` +
           'budget from the annual one and runs out separately.',
       );
     }

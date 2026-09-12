@@ -1,7 +1,8 @@
 import Link from 'next/link';
 
+import { DeleteSession } from '@/components/delete-session';
 import { Badge, Button, Card } from '@/components/ui';
-import { cloneScenario, createScenario, deleteScenario } from '@/lib/actions';
+import { cloneScenario, createScenario } from '@/lib/actions';
 import { engineData } from '@/lib/config.server';
 import { prisma } from '@/lib/db';
 import { requireAnalyst } from '@/lib/session.server';
@@ -108,12 +109,7 @@ export default async function ScenariosPage() {
                     Clone
                   </Button>
                 </form>
-                <form action={deleteScenario}>
-                  <input type="hidden" name="id" value={scenario.id} />
-                  <Button type="submit" variant="danger">
-                    Delete
-                  </Button>
-                </form>
+                <DeleteSession id={scenario.id} name={scenario.name} />
               </li>
             ))}
           </ul>

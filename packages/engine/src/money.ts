@@ -103,3 +103,26 @@ export function convertMoney(amount: Money, to: CurrencyCode, fx: FxConfig): Mon
 export function isIdentityBaseRate(fx: FxConfig): boolean {
   return rateMicrosFor(fx, fx.base) === FX_RATE_SCALE;
 }
+
+/**
+ * Money as a readable string, for a rationale sentence.
+ *
+ * Hard rule 1 puts formatting at the render boundary, and this does not break
+ * it: the engine's `rationale` lines *are* strings by the time anything reads
+ * them, so a figure inside one has already left the typed world. The choice is
+ * not "format here or later", it is "grouped digits or not".
+ *
+ * Before this existed, every such line interpolated `amountMinor / 100`
+ * directly and produced "3760216.76 INR" next to a table cell rendering the
+ * same quantity as "₹37,60,217". Whole units, grouped, currency code first —
+ * plainly an engine figure rather than something pretending to be the
+ * formatted UI.
+ *
+ * Deliberately not `Intl.NumberFormat` with a currency style: that picks a
+ * symbol and a grouping convention per locale, which is exactly the decision
+ * the render boundary owns. This only groups thousands.
+ */
+export function moneyInWords(amount: Money): string {
+  const units = Math.round(amount.amountMinor / 100);
+  return `${amount.currency} ${units.toLocaleString('en-US')}`;
+}

@@ -21,7 +21,7 @@ import type {
 import { AssetClass as AssetClassEnum } from '@stackfit/schema';
 
 import type { CoverageResult } from './coverage';
-import { subtractMoney } from './money';
+import { moneyInWords, subtractMoney } from './money';
 import type { Bundle } from './portfolio';
 import { CATEGORY_LABELS, type ProposalCell } from './proposal';
 import type { SizingResult } from './sizing';
@@ -335,7 +335,7 @@ function summarise(
     if (delta !== 0) {
       lines.push(
         `Annual spend is ${delta > 0 ? 'higher' : 'lower'} in ${right.name} by ` +
-          `${Math.abs(delta) / 100} ${right.bundle.currency}.`,
+          `${moneyInWords({ amountMinor: Math.abs(delta), currency: right.bundle.currency })}.`,
       );
     }
   }
