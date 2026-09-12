@@ -1633,20 +1633,46 @@ What follows is the honest scorecard, including where the sources are weak.
   Held at the reviewer's direction: all thirteen categories stay, including
   `backup` and `mdr`, and the MSSP figure keeps its build-versus-buy framing
   rather than being re-presented as our own fee.
-- ⚠ **A mandated category can be funded with a SKU that does not close the
-  mandate.** Found while removing the Ideal bundle, and it predates that removal.
-  Every selection objective ranks within a category on price or on value density,
-  and none of them can see that one tier claims a mandated control and the
-  cheaper one does not. So a PCI client with thirty times the budget needed is
-  sold the entry SIEM tier, the category is reported as mandatory and funded, and
-  the coverage matrix then reports the control as an open gap. Ideal used to
-  display the dearer SKU beside the recommendation, which looked like an answer
-  and was not: the recommendation itself was always wrong, and nobody buys Ideal.
-  **Not fixed**, because the candidate comparator does not currently know which
-  controls are mandated in scope and threading that through is a change of its
-  own. Pinned by a test named for what it is, in
-  `packages/engine/test/portfolio.test.ts`. This is the most consequential thing
-  still open in the engine.
+- **"A mandated category can be funded with a SKU that does not close the
+  mandate" was raised here as a defect, was built, was measured, and was
+  reverted. The existing behaviour is better.** Recording it because the
+  reasoning is worth more than the code was, and because it looks like a bug
+  every time somebody reads the selection code.
+
+  The observation is true: every selection objective ranks within a category on
+  price or on value density, so none of them can see that one tier of a product
+  claims a mandated control and the cheaper tier does not. The fix was to rank
+  candidates that close an elected control ahead of the objective, still subject
+  to both caps.
+
+  It works, and it fires ten times across the six committed presets, so this is
+  not a theoretical case. What it costs, measured:
+
+  | preset | year one before | after | in-scope controls covered |
+  | --- | --- | --- | --- |
+  | retail | INR 2,605,380 | INR 5,083,191 | 8/13 to 9/13 |
+  | hospital | USD 19,729 | USD 241,881 | 7/9 to 8/9 |
+  | bank | INR 7,543,344 | INR 26,267,519 | 20/30 to 23/30 |
+
+  Twelve times the hospital's quote for one more covered control. No analyst
+  takes that to a client, and a tool that produces it has stopped answering
+  "what budget should this client be given".
+
+  What the engine already does instead, and it is the right answer. The control
+  is reported as **partial** rather than covered, with the reason stated:
+  "keycloak, teleport-community is the kind of product that satisfies HIPAA
+  Security Rule 164.308.a.3, but does not claim that control in the catalog.
+  Reported as partial, not covered: verify before this reaches a client." And the
+  upgrade is priced on the remediation list: "manageengine-pam360 (pam) 32,526
+  USD/yr closes hipaa:164.308.a.3". The analyst is told exactly what is missing,
+  what closes it, and what it costs, and the client decides. Forcing it into the
+  base quote takes that decision away and answers neither "which product" nor
+  "what budget" better.
+
+  If this is revisited, the thing to change is not the selection order. It is
+  whether a mandated control sitting at `partial` is prominent enough in the
+  client-facing proposal, which is a presentation question rather than a
+  selection one.
 - **`yearOneWeightRatio` is 0.5 and is a judgement, not a measurement.** Half the
   top-ranked category's weight, checked against the six committed presets: year
   one lands at 6 to 10 categories and the deferred tranche is the one an analyst
