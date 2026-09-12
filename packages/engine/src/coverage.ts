@@ -346,6 +346,7 @@ function coverOneControl(
   categoryByProduct: ReadonlyMap<string, ProductCategory>,
   selectionsByCategory: ReadonlyMap<ProductCategory, readonly string[]>,
   selectedProductIds: readonly string[],
+  retained: ReadonlySet<string>,
 ): ControlCoverage {
   const controlId = qualify(framework.id, control);
   const satisfyingCategories = new Set(control.satisfiedBy);
@@ -383,6 +384,20 @@ function coverOneControl(
     rationale.push(
       `Covered by ${coveredBy.join(', ')}, which claims ${controlId} in its own catalog entry.`,
     );
+    // Which of them the client is being asked to buy, and which they already
+    // have, is the difference between a quote and a quote plus a surprise. A
+    // control closed only by a holding is closed, and nothing in this proposal
+    // pays for it.
+    const byHolding = coveredBy.filter((productId) => retained.has(productId));
+    if (byHolding.length === coveredBy.length) {
+      rationale.push(
+        `Closed by what the client already owns (${byHolding.join(', ')}), so nothing in this ` +
+          'stack is bought for it. Resolved at the floor of that product, what every tier of it ' +
+          'does, because the tier they hold is not recorded.',
+      );
+    } else if (byHolding.length > 0) {
+      rationale.push(`${byHolding.join(', ')} already covers this, and is not being re-bought.`);
+    }
     const fromOutside = coveredBy.filter((productId) => {
       const category = categoryByProduct.get(productId);
       return category !== undefined && !satisfyingCategories.has(category);
@@ -476,12 +491,40 @@ export function computeFrameworkCoverage(inputs: CoverageInputs): readonly Frame
     ]),
   );
   const categoryByProduct = new Map(products.map((product) => [product.id, product.category]));
-  const selectedProductIds = bundle.selections.map((selection) => selection.productId);
+
+  /*
+   * What the client already owns counts as covered, because it is.
+   *
+   * `retainedTools` is documented in the spec as "products they already own and
+   * will keep", and it was reaching the integration score and the tier
+   * prerequisites and nothing else. A bank that told StackFit it was keeping
+   * CrowdStrike had every EDR control reported back to it as a gap. Reporting a
+   * covered control as a gap is not a conservative estimate, it is a wrong
+   * answer, and it is the kind a client spots in the first five minutes.
+   *
+   * No tier is known for a holding, so `claimsByProduct` resolves it at the
+   * conservative floor: what every tier of that product does. Crediting a
+   * holding with the top tier's claims would be inventing a purchase the client
+   * has not made.
+   *
+   * A retained id that matches nothing in the catalog is ignored rather than
+   * rejected. The analyst typed what the client said, and the catalog not
+   * carrying it is StackFit's gap, not theirs.
+   */
+  const retainedIds = profile.retainedTools.filter((id) => categoryByProduct.has(id));
+  const retained = new Set(retainedIds);
+
+  const selectedProductIds = [
+    ...bundle.selections.map((selection) => selection.productId),
+    ...retainedIds.filter((id) => !bundle.selections.some((s) => s.productId === id)),
+  ];
   const selectionsByCategory = new Map<ProductCategory, string[]>();
-  for (const selection of bundle.selections) {
-    const ids = selectionsByCategory.get(selection.category) ?? [];
-    ids.push(selection.productId);
-    selectionsByCategory.set(selection.category, ids);
+  for (const productId of selectedProductIds) {
+    const category = categoryByProduct.get(productId);
+    if (category === undefined) continue;
+    const ids = selectionsByCategory.get(category) ?? [];
+    ids.push(productId);
+    selectionsByCategory.set(category, ids);
   }
 
   return frameworks.map((framework): FrameworkCoverage => {
@@ -494,6 +537,7 @@ export function computeFrameworkCoverage(inputs: CoverageInputs): readonly Frame
         categoryByProduct,
         selectionsByCategory,
         selectedProductIds,
+        retained,
       ),
     );
 
