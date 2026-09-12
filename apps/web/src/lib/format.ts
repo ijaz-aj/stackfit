@@ -93,3 +93,42 @@ export function humanise(value: string): string {
   const spaced = value.replace(/_/g, ' ');
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
+
+/**
+ * A timestamp a person reads, not one a database prints.
+ *
+ * The session list showed `2026-09-12 15:27` against every row. That is
+ * sortable and precise and it answers the wrong question: an analyst scanning
+ * for the session they had open twenty minutes ago is looking for "now-ish",
+ * and has to parse a date to find it. Recency is the only thing this column is
+ * for, so recency is what it says.
+ *
+ * Pure, and `now` is a parameter. The comparison is calendar-day rather than
+ * elapsed-hours, because 23:50 yesterday and 00:10 today are ten minutes apart
+ * and nobody calls that "today".
+ */
+export function formatWhen(iso: string, now: Date): string {
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return '';
+
+  const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((midnight(now) - midnight(then)) / 86_400_000);
+
+  const time = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(then);
+
+  if (days === 0) return `Today ${time}`;
+  if (days === 1) return `Yesterday ${time}`;
+  if (days < 7)
+    return `${new Intl.DateTimeFormat('en-GB', { weekday: 'short' }).format(then)} ${time}`;
+
+  // Past a week the clock stops mattering and the year starts to.
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    ...(then.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+  }).format(then);
+}

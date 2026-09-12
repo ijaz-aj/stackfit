@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { formatMoney } from '../src/lib/format';
+import { formatMoney, formatWhen } from '../src/lib/format';
 
 const usd = (amountMinor: number) => ({ amountMinor, currency: 'USD' as const });
 
@@ -129,5 +129,46 @@ describe('each currency in its own reading convention', () => {
     // Two analysts opening one proposal must see identical numbers.
     const once = formatMoney({ amountMinor: 20_38_984_00, currency: 'INR' });
     expect(formatMoney({ amountMinor: 20_38_984_00, currency: 'INR' })).toBe(once);
+  });
+});
+
+describe('formatWhen', () => {
+  // The session list's recency column. Local time throughout, because the
+  // reader's "today" is the only one that matters, and the component that uses
+  // this runs in their browser for exactly that reason.
+  const at = (y: number, m: number, d: number, hh = 12, mm = 0) => new Date(y, m - 1, d, hh, mm);
+  const iso = (d: Date) => d.toISOString();
+
+  it('says today, with the time, for the same calendar day', () => {
+    const now = at(2026, 9, 12, 16, 40);
+    expect(formatWhen(iso(at(2026, 9, 12, 15, 27)), now)).toBe('Today 15:27');
+  });
+
+  it('counts calendar days, not elapsed hours', () => {
+    // Ten minutes apart across midnight is still yesterday, and an elapsed-hours
+    // rule would call it "today" for the next twenty-three hours.
+    const now = at(2026, 9, 12, 0, 10);
+    expect(formatWhen(iso(at(2026, 9, 11, 23, 50)), now)).toBe('Yesterday 23:50');
+  });
+
+  it('names the weekday inside the last week', () => {
+    const now = at(2026, 9, 12);
+    // 2026-09-09 is a Wednesday.
+    expect(formatWhen(iso(at(2026, 9, 9, 9, 5)), now)).toBe('Wed 09:05');
+  });
+
+  it('drops the clock past a week, because by then it does not matter', () => {
+    const now = at(2026, 9, 12);
+    expect(formatWhen(iso(at(2026, 8, 20, 9, 5)), now)).toBe('20 Aug');
+  });
+
+  it('adds the year only when it differs', () => {
+    const now = at(2026, 9, 12);
+    expect(formatWhen(iso(at(2026, 1, 4)), now)).toBe('4 Jan');
+    expect(formatWhen(iso(at(2025, 12, 30)), now)).toBe('30 Dec 2025');
+  });
+
+  it('returns nothing at all for an unparseable date rather than "Invalid Date"', () => {
+    expect(formatWhen('not a date', at(2026, 9, 12))).toBe('');
   });
 });

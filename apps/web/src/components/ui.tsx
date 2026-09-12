@@ -49,7 +49,7 @@ export function Card({
   action,
 }: {
   title?: string;
-  hint?: string;
+  hint?: string | undefined;
   children: ReactNode;
   className?: string;
   /** Sits opposite the title. A link or control that belongs to the card. */

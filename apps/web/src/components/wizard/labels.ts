@@ -108,6 +108,25 @@ export const INDUSTRY_LABELS: Readonly<Record<string, string>> = {
   other: 'Other',
 };
 
+/**
+ * The same industries, short enough for a metadata line.
+ *
+ * `INDUSTRY_LABELS` is written for the intake dropdown, where "Banking /
+ * financial services / insurance" is the right amount of precision. On a card
+ * footer it is longer than everything around it and wraps, which broke the
+ * alignment of one preset card against the other five.
+ */
+export const INDUSTRY_SHORT: Readonly<Record<string, string>> = {
+  retail: 'Retail',
+  healthcare: 'Healthcare',
+  bfsi: 'Banking and finance',
+  manufacturing: 'Manufacturing',
+  saas: 'SaaS',
+  education: 'Education',
+  govt: 'Government',
+  other: 'Other',
+};
+
 export const REGION_LABELS: Readonly<Record<string, string>> = {
   in: 'India',
   us: 'United States',
@@ -190,3 +209,31 @@ export const DIMENSION_LABELS: Readonly<Record<ScoringDimension, string>> = {
   scale_fit: 'Scale fit',
   maturity: 'Maturity',
 };
+
+/**
+ * Frameworks, short enough for a metadata line.
+ *
+ * The session list printed the ids: `pci-dss-4.0, dpdp-2023`. Those are
+ * database keys, and on a screen an analyst opens in front of a client they
+ * read as one. The full titles in `data/frameworks/` are the other extreme
+ * ("Payment Card Industry Data Security Standard"); this is the form the
+ * people in the room actually say out loud.
+ */
+export const FRAMEWORK_SHORT: Readonly<Record<string, string>> = {
+  'pci-dss-4.0': 'PCI DSS 4.0',
+  'dpdp-2023': 'DPDP 2023',
+  'iso-27001-2022': 'ISO 27001',
+  'nist-csf-2.0': 'NIST CSF 2.0',
+  'soc-2': 'SOC 2',
+  'rbi-csf': 'RBI CSF',
+  'cert-in': 'CERT-In',
+  'cis-v8': 'CIS v8',
+  hipaa: 'HIPAA',
+  gdpr: 'GDPR',
+  nis2: 'NIS2',
+};
+
+/** The short name if there is one, otherwise the id with its hyphens opened up. */
+export function frameworkLabel(id: string): string {
+  return FRAMEWORK_SHORT[id] ?? id.replace(/-/g, ' ').toUpperCase();
+}

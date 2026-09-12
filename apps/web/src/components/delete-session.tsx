@@ -26,8 +26,27 @@ export function DeleteSession({ id, name }: { id: string; name: string }) {
   const [confirming, setConfirming] = useState(false);
 
   if (!confirming) {
+    /*
+      Quiet until it is wanted.
+
+      `danger` put a red-bordered button on every row of the session list,
+      twelve of them down one edge, which is a wall of alarm around the action
+      an analyst wants least often. Colour is how an interface says "be
+      careful", and spending it on a resting state leaves nothing to spend when
+      the decision is actually in front of someone.
+
+      Not hidden until hover, though: hover is not an interaction a keyboard or
+      a touchscreen has, and a destructive action nobody can reach is its own
+      kind of broken. It is present, legible and unremarkable, and it turns red
+      the moment the pointer is on it.
+    */
     return (
-      <Button type="button" variant="danger" onClick={() => setConfirming(true)}>
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={() => setConfirming(true)}
+        className="hover:text-bad hover:bg-bad/10 px-2 py-1 text-xs"
+      >
         Delete
       </Button>
     );
