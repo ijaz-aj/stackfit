@@ -23,7 +23,11 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { categoryChartHeight } from '../src/components/results/chart-geometry';
 import { CashflowChart, CostByCategoryChart } from '../src/components/results/cost-charts';
+
+/** What the page passes both charts. Only the row-count maths below cares. */
+const CHART_HEIGHT = 420;
 
 // Recharts measures its container; jsdom reports zero for everything, so the
 // ResponsiveContainer needs an observer that tells it a real size once.
@@ -107,7 +111,9 @@ describe('the cost-by-category chart', () => {
   it('renders an SVG with every category on the axis', () => {
     // interval={0} is deliberate: dropping a label would hide a category the
     // client is paying for. Thirteen of them is the case that broke it.
-    const markup = render(<CostByCategoryChart data={byCategory} currency="USD" />);
+    const markup = render(
+      <CostByCategoryChart data={byCategory} currency="USD" height={CHART_HEIGHT} />,
+    );
 
     expect(markup).toContain('<svg');
     const painted = labels(markup);
@@ -121,7 +127,9 @@ describe('the cost-by-category chart', () => {
     // same label appeared at three different heights. Checked here through
     // Recharts' own tick generation rather than against a tick set this test
     // made up.
-    const markup = render(<CostByCategoryChart data={byCategory} currency="USD" />);
+    const markup = render(
+      <CostByCategoryChart data={byCategory} currency="USD" height={CHART_HEIGHT} />,
+    );
     const money = labels(markup).filter((label) => label.startsWith('$'));
 
     expect(money.length).toBeGreaterThan(2);
@@ -135,7 +143,9 @@ describe('the cost-by-category chart', () => {
     // 44px, so "Vulnerability management", "Asset discovery", "Firewall / NGFW"
     // and "Email security" ran into each other. The test pinned the workaround
     // rather than the property the workaround was for.
-    const markup = render(<CostByCategoryChart data={byCategory} currency="USD" />);
+    const markup = render(
+      <CostByCategoryChart data={byCategory} currency="USD" height={CHART_HEIGHT} />,
+    );
     expect(markup).not.toMatch(/rotate\(/);
   });
 
@@ -145,7 +155,9 @@ describe('the cost-by-category chart', () => {
     // constraint, and height is a number jsdom reports even though it measures
     // no text. Thirteen distinct y positions, each at least a line-height
     // apart, cannot overlap however long the words are.
-    const markup = render(<CostByCategoryChart data={byCategory} currency="USD" />);
+    const markup = render(
+      <CostByCategoryChart data={byCategory} currency="USD" height={CHART_HEIGHT} />,
+    );
 
     const ys = [...markup.matchAll(/<text[^>]*\sy="([\d.]+)"[^>]*text-anchor="end"/g)].map(
       (match) => Number(match[1]),
@@ -160,15 +172,16 @@ describe('the cost-by-category chart', () => {
   });
 });
 
-describe('the cash-flow chart', () => {
-  const cashflow = [
-    { label: 'Year 1', amount: 194_100_000 },
-    { label: 'Year 2', amount: 164_276_600 },
-    { label: 'Year 3', amount: 166_000_000 },
-  ];
+/** Three years, with implementation dropping out after year one. */
+const cashflow = [
+  { label: 'Year 1', amount: 194_100_000 },
+  { label: 'Year 2', amount: 164_276_600 },
+  { label: 'Year 3', amount: 166_000_000 },
+];
 
+describe('the cash-flow chart', () => {
   it('renders an SVG with a bar label and an axis for each year', () => {
-    const markup = render(<CashflowChart data={cashflow} currency="USD" />);
+    const markup = render(<CashflowChart data={cashflow} currency="USD" height={CHART_HEIGHT} />);
 
     expect(markup).toContain('<svg');
     const painted = labels(markup);
@@ -181,7 +194,7 @@ describe('the cash-flow chart', () => {
     // Years 2 and 3 are within 1% of each other here, which is the shape a real
     // cash flow has once implementation drops out of year one. Before the fix
     // the ticks either side of them collapsed onto the same label.
-    const markup = render(<CashflowChart data={cashflow} currency="USD" />);
+    const markup = render(<CashflowChart data={cashflow} currency="USD" height={CHART_HEIGHT} />);
     const money = labels(markup).filter((label) => label.startsWith('$'));
 
     expect(money.length).toBeGreaterThan(2);
@@ -198,13 +211,13 @@ describe('the cash-flow chart', () => {
     // formatMoney(..., { compact: true }) that format.test.ts sweeps for
     // collisions — but that they appear at all, above the right bars, is still
     // something only a browser can confirm.
-    const markup = render(<CashflowChart data={cashflow} currency="USD" />);
+    const markup = render(<CashflowChart data={cashflow} currency="USD" height={CHART_HEIGHT} />);
     const money = labels(markup).filter((label) => label.startsWith('$'));
     expect(money).toContain('$1.9M');
   });
 
   it('renders without a legend, because one series needs no key', () => {
-    const markup = render(<CashflowChart data={cashflow} currency="USD" />);
+    const markup = render(<CashflowChart data={cashflow} currency="USD" height={CHART_HEIGHT} />);
     expect(markup).not.toContain('recharts-legend');
   });
 });
@@ -213,14 +226,54 @@ describe('both charts', () => {
   it('survive an empty bundle without throwing', () => {
     // A shortfall scenario funds nothing. The dashboard guards this upstream,
     // but a chart that throws on empty data takes the whole page with it.
-    expect(() => render(<CostByCategoryChart data={[]} currency="USD" />)).not.toThrow();
-    expect(() => render(<CashflowChart data={[]} currency="USD" />)).not.toThrow();
+    expect(() =>
+      render(<CostByCategoryChart data={[]} currency="USD" height={CHART_HEIGHT} />),
+    ).not.toThrow();
+    expect(() =>
+      render(<CashflowChart data={[]} currency="USD" height={CHART_HEIGHT} />),
+    ).not.toThrow();
   });
 
   it('render in every supported currency', () => {
     for (const currency of ['USD', 'EUR', 'INR'] as const) {
-      const markup = render(<CostByCategoryChart data={byCategory} currency={currency} />);
+      const markup = render(
+        <CostByCategoryChart data={byCategory} currency={currency} height={CHART_HEIGHT} />,
+      );
       expect(markup, `${currency} produced no chart`).toContain('<svg');
     }
+  });
+
+  it('take their height from the caller, so the two cards in a row agree', () => {
+    // The charts sit in one grid row and the cards stretch to the taller of
+    // them. When the cash flow sized itself at a fixed 300px and the category
+    // chart grew with its row count, the difference was painted as a band of
+    // empty panel under a three-bar chart — which reads as a chart that failed
+    // to load rather than one with three data points.
+    const height = categoryChartHeight(byCategory.length);
+    const category = render(
+      <CostByCategoryChart data={byCategory} currency="USD" height={height} />,
+    );
+    const cash = render(<CashflowChart data={cashflow} currency="USD" height={height} />);
+
+    for (const markup of [category, cash]) {
+      expect(markup).toMatch(new RegExp(`height="${height}"`));
+    }
+  });
+});
+
+describe('categoryChartHeight', () => {
+  it('gives every category a row', () => {
+    // Thirteen is a full bundle. The figure matters because it is also the
+    // cash-flow chart's height, so a change here resizes a card it does not
+    // name.
+    expect(categoryChartHeight(13)).toBe(13 * 26 + 64);
+    expect(categoryChartHeight(13)).toBeGreaterThan(categoryChartHeight(9));
+  });
+
+  it('keeps a floor, so a one-category bundle is still a chart', () => {
+    // Without it a four-product Operable bundle would be 168px of axis and
+    // legend with four hairlines in the middle.
+    expect(categoryChartHeight(0)).toBe(220);
+    expect(categoryChartHeight(4)).toBe(220);
   });
 });

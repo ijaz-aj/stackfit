@@ -4,6 +4,9 @@ import { Card } from '@/components/ui';
 import { CATEGORY_LABELS } from '@/components/wizard/labels';
 import { formatMoney } from '@/lib/format';
 
+// Not from './cost-charts' — that module is `'use client'`, and a server
+// component cannot call a function it exports. See chart-geometry.ts.
+import { categoryChartHeight } from './chart-geometry';
 import { CashflowChart, CostByCategoryChart } from './cost-charts';
 
 /**
@@ -37,28 +40,47 @@ export function CostBreakdown({ bundle }: { bundle: Bundle }) {
   if (bundle.selections.length === 0) {
     return (
       <Card title="Cost breakdown">
-        <p className="text-muted text-sm">Nothing is funded in this bundle, so there is nothing to break down.</p>
+        <p className="text-muted text-sm">
+          Nothing is funded in this bundle, so there is nothing to break down.
+        </p>
       </Card>
     );
   }
 
+  // Two thirds against one, not halves. The category chart is thirteen rows
+  // tall; the cash flow is three bars. Equal width left the cash flow adrift in
+  // a panel it could not fill, which reads as a chart that failed to load
+  // rather than one with three data points. Width follows how much there is to
+  // show.
+  //
+  // `lg`, not `xl`. A 1280px breakpoint sounds like a laptop and is not one:
+  // the browser here reports 1254 CSS pixels on a 1568px panel, because the
+  // display scales at 1.25. Every figure in Tailwind's scale is a CSS pixel, so
+  // `xl:` on a results page is a rule that fires for almost nobody — the layout
+  // above was written, shipped and never once seen.
+  //
+  // Both charts are given the same height so the row does not leave a band of
+  // empty panel under the shorter card.
+  const chartHeight = categoryChartHeight(byCategory.length);
+
   return (
-    <div className="grid gap-3 xl:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-3">
       <Card
+        className="lg:col-span-2"
         title="Annual cost by category"
         hint="Licence, support, infrastructure and people — the four lines that make up a year."
       >
-        <CostByCategoryChart data={byCategory} currency={currency} />
+        <CostByCategoryChart data={byCategory} currency={currency} height={chartHeight} />
       </Card>
 
       <Card
         title="Cash flow over the horizon"
         hint="Year one carries implementation and training. Later years carry the subscription uplift."
       >
-        <CashflowChart data={cashflow} currency={currency} />
+        <CashflowChart data={cashflow} currency={currency} height={chartHeight} />
       </Card>
 
-      <Card title="The same figures, as a table" className="xl:col-span-2">
+      <Card title="The same figures, as a table" className="lg:col-span-3">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] border-collapse text-sm">
             <thead>

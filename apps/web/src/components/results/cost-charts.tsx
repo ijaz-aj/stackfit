@@ -34,10 +34,19 @@ const SERIES = [
   { key: 'people', label: 'People', colour: '#c98500' },
 ] as const;
 
-/** The panel colour. Painted between stacked segments as a 2px gap, not a border. */
-const SURFACE = '#111820';
-const GRID = '#22303f';
-const TEXT = '#93a4b8';
+/*
+ * These three must track `globals.css`. They cannot be tokens: Recharts writes
+ * `fill` and `stroke` as SVG presentation attributes, which take a colour, not
+ * a class. They went stale once already — the palette moved to neutral and
+ * these kept the old blue-grey, so the gap between stacked segments was painted
+ * in a panel colour the panel no longer used.
+ */
+/** `--color-panel`. Painted between stacked segments as a 2px gap, not a border. */
+const SURFACE = '#121418';
+/** `--color-line`. */
+const GRID = '#24272e';
+/** `--color-faint` — 4.67:1, which an 11px axis tick needs. */
+const TEXT = '#858c99';
 
 export interface CategoryCost {
   readonly label: string;
@@ -96,9 +105,11 @@ function MoneyTooltip({
 export function CostByCategoryChart({
   data,
   currency,
+  height,
 }: {
   data: readonly CategoryCost[];
   currency: CurrencyCode;
+  height: number;
 }) {
   return (
     // Horizontal bars, one row per category.
@@ -116,7 +127,7 @@ export function CostByCategoryChart({
     // the bars all start from a common baseline on the left, which is the
     // comparison the card exists to support. 26px per row keeps thirteen
     // categories inside roughly the height the angled version needed.
-    <ResponsiveContainer width="100%" height={Math.max(220, data.length * 26 + 64)}>
+    <ResponsiveContainer width="100%" height={height}>
       <BarChart
         data={[...data]}
         layout="vertical"
@@ -181,13 +192,19 @@ export function CostByCategoryChart({
 export function CashflowChart({
   data,
   currency,
+  height,
 }: {
   data: readonly CashflowYear[];
   currency: CurrencyCode;
+  height: number;
 }) {
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <BarChart data={[...data]} margin={{ top: 20, right: 8, bottom: 4, left: 8 }}>
+    // Height comes from the category chart next to it, and the bars are capped
+    // rather than left to divide the width between them: three bars sharing a
+    // third of the row would each be 90px of solid colour, which reads as a
+    // block diagram rather than a comparison of three numbers.
+    <ResponsiveContainer width="100%" height={height}>
+      <BarChart data={[...data]} margin={{ top: 24, right: 8, bottom: 4, left: 8 }}>
         <CartesianGrid vertical={false} stroke={GRID} strokeWidth={1} />
         <XAxis
           dataKey="label"
@@ -206,7 +223,13 @@ export function CashflowChart({
         />
         <Tooltip cursor={{ fill: '#ffffff08' }} content={<MoneyTooltip currency={currency} />} />
         {/* One series, so no legend: the card's title already says what this is. */}
-        <Bar dataKey="amount" name="Total cost" fill="#3987e5" maxBarSize={24} radius={[4, 4, 0, 0]}>
+        <Bar
+          dataKey="amount"
+          name="Total cost"
+          fill="#3987e5"
+          maxBarSize={72}
+          radius={[4, 4, 0, 0]}
+        >
           <LabelList
             dataKey="amount"
             position="top"
