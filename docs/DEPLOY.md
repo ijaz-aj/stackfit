@@ -27,12 +27,26 @@ postgresql://USER:PASSWORD@ep-something.region.aws.neon.tech/neondb?sslmode=requ
 `sslmode=require` matters. Neon refuses plaintext connections and the error if
 you omit it is not obvious.
 
-Then create the schema and, if you want the demo sessions, seed it:
+**Do not paste that string into a chat, a ticket or a commit.** It contains the
+database password. It belongs in exactly two places: Vercel's environment
+variables, and a local file git already ignores.
 
 ```bash
-cd apps/web
-DATABASE_URL="postgresql://..." npx prisma db push
-DATABASE_URL="postgresql://..." npx tsx scripts/seed-demo.ts
+cp apps/web/.env.example apps/web/.env.local   # then set DATABASE_URL in it
+pnpm --filter @stackfit/web db:push            # create the schema
+pnpm --filter @stackfit/web seed               # demo sessions, optional
+```
+
+`.env.local` is enough for all three tools. It did not used to be: Next reads
+it, the Prisma CLI reads only `.env`, and `tsx` reads neither, so putting the
+URL where the error message told you to produced a working dev server and a
+`db:push` that insisted the variable was not set. `scripts/load-env.ts` is
+imported first by the CLI config and by both scripts, so they now agree.
+
+If you already had sessions in the old SQLite file:
+
+```bash
+pnpm --filter @stackfit/web db:migrate-from-sqlite
 ```
 
 The seed reads its own writes back and fails loudly if they are not there, so a

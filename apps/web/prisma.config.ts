@@ -1,3 +1,6 @@
+// Must be first: it loads .env.local / .env, which the Prisma CLI does not.
+import './scripts/load-env';
+
 import { defineConfig } from 'prisma/config';
 
 /**
@@ -16,10 +19,10 @@ function databaseUrl(): string {
   const url = process.env.DATABASE_URL;
   if (url === undefined || url === '') {
     throw new Error(
-      'DATABASE_URL is not set. Copy apps/web/.env.example to apps/web/.env.local and point it ' +
-        'at a Postgres instance; a Neon branch is free and takes about a minute. Then run ' +
-        '`pnpm --filter @stackfit/web db:push` to create the schema and `pnpm --filter ' +
-        '@stackfit/web seed` for the demo sessions.',
+      'DATABASE_URL is not set, and apps/web/.env.local and apps/web/.env were both checked. ' +
+        'Copy apps/web/.env.example to apps/web/.env.local and point it at a Postgres instance: ' +
+        '`docker compose up -d` gives you one locally, or a Neon branch is free and takes about ' +
+        'a minute.',
     );
   }
   return url;

@@ -19,6 +19,9 @@
  *   DATABASE_URL="postgresql://..." npx tsx scripts/migrate-sqlite-to-postgres.ts
  */
 
+// Must be first: it loads .env.local / .env for tools that do not.
+import './load-env';
+
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';

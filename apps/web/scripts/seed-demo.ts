@@ -15,6 +15,9 @@
  * nothing and it can never touch a session an analyst actually saved.
  */
 
+// Must be first: it loads .env.local / .env for tools that do not.
+import './load-env';
+
 import type { ClientProfile, ScenarioPreset } from '@stackfit/schema';
 
 import { engineData } from '../src/lib/config.server';
