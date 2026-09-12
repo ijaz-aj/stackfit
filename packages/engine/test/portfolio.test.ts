@@ -1121,7 +1121,11 @@ describe('rationale that repeats itself', () => {
     expect(dearer).toHaveLength(1);
     expect(dearer[0]).toContain(' and ');
     // The range is what the collapsed line adds over the three it replaces.
-    expect(dearer[0]).toMatch(/USD [\d,]+ to USD [\d,]+ a year/);
+    expect(dearer[0]).toMatch(/\$[\d,]+ to \$[\d,]+ a year/);
+    // And in the interface's own notation. This read "USD 1,000" while the
+    // card beside it read "$411,903" — the same currency written two ways,
+    // which reads as two currencies.
+    expect(dearer[0]).not.toMatch(/USD \d/);
   });
 
   it('still gives a better-scoring tier a line of its own', () => {

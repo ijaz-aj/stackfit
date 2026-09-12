@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addMoney,
   convertMoney,
+  moneyInWords,
   scaleMoney,
   subtractMoney,
   sumMoney,
@@ -99,5 +100,34 @@ describe('currency conversion', () => {
     const first = convertMoney(inr(123_456_789), 'EUR', fx);
     const second = convertMoney(inr(123_456_789), 'EUR', fx);
     expect(second).toEqual(first);
+  });
+});
+
+describe('money in a rationale sentence', () => {
+  // These strings land next to figures the interface rendered itself. When the
+  // two disagree about notation, a reader has to work out whether "USD 2,604"
+  // and "$411,903" are the same money — in a document about budgets.
+  it('writes money the way the interface does', () => {
+    expect(moneyInWords({ amountMinor: 411_903_00, currency: 'USD' })).toBe('$411,903');
+    expect(moneyInWords({ amountMinor: 2_038_984_00, currency: 'INR' })).toBe('₹2,038,984');
+    expect(moneyInWords({ amountMinor: 85_222_00, currency: 'EUR' })).toBe('€85,222');
+  });
+
+  it('never writes a bare currency code before a figure', () => {
+    // The shape that caused the confusion.
+    for (const currency of ['USD', 'INR', 'EUR'] as const) {
+      expect(moneyInWords({ amountMinor: 1_234_00, currency })).not.toMatch(/^[A-Z]{3} /);
+    }
+  });
+
+  it('rounds to whole units, because a rationale is not an invoice', () => {
+    expect(moneyInWords({ amountMinor: 2_604_49, currency: 'USD' })).toBe('$2,604');
+    expect(moneyInWords({ amountMinor: 2_604_50, currency: 'USD' })).toBe('$2,605');
+  });
+
+  it('does not vary with the reader, so one scenario reads the same to everyone', () => {
+    expect(moneyInWords({ amountMinor: 1_000_000_00, currency: 'USD' })).toBe(
+      moneyInWords({ amountMinor: 1_000_000_00, currency: 'USD' }),
+    );
   });
 });

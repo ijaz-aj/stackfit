@@ -352,9 +352,12 @@ export function buildCandidates(
  * The difference between two amounts, for a sentence rather than a table. Both
  * are in the scenario currency by the time they reach here.
  */
+/** The gap between two prices, in the notation the rest of the interface uses. */
 function formatMinor(dearer: Money, cheaper: Money): string {
-  const delta = Math.abs(dearer.amountMinor - cheaper.amountMinor) / 100;
-  return `${dearer.currency} ${delta.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  return moneyInWords({
+    amountMinor: Math.abs(dearer.amountMinor - cheaper.amountMinor),
+    currency: dearer.currency,
+  });
 }
 
 /** "A", "A and B", "A, B and C" — how a person writes a list in a sentence. */

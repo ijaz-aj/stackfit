@@ -107,22 +107,28 @@ export function isIdentityBaseRate(fx: FxConfig): boolean {
 /**
  * Money as a readable string, for a rationale sentence.
  *
- * Hard rule 1 puts formatting at the render boundary, and this does not break
- * it: the engine's `rationale` lines *are* strings by the time anything reads
- * them, so a figure inside one has already left the typed world. The choice is
- * not "format here or later", it is "grouped digits or not".
+ * Hard rule 1 puts formatting at the render boundary and this does not break
+ * it: a `rationale` line is prose, already a string by the time anything reads
+ * it, so a figure inside one has left the typed world whatever we do. The only
+ * question is what it looks like.
  *
- * Before this existed, every such line interpolated `amountMinor / 100`
- * directly and produced "3760216.76 INR" next to a table cell rendering the
- * same quantity as "₹37,60,217". Whole units, grouped, currency code first —
- * plainly an engine figure rather than something pretending to be the
- * formatted UI.
+ * It must look like the rest of the interface. The first version wrote
+ * "USD 2,604" on the reasoning that an engine figure should be visibly an
+ * engine figure — and it landed in a card next to "$411,903", the same currency
+ * in two notations, which reads as two different currencies. Nobody reading a
+ * proposal should have to work out whether those are the same money.
  *
- * Deliberately not `Intl.NumberFormat` with a currency style: that picks a
- * symbol and a grouping convention per locale, which is exactly the decision
- * the render boundary owns. This only groups thousands.
+ * So: the same `Intl` call the render boundary makes, with the same fixed
+ * locale. Fixed rather than the reader's, because the engine may not vary its
+ * output by environment — two people opening one scenario must see one
+ * sentence.
  */
 export function moneyInWords(amount: Money): string {
-  const units = Math.round(amount.amountMinor / 100);
-  return `${amount.currency} ${units.toLocaleString('en-US')}`;
+  const exponent = CURRENCY_MINOR_UNIT_EXPONENT[amount.currency];
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: amount.currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount.amountMinor / 10 ** exponent);
 }
