@@ -1063,26 +1063,28 @@ Still unverified rather than unanswered:
 Found on 2026-09-12 while fixing the charts. Neither is a chart bug; both are
 visible on the charts, which is how they surfaced.
 
-- **⚠ Self-hosted infrastructure is charged per product, sized from the whole
-  estate's log volume.** `infraAnnualFor` in `packages/engine/src/cost.ts` sizes
-  every self-hostable product's infrastructure from `sizing.gbPerDay`, the
-  estate-wide ingest figure. Every self-hosted product therefore gets an
-  identical bill, whatever it is: on the 300-bed hospital scenario, T-Pot (a
-  honeypot), Passbolt (a credential vault) and Elastic Security (the SIEM) are
-  each charged USD 6,319/yr for 4 vCPU and 16 GB sized from 31 GB/day of logs.
-  Eleven self-hosted products in that bundle means one log-volume figure counted
-  eleven times — about USD 69,500/yr of infrastructure, and thirteen identical
-  segments on the cost-by-category chart.
+- ~~**Self-hosted infrastructure is charged per product, sized from the whole
+  estate's log volume.**~~ **Fixed 2026-09-12.** `infra.byCategory` in
+  `cost-assumptions.yaml` now states what each category's self-hosted footprint
+  runs on — `log_ingest` for siem and ndr, `monitored_assets` for everything
+  else — and only the log platforms pay for log-retention storage. The schema
+  requires an entry for all thirteen categories, so a new category forces the
+  decision. On the hospital scenario total infrastructure went from about USD
+  69,500/yr across thirteen identical segments to USD 22,400/yr that
+  differentiates: SIEM and NDR USD 6,319, management servers USD 1,080, a
+  honeypot USD 540, MDR nothing.
 
-  It was defensible when a bundle held three or four products and the self-
-  hosted ones really were log platforms. At thirteen categories it is not: a
-  honeypot's compute has nothing to do with SIEM ingest.
+  Two gaps are now explicit rather than silently wrong, both stated in the
+  config: **backup storage is not modelled** (it is the dominant cost of a
+  backup product, and charging it a SIEM's retention was a wrong number rather
+  than a missing one), and **PAM session recording is not modelled** either.
 
-  **Not fixed, because the right answer is a modelling decision rather than a
-  bug fix**: infra sizing probably needs to key off something per-category (the
-  category's own remit, or a per-product sizing basis in the catalog) rather
-  than off one estate-wide number. It touches every costed figure and every
-  snapshot in the suite. Raise it before Phase 8.
+  Fixing it exposed a third way this stage could buy less with more money — a
+  greedy-knapsack failure where one expensive high-weight category starved two
+  cheaper ones worth more between them. `buildRecommended` now also fills in
+  risk-reduction-per-pound order and keeps whichever of three bundles covers
+  most. Caught by the §12.1 acceptance monotonicity assertion, pinned by its own
+  regression.
 
 - **The per-row Annual column can differ from the Total by a cent.** Each row is
   rounded to whole currency units for display while the total is the exact sum
