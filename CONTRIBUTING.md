@@ -194,3 +194,16 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
 - **`termYears` is on `PricingRule` and nothing reads it.** Every committed rule
   is `termYears: 1`, so this is latent rather than broken — but a multi-year
   rule would be costed as if it were annual.
+- **`Intl` compact notation needs fractional digits to stay honest.** Passing
+  `maximumFractionDigits: 0` alongside `notation: 'compact'` collapses every
+  value in a magnitude bucket onto one label — 1.5M, 2.0M and 2.4M all became
+  "$2M", which put the same label at three heights on a chart axis and
+  overstated a headline TCO by a third. `formatMoney` keeps one fractional digit
+  in compact mode and `apps/web/test/format.test.ts` sweeps nice-numbered tick
+  sets to prove distinct values stay distinct.
+- **The charts and the wizard readout are client components, so nothing about
+  them appears in server HTML.** `curl` on a results page returns the Recharts
+  container div and zero `<svg>` elements, and the readout's figures are absent
+  entirely. Four sessions of "verified over HTTP" said nothing whatsoever about
+  either. Anything visual in those two places needs a real browser or a unit
+  test on the pure function behind it.

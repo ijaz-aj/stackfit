@@ -1058,6 +1058,40 @@ Still unverified rather than unanswered:
   `http://localhost:3000` by hand, the two Recharts figures in §8 are the only
   part of this application that has never been observed working.
 
+## Open defects
+
+Found on 2026-09-12 while fixing the charts. Neither is a chart bug; both are
+visible on the charts, which is how they surfaced.
+
+- **⚠ Self-hosted infrastructure is charged per product, sized from the whole
+  estate's log volume.** `infraAnnualFor` in `packages/engine/src/cost.ts` sizes
+  every self-hostable product's infrastructure from `sizing.gbPerDay`, the
+  estate-wide ingest figure. Every self-hosted product therefore gets an
+  identical bill, whatever it is: on the 300-bed hospital scenario, T-Pot (a
+  honeypot), Passbolt (a credential vault) and Elastic Security (the SIEM) are
+  each charged USD 6,319/yr for 4 vCPU and 16 GB sized from 31 GB/day of logs.
+  Eleven self-hosted products in that bundle means one log-volume figure counted
+  eleven times — about USD 69,500/yr of infrastructure, and thirteen identical
+  segments on the cost-by-category chart.
+
+  It was defensible when a bundle held three or four products and the self-
+  hosted ones really were log platforms. At thirteen categories it is not: a
+  honeypot's compute has nothing to do with SIEM ingest.
+
+  **Not fixed, because the right answer is a modelling decision rather than a
+  bug fix**: infra sizing probably needs to key off something per-category (the
+  category's own remit, or a per-product sizing basis in the catalog) rather
+  than off one estate-wide number. It touches every costed figure and every
+  snapshot in the suite. Raise it before Phase 8.
+
+- **The per-row Annual column can differ from the Total by a cent.** Each row is
+  rounded to whole currency units for display while the total is the exact sum
+  of minor units, so thirteen rows can sum to USD 1,647,203 under a total of USD
+  1,647,202. This is correct behaviour under hard rule 1 — the total is the
+  authoritative figure and must not be replaced by the sum of rounded rows — but
+  it looks sloppy in a client-facing table. Showing cents, or a footnote, would
+  settle it. Left alone deliberately.
+
 ## Known placeholders
 
 <!-- every catalog entry still on placeholder pricing, so they can be chased down before any client sees output -->
