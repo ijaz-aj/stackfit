@@ -43,13 +43,39 @@ export function LiveReadout({
       </header>
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-faint text-2xs tracking-wide uppercase">Ingest</h3>
+        {/*
+          "Estimated", not "Ingest", and the difference is not decoration.
+          
+          These figures come from a per-asset events-per-second coefficient, and
+          the published values for one device class disagree by more than an
+          order of magnitude: a Windows workstation is quoted at 1, 2, 5 and 10
+          to 50 EPS by four different sources, because what a machine emits is
+          decided by its audit policy and not by what it is. Rendering 2,786 to
+          four significant figures claims a precision nothing here has.
+          
+          The number is still worth showing: it is the right order of magnitude
+          and it is what every vendor sizing calculator does. It is the word
+          above it that has to be honest, and the label flips the moment the
+          client supplies a real one.
+        */}
+        <h3 className="text-faint text-2xs tracking-wide uppercase">
+          {sizing?.ingestSource === 'measured' ? 'Ingest, measured' : 'Ingest, estimated'}
+        </h3>
         {sizing === null ? (
           <p className="text-faint text-xs">Enter an estate to size it.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            <Stat label="Events/sec" value={formatNumber(sizing.epsTotal)} tone="accent" />
-            <Stat label="GB/day" value={formatNumber(sizing.gbPerDay, 1)} />
+            <Stat
+              label="Events/sec"
+              value={formatNumber(sizing.epsTotal)}
+              tone="accent"
+              hint={sizing.ingestSource === 'measured' ? 'as measured' : 'from asset counts'}
+            />
+            <Stat
+              label="GB/day"
+              value={formatNumber(sizing.gbPerDay, 1)}
+              hint={sizing.ingestSource === 'measured' ? 'as measured' : 'estimate'}
+            />
             <Stat
               label="Licensed GB/day"
               value={formatNumber(sizing.licensedGbPerDay, 1)}
