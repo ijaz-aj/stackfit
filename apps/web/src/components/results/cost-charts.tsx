@@ -16,7 +16,7 @@ import {
 import { formatMoney } from '@/lib/format';
 
 /**
- * §8.3 — where the money goes, and when.
+ * §8.3, where the money goes, and when.
  *
  * Both charts are plotted in **minor units**, like everything else in this repo,
  * and only `formatMoney` turns a number into a string with a decimal point in
@@ -37,7 +37,7 @@ const SERIES = [
 /*
  * These three must track `globals.css`. They cannot be tokens: Recharts writes
  * `fill` and `stroke` as SVG presentation attributes, which take a colour, not
- * a class. They went stale once already — the palette moved to neutral and
+ * a class. They went stale once already. The palette moved to neutral and
  * these kept the old blue-grey, so the gap between stacked segments was painted
  * in a panel colour the panel no longer used.
  */
@@ -45,7 +45,7 @@ const SERIES = [
 const SURFACE = '#121418';
 /** `--color-line`. */
 const GRID = '#24272e';
-/** `--color-faint` — 4.67:1, which an 11px axis tick needs. */
+/** `--color-faint`: 4.67:1, which an 11px axis tick needs. */
 const TEXT = '#858c99';
 
 export interface CategoryCost {

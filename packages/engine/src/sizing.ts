@@ -1,8 +1,8 @@
 // Stage 1 of the pipeline: turn an asset inventory into ingest volume, storage
 // and a scale class (PROJECT_SPEC §7.1).
 //
-// This is the number everything downstream leans on — SIEM pricing is driven by
-// GB/day more than by anything else — so every derived figure carries the
+// This is the number everything downstream leans on, SIEM pricing is driven by
+// GB/day more than by anything else, so every derived figure carries the
 // arithmetic that produced it, and the per-class breakdown is returned whole so
 // the UI can render the sizing worksheet (§8.6) without recomputing anything.
 //
@@ -66,7 +66,7 @@ export interface SizingResult {
  * scenarios sized in the same process cannot leak an override into each other.
  *
  * `retentionDays` replaces the *default* period only. Compliance still lengthens
- * it afterwards — an analyst deciding 30 days is enough does not exempt a PCI
+ * it afterwards. An analyst deciding 30 days is enough does not exempt a PCI
  * client from requirement 10, and the rule that compliance can only lengthen
  * retention has to survive an override or it was never a rule.
  */
@@ -160,7 +160,7 @@ function resolveScaleClass(
  * Derives ingest volume, storage and scale class from an inventory.
  *
  * Deterministic: asset classes are always walked in `AssetClass` declaration
- * order, so the floating-point sum is associative in practice — the same input
+ * order, so the floating-point sum is associative in practice. The same input
  * produces a byte-identical result.
  */
 export function computeSizing(

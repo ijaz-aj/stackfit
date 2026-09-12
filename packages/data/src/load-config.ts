@@ -2,8 +2,8 @@
  * Loads and validates files from data/config/.
  *
  * This is the boundary the engine deliberately does not cross: the engine takes
- * assumptions as an argument, and something outside it — this loader, and later
- * the web app — is responsible for reading and validating the YAML.
+ * assumptions as an argument, and something outside it (this loader, and later
+ * the web app) is responsible for reading and validating the YAML.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -60,7 +60,9 @@ export function loadScoringWeights(dataDir: string): ScoringWeights {
 }
 
 export function loadPortfolioAssumptions(dataDir: string): PortfolioAssumptions {
-  return PortfolioAssumptions.parse(readYaml(join(dataDir, 'config', 'portfolio-assumptions.yaml')));
+  return PortfolioAssumptions.parse(
+    readYaml(join(dataDir, 'config', 'portfolio-assumptions.yaml')),
+  );
 }
 
 export function loadCoverageAssumptions(dataDir: string): CoverageAssumptions {

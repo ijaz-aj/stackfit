@@ -1,4 +1,4 @@
-# CIS Critical Security Controls v8 — the 18 top-level Controls.
+# CIS Critical Security Controls v8. The 18 top-level Controls.
 #
 # Held at Control level rather than Safeguard level, for the same reason as
 # NIST CSF: a product category answers "Control 8, Audit Log Management", not
@@ -76,7 +76,7 @@ controls:
     satisfiedBy: [soar, mdr, siem]
     notes: >-
       SIEM is listed because the platforms that dominate this category now ship
-      case management and response automation in the product — Sentinel's
+      case management and response automation in the product: Sentinel's
       playbooks and automation rules are sold as SOAR, not as an add-on. It is
       not true of every SIEM: a log-management-first tool with no case handling
       claims nothing here and reads as partial rather than covered, which is the

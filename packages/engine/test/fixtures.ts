@@ -138,7 +138,7 @@ export function buildCostAssumptions(overrides: Partial<CostAssumptions> = {}): 
       gbPerDayPerVcpu: 15,
       ramGbPerVcpu: 4,
       minimumVcpu: 4,
-      // Every category, because the schema insists — a fixture that could skip
+      // Every category, because the schema insists. A fixture that could skip
       // one would let the engine fall back to a log platform's sizing without
       // any test noticing. siem and ndr keep the log-platform shape; everything
       // else is a flat floor here, so a fixture product's infra does not move
@@ -346,8 +346,8 @@ export function buildMsspRateCard(): MsspRateCard {
 /**
  * A framework, parsed rather than cast.
  *
- * Casting one is how a fixture ends up missing a field the schema defaults —
- * `groups`, say — and then crashes a stage that trusts the schema. Same lesson
+ * Casting one is how a fixture ends up missing a field the schema defaults
+ * (`groups`, say) and then crashes a stage that trusts the schema. Same lesson
  * as the `buildProduct` fixture, which priced at zero while it cast.
  */
 export function buildFramework(overrides: Record<string, unknown>): Framework {

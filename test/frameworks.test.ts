@@ -22,8 +22,8 @@ const frameworks = readdirSync(FRAMEWORKS_DIR)
 
 describe('framework coverage of PROJECT_SPEC §5.4', () => {
   it('ships every framework the analyst can tick during intake', () => {
-    // If FrameworkId offers it in the wizard, data/frameworks must define it —
-    // otherwise ticking it would silently contribute nothing to the coverage
+    // If FrameworkId offers it in the wizard, data/frameworks must define it.
+    // Otherwise ticking it would silently contribute nothing to the coverage
     // matrix rather than failing loudly.
     expect(frameworks.map((framework) => framework.id).sort()).toEqual([...FrameworkId.options].sort());
   });
@@ -83,7 +83,7 @@ describe('control mappings', () => {
     // conservative files will hide it.
     //
     // The bar sits above RBI CSF (77%), the densest honest file here. Frameworks
-    // written for practitioners — RBI, CIS, PCI DSS — are largely lists of
+    // written for practitioners (RBI, CIS, PCI DSS) are largely lists of
     // technical controls, and a high rate in those is correct rather than
     // generous. What no honest file should do is claim a product for nearly
     // everything it lists.
@@ -94,7 +94,7 @@ describe('control mappings', () => {
     }
   });
 
-  it('keeps the broad standards mostly unmapped — they are governance, people and process', () => {
+  it('keeps the broad standards mostly unmapped: they are governance, people and process', () => {
     // ISO 27001 Annex A, the HIPAA Security Rule and the SOC 2 TSC each publish a
     // full-length control list spanning governance, people and physical security.
     // Most of it is not closed by a purchase, and if one of these ever flips,

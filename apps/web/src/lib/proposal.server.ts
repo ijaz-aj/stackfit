@@ -15,7 +15,7 @@ import { formatMoney, formatNumber } from './format';
  * renderer.
  *
  * Server-only: it reads the clock, which the engine may not. Same reasoning as
- * `resultsFor` — the alternative is each export assembling its own arguments
+ * `resultsFor`. The alternative is each export assembling its own arguments
  * and the three of them drifting apart, which is the mistake this repo has now
  * corrected at four different layers.
  */
@@ -60,7 +60,7 @@ export function renderCell(cell: ProposalCell): string {
     case 'number':
       return formatNumber(cell.value, cell.decimals);
     case 'percent':
-      return cell.value === null ? '—' : `${formatNumber(cell.value, 1)}%`;
+      return cell.value === null ? '–' : `${formatNumber(cell.value, 1)}%`;
   }
 }
 

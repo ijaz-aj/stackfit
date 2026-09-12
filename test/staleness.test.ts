@@ -1,7 +1,7 @@
 // Guards the freshness machinery against the committed catalog.
 //
 // This is the test that stops the catalog rotting silently. It does NOT assert
-// that everything is fresh — prices legitimately age between sessions, and a
+// that everything is fresh: prices legitimately age between sessions, and a
 // test that fails purely because time passed would be noise nobody reads.
 // Instead it asserts the properties that must hold regardless of the date:
 // every price is dateable, and every price says how to re-check it.
@@ -86,7 +86,7 @@ describe('the staleness report is usable as a release gate', () => {
 
 describe('config-level prices are checked too', () => {
   // The MSSP rate card and the FX table are prices, they carry an asOf, and
-  // before this they were never walked — so they aged silently while the
+  // before this they were never walked, so they aged silently while the
   // catalog was policed. Hard rule 9 covers every price, not just the ones
   // attached to a product.
   const configPrices = [

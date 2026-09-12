@@ -9,12 +9,12 @@ import { Badge, Card, RationaleList } from '@/components/ui';
 import { cn } from '@/lib/cn';
 
 /**
- * §8.4 — the coverage matrix.
+ * §8.4. The coverage matrix.
  *
  * Four states, not two. `covered` means a selected product claims that control;
  * `partial` means the stack has the right *kind* of product and that product
  * makes no such claim; `gap` means nothing addresses it; and `not addressable`
- * means no purchase can — policy, training, physical custody, cryptography —
+ * means no purchase can (policy, training, physical custody, cryptography)
  * which is why those cells are outside the percentage entirely.
  *
  * The status is carried by a letter as well as a colour, because colour alone
@@ -33,7 +33,7 @@ const CELL = {
 
 function ControlCell({ control }: { control: ControlCoverage }) {
   const cell = CELL[control.status];
-  const covered = control.coveredBy.length > 0 ? ` — ${control.coveredBy.join(', ')}` : '';
+  const covered = control.coveredBy.length > 0 ? `: ${control.coveredBy.join(', ')}` : '';
 
   return (
     <li
@@ -55,7 +55,7 @@ function FrameworkBlock({ framework }: { framework: FrameworkCoverage }) {
     framework.groups.length > 0
       ? framework.groups.map((group) => ({
           key: group.groupId,
-          title: `${group.name} — ${group.coveredControls}/${group.addressableControls}${
+          title: `${group.name}: ${group.coveredControls}/${group.addressableControls}${
             group.coveragePercent === null ? '' : ` (${group.coveragePercent}%)`
           }`,
           controls: framework.controls.filter((control) => control.group === group.groupId),
@@ -107,7 +107,7 @@ export function CoverageMatrix({ coverage }: { coverage: CoverageResult }) {
   return (
     <Card
       title="Coverage matrix"
-      hint="Covered means a selected product claims the control. Partial means the right kind of tool with no such claim — checked, not assumed."
+      hint="Covered means a selected product claims the control. Partial means the right kind of tool with no such claim. Checked, not assumed."
     >
       {/* Verbatim, and first. This is the number most likely to be misread,
           and an export is where the reader stops seeing the qualifications. */}

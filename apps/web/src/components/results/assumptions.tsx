@@ -10,7 +10,7 @@ import { Card, CardSection, Grade, RationaleList } from '@/components/ui';
 import { formatNumber } from '@/lib/format';
 
 /**
- * §8.7 — the assumptions and disclaimers panel. "Always present, always
+ * §8.7. The assumptions and disclaimers panel. "Always present, always
  * exported."
  *
  * This is the panel that decides whether the rest of the page is honest. Every
@@ -21,12 +21,12 @@ import { formatNumber } from '@/lib/format';
  * It is also the panel a client reads most carefully, which is why it was
  * rebuilt. Six identically-styled sections, 1,900 pixels of one scroll, prose
  * at 190 characters a line, twenty-six consecutive amber badges and product
- * *ids* where the names should be — the content was right and it looked like a
+ * *ids* where the names should be. The content was right and it looked like a
  * debug dump. What changed, and why:
  *
  * - Provenance is a table, because it is one. Thirteen rows of name-then-badge
  *   put every badge at a different x, so nothing could be compared down a
- *   column — which is the only reason to list them together.
+ *   column, which is the only reason to list them together.
  * - Repetition is collapsed. Eleven prices said "well inside the 90-day
  *   allowance" in identical words, and thirteen products were ruled out for the
  *   identical reason. A reader skims that and concludes there is nothing to
@@ -76,7 +76,7 @@ function Expandable({
       {/*
         The native marker is removed and redrawn, because the default one is a
         platform triangle that sits outside the text box and cannot be given a
-        colour that survives this palette — on screen it read as absent, and a
+        colour that survives this palette. On screen it read as absent, and a
         disclosure control nobody can see is content nobody finds. This chevron
         rotates on open, which also says which way the control is pointing.
       */}
@@ -133,7 +133,7 @@ function ProvenanceRow({
  * The elimination reasons, grouped by the reason itself.
  *
  * Thirteen of twenty products were ruled out with the byte-identical sentence
- * "A large environment is above this product's mid ceiling — it would not carry
+ * "A large environment is above this product's mid ceiling. It would not carry
  * this estate." Printed once per product that is a wall; printed once with its
  * thirteen products named, it is a finding.
  */
@@ -318,7 +318,7 @@ export function AssumptionsPanel({
               // both and then adding the date made two bullets out of one
               // fact; this adds only what the engine does not know.
               `That rate card is dated ${msspAsOf} and graded ` +
-                `${msspConfidence.replace(/_/g, ' ')} — synthesised from aggregator ranges, for ` +
+                `${msspConfidence.replace(/_/g, ' ')}, synthesised from aggregator ranges, for ` +
                 'comparison and never for quoting.',
             ]}
           />
@@ -328,7 +328,7 @@ export function AssumptionsPanel({
           <RationaleList
             lines={[
               'Every figure here is indicative. Nothing on this page is a quotation, and no vendor has been approached.',
-              "Operational FTE is costed from a regional labour rate card, which is an analyst estimate. It is included in year one as well as later years — a deliberate deviation from the spec's formula, because leaving it out understates exactly the open-source options the tool exists to compare honestly.",
+              'Operational FTE is costed from a regional labour rate card, which is an analyst estimate. It is included in year one as well as later years. That is a deliberate departure from the conventional formula, which leaves it out and so understates exactly the open-source options this tool exists to compare honestly.',
               'Volume discounts are assumptions about what a competent buyer achieves, not quoted discounts, and they are announced wherever they are applied.',
               ...(converted
                 ? [
@@ -343,7 +343,7 @@ export function AssumptionsPanel({
 
         <CardSection
           title="Products ruled out for this client"
-          hint="Grouped by reason. A catalog entry that loses on price is not here — these were removed before scoring, by a hard filter or a tier limit."
+          hint="Grouped by reason. A catalog entry that loses on price is not here. These were removed before scoring, by a hard filter or a tier limit."
         >
           {ruledOutCount === 0 ? (
             <p className="text-faint text-xs">Nothing in the catalog was hard-filtered.</p>

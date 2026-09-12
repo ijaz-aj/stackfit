@@ -8,7 +8,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  *
  * Next injects the nonce into its own script tags when it sees one in the CSP
  * header, which is what makes `script-src` enforceable without `unsafe-inline`.
- * The cost is that every page renders dynamically — fine here, since every page
+ * The cost is that every page renders dynamically: fine here, since every page
  * reads the database anyway.
  *
  * `style-src` still allows inline styles: Next and Tailwind both emit inline

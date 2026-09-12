@@ -9,13 +9,13 @@
 #
 # Two ideas:
 #
-#   surfaceUnits  — every asset class maps to one attack surface, with a weight
+#   surfaceUnits . Every asset class maps to one attack surface, with a weight
 #                   saying how much surface one unit of it represents. Raw
 #                   counts cannot be compared (5,000 mailboxes is not "more
 #                   estate" than 4 firewalls), so these weights are what make a
 #                   share-of-estate figure mean anything.
 #
-#   categories    — a base risk-reduction weight, plus affinities saying how
+#   categories   . A base risk-reduction weight, plus affinities saying how
 #                   that value scales with the surfaces actually present.
 #                   1.0 is neutral; only deviations are written down.
 #
@@ -29,14 +29,14 @@
 #   - Mandiant M-Trends 2025: exploits are the top initial infection vector at
 #     33%, stolen credentials second at 16% (up from 10%).
 #   - Verizon DBIR 2025: credential abuse 22%, vulnerability exploitation 20%,
-#     phishing 16%. 22% of exploitation breaches targeted edge infrastructure —
-#     firewalls, VPN concentrators, remote access gateways — an eightfold
+#     phishing 16%. 22% of exploitation breaches targeted edge infrastructure:
+#     firewalls, VPN concentrators, remote access gateways. An eightfold
 #     year-on-year rise. This is why network_edge carries a high surface weight
 #     and a high vulnerability_management affinity.
 #   - Verizon DBIR 2026: 31% of breaches now begin with a software
 #     vulnerability, overtaking stolen credentials as the top entry point.
-#   - M-Trends 2025 reports a different vector mix for cloud environments —
-#     phishing first, stolen credentials second — against an exploit-led mix
+#   - M-Trends 2025 reports a different vector mix for cloud environments:
+#     phishing first, stolen credentials second: against an exploit-led mix
 #     overall. This is the single most important asymmetry in this file: a
 #     SaaS-shaped estate is attacked through identity and mail, an owned estate
 #     through exploitable services. ⚠ Those cloud-specific percentages come
@@ -50,7 +50,7 @@ notes: >-
   Analyst estimates throughout, grounded in the incident data cited in the file
   header. No figure here is a measured coefficient. The numbers that move an
   answer most are the surface weights for firewalls, vpnConcentrators, cloud
-  accounts and M365 seats — tune those first when a result looks wrong.
+  accounts and M365 seats: tune those first when a result looks wrong.
 
 # A surface holding at least this share of total units counts as material when
 # naming the estate shape.
@@ -60,8 +60,8 @@ materialSurfaceShare: 0.1
 # that point safety and availability outrank confidentiality.
 otHeavyShare: 0.35
 
-# Of the workload-bearing estate — owned infrastructure, cloud tenancy, SaaS —
-# one of the three must reach this share to name the shape. Below it the client
+# Of the workload-bearing estate: owned infrastructure, cloud tenancy, SaaS.
+# One of the three must reach this share to name the shape. Below it the client
 # has to defend more than one front, which is what "hybrid" means.
 dominantLocusShare: 0.6
 
@@ -178,7 +178,7 @@ surfaceUnits:
     surface: saas_identity
     weight: 0.15
     basis: >-
-      Per seat, so a 5,000-seat tenant reads as 750 units — comparable to a
+      Per seat, so a 5,000-seat tenant reads as 750 units: comparable to a
       substantial owned estate, which is the intended calibration.
   googleWorkspaceSeats:
     surface: saas_identity
@@ -210,7 +210,7 @@ categories:
   - category: edr
     baseRiskReduction: 90
     basis: >-
-      Both leading initial access vectors — exploitation and stolen credentials —
+      Both leading initial access vectors: exploitation and stolen credentials:
       terminate in code running on a host. The single highest-value control for
       most estates.
     requiresAnyOf: [endpoint, on_prem_server]
@@ -300,7 +300,7 @@ categories:
       - surface: ot_ics
         multiplier: 1.2
         basis: >-
-          Finds plenty and fixes little — OT rarely takes a patch — but knowing
+          Finds plenty and fixes little: OT rarely takes a patch, but knowing
           the exposure is what justifies compensating controls.
       - surface: saas_identity
         multiplier: 0.3
@@ -426,7 +426,7 @@ categories:
   - category: mdr
     baseRiskReduction: 65
     basis: >-
-      Supplies the thing every other category quietly assumes — someone looking
+      Supplies the thing every other category quietly assumes: someone looking
       at the alerts at 3am. Weighted for a buyer, not for a capability.
     requiresAnyOf: [endpoint, on_prem_server, cloud_iaas, saas_identity, network_edge, ot_ics, public_app]
     affinities:
@@ -437,7 +437,7 @@ categories:
   - category: ndr
     baseRiskReduction: 50
     basis: >-
-      Sees what agents cannot — unmanaged devices, appliances, and lateral
+      Sees what agents cannot: unmanaged devices, appliances, and lateral
       movement between them. Entirely dependent on there being a network.
     requiresAnyOf: [network_edge, on_prem_server, ot_ics, cloud_iaas]
     affinities:
@@ -502,7 +502,7 @@ categories:
 #
 # Only deviations from neutral, same convention as the surface affinities.
 # These are analyst judgement about what a sector's incidents actually look
-# like, and they are deliberately mild — infrastructure is a much stronger
+# like, and they are deliberately mild: infrastructure is a much stronger
 # signal than industry, and a sector modifier should nudge a ranking rather
 # than rewrite it.
 # ---------------------------------------------------------------------------

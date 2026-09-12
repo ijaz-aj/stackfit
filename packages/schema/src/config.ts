@@ -13,7 +13,7 @@ import { IsoDate, Source } from './pricing';
 
 /**
  * Scaling factor for FX rates. Rates are stored as integers in millionths so
- * currency conversion is integer arithmetic end to end — acceptance test §12.7
+ * currency conversion is integer arithmetic end to end: acceptance test §12.7
  * requires USD and INR totals to agree with no floating-point drift.
  *
  *   1 USD = 83.25 INR  →  rateMicros: 83_250_000
@@ -72,13 +72,13 @@ export const FxConfig = z
 export type FxConfig = z.infer<typeof FxConfig>;
 
 // ---------------------------------------------------------------------------
-// MSSP rate card — data/config/mssp-rate-card.yaml
+// MSSP rate card: data/config/mssp-rate-card.yaml
 //
 // PROJECT_SPEC §7.4 step 6 wants an MSSP alternative costed against every
 // bundle, so the client sees build-vs-buy on one page. That needs a rate card
 // with the same shape MSSPs actually quote in.
 //
-// The shape is a blend — a base platform fee that varies by scale class, plus
+// The shape is a blend. A base platform fee that varies by scale class, plus
 // per-endpoint and per-GB/day components. Published SMB quotes are what force
 // this: a 50-endpoint client is quoted USD 1,500–5,000 a month, which a pure
 // per-endpoint rate of USD 8–35 cannot reach. Most of a small client's bill is

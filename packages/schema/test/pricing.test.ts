@@ -6,7 +6,7 @@ const usd = (amountMinor: number) => ({ amountMinor, currency: 'USD' as const })
 
 const sourced = [{ url: 'https://example.com/pricing', asOf: '2026-09-09' }];
 
-describe('PricingRule — sourcing (hard rules 2 and 3)', () => {
+describe('PricingRule: sourcing (hard rules 2 and 3)', () => {
   it('accepts a sourced per-endpoint price', () => {
     const result = PricingRule.safeParse({
       model: 'per_endpoint_year',
@@ -37,7 +37,7 @@ describe('PricingRule — sourcing (hard rules 2 and 3)', () => {
     expect(result.success).toBe(false);
   });
 
-  it('requires a source on zero_licence too — a free licence is still a claim', () => {
+  it('requires a source on zero_licence too: a free licence is still a claim', () => {
     const result = PricingRule.safeParse({
       model: 'zero_licence',
       pricingConfidence: 'public_list',
@@ -47,7 +47,7 @@ describe('PricingRule — sourcing (hard rules 2 and 3)', () => {
   });
 });
 
-describe('PricingRule — placeholders', () => {
+describe('PricingRule: placeholders', () => {
   it('accepts a placeholder carrying the sentinel and a TODO note', () => {
     const result = PricingRule.safeParse({
       model: 'per_user_year',
@@ -84,7 +84,7 @@ describe('PricingRule — placeholders', () => {
   });
 });
 
-describe('PricingRule — model coherence', () => {
+describe('PricingRule: model coherence', () => {
   it('rejects a per-unit model with no unitPrice', () => {
     const result = PricingRule.safeParse({
       model: 'per_gb_day_year',

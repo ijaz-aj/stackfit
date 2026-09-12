@@ -1,7 +1,7 @@
 // Stage 6 of the pipeline: the client-facing proposal (PROJECT_SPEC §8).
 //
 // This builds a *document model*, not a document. Three renderers are required
-// — an HTML preview, a DOCX and a PDF — and writing the content decisions three
+// (an HTML preview, a DOCX and a PDF) and writing the content decisions three
 // times is how three exports end up disagreeing about the same number.
 //
 // Money stays `Money` all the way through. Nothing here formats a currency,
@@ -90,8 +90,8 @@ export interface RoadmapEntry {
  *
  * Deliberately wider than anything the prose sections show. This is the sheet
  * an analyst pivots, argues with and pastes into their own model, so it carries
- * the four cost lines separately, the confidence grading and the price age —
- * everything needed to challenge a number rather than just read it.
+ * the four cost lines separately, the confidence grading and the price age.
+ * Everything needed to challenge a number rather than just read it.
  */
 export interface CostModelRow {
   readonly category: ProductCategory;
@@ -145,13 +145,13 @@ export interface ProposalInputs {
    */
   readonly justifications: readonly CategoryJustification[];
   readonly assumptions: PortfolioAssumptions;
-  /** The date the figures were read. Passed in — the engine has no clock. */
+  /** The date the figures were read. Passed in. The engine has no clock. */
   readonly asOf: string;
 }
 
 // `count` and `plural` used to be defined here. They now live in `labels.ts`
 // alongside the other things that turn a value into prose, because
-// `portfolio.ts` was growing its own copies of both — and "1260 endpoint(s)"
+// `portfolio.ts` was growing its own copies of both, and "1260 endpoint(s)"
 // shipped out of the one that had not been fixed yet.
 const count = formatCount;
 
@@ -165,7 +165,7 @@ const percent = (value: number | null): ProposalCell => ({ kind: 'percent', valu
 // existing caller already reaches for.
 export { CATEGORY_LABELS };
 
-/** Mandatory first, then by category weight — the order the money was spent in. */
+/** Mandatory first, then by category weight. The order the money was spent in. */
 function inDeliveryOrder(selections: readonly BundleSelection[]): BundleSelection[] {
   return [...selections].sort(
     (a, b) =>
@@ -179,7 +179,7 @@ function inDeliveryOrder(selections: readonly BundleSelection[]): BundleSelectio
  * Assigns the bundle to delivery phases by how much elapsed time each can
  * absorb, across the configured number of parallel workstreams.
  *
- * The final phase is open-ended — the schema enforces it — so a long programme
+ * The final phase is open-ended, the schema enforces it, so a long programme
  * cannot silently lose its tail.
  */
 export function buildRoadmap(inputs: ProposalInputs): RoadmapEntry[] {
@@ -200,7 +200,7 @@ export function buildRoadmap(inputs: ProposalInputs): RoadmapEntry[] {
     // do not shorten the deployment.
     const elapsed = typicalWeeks / parallelWorkstreams;
 
-    // Advance while this product would overrun the phase — but never past the
+    // Advance while this product would overrun the phase, but never past the
     // last one, which has no ceiling.
     while (phaseIndex < phases.length - 1) {
       const ceiling = phases[phaseIndex]?.elapsedWeeks;
@@ -264,7 +264,7 @@ function executiveSummary(inputs: ProposalInputs): ProposalSection {
       'This is people, not licence, and it is the cost most often left out of a comparison.',
   );
   if (!recommended.withinAnnualCap) {
-    summary.push('⚠ The recommended stack exceeds the stated annual budget — see Costs.');
+    summary.push('⚠ The recommended stack exceeds the stated annual budget. See Costs.');
   }
   blocks.push({ kind: 'bullets', items: summary });
 
@@ -333,7 +333,7 @@ function recommendedStack(inputs: ProposalInputs): ProposalSection {
 
   const rows = inDeliveryOrder(recommended.selections).map((selection) => [
     text(CATEGORY_LABELS[selection.category]),
-    text(`${selection.productName} — ${selection.tierName}`),
+    text(`${selection.productName} · ${selection.tierName}`),
     text(selection.mandatory ? 'Required by compliance' : 'Risk-reduction'),
     money(selection.annualSpend),
   ]);
@@ -382,9 +382,9 @@ function whyTheseProducts(inputs: ProposalInputs): ProposalSection {
     {
       kind: 'paragraph',
       text:
-        'Only products that competed are listed. Where one was ruled out before scoring — too ' +
+        'Only products that competed are listed. Where one was ruled out before scoring, for ' +
         'large or too small for this estate, no support for a device class it would have to ' +
-        'cover, or excluded for this client — the count appears beside its category and the ' +
+        'scale, coverage or exclusion, the count appears beside its category and the ' +
         'reason is on the scoping dashboard.',
     },
     {
@@ -392,7 +392,7 @@ function whyTheseProducts(inputs: ProposalInputs): ProposalSection {
       text:
         'Two things hold for every row below, so they are stated once here rather than repeated ' +
         'in each. Costs are compared on total annual cost, people included, because a comparison ' +
-        'on licence alone systematically flatters self-hosted options — most of what they cost ' +
+        'on licence alone systematically flatters self-hosted options, because most of what they cost ' +
         'is the people who run them. And only one product per category is funded, so a strong ' +
         'product can appear here having lost on nothing but price.',
     },
@@ -406,7 +406,7 @@ function whyTheseProducts(inputs: ProposalInputs): ProposalSection {
 
     // Contenders only. The headline above already states how many were ruled
     // out before scoring, so nothing is concealed by leaving them out of the
-    // table — only the per-product reason moves to the dashboard.
+    // table. Only the per-product reason moves to the dashboard.
     const contenders = justification.alternatives.filter(
       (alternative) => alternative.kind !== 'eliminated',
     );
@@ -421,7 +421,7 @@ function whyTheseProducts(inputs: ProposalInputs): ProposalSection {
         { heading: 'Why not selected', align: 'left' },
       ],
       rows: contenders.map((alternative) => [
-        text(`${alternative.productName} — ${alternative.tierName}`),
+        text(`${alternative.productName} · ${alternative.tierName}`),
         number(alternative.fitScore, 1),
         // Every contender was costed; only a ruled-out product is not, and
         // those do not reach this table.
@@ -449,7 +449,7 @@ function costs(inputs: ProposalInputs): ProposalSection {
     {
       kind: 'paragraph',
       text:
-        'Annual spend is procurement — licence, support and infrastructure. Total annual cost ' +
+        'Annual spend is procurement: licence, support and infrastructure. Total annual cost ' +
         'adds the operational people required to run the stack, which is not a procurement line ' +
         'but is a real cost. Both are shown because a comparison that omits the second ' +
         'systematically flatters self-hosted and open-source options.',
@@ -464,9 +464,9 @@ function costs(inputs: ProposalInputs): ProposalSection {
         { heading: `${profile.budget.horizonYears}-year TCO`, align: 'right' },
       ],
       rows: [
-        compare(essential, 'Essential — minimum defensible'),
+        compare(essential, 'Essential: minimum defensible'),
         compare(recommended, 'Recommended'),
-        compare(ideal, 'Ideal — no budget constraint'),
+        compare(ideal, 'Ideal: no budget constraint'),
       ],
     },
   ];
@@ -483,8 +483,8 @@ function costs(inputs: ProposalInputs): ProposalSection {
   }
 
   // A separate callout, not a clause in the one above. The reader's response to
-  // each is different — one is a recurring budget conversation, the other a
-  // one-off project-funding one — and a proposal that blurs them invites the
+  // each is different (one is a recurring budget conversation, the other a
+  // one-off project-funding one) and a proposal that blurs them invites the
   // client to solve the wrong problem.
   if (recommended.oneTimeShortfall !== null) {
     blocks.push({
@@ -517,12 +517,12 @@ function costs(inputs: ProposalInputs): ProposalSection {
       { heading: 'Annual', align: 'right' },
     ],
     rows: [
-      [text(`${serviceLevel} — service fee`), money(mssp.annual)],
+      [text(`${serviceLevel} service fee`), money(mssp.annual)],
       [
         text(
           mssp.uncoveredCategories.length === 0
-            ? 'Residual — none, the service covers every recommended category'
-            : `Residual — still the client's to buy: ${mssp.uncoveredCategories
+            ? 'Residual: none, the service covers every recommended category'
+            : `Residual, still the client's to buy: ${mssp.uncoveredCategories
                 .map((category) => CATEGORY_LABELS[category])
                 .join(', ')}`,
         ),
@@ -541,7 +541,7 @@ function roadmapSection(inputs: ProposalInputs, roadmap: readonly RoadmapEntry[]
   const rows = roadmap.map((entry) => [
     text(entry.phaseLabel),
     text(CATEGORY_LABELS[entry.category]),
-    text(`${entry.productName} — ${entry.tierName}`),
+    text(`${entry.productName} · ${entry.tierName}`),
     number(entry.typicalWeeks),
     money(entry.annualSpend),
   ]);
@@ -557,7 +557,7 @@ function roadmapSection(inputs: ProposalInputs, roadmap: readonly RoadmapEntry[]
         kind: 'paragraph',
         text:
           'Sequenced by compliance obligation first, then by risk reduction, and bounded by how ' +
-          `much delivery the client can absorb — ` +
+          `much delivery the client can absorb, at ` +
           `${plural(assumptions.roadmap.parallelWorkstreams, 'parallel workstream')}. Elapsed ` +
           'weeks are the vendor-typical deployment time for each ' +
           'product, not effort days.',

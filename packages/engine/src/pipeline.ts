@@ -4,7 +4,7 @@
 //
 // Every stage is independently callable and independently tested; this is the
 // wiring between them, in one place, because there is now more than one caller.
-// The acceptance scenarios and the web app both run this — if they each wired
+// The acceptance scenarios and the web app both run this. If they each wired
 // the stages up themselves, the thing they proved about the engine would be a
 // thing about their own copy of the wiring.
 //

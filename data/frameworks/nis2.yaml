@@ -1,4 +1,4 @@
-# NIS2 — Directive (EU) 2022/2555, Article 21(2).
+# NIS2: Directive (EU) 2022/2555, Article 21(2).
 #
 # Article 21(2) lists ten cybersecurity risk-management measures, (a) to (j),
 # that essential and important entities must take. That list is the whole
@@ -90,5 +90,5 @@ controls:
     satisfiedBy: [iam]
     mandatory: true
     notes: >-
-      The most directly product-shaped requirement in NIS2 — it names MFA
+      The most directly product-shaped requirement in NIS2. It names MFA
       explicitly, which makes an IAM/MFA purchase difficult to argue away.

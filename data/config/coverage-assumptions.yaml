@@ -9,7 +9,7 @@
 
 notes: >-
   Two different findings share one list. A mandatory control left uncovered is a
-  stated obligation going unmet — the client signed up to it, and no amount of
+  stated obligation going unmet. The client signed up to it, and no amount of
   risk argument makes it optional. Everything else is an unmitigated risk, and
   is graded by how much the product category that would close it actually
   reduces risk in this estate, so a gap in a category the client has nothing for
@@ -22,7 +22,7 @@ notes: >-
 mandatoryControlRisk: critical
 
 # Otherwise, banded on the category weight computed for this client in
-# infrastructure.ts — baseRiskReduction adjusted for the estate they actually
+# infrastructure.ts: baseRiskReduction adjusted for the estate they actually
 # have. Evaluated top down; the last band must start at 0.
 residualRiskBands:
   # 85 is deliberately the same figure as portfolio-assumptions.yaml's
@@ -44,7 +44,7 @@ basis: >-
   (deception) to about 130 (identity in a cloud-native estate). 85 is the
   essential floor, so it separates "you should own this" from "you could own
   this". 50 separates a category that still moves the needle from one that is
-  situational — ndr at a base of 50 and soar at 45 sit either side of that line
+  situational: ndr at a base of 50 and soar at 45 sit either side of that line
   on purpose. A category ruled out as inapplicable scores 0 and lands in the
   bottom band, which is right: a gap in network detection for a client with no
   network is not a risk finding.

@@ -5,7 +5,7 @@ import type { PricingConfidence } from '@stackfit/schema';
 import Link from 'next/link';
 
 import { MoneyWithRupees } from '@/components/money';
-import { Badge, Card } from '@/components/ui';
+import { Badge, Card, RationaleList } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { formatMoney, formatNumber } from '@/lib/format';
 
@@ -17,7 +17,7 @@ const CONFIDENCE_TONE: Readonly<Record<PricingConfidence, 'good' | 'warn' | 'bad
 };
 
 /**
- * §8.1 — the three tiers side by side: year one, annual, three-year TCO,
+ * §8.1. The three tiers side by side: year one, annual, three-year TCO,
  * coverage and pricing confidence.
  *
  * The managed alternative is on the same table rather than a page of its own,
@@ -91,12 +91,12 @@ export function BundleComparison({
           The label column is capped rather than left to `w-full`'s devices. On
           a 1400px results page the browser gave the text column everything the
           numbers did not ask for, which left roughly 225px of dead space
-          between a tier's name and its first figure — the eye had to travel it
+          between a tier's name and its first figure: the eye had to travel it
           on every row to connect the two.
 
           A px width rather than ch: `ch` is relative to the font, so the value
           tuned against the system stack put the table 2px over its container
-          the moment the typeface changed — enough to raise a scrollbar on a
+          the moment the typeface changed, enough to raise a scrollbar on a
           table of money, which is the last place a reader should wonder
           whether a column is cut off. 300px fits every tier hint on two lines.
         */}
@@ -123,7 +123,7 @@ export function BundleComparison({
                 className={cn(
                   'border-line group border-t transition-colors',
                   // A 5% tint on a dark ground is invisible, and this row is
-                  // the page's primary state — everything below it changes
+                  // the page's primary state. Everything below it changes
                   // with it. The left marker carries the signal; the tint only
                   // supports it.
                   bundle.kind === selectedKind ? 'bg-accent/[0.07]' : 'hover:bg-panel-raised/50',
@@ -179,7 +179,7 @@ export function BundleComparison({
                   <span className="text-faint block text-2xs">FTE</span>
                 </td>
                 <td className="tabular py-2 pr-3 text-right align-top">
-                  {coverage.coveragePercent === null ? '—' : `${coverage.coveragePercent}%`}
+                  {coverage.coveragePercent === null ? '–' : `${coverage.coveragePercent}%`}
                   {/* A percentage that excludes the partials has to name them, or
                       "0%" reads as "this stack does nothing for you". */}
                   {coverage.partialControls > 0 && (
@@ -206,16 +206,13 @@ export function BundleComparison({
         </table>
       </div>
 
-      <ul className="text-faint mt-3 flex flex-col gap-1 text-xs leading-snug">
-        <li>
-          — Procurement is licence, support and infrastructure. All-in adds the operational FTE, and
-          so does the TCO: hard rule 8, and the reason an open-source stack is never free here.
-        </li>
-        <li>
-          — The managed figure is the fee plus the residual cost of whatever the service level does
-          not operate. Comparing a fee against a whole stack would flatter it.
-        </li>
-      </ul>
+      <RationaleList
+        className="text-faint mt-3"
+        lines={[
+          'Procurement is licence, support and infrastructure. All-in adds the operational FTE, and so does the TCO. That is why an open-source stack is never free here.',
+          'The managed figure is the fee plus the residual cost of whatever the service level does not operate. Comparing a fee against a whole stack would flatter it.',
+        ]}
+      />
     </Card>
   );
 }

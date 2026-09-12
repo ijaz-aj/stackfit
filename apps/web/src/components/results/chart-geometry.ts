@@ -2,7 +2,7 @@
  * Chart sizing, in a module with no `'use client'` on it.
  *
  * This is not tidiness. `cost-charts.tsx` is a client module, and every export
- * of a client module — a plain function included — becomes a client reference
+ * of a client module, a plain function included, becomes a client reference
  * proxy when a server component imports it. The server renders the results page,
  * so calling this there threw "Attempted to call categoryChartHeight() from the
  * server but categoryChartHeight is on the client" and the whole page fell
@@ -20,7 +20,7 @@
  *
  * The cash flow chart beside it is given the same number. The two cards sit in
  * one grid row and stretch to the taller of them, so a chart that sizes itself
- * independently leaves a band of empty panel under the shorter one — which
+ * independently leaves a band of empty panel under the shorter one, which
  * reads as a chart that failed to load rather than one with three data points.
  *
  * The floor matters for a four-product Operable bundle: without it that card

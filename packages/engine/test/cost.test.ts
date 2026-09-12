@@ -38,7 +38,7 @@ function firstTier(product: Product): ProductTier {
   return tier;
 }
 
-describe('computeProductCost — billable units per pricing model', () => {
+describe('computeProductCost: billable units per pricing model', () => {
   it('prices per endpoint against the endpoint count, not the asset count', () => {
     const product = buildProduct({
       pricing: [{ model: 'per_endpoint_year', unitPrice: usd(6000) }],
@@ -115,7 +115,7 @@ describe('computeProductCost — billable units per pricing model', () => {
   });
 });
 
-describe('computeProductCost — the honest TCO (hard rule 8)', () => {
+describe('computeProductCost: the honest TCO (hard rule 8)', () => {
   it('never reports a zero TCO for a zero-licence product', () => {
     const wazuhLike = buildProduct({
       id: 'free-tool',
@@ -170,7 +170,7 @@ describe('computeProductCost — the honest TCO (hard rule 8)', () => {
   it('costs open source above a cheap commercial tool once ops burden is counted', () => {
     // The comparison the whole tool exists to make. A "free" platform needing
     // 0.65 FTE is not cheaper than a USD 60/endpoint SaaS product that needs
-    // almost none — and the tool has to be able to say so.
+    // almost none, and the tool has to be able to say so.
     const openSource = buildProduct({
       id: 'oss-siem',
       licenceModel: 'open_source',
@@ -272,7 +272,7 @@ describe('computeProductCost — the honest TCO (hard rule 8)', () => {
     // Was: every self-hostable product was sized from sizing.gbPerDay and
     // charged the SIEM's log-retention storage, so a honeypot and a SIEM came
     // out at exactly the same number. A bundle with eleven self-hosted products
-    // counted one log-volume figure eleven times — on a 300-bed hospital that
+    // counted one log-volume figure eleven times: on a 300-bed hospital that
     // was about USD 69,500/yr of infrastructure, and thirteen identical
     // segments on the cost-by-category chart.
     const selfHosted = (category: ProductCategory) => ({
@@ -332,7 +332,7 @@ describe('computeProductCost — the honest TCO (hard rule 8)', () => {
   });
 });
 
-describe('computeProductCost — how well grounded the effort figures are', () => {
+describe('computeProductCost: how well grounded the effort figures are', () => {
   it('carries the confidence onto the cost, where the FTE number is read', () => {
     // Same principle as `pricingConfidence` and `freshness`: the grading has to
     // travel with the number, not stay in the file it came from. The FTE line
@@ -360,7 +360,7 @@ describe('computeProductCost — how well grounded the effort figures are', () =
   });
 });
 
-describe('computeProductCost — discounting is an assumption, stated out loud', () => {
+describe('computeProductCost: discounting is an assumption, stated out loud', () => {
   it('leaves SMB spend at list', () => {
     const product = buildProduct({
       pricing: [{ model: 'per_node_year', unitPrice: usd(1000) }],
@@ -382,7 +382,7 @@ describe('computeProductCost — discounting is an assumption, stated out loud',
   });
 });
 
-describe('computeProductCost — multi-year view', () => {
+describe('computeProductCost: multi-year view', () => {
   const product = buildProduct({
     pricing: [{ model: 'per_node_year', unitPrice: usd(1000) }],
     deploymentModes: ['cloud'],
@@ -420,7 +420,7 @@ describe('computeProductCost — multi-year view', () => {
   });
 });
 
-describe('computeProductCost — currency', () => {
+describe('computeProductCost: currency', () => {
   it('reports every figure in the client budget currency', () => {
     const inrProfile = buildClientProfile({
       region: 'in',

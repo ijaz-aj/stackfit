@@ -1,8 +1,8 @@
-# PAM — privileged access, credential vaulting and session control.
+# PAM: privileged access, credential vaulting and session control.
 #
 # Prices are in minor units (hard rule 1).
 #
-# Scope note. Workforce identity — who the staff are and how they prove it —
+# Scope note. Workforce identity, who the staff are and how they prove it:
 # is data/catalog/iam.yaml. This file is what happens after someone has
 # authenticated and needs to act as an administrator: where the credential is
 # kept, who can borrow it, for how long, and whether anyone watched.
@@ -10,14 +10,14 @@
 # ⚠ EVERY MARKET LEADER IN THIS CATEGORY IS QUOTE-ONLY. CyberArk, BeyondTrust,
 # Delinea, One Identity, Wallix, StrongDM, Segura and KeeperPAM were all
 # checked on 2026-09-12 and none publishes a rate. What is catalogued below is
-# therefore not the top of the market — it is the part of the market that will
+# therefore not the top of the market. It is the part of the market that will
 # tell you what it costs. Say that out loud rather than letting a shortlist
 # imply the enterprise options were considered and rejected.
 #
 # ⚠ A BILLING-UNIT LIMITATION RUNS THROUGH THIS FILE. Three of the five
 # products bill per privileged user, which `per_privileged_user_year` models
 # exactly. ManageEngine bills in bands of administrators, and `flat_tiered` can
-# only band on monitored assets — so that entry carries an explicit assumption
+# only band on monitored assets, so that entry carries an explicit assumption
 # converting one to the other. It is the crudest number in the catalog and it
 # is labelled as such on the entry.
 
@@ -148,7 +148,7 @@ products:
                 Re-read the licence statement on the repository. Teleport
                 describes Community Edition builds as being under a *modified*
                 Apache 2.0 licence, and the word "modified" is the thing to
-                re-check — a tightening there changes whether this entry can be
+                re-check. A tightening there changes whether this entry can be
                 offered at all.
             sources:
               - url: https://github.com/gravitational/teleport
@@ -156,8 +156,8 @@ products:
             notes: >-
               Teleport states that Community Edition builds distributed on
               goteleport.com are available under a modified Apache 2.0 licence.
-              No licence fee. Enterprise and Cloud are quote-only — Teleport's
-              pricing page requires a form — and are not catalogued.
+              No licence fee. Enterprise and Cloud are quote-only: Teleport's
+              pricing page requires a form, and are not catalogued.
 
     supports:
       os: [linux, windows, macos]
@@ -255,7 +255,7 @@ products:
               checkUrl: https://www.passbolt.com/pricing
               note: >-
                 Confirm the Community Edition is still AGPLv3 and still
-                advertised with unlimited users — the user limit is the thing
+                advertised with unlimited users. The user limit is the thing
                 most likely to appear.
             sources:
               - url: https://www.passbolt.com/pricing
@@ -316,7 +316,7 @@ products:
     integrations: [ldap, saml, oidc]
 
     controlsCovered:
-      # A vault, not a gateway — the mirror image of Guacamole. It manages and
+      # A vault, not a gateway. The mirror image of Guacamole. It manages and
       # protects the credential and has no view of the session it is used in,
       # so the monitoring and session-audit controls are absent.
       - cis-v8:5
@@ -502,7 +502,7 @@ products:
     weaknesses:
       - Above 100 users Devolutions moves to a custom quote, so the published rate stops applying where it matters most
       - Windows-centric heritage; Linux and cloud-native estates are served less naturally
-      - Not an enterprise PAM — no air-gapped deployment and thinner governance than the quote-only leaders
+      - Not an enterprise PAM. No air-gapped deployment and thinner governance than the quote-only leaders
     bestFor:
       - Mid-market clients with a real privileged-access obligation and no appetite for a CyberArk conversation
       - Windows-heavy estates with a helpdesk that shares admin credentials today
@@ -581,7 +581,7 @@ products:
               method: manual
               checkUrl: https://www.manageengine.com/privileged-access-management/pricing.html
               note: >-
-                ManageEngine publishes a full banded price list — read the
+                ManageEngine publishes a full banded price list. Read the
                 English-edition subscription column. The Multilingual edition is
                 roughly 20% dearer and is not catalogued. Re-check the
                 administrator counts attached to each band as well as the
@@ -600,7 +600,7 @@ products:
               and the sizing stage's privilegedAccountCount cannot reach this
               rule. The bands above therefore encode an assumption of roughly
               one administrator per 40 monitored assets, floored at the
-              10-administrator band — so 400 assets buys the 10-admin band,
+              10-administrator band, so 400 assets buys the 10-admin band,
               2,000 assets the 50-admin band, and so on.
 
               That ratio is an analyst estimate and nothing more. Where the
@@ -658,14 +658,14 @@ products:
       - Covers vaulting, rotation, session recording, SSH keys and certificates in one product
       - Perpetual licensing is offered as an alternative for clients who prefer capex
     weaknesses:
-      - Banding on administrator count makes the cost a step function — one more admin can cost thousands
+      - Banding on administrator count makes the cost a step function. One more admin can cost thousands
       - Deployment is a project, not a configuration; ten weeks elapsed is realistic
       - No air-gapped deployment
     bestFor:
       - Mid-market and larger clients with a compliance-driven PAM obligation
       - Clients who want a defensible price in the proposal without a three-week quote cycle
     avoidWhen:
-      - The estate is small — the 10-administrator band is the floor and it is not cheap
+      - The estate is small. The 10-administrator band is the floor and it is not cheap
       - The environment is air-gapped
 
     sources:

@@ -2,7 +2,7 @@
 # safeguards enumerated in Rule 6 of the Digital Personal Data Protection
 # Rules, 2025.
 #
-# The Act itself is short and outcome-worded — section 8(5) says "reasonable
+# The Act itself is short and outcome-worded: section 8(5) says "reasonable
 # security safeguards" without listing any. Rule 6 of the 2025 Rules is what
 # turns that into a checklist, and it is unusually product-shaped: encryption,
 # access control, logging, backups. That makes it directly useful here.
@@ -26,14 +26,14 @@ sources:
     asOf: '2026-09-09'
 
 notes: >-
-  sourceQuality is secondary_sources — the Act text and Rule 6's substance were
+  sourceQuality is secondary_sources. The Act text and Rule 6's substance were
   corroborated across independent legal summaries rather than read from the
   Gazette. Verify against the official publication before a client-facing
   coverage claim, particularly the Rules, which are recent.
 
   Two things worth raising with any Indian client in scope. First, the penalty
   for failing to implement reasonable security safeguards is up to INR 250
-  crore — the largest in the Schedule, and larger than the penalty for failing
+  crore. The largest in the Schedule, and larger than the penalty for failing
   to report a breach. Second, DPDP and the CERT-In Directions apply
   simultaneously to most organisations, and CERT-In's six-hour reporting clock
   is far tighter than DPDP's, so CERT-In is usually the binding constraint on
@@ -49,7 +49,7 @@ controls:
     title: Protect personal data by taking reasonable security safeguards to prevent a breach
     satisfiedBy: [siem, edr, iam, pam, backup, email_security]
     mandatory: true
-    notes: Rule 6 of the 2025 Rules enumerates the minimum safeguards — see below.
+    notes: Rule 6 of the 2025 Rules enumerates the minimum safeguards. See below.
 
   - id: s-8-6
     title: Give the Data Protection Board and affected Data Principals notice of a personal data breach

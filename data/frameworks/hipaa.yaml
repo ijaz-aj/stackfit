@@ -1,4 +1,4 @@
-# HIPAA Security Rule — 45 CFR Part 164 Subpart C.
+# HIPAA Security Rule: 45 CFR Part 164 Subpart C.
 #
 # Held at *standard* level, which is the level 45 CFR 164.308/310/312 is
 # organised at. Each standard has implementation specifications beneath it
@@ -92,7 +92,7 @@ controls:
     title: Workstation Security
     satisfiedBy: []
     notes: >-
-      Physical safeguards restricting access to workstations — placement,
+      Physical safeguards restricting access to workstations: placement,
       screens, locks. An endpoint agent does not close a physical control.
   - id: 164.310.d.1
     title: Device and Media Controls

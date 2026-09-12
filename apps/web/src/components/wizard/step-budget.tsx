@@ -11,7 +11,7 @@ import { useWizard } from './store';
 /**
  * Budget (PROJECT_SPEC §5.1).
  *
- * Both caps are *procurement* spend — licence, support, infrastructure. The
+ * Both caps are *procurement* spend: licence, support, infrastructure. The
  * engine constrains them against the same figure, deliberately: a stated
  * security budget is a purchase-order number, and the client's own salaried
  * team is not on that purchase order.

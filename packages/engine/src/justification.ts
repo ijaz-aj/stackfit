@@ -12,8 +12,8 @@
 // scoring carries the hard filter's own words.
 //
 // Each verdict states its own specific fact and nothing else. The reasoning
-// they share — that costs are compared all-in rather than on licence, and that
-// only one product per category is funded — belongs once, where the reader
+// they share (that costs are compared all-in rather than on licence, and that
+// only one product per category is funded) belongs once, where the reader
 // meets the table, not appended to all sixty-six rows. It was appended to all
 // sixty-six rows, and that alone was most of a fourteen-page proposal.
 //
@@ -61,7 +61,7 @@ export interface AlternativeVerdict {
    *
    * Carried beside `annualSpend` because a comparison on procurement alone is
    * how an open-source tool looks 80 times cheaper than a commercial one it is
-   * actually level with — the operational FTE is most of its cost and the whole
+   * actually level with. The operational FTE is most of its cost and the whole
    * point of hard rule 8.
    */
   readonly annualRecurring: Money | null;
@@ -107,7 +107,7 @@ function round(value: number, decimals: number): number {
  * The dimension the winner beat this alternative by most.
  *
  * Compared on `contribution` rather than raw score, because a 20-point lead on
- * a dimension weighted 5 decides less than a 6-point lead on one weighted 25 —
+ * a dimension weighted 5 decides less than a 6-point lead on one weighted 25,
  * and the contribution is what actually moved the total.
  */
 function decidingDimension(
@@ -155,7 +155,7 @@ function verdictFor(
     const where =
       deciding === null
         ? ''
-        : ` — widest gap on ${dimensionName(deciding.dimension)}, ${round(deciding.gap, 1)} points`;
+        : `, widest gap on ${dimensionName(deciding.dimension)}, ${round(deciding.gap, 1)} points`;
     return {
       kind: 'lower_fit',
       decidingDimension: deciding === null ? null : deciding.dimension,
@@ -164,7 +164,7 @@ function verdictFor(
   }
 
   // It scored at least as well, so the decision was cost. Stated on the basis
-  // the bundle actually decided on — total annual cost, people included.
+  // the bundle actually decided on: total annual cost, people included.
   //
   // Procurement alone would be a lie by omission: a self-hosted tool at $1,080
   // against a commercial one at $42,840 is "40 times the price" on licence and
@@ -188,7 +188,7 @@ function verdictFor(
 
   // Same score or better, and the same money to own. Then the licence price is
   // what separated them, and saying "did not win on value density" would be
-  // false — a product that is cheaper to own *and* scores higher has the better
+  // false. A product that is cheaper to own *and* scores higher has the better
   // density by construction. What actually happened is that the bundle was
   // built to stretch the procurement budget, and this SKU costs more to buy.
   const spendRatio =
@@ -223,16 +223,16 @@ function verdictFor(
  * A tier of a product that is already in the list, described against that
  * sibling rather than against the selection.
  *
- * Tiers of one product score identically far more often than not — they differ
- * in what they licence, not in how well they fit an estate — so running each
+ * Tiers of one product score identically far more often than not (they differ
+ * in what they licence, not in how well they fit an estate) so running each
  * one through the normal comparison produced rows of literally identical text.
  * The email-security table carried seven of them, all reading "Scores 97.7
- * against 100 — widest gap on scale fit, 2.3 points." Seven rows, one fact,
+ * against 100: widest gap on scale fit, 2.3 points." Seven rows, one fact,
  * in a document a client reads.
  *
  * The tier difference is the thing worth stating: what the upgrade costs, and
  * whether it buys anything measurable for this estate. Where it buys nothing,
- * saying so is more useful than the fit comparison it replaces — that is the
+ * saying so is more useful than the fit comparison it replaces. That is the
  * row an analyst quotes when a client asks why not the dearer edition.
  */
 function siblingTierVerdict(
@@ -270,7 +270,7 @@ function siblingTierVerdict(
  * One justification per funded category.
  *
  * Every scored SKU in the category appears except the winning one, eliminated
- * products included — "we looked at it, and here is why it could not be used" is
+ * products included. "we looked at it, and here is why it could not be used" is
  * an answer, and silence is not.
  */
 export function justifyBundle(

@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 // react-pdf needs Node APIs (fonts, streams); it does not run on the edge.
 export const runtime = 'nodejs';
 
-/** §8's proposal as a PDF — the format that arrives looking the same everywhere. */
+/** §8's proposal as a PDF. The format that arrives looking the same everywhere. */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },

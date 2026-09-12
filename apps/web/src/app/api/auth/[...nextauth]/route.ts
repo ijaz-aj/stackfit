@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 
 /**
  * The Auth.js endpoints. The only route in this app that is deliberately
- * reachable without a session — signing in is how you get one.
+ * reachable without a session: signing in is how you get one.
  */
 const handler = NextAuth(authOptions);
 

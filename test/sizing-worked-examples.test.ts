@@ -54,7 +54,7 @@ function summarise(result: SizingResult) {
   };
 }
 
-/** The classes contributing most of the ingest — where tuning pays off. */
+/** The classes contributing most of the ingest, where tuning pays off. */
 function topContributors(result: SizingResult, count = 3) {
   return [...result.perAssetClass]
     .sort((a, b) => b.eventsPerSecond - a.eventsPerSecond)
@@ -62,7 +62,7 @@ function topContributors(result: SizingResult, count = 3) {
     .map((row) => `${row.assetClass}: ${row.eventsPerSecond} EPS`);
 }
 
-describe('Worked example A — small retail chain, 40 stores, PCI DSS', () => {
+describe('Worked example A: small retail chain, 40 stores, PCI DSS', () => {
   // 60 staff, mostly POS. The §12.1 acceptance scenario's environment.
   const inventory: AssetInventory = {
     windowsEndpoints: { count: 45 },
@@ -118,7 +118,7 @@ describe('Worked example A — small retail chain, 40 stores, PCI DSS', () => {
   });
 });
 
-describe('Worked example B — mid-sized professional services firm', () => {
+describe('Worked example B: mid-sized professional services firm', () => {
   const inventory: AssetInventory = {
     windowsEndpoints: { count: 260 },
     macosEndpoints: { count: 40 },
@@ -164,7 +164,7 @@ describe('Worked example B — mid-sized professional services firm', () => {
     `);
   });
 
-  it('keeps the default retention — neither ISO 27001 nor SOC 2 sets a fixed period', () => {
+  it('keeps the default retention: neither ISO 27001 nor SOC 2 sets a fixed period', () => {
     expect(result.retentionDays).toBe(90);
   });
 
@@ -179,7 +179,7 @@ describe('Worked example B — mid-sized professional services firm', () => {
   });
 });
 
-describe('Worked example C — large manufacturer with an OT estate', () => {
+describe('Worked example C: large manufacturer with an OT estate', () => {
   const inventory: AssetInventory = {
     windowsEndpoints: { count: 1500 },
     linuxEndpoints: { count: 60 },

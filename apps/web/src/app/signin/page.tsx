@@ -6,8 +6,8 @@ import { redirect } from 'next/navigation';
  * Sign-in, and the one page deliberately reachable without a session.
  *
  * `error` arrives from Auth.js when a sign-in is refused. The commonest cause
- * here is by far an address that is not on the allowlist — somebody signed in
- * correctly and is still not permitted — so that case says so, rather than
+ * here is by far an address that is not on the allowlist, somebody signed in
+ * correctly and is still not permitted, so that case says so, rather than
  * leaving a colleague to conclude the login is broken.
  */
 export default async function SignInPage({

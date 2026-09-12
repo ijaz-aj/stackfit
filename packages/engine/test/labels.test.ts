@@ -129,7 +129,7 @@ describe('skuName', () => {
     // The trap: naive substring elision turns Tenable's two SKUs into
     // "Tenable Expert", losing the product entirely. "Nessus" ends the product
     // name and begins the tier name, but only as part of the longer word
-    // "Nessuses" would that be wrong — this is the case that proves the
+    // "Nessuses" would that be wrong. This is the case that proves the
     // boundary check, not the elision.
     expect(skuName('Tenable Nessus', 'Nessus Expert')).toBe('Tenable Nessus Expert');
     expect(skuName('Tenable', 'Nessus Expert')).toBe('Tenable Nessus Expert');

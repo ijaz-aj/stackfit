@@ -2,7 +2,7 @@
 //
 // The list shows a name, an industry, a headcount and a currency. For two
 // sessions started from the same preset all four are identical, so the only
-// thing distinguishing them was a timestamp — next to a Delete button.
+// thing distinguishing them was a timestamp, next to a Delete button.
 
 import { describe, expect, it } from 'vitest';
 

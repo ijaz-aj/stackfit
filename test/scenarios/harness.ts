@@ -4,7 +4,7 @@
 // Everything else in the test suite is a unit test over fixtures, which is what
 // makes it a good regression net and a poor safety net: each stage was correct
 // in isolation while two defects lived in the seams between them. These
-// scenarios exist to exercise the seams — sizing feeding cost feeding scoring
+// scenarios exist to exercise the seams: sizing feeding cost feeding scoring
 // feeding portfolio feeding coverage, with the real catalog, the real rate
 // cards and the real framework library.
 //
@@ -14,7 +14,7 @@
 // engine the web app runs.
 //
 // ⚠ These are the tests CONTRIBUTING.md forbids editing to make a change pass. If a
-// scenario goes red, either the engine is wrong or the committed data is — fix
+// scenario goes red, either the engine is wrong or the committed data is: fix
 // that, or raise it. Do not move the assertion.
 
 import { dirname, join } from 'node:path';

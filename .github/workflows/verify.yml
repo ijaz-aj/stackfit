@@ -1,6 +1,6 @@
 # Every gate this repo already has, run on every push.
 #
-# Phase 0 shipped a "CI-less test runner" on purpose — the commands are the
+# Phase 0 shipped a "CI-less test runner" on purpose, the commands are the
 # same ones a developer runs, and nothing here is CI-only. What CI adds is that
 # they stop being optional.
 #
@@ -44,7 +44,7 @@ jobs:
 
       # First, and before anything that compiles the web app. The Prisma client
       # is generated into apps/web/src/generated and gitignored, so on a clean
-      # checkout it does not exist — and without it every Prisma type widens to
+      # checkout it does not exist, and without it every Prisma type widens to
       # `any`, which `noImplicitAny` then rejects across the app. No database is
       # needed to generate it.
       #

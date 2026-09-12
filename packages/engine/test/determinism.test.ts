@@ -90,7 +90,7 @@ describe('determinism', () => {
   });
 });
 
-describe('determinism — cost', () => {
+describe('determinism: cost', () => {
   const sizing = computeSizing(inventory, profile, assumptions);
   const costInputs = buildCostInputs();
 

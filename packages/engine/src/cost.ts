@@ -90,7 +90,7 @@ export interface ProductCost {
    * Separate from `annualRecurring` because a stated security budget is a
    * *procurement* figure, and salary is not procurement. Testing a budget cap
    * against a total that includes people charges the analyst's own team to the
-   * purchase order — and charges them once per product, for staff who are
+   * purchase order, and charges them once per product, for staff who are
    * already on payroll. It also prices open source out of every budget, which
    * inverts hard rule 8: that rule exists to stop open source looking free, not
    * to make it unbuyable. People are constrained separately, against available
@@ -174,7 +174,7 @@ export function billableUnitsFor(
     case 'per_asset_year':
       return { units: sizing.monitoredAssetCount, unitLabel: 'monitored assets' };
     case 'per_mailbox_year':
-      // Seats where captured, otherwise headcount — a mailbox per employee is
+      // Seats where captured, otherwise headcount. A mailbox per employee is
       // the assumption an analyst would make on a call anyway.
       return {
         units: sizing.userSeatCount > 0 ? sizing.userSeatCount : profile.employeeCount,
@@ -257,7 +257,7 @@ function selectDiscount(
  * Infrastructure to self-host a product, sized from what that *category*
  * actually runs on.
  *
- * Deliberately crude — the point is that the line is non-zero for a self-hosted
+ * Deliberately crude. The point is that the line is non-zero for a self-hosted
  * tool, not that it is accurate to the vCPU. Cloud-delivered products carry no
  * infrastructure cost because the vendor is already charging for theirs.
  *
@@ -319,7 +319,7 @@ function infraAnnualFor(
   const storageNote =
     storageTb > 0
       ? `, plus ${storageTb} TB of log retention at rest`
-      : ", and no log-retention storage — that is the SIEM's bill, not this one's";
+      : ", and no log-retention storage. That is the SIEM's bill, not this one's";
 
   return {
     amount: scaleMoney(monthly, MONTHS_PER_YEAR),
@@ -341,7 +341,7 @@ export function computeProductCost(
   profile: ClientProfile,
   inputs: CostInputs,
   /**
-   * A further discount on top of the volume band — the §7.4 suite discount.
+   * A further discount on top of the volume band. The §7.4 suite discount.
    *
    * Taken here rather than applied by the caller so that licence, support,
    * cash-flow and TCO all move together. Discounting one figure downstream and
@@ -410,7 +410,7 @@ export function computeProductCost(
   const opsFteAnnual = scaleMoney(convertMoney(regionRate.loadedAnnualCost, currency, fx), opsFte);
 
   rationale.push(
-    `Operational effort: ${opsFte.toFixed(2)} FTE = ${product.opsBurden.baseFte} base + ${product.opsBurden.ftePerThousandAssets} per 1,000 assets × ${sizing.monitoredAssetCount} assets, at ${product.opsBurden.confidence.replace(/_/g, ' ')} confidence. This is the effort to administer the tool — deploy, tune, maintain — and excludes staffing continuous monitoring with it, which is a separate and larger question this tool does not size.`,
+    `Operational effort: ${opsFte.toFixed(2)} FTE = ${product.opsBurden.baseFte} base + ${product.opsBurden.ftePerThousandAssets} per 1,000 assets × ${sizing.monitoredAssetCount} assets, at ${product.opsBurden.confidence.replace(/_/g, ' ')} confidence. This is the effort to administer the tool (deploy, tune, maintain). It excludes staffing continuous monitoring with it, which is a separate and larger question this tool does not size.`,
   );
 
   if (product.opsBurden.confidence === 'placeholder') {
@@ -451,7 +451,7 @@ export function computeProductCost(
     trainingOneTime,
   ]);
 
-  // What the business spends. People are excluded on purpose — see the field doc.
+  // What the business spends. People are excluded on purpose. See the field doc.
   const procurementAnnual = sumMoney(currency, [licenceAnnual, supportAnnual, infraAnnual]);
 
   const annualRecurring = addMoney(procurementAnnual, opsFteAnnual);
@@ -557,7 +557,7 @@ export function computeProductCosts(
  * TCO first.
  *
  * Keyed by product rather than by product-and-tier so that "what else does this
- * product cost at its other tiers" stays a single lookup — which is the
+ * product cost at its other tiers" stays a single lookup, which is the
  * question behind a tier upgrade, and the one a composite string key makes
  * awkward.
  */
@@ -573,7 +573,7 @@ export function costOfTier(
 }
 
 /**
- * The cheapest tier's costing — what a caller wants when no tier has been
+ * The cheapest tier's costing, what a caller wants when no tier has been
  * chosen. Never used to *present* a product whose tier a bundle has fixed: that
  * is the cheapest-tier assumption this model exists to stop making.
  */

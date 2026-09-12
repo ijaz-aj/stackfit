@@ -16,14 +16,14 @@ import './globals.css';
  * be blocked. `next/font` downloads the files during the build and serves them
  * from this origin, which satisfies the policy without loosening it.
  *
- * Inter, because the interface was on the system stack — which is what an
+ * Inter, because the interface was on the system stack, which is what an
  * application looks like before anybody chose a typeface. Inter was drawn for
  * screen UI at small sizes, which is the entire range this app lives in, and
  * its tall x-height keeps an 11px label legible where a system serif-ish
  * fallback would not.
  *
  * JetBrains Mono for figures. Every number in this tool sits in a column that
- * has to align, and its zero is slashed — the difference between a zero and an
+ * has to align, and its zero is slashed. The difference between a zero and an
  * capital O matters in a table of prices and product ids.
  */
 const sans = Inter({
@@ -43,13 +43,13 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'StackFit — security stack advisor',
+  title: 'StackFit',
   description: 'Size an environment, recommend a security stack, and cost it over three years.',
 };
 
 /**
  * `dark` rather than relying on the CSS alone, so the browser paints its own
- * chrome — scrollbars, form controls, the address bar on mobile — to match
+ * chrome (scrollbars, form controls, the address bar on mobile) to match
  * instead of flashing white on first paint.
  */
 export const viewport: Viewport = {
@@ -78,7 +78,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <Link
               href="/"
               className="flex items-baseline gap-2 rounded"
-              aria-label="StackFit — back to sessions"
+              aria-label="StackFit, back to sessions"
             >
               <span className="text-ink text-lg font-semibold tracking-tight">StackFit</span>
               <span className="text-faint hidden text-xs sm:inline">security solution advisor</span>
@@ -91,7 +91,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 every width rather than being the thing that drops on mobile.
               */}
               <span className="border-line text-faint rounded border px-2 py-1 text-xs">
-                figures are indicative — not a quote
+                Indicative figures, not a quote
               </span>
               {analyst !== null && analyst.email !== null && <AnalystMenu email={analyst.email} />}
             </div>

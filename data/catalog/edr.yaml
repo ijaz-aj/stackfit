@@ -68,7 +68,7 @@ products:
     strengths:
       - Deploys in days with almost no tuning
       - Published list price, so budgeting does not need a vendor conversation
-      - Very low operational burden — viable for teams with no security FTE
+      - 'Very low operational burden: viable for teams with no security FTE'
     weaknesses:
       - 'Go is the entry bundle: no threat hunting, no managed detection, limited telemetry retention'
       - Linux is not covered in this bundle
@@ -144,7 +144,7 @@ products:
       - Single lightweight agent, scales to large fleets on modest hardware
       - Runs air-gapped
     weaknesses:
-      - Not a preventive control — it does not block or quarantine malware
+      - Not a preventive control. It does not block or quarantine malware
       - VQL is a real skill; an unstaffed deployment produces nothing
       - No vendor SLA
     bestFor:
@@ -190,7 +190,7 @@ products:
               checkUrl: https://www.microsoft.com/en-us/microsoft-365/enterprise/microsoft365-plans-and-pricing
               note: >-
                 Not machine-refreshable. Microsoft's retail price API covers Azure
-                meters, not Microsoft 365 seat SKUs, so this one needs a person —
+                meters, not Microsoft 365 seat SKUs, so this one needs a person:
                 ideally the client's reseller, since the E3/E5 base matters more
                 than the standalone rate.
             sources:
@@ -202,7 +202,7 @@ products:
               USD 3.00 per user per month, i.e. USD 36.00 per user per year.
               Marked analyst_estimate rather than public_list deliberately:
               Microsoft does not publish standalone per-plan pricing on any of
-              its own pages — the product page quotes only the bundled Defender
+              its own pages. The product page quotes only the bundled Defender
               Suite at USD 12.00 per user per month. This figure is the widely
               and consistently reported list rate from licensing specialists,
               corroborated across independent sources, but it is not
@@ -248,7 +248,7 @@ products:
               checkUrl: https://www.microsoft.com/en-us/microsoft-365/enterprise/microsoft365-plans-and-pricing
               note: >-
                 Not machine-refreshable. Microsoft's retail price API covers Azure
-                meters, not Microsoft 365 seat SKUs, so this one needs a person —
+                meters, not Microsoft 365 seat SKUs, so this one needs a person:
                 ideally the client's reseller, since the E3/E5 base matters more
                 than the standalone rate.
             sources:
@@ -258,7 +258,7 @@ products:
                 asOf: '2026-09-09'
             notes: >-
               USD 5.20 per user per month, i.e. USD 62.40 per user per year.
-              analyst_estimate for the same reason as Plan 1 — not published by
+              analyst_estimate for the same reason as Plan 1. Not published by
               Microsoft directly.
 
               Licensing reality that usually decides this product: P2 is
@@ -266,7 +266,7 @@ products:
               marginal for it, which is why Defender frequently wins on price
               against a technically stronger competitor. From an E3 base,
               reaching P2 means either the E5 Security add-on or a full E5
-              upgrade — a much larger number than the standalone rate above.
+              upgrade. A much larger number than the standalone rate above.
               Establish which base the client is on before costing this.
 
     supports:
@@ -327,7 +327,7 @@ products:
     notes: >-
       Both tier prices are analyst_estimate, not vendor-published. The number
       that actually matters on most deals is whether the client is on E3 or E5,
-      not the standalone rate — see the Plan 2 pricing note.
+      not the standalone rate. See the Plan 2 pricing note.
 
   - id: sentinelone-singularity
     name: SentinelOne Singularity
@@ -357,7 +357,7 @@ products:
               checkUrl: https://www.sentinelone.com/pricing/
               note: >-
                 SentinelOne publishes an annual per-endpoint figure directly,
-                which is unusual above the SMB tier — read it as quoted rather
+                which is unusual above the SMB tier. Read it as quoted rather
                 than converting from a monthly rate. Also re-check which
                 managed services are included versus add-on at each tier, since
                 that is what separates Complete from Commercial.
@@ -458,7 +458,7 @@ products:
       pricing page, as is the managed-services matrix that distinguishes the
       tiers. The wider feature list was not re-read from the vendor's product
       pages, so the capabilities and control claims above are held deliberately
-      conservative — no more than any full EDR with automated response does.
+      conservative. No more than any full EDR with automated response does.
       Widen them only after reading SentinelOne's own feature documentation.
 
       Singularity Enterprise is quote-only and is not catalogued. Singularity
@@ -494,7 +494,7 @@ products:
                 Check first whether Bitdefender has started publishing a
                 per-device rate on its own site; if it has, regrade to
                 public_list. Otherwise re-derive from reseller catalogues and
-                expect a spread — the reported figures move with the reseller,
+                expect a spread. The reported figures move with the reseller,
                 not with Bitdefender.
             sources:
               - url: https://www.bitdefender.com/business/
@@ -508,7 +508,7 @@ products:
               reports it says plainly that these "are estimates, not quotes".
 
               This tier is deliberately catalogued as the cheaper, prevention-
-              only option — it does NOT include EDR, and its control claims say
+              only option. It does NOT include EDR, and its control claims say
               so.
 
       - id: business-security-premium
@@ -529,7 +529,7 @@ products:
             refresh:
               method: manual
               checkUrl: https://www.bitdefender.com/business/
-              note: See the Business Security tier — the whole product is on estimated pricing.
+              note: See the Business Security tier. The whole product is on estimated pricing.
             sources:
               - url: https://www.bitdefender.com/business/
                 asOf: '2026-09-12'
@@ -538,7 +538,7 @@ products:
             notes: >-
               ⚠ NOT VENDOR-PUBLISHED. USD 95.89 per device per year, reported
               rather than published. This is the cheapest tier that includes
-              EDR, which is what makes it the one worth quoting — the base tier
+              EDR, which is what makes it the one worth quoting. The base tier
               below it is prevention only.
         controlsCovered:
           - cis-v8:13
@@ -589,7 +589,7 @@ products:
       - One console across workstations, servers and virtualised workloads
     weaknesses:
       - 'No published price: every figure here is reported rather than vendor-stated'
-      - 'The base tier is prevention only — buying "Bitdefender" does not mean buying EDR, and the gap is easy to miss'
+      - 'The base tier is prevention only: buying "Bitdefender" does not mean buying EDR, and the gap is easy to miss'
       - Enterprise tier with XDR is quote-only, so the top of the range has no visible price
     bestFor:
       - Mid-market clients wanting credible EDR without CrowdStrike or SentinelOne pricing

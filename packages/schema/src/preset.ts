@@ -5,7 +5,7 @@
 // Scoping calls do not produce clean data."
 //
 // A preset is an assertion about what a typical estate of a given shape looks
-// like, which makes it a tunable assumption like any other — so it lives in
+// like, which makes it a tunable assumption like any other, so it lives in
 // data/ with a stated `basis` rather than hard-coded in a React component
 // (CONTRIBUTING.md hard rules 4 and 6).
 
@@ -24,7 +24,7 @@ export const ScenarioPreset = z
     description: z.string().min(1),
     /**
      * Everything a preset knows about the organisation. `orgName` is
-     * deliberately absent — the analyst types the client's actual name, and a
+     * deliberately absent. The analyst types the client's actual name, and a
      * preset filling it in would be the one field guaranteed to be wrong.
      */
     profile: ClientProfile.omit({ orgName: true }),

@@ -1,4 +1,4 @@
-# PCI DSS 4.0 — the 12 top-level Requirements.
+# PCI DSS 4.0. The 12 top-level Requirements.
 #
 # Unlike NIST CSF and CIS, PCI DSS is contractually binding on anyone handling
 # card data, so `mandatory: true` is used here and means it: if the analyst
@@ -32,7 +32,7 @@ notes: >-
   rest are consistent across independent sources.
 
   The top-level Requirement list is stable and uncontroversial. The
-  sub-requirement detail this tool does not model is where the real churn is —
+  sub-requirement detail this tool does not model is where the real churn is,
   and note that v4.0.1 is now the current revision, so re-read against it, with
   a licensed copy, before a client-facing coverage claim.
 
@@ -76,7 +76,7 @@ controls:
     title: Log and Monitor All Access to System Components and Cardholder Data
     satisfiedBy: [siem]
     mandatory: true
-    notes: Drives log retention and daily review — the usual reason a SIEM is non-negotiable.
+    notes: Drives log retention and daily review. The usual reason a SIEM is non-negotiable.
   - id: '11'
     title: Test Security of Systems and Networks Regularly
     satisfiedBy: [vulnerability_management, ndr, siem]

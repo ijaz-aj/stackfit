@@ -3,8 +3,8 @@ import { LoadingAnnouncement, SkeletonCard, SkeletonLine } from '@/components/sk
 /**
  * Shown while the pipeline runs (measured 1.4–5.6s on the demo estates).
  *
- * Laid out like the real page — header, bundle comparison, the category grid,
- * then the full-width panels — so the content lands into the shape already on
+ * Laid out like the real page (header, bundle comparison, the category grid,
+ * then the full-width panels) so the content lands into the shape already on
  * screen instead of pushing it around.
  */
 export default function ResultsLoading() {

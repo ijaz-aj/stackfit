@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
  *
  * A GET route rather than a server action: this returns a file, and a download
  * is a navigation. Read-only, so there is nothing here for the server-action
- * layer's authz seam to guard — it guards mutations.
+ * layer's authz seam to guard. It guards mutations.
  */
 export async function GET(
   _request: Request,

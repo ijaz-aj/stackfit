@@ -8,7 +8,7 @@ import { formatMoney } from '@/lib/format';
  * A figure, with its rupee equivalent underneath where that helps.
  *
  * This tool's primary region is India, and a scenario priced in USD or EUR
- * gives an Indian reader nothing to judge the size of a number against —
+ * gives an Indian reader nothing to judge the size of a number against:
  * "$1,642,766" is a quantity you have to stop and convert before it means
  * anything. The secondary line is there to give the sense of scale, not to be
  * quoted.

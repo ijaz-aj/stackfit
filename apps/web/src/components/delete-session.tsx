@@ -9,7 +9,7 @@ import { deleteScenario } from '@/lib/actions';
  * Delete, with a step in between.
  *
  * This sat one click away from Clone, on a row whose only distinguishing
- * feature is often a timestamp — two sessions can share a client's name — and
+ * feature is often a timestamp, two sessions can share a client's name, and
  * it destroys a scoping session containing a prospective client's whole asset
  * inventory. There is no undo, no trash, and nothing to re-import from.
  *

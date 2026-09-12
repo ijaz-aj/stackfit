@@ -3,7 +3,7 @@
 // The point of cloning a scenario is to change one thing and see what it does:
 // give them two security engineers, drop the budget, add PCI. A comparison that
 // only showed the two answers would leave the analyst diffing by eye. This
-// diffs both ends — what the analyst changed, and what it cost.
+// diffs both ends, what the analyst changed, and what it cost.
 //
 // Cells are the same typed cells the exports use, so one `renderCell` formats
 // a comparison and a proposal alike, and money is never formatted here.
@@ -158,8 +158,8 @@ function profileChanges(
   ];
 
   // Both caps, because both bind and they bind independently. Comparing only
-  // the annual one left the headline demo — the same client with a larger
-  // implementation budget — reporting "no differences" in its inputs panel
+  // the annual one left the headline demo, the same client with a larger
+  // implementation budget, reporting "no differences" in its inputs panel
   // beside a completely different recommended stack.
   const capChange = (label: string, leftCap: Money | null, rightCap: Money | null): void => {
     if (leftCap === null && rightCap === null) return;
@@ -390,7 +390,7 @@ export function compareScenarios(left: ComparisonSide, right: ComparisonSide): S
   const summary = summarise(left, right, categories, comparable);
   if (!comparable) {
     summary.unshift(
-      `⚠ These scenarios are priced in different currencies — ${left.bundle.currency} against ` +
+      `⚠ These scenarios are priced in different currencies: ${left.bundle.currency} against ` +
         `${right.bundle.currency}. Every money figure below is in its own currency and no ` +
         'difference is shown, because subtracting one from the other would produce a number that ' +
         'looks like an answer.',

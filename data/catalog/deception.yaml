@@ -1,4 +1,4 @@
-# Deception — decoys, honeypots and tripwires.
+# Deception: decoys, honeypots and tripwires.
 #
 # Prices are in minor units (hard rule 1).
 #
@@ -11,8 +11,8 @@
 # first.
 #
 # ⚠ THE CONTROL CLAIMS ARE DELIBERATELY NARROW. Only three controls in the whole
-# framework library name `deception` in their `satisfiedBy` list — CIS Control
-# 13, CSF DE.CM and ISO A.8.16 — and no product here claims more than those.
+# framework library name `deception` in their `satisfiedBy` list: CIS Control
+# 13, CSF DE.CM and ISO A.8.16, and no product here claims more than those.
 # That is the honest answer and it is worth saying out loud: deception is bought
 # on risk, not on compliance, and an analyst who pitches it as a compliance
 # control will be caught out.
@@ -21,7 +21,7 @@
 # leader, publishes no rate; Tracebit, CounterCraft and the identity-deception
 # products folded into larger platforms are all quote-only. Four of the five
 # below are free, which is genuinely the shape of this market outside large
-# enterprises — a competent engineer with OpenCanary and a weekend gets most of
+# enterprises. A competent engineer with OpenCanary and a weekend gets most of
 # the value.
 
 category: deception
@@ -94,7 +94,7 @@ products:
       confidence: analyst_estimate
 
     strengths:
-      - The highest ratio of detection value to effort anywhere in this catalog — an afternoon's work
+      - The highest ratio of detection value to effort anywhere in this catalog. An afternoon's work
       - Catches the things nothing else does, such as a stolen document opened outside the estate
       - Fake cloud credentials in a repository are the single best tripwire for a leaked secret
     weaknesses:
@@ -102,7 +102,7 @@ products:
       - The free hosted service means alert data leaves the estate, which some clients will refuse
       - Coverage depends entirely on where a human decided to put tokens
     bestFor:
-      - Every client, as a cheap supplement — there is almost no scenario where this is a bad idea
+      - Every client, as a cheap supplement. There is almost no scenario where this is a bad idea
       - Detecting document exfiltration and leaked cloud credentials
     avoidWhen:
       - It is being proposed as a primary detection control
@@ -114,7 +114,7 @@ products:
     notes: >-
       The one entry in this catalog that is worth recommending almost
       unconditionally, precisely because it costs nothing and asks for nothing.
-      It is also the one most likely to be forgotten after deployment — tokens
+      It is also the one most likely to be forgotten after deployment: tokens
       placed once and never reviewed decay as the estate changes.
 
   - id: opencanary
@@ -142,7 +142,7 @@ products:
               checkUrl: https://github.com/thinkst/opencanary
               note: >-
                 BSD-3-Clause and stable. Worth re-checking release activity
-                rather than the licence — Thinkst's commercial attention is on
+                rather than the licence: Thinkst's commercial attention is on
                 the Canary appliance, and this is the free sibling.
             sources:
               - url: https://github.com/thinkst/opencanary
@@ -181,11 +181,11 @@ products:
 
     strengths:
       - The commercial product's detection logic, free, for a client willing to run it themselves
-      - Any alert is real by construction — nothing legitimate talks to a decoy
+      - Any alert is real by construction. Nothing legitimate talks to a decoy
       - Small enough to sit on infrastructure that already exists
     weaknesses:
       - 'No console: alerts go to a log or a webhook and something else has to be watching'
-      - Placement is a design exercise — a decoy in the wrong VLAN detects nothing
+      - Placement is a design exercise. A decoy in the wrong VLAN detects nothing
       - Fewer emulated services than a purpose-built appliance, so a careful attacker may fingerprint it
     bestFor:
       - Clients with an engineer, a flat network and no budget for Canary
@@ -227,7 +227,7 @@ products:
               checkUrl: https://github.com/cowrie/cowrie/blob/master/LICENSE.rst
               note: >-
                 BSD-3-Clause and community-governed. The interesting change to
-                watch is feature direction — Cowrie has added an experimental
+                watch is feature direction: Cowrie has added an experimental
                 LLM mode for generating attacker responses, which has data
                 handling implications worth checking before deployment.
             sources:
@@ -407,8 +407,8 @@ products:
               checkUrl: https://canary.tools/
               note: >-
                 Check first whether Thinkst has started publishing a rate; if it
-                has, regrade to public_list. Otherwise ask Thinkst directly —
-                they are unusually willing to quote quickly, and the reported
+                has, regrade to public_list. Otherwise ask Thinkst directly.
+                They are unusually willing to quote quickly, and the reported
                 figures below vary enough that a real quote is worth the email.
             sources:
               - url: https://canary.tools/
@@ -457,12 +457,12 @@ products:
       confidence: analyst_estimate
 
     strengths:
-      - The lowest operational burden of any detection control in this catalog — deploy and forget
+      - 'The lowest operational burden of any detection control in this catalog: deploy and forget'
       - Decoys are convincing enough to survive an attacker's inspection, which the free tools are not
       - Alerts are so reliably real that a client with no SOC can still act on them
     weaknesses:
       - 'No published price, and the reported figures vary by a factor of two'
-      - Covers little on its own — the category weight of 25 is the honest assessment
+      - Covers little on its own. The category weight of 25 is the honest assessment
       - The hosted console means alert data leaves the estate, and there is no air-gapped option
     bestFor:
       - Clients with no security staff who need at least one alert they can trust
@@ -477,5 +477,5 @@ products:
     notes: >-
       Worth positioning honestly: this is the best-executed product in the
       category and it is still a supplement. A client without EDR or MFA should
-      buy those first, and this second — which is what the category weight of 25
+      buy those first, and this second, which is what the category weight of 25
       in category-weights.yaml is there to enforce.

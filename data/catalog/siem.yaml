@@ -5,7 +5,7 @@
 #
 # opsBurden and implementation figures are analyst estimates, not vendor
 # claims. They are the most opinionated numbers in this file and the ones most
-# worth arguing about — they are also what stops "Wazuh is free" from being the
+# worth arguing about. They are also what stops "Wazuh is free" from being the
 # answer to every question (hard rule 8).
 
 category: siem
@@ -64,7 +64,7 @@ products:
       # and is not: Wazuh's syscollector inventories hosts that already run an
       # agent, and Control 1 is about finding the ones that do not.
       # cis-v8:4 is kept and is deliberately outside that control's own
-      # satisfiedBy list — the Security Configuration Assessment module really
+      # satisfiedBy list. The Security Configuration Assessment module really
       # does run CIS benchmark checks, which most SIEMs do not, so this is a
       # product-level exception rather than a reason to widen the category.
       - cis-v8:4
@@ -130,7 +130,7 @@ products:
             refresh:
               method: manual
               checkUrl: https://graylog.org/products/open/
-              note: Watch for features moving from Open into the paid tiers — that is how open-core pricing actually changes.
+              note: Watch for features moving from Open into the paid tiers. That is how open-core pricing actually changes.
             sources:
               - url: https://graylog.org/products/open/
                 asOf: '2026-09-09'
@@ -161,7 +161,7 @@ products:
               checkUrl: https://graylog.org/pricing/
               note: >-
                 Graylog publishes a starting price rather than a rate. Read the
-                "starting at" figure and the minimum entry point together — the
+                "starting at" figure and the minimum entry point together. The
                 floor is what this models, and the rate above it is quote-only.
             sources:
               - url: https://graylog.org/pricing/
@@ -254,7 +254,7 @@ products:
       - Strong log parsing and search ergonomics for the price
       - Simpler to operate than a full Elastic stack
     weaknesses:
-      - Log management, not detection — no agent, no FIM, no bundled detection content
+      - Log management, not detection. No agent, no FIM, no bundled detection content
       - 'Deliberately gated: FIM, correlation and compliance reporting sit in the paid tiers'
     bestFor:
       - Clients whose immediate obligation is log centralisation and retention
@@ -272,12 +272,12 @@ products:
       rate: Graylog licenses processed data volume in the active tier, with a
       minimum entry of 10 GB/day, and the figure above that minimum is
       quote-only. The two paid tiers are therefore modelled as floors and will
-      understate any real ingest volume — which is the wrong direction, so get
+      understate any real ingest volume, which is the wrong direction, so get
       a quote before either number reaches a client.
 
       Open remains genuinely free with no ingestion cap. The upgrade decision is
       almost never about ingest and almost always about archiving, audit logging
-      and — for Security — the detection content, which is the only thing in
+      and, for Security, the detection content, which is the only thing in
       this product that a SIEM buyer is really paying for.
 
   - id: microsoft-sentinel
@@ -315,7 +315,7 @@ products:
                 asOf: '2026-09-09'
             notes: >-
               USD 4.30 per GB, the "Pay-as-you-go Analysis" meter for East US,
-              read from the Azure Retail Prices API — Microsoft's own
+              read from the Azure Retail Prices API: Microsoft's own
               authoritative price feed. The Sentinel pricing page and the
               learn.microsoft.com billing article both decline to quote a
               figure, so the API is the primary source.
@@ -424,7 +424,7 @@ products:
               checkUrl: https://github.com/opensearch-project/OpenSearch
               note: >-
                 Apache 2.0 under the Linux Foundation, which makes a licence
-                change about as unlikely as it gets in this catalog — OpenSearch
+                change about as unlikely as it gets in this catalog: OpenSearch
                 exists precisely because Elasticsearch's licence changed. Worth
                 re-checking the Security Analytics plugin's release cadence
                 rather than the licence.
@@ -436,8 +436,8 @@ products:
             notes: >-
               Apache License 2.0, for both the platform and the Security
               Analytics plugin. OpenSearch is a registered trademark of LF
-              Projects, LLC. No licence fee, no ingest cap, no per-user charge —
-              the cost is entirely the cluster and the engineer who runs it.
+              Projects, LLC. No licence fee, no ingest cap, no per-user charge.
+              The cost is entirely the cluster and the engineer who runs it.
 
               AWS sells a managed OpenSearch Service; that is a different
               purchase, priced per instance-hour, and is not catalogued.
@@ -500,7 +500,7 @@ products:
       - Estates already running OpenSearch for observability
       - Air-gapped or data-residency-constrained environments
     avoidWhen:
-      - Security staffing is thin — this is a platform to operate, not a product to buy
+      - Security staffing is thin. This is a platform to operate, not a product to buy
       - The client expects vendor-supplied detections to work on day one
 
     sources:
@@ -552,8 +552,8 @@ products:
               - url: https://www.elastic.co/guide/en/security/current/es-overview.html
                 asOf: '2026-09-12'
             notes: >-
-              Elasticsearch source is triple-licensed — AGPLv3, Server Side
-              Public License v1, or Elastic License 2.0 — except the x-pack
+              Elasticsearch source is triple-licensed: AGPLv3, Server Side
+              Public License v1, or Elastic License 2.0: except the x-pack
               folder, which is Elastic License 2.0 only. The Security solution
               lives largely in x-pack, so ELv2 is the licence that governs it:
               source-available, free to self-manage, and forbidding provision to
@@ -586,8 +586,8 @@ products:
       # Narrowed to what the free tier actually ships. Detection rules and the
       # Security app are in Basic, so logging, monitoring and adverse-event
       # analysis hold. Case management and Elastic Defend are not, so the
-      # incident-response controls that lean on them — CSF RS.AN, ISO A.5.25
-      # and rbi-csf:incident-response — are deliberately absent. They were
+      # incident-response controls that lean on them: CSF RS.AN, ISO A.5.25
+      # and rbi-csf:incident-response: are deliberately absent. They were
       # claimed here until the tier split was checked.
       - cis-v8:8
       - cis-v8:13
@@ -612,7 +612,7 @@ products:
       confidence: analyst_estimate
 
     strengths:
-      - Prebuilt detection rules in the free tier, maintained by Elastic — the strongest free detection content here
+      - Prebuilt detection rules in the free tier, maintained by Elastic. The strongest free detection content here
       - SIEM and endpoint in one platform if the client pays for it, with nothing to build between them
       - Self-managed and air-gappable, which the commercial SaaS SIEMs are not
     weaknesses:
@@ -642,10 +642,10 @@ products:
 
       This entry was corrected once already on the strength of that. It
       originally listed Elastic Defend and case management as Basic capabilities
-      and claimed the incident-response controls that lean on them — which would
+      and claimed the incident-response controls that lean on them, which would
       have offered a client endpoint protection and a case workflow at zero
       cost, and credited them with response capability they had not bought.
 
       Confirm the split with Elastic before this reaches a proposal. The number
       that matters is not the licence, which is settled, but where the line
-      falls — and it is where all the value is.
+      falls, and it is where all the value is.

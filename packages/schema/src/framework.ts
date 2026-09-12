@@ -13,7 +13,7 @@ import { Source } from './pricing';
 export const Control = z
   .object({
     /**
-     * The local id, unqualified — `DE.CM`, `10`, `A.8`. The framework id is
+     * The local id, unqualified: `DE.CM`, `10`, `A.8`. The framework id is
      * prepended to form the `ControlId` a product references.
      */
     id: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9.-]*$/, 'expected a control id like DE.CM or 10'),
@@ -41,7 +41,7 @@ export const Control = z
 export type Control = z.infer<typeof Control>;
 
 /**
- * A published grouping of a framework's controls — the six CSF 2.0 Functions,
+ * A published grouping of a framework's controls. The six CSF 2.0 Functions,
  * PCI DSS's six goals, ISO 27001's four themes.
  *
  * Declared in the framework file rather than derived in code, even where the
@@ -59,7 +59,7 @@ export const ControlGroup = z
 export type ControlGroup = z.infer<typeof ControlGroup>;
 
 /**
- * How well-sourced a framework's control list is — the compliance equivalent of
+ * How well-sourced a framework's control list is. The compliance equivalent of
  * `pricingConfidence`, and it exists for the same reason. Some publishers put
  * their control list behind a paywall, a CAPTCHA or an unparseable PDF, and a
  * coverage claim built on a secondary source should not look identical to one

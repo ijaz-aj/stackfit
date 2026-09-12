@@ -24,7 +24,7 @@ export interface StalenessReport {
   readonly stale: readonly PriceStatus[];
   readonly ageing: readonly PriceStatus[];
   readonly unknown: readonly PriceStatus[];
-  /** Prices with no declared way to re-check them — the real backlog. */
+  /** Prices with no declared way to re-check them. The real backlog. */
   readonly undeclared: readonly PriceStatus[];
   readonly machineRefreshable: readonly PriceStatus[];
 }
@@ -71,7 +71,7 @@ export function assessCatalogStaleness(
  * Prices that live in data/config rather than data/catalog.
  *
  * The MSSP rate card and the FX table are prices, they carry an `asOf`, and
- * they go stale exactly like a catalog price does — but only the catalog was
+ * they go stale exactly like a catalog price does, but only the catalog was
  * ever walked, so these rotted silently. Hard rule 9 says every price declares
  * how it gets re-checked; that has to include the ones that are not products.
  */

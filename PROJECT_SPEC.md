@@ -1,4 +1,4 @@
-# PROJECT SPEC — "StackFit": Security Solution Advisor & Budget Portal
+# PROJECT SPEC: "StackFit": Security Solution Advisor & Budget Portal
 
 > **How to use this file**
 > 1. It is the requirement, and it is the arbiter when an implementation and an
@@ -52,7 +52,7 @@ Do not re-litigate these. If you think one is wrong, say so once, then follow it
 | State | React Server Components where possible; Zustand for wizard state |
 | Validation | Zod for every input boundary and every catalog record |
 | Persistence | SQLite via Prisma (file-based, zero setup). Schema must be Postgres-portable |
-| Engine | Pure TypeScript in `packages/engine` — **no React, no DB, no I/O**. Deterministic in, deterministic out |
+| Engine | Pure TypeScript in `packages/engine`: **no React, no DB, no I/O**. Deterministic in, deterministic out |
 | Tests | Vitest. Engine requires unit tests; UI gets smoke tests only |
 | Catalog | YAML files in `data/catalog/`, loaded and Zod-validated at build time |
 | Export | Markdown → DOCX (docx lib) and PDF (react-pdf). HTML preview first |
@@ -176,7 +176,7 @@ Seed **at least 5 candidates per category**, spanning open-source, mid-market, a
 - **Deception:** OpenCanary, Thinkst Canary
 - **MDR / managed:** Huntress, Arctic Wolf, Red Canary, Expel, plus a configurable **"In-house MSSP"** provider record representing our own managed SOC offering, priced from `data/config/mssp-rate-card.yaml`
 
-### Pricing honesty rules — non-negotiable
+### Pricing honesty rules: non-negotiable
 
 1. **Never invent a price.** Every `PricingRule` needs `pricingConfidence` and at least one `source` with an `asOf` date.
 2. Anything you cannot source gets `pricingConfidence: 'placeholder'` with an obvious sentinel value and a `TODO` note.
@@ -243,7 +243,7 @@ Two passes.
 | Scale fit | 10 | |
 | Maturity / support | 5 | |
 
-Weights are configurable and `procurementBias` shifts them (open-source-first raises ops-fit weight, since OSS failure mode is operational, not financial). Every score must come with a human-readable **rationale string list** — the UI shows "why this was picked" and "why this was ruled out", never a bare number.
+Weights are configurable and `procurementBias` shifts them (open-source-first raises ops-fit weight, since OSS failure mode is operational, not financial). Every score must come with a human-readable **rationale string list**. The UI shows "why this was picked" and "why this was ruled out", never a bare number.
 
 ### 7.4 Portfolio optimisation (`portfolio.ts`)
 
@@ -252,9 +252,9 @@ Weights are configurable and `procurementBias` shifts them (open-source-first ra
 3. Greedy knapsack under `budget.annualCap` and `budget.oneTimeCap`: fill mandatory categories first (cheapest acceptable option if budget is tight), then maximise value density with the remainder.
 4. Apply **bundle synergy**: if products from one vendor/suite are already selected, apply a configurable suite discount and an integration-fit bonus. Avoid selecting two products that do the same job.
 5. Emit three bundles:
-   - **Essential** — minimum defensible posture + everything compliance-mandated
-   - **Recommended** — best value inside the stated budget
-   - **Ideal** — ignores the budget cap; exists to quantify the gap
+   - **Essential**: minimum defensible posture + everything compliance-mandated
+   - **Recommended**: best value inside the stated budget
+   - **Ideal**: ignores the budget cap; exists to quantify the gap
 6. Emit an **MSSP alternative** for each bundle: same coverage, delivered as a managed service, costed from the MSSP rate card, so the client can see build-vs-buy on one page.
 7. If the budget cannot cover the mandatory set, **say so plainly**. Output the shortfall amount and the minimum viable budget. Do not silently downgrade to a stack that fails their compliance obligation.
 
@@ -268,13 +268,13 @@ Map the selected bundle to NIST CSF 2.0 functions (Govern/Identify/Protect/Detec
 
 Results dashboard shows:
 
-1. **Bundle comparison** — 3 tiers side by side: total year-1, annual, 3-year TCO, coverage %, pricing confidence.
-2. **Per-category recommendation cards** — chosen product, runner-up, rationale bullets, cost line, what it covers in *their* environment ("covers 38 Windows servers, 12 Linux servers, 40 POS terminals").
-3. **Cost breakdown** — stacked bar by category, licence vs services vs infra vs FTE, and a 3-year cash-flow chart.
-4. **Coverage matrix** — heatmap against the selected frameworks.
-5. **Gap analysis** — what is not covered and what it would cost to fix.
-6. **Sizing worksheet** — the derived EPS/GB/day with every assumption visible and editable.
-7. **Assumptions & disclaimers** panel — always present, always exported.
+1. **Bundle comparison**: 3 tiers side by side: total year-1, annual, 3-year TCO, coverage %, pricing confidence.
+2. **Per-category recommendation cards**: chosen product, runner-up, rationale bullets, cost line, what it covers in *their* environment ("covers 38 Windows servers, 12 Linux servers, 40 POS terminals").
+3. **Cost breakdown**: stacked bar by category, licence vs services vs infra vs FTE, and a 3-year cash-flow chart.
+4. **Coverage matrix**: heatmap against the selected frameworks.
+5. **Gap analysis**, what is not covered and what it would cost to fix.
+6. **Sizing worksheet**. The derived EPS/GB/day with every assumption visible and editable.
+7. **Assumptions & disclaimers** panel. Always present, always exported.
 
 Export: client-facing proposal (DOCX + PDF) with an executive summary, current-state, recommended stack, costs, roadmap phasing, and assumptions. Plus a raw XLSX/CSV of the cost model for the analyst.
 
@@ -289,7 +289,7 @@ Export: client-facing proposal (DOCX + PDF) with an executive summary, current-s
 
 ---
 
-## 10. `CONTRIBUTING.md` — write this at Phase 0
+## 10. `CONTRIBUTING.md`: write this at Phase 0
 
 Include: repo layout, "engine stays pure", the money-as-integer-minor-units rule, the pricing-honesty rules, commit conventions (conventional commits, one logical change per commit), the command list (`pnpm dev`, `pnpm test`, `pnpm catalog:validate`), and a standing instruction that catalog data changes are never mixed into code commits.
 

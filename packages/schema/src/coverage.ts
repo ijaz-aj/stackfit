@@ -12,7 +12,7 @@ import { z } from 'zod';
  * How much it matters that a control is uncovered.
  *
  * `critical` is reserved for a compliance obligation the client has actually
- * taken on — a control their own selected framework marks mandatory. Everything
+ * taken on. A control their own selected framework marks mandatory. Everything
  * else is banded from how much risk the product category that would close it
  * reduces *in this estate*, so a gap in a category the client has nothing for
  * does not shout.

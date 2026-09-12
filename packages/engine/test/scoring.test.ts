@@ -1,7 +1,7 @@
 // Fit scoring (PROJECT_SPEC §7.3).
 //
 // The arithmetic is checked against hand-workable numbers from the fixtures,
-// not against the committed weights — those are exercised by the worked
+// not against the committed weights. Those are exercised by the worked
 // examples in the repo-root `data` project, so a tuning change does not break
 // a unit test that was meant to assert the formula.
 
@@ -97,7 +97,7 @@ describe('hard filters (§7.3 pass 1)', () => {
   it('does not eliminate a cloud product for an on-premises estate', () => {
     // Where a client's assets live and how a tool is delivered are different
     // questions. A cloud-delivered EDR protects on-premises endpoints perfectly
-    // well, so this belongs in the score, not the filter — eliminating here
+    // well, so this belongs in the score, not the filter: eliminating here
     // would remove every cloud-delivered product from every on-prem client.
     const base = buildProduct({ deploymentModes: ['cloud'] });
     const cloudOnly = {
@@ -328,7 +328,7 @@ describe('compliance fit', () => {
   });
 });
 
-describe('ops fit — the dimension that stops "free" winning by default', () => {
+describe('ops fit: the dimension that stops "free" winning by default', () => {
   it('scores full marks for a tool the team can absorb', () => {
     const light = {
       ...coveringProduct(),
@@ -364,7 +364,7 @@ describe('ops fit — the dimension that stops "free" winning by default', () =>
   it('still separates a managed service from a self-hosted platform at zero staff', () => {
     // Was: the zero-staff branch returned a flat constant for every product, so
     // a service needing almost no client-side effort and a platform needing
-    // most of an engineer scored identically — for the client who cares about
+    // most of an engineer scored identically: for the client who cares about
     // the difference more than anyone. PROJECT_SPEC §12.2 requires the
     // opposite, and the flat score made it unassertable.
     const inputs = buildInputs({ profile: buildClientProfile({ securityStaffFte: 0 }) });
@@ -407,7 +407,7 @@ describe('ops fit — the dimension that stops "free" winning by default', () =>
   });
 });
 
-describe('deployment fit — what they asked for, or what they run', () => {
+describe('deployment fit: what they asked for, or what they run', () => {
   function deployment(
     modes: DeploymentMode[],
     overrides: { environment?: ClientEnvironment; estateShape?: EstateShape } = {},
@@ -506,7 +506,7 @@ describe('deployment fit — what they asked for, or what they run', () => {
     });
 
     it('treats a cloud-only product as a real fit, not a mismatch', () => {
-      // 85, not 30. They run cloud — it is native to half their estate.
+      // 85, not 30. They run cloud. It is native to half their estate.
       const fit = deployment(['cloud'], { environment: 'hybrid' });
       expect(fit?.score).toBe(85);
       expect(fit?.rationale).toContain('native to the cloud half');
@@ -685,7 +685,7 @@ describe('a candidate is a SKU, not a product', () => {
   });
 });
 
-describe('tier limits — the conditions attached to a SKU, not to a product', () => {
+describe('tier limits: the conditions attached to a SKU, not to a product', () => {
   /** A free tier capped at 10 users, and a paid tier with no cap. */
   function cappedFreeTier(): Product {
     const base = coveringProduct({ id: 'capped' });
@@ -731,7 +731,7 @@ describe('tier limits — the conditions attached to a SKU, not to a product', (
 
   it('treats an unconfirmed prerequisite as unmet', () => {
     // The Entra ID Free shape: free, but only inside a subscription the client
-    // has to already hold. Unmet by default is the whole point — assuming
+    // has to already hold. Unmet by default is the whole point: assuming
     // otherwise lets a zero-cost tier beat every priced option on a client who
     // cannot take it.
     const base = coveringProduct({ id: 'bundled' });
@@ -796,7 +796,7 @@ describe('tier limits — the conditions attached to a SKU, not to a product', (
     // is the same failure mode billableUnitsFor exists to prevent in costing.
     // The fixture gives every asset class role 'server' by default, so
     // windowsEndpoints has to be told it is an endpoint for this to mean
-    // anything — which is itself the point being tested.
+    // anything, which is itself the point being tested.
     const inv = inventory({ windowsEndpoints: 40, windowsServers: 4 });
     const profile = buildClientProfile({ securityStaffFte: 2 });
     const inputs = buildInputs({
@@ -838,7 +838,7 @@ describe('regressions', () => {
   it('measures asset coverage in weighted units, not raw counts', () => {
     // Was: a SIEM ingesting every server, domain controller and firewall scored
     // 0.5/100 in a mailbox-heavy estate, because 5,000 seats outnumbered 26
-    // pieces of infrastructure one-for-one — on the heaviest-weighted dimension
+    // pieces of infrastructure one-for-one: on the heaviest-weighted dimension
     // there is. Mailboxes are worth a fraction of a server, and coverage has to
     // use the same weighted units the infrastructure stage does.
     const base = buildProduct();
@@ -887,7 +887,7 @@ describe('regressions', () => {
 
   it('does not treat "no preference" as a demand for a hybrid product', () => {
     // Was: `environment: 'not_asked'` is the wizard's wording for "no
-    // strong preference", but scoring read it as a requirement — so a client
+    // strong preference", but scoring read it as a requirement, so a client
     // who had expressed no opinion scored every cloud-only and every
     // on-prem-only product 30 out of 100, marking down precisely the products
     // that suited their estate best. A stated preference still scores 30.

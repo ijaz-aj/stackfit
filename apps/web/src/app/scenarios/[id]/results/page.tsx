@@ -26,7 +26,7 @@ function bundleKindFrom(value: string | undefined): Bundle['kind'] {
 }
 
 /**
- * §8 — the results dashboard.
+ * §8. The results dashboard.
  *
  * Rendered on the server, because everything on it is derived from the engine
  * and none of it is worth shipping a copy of the catalog to the browser for.

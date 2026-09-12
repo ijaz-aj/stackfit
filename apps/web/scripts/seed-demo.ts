@@ -8,8 +8,8 @@
  *
  * Everything here comes from `data/presets/`. Nothing is invented: the counts
  * are the same analyst estimates the intake wizard offers, and the one figure
- * this file chooses for itself — the raised implementation budget on the fourth
- * session — is named and explained below.
+ * this file chooses for itself, the raised implementation budget on the fourth
+ * session, is named and explained below.
  *
  * Idempotent. Rows are upserted under fixed ids, so running it twice changes
  * nothing and it can never touch a session an analyst actually saved.
@@ -38,12 +38,12 @@ const DEMO_SESSIONS: readonly DemoSession[] = [
   {
     id: 'demo-hospital-300-beds',
     presetId: 'hospital-300-beds',
-    shows: 'the whole dashboard on a large estate — 13 categories funded, no shortfall',
+    shows: 'the whole dashboard on a large estate, 13 categories funded, no shortfall',
   },
   {
     id: 'demo-bank-60-branches',
     presetId: 'bank-60-branches',
-    shows: 'three frameworks at once, priced in INR — compare it with the hospital to see the currency guard',
+    shows: 'three frameworks at once, priced in INR, compare it with the hospital to see the currency guard',
   },
   {
     id: 'demo-retail-40-stores',
@@ -53,13 +53,13 @@ const DEMO_SESSIONS: readonly DemoSession[] = [
   {
     id: 'demo-retail-40-stores-funded',
     presetId: 'retail-chain-40-stores',
-    name: 'Retail chain, 40 stores — implementation funded',
+    name: 'Retail chain, 40 stores, implementation funded',
     // The preset's own annual cap is untouched. Only the one-time cap moves,
-    // because on this estate the one-time cap is what was actually binding —
+    // because on this estate the one-time cap is what was actually binding:
     // two thirds of the annual budget was going unspent. INR 30,00,000 is the
     // smallest round figure that visibly changes the answer rather than a
     // number picked to flatter the tool.
-    shows: 'the same client with a larger implementation budget — the other half of the compare demo',
+    shows: 'the same client with a larger implementation budget, the other half of the compare demo',
     amend: (profile) => ({
       ...profile,
       budget: {

@@ -5,12 +5,12 @@
 // They are client components: `curl` on the results page returns the container
 // div and zero `<svg>` elements, so five sessions of "verified over HTTP"
 // proved nothing at all about them. Browser automation has been unavailable
-// throughout. This is the substitute — render them into a DOM and read the axis
+// throughout. This is the substitute, render them into a DOM and read the axis
 // back out.
 //
 // What it does and does not prove. It proves the charts render without
 // throwing, that the money axis labels are the ones intended and are distinct,
-// and — since the category chart became horizontal — that every category sits
+// and, since the category chart became horizontal, that every category sits
 // on its own row far enough from its neighbours to be unable to overlap.
 //
 // That last one used to be outside reach. jsdom measures no text, so whether
@@ -73,7 +73,7 @@ function render(element: React.ReactElement): string {
  *
  * Both element shapes, because it uses both: axis ticks are wrapped in a
  * `<tspan>`, and a `<LabelList>` above a bar is bare text inside `<text>`.
- * Matching only tspans finds the axis and silently misses every bar label —
+ * Matching only tspans finds the axis and silently misses every bar label,
  * which is exactly where the rounding defect was most misleading.
  */
 function labels(markup: string): string[] {
@@ -201,15 +201,15 @@ describe('the cash-flow chart', () => {
     expect(new Set(money).size, `duplicate axis labels: ${money.join(' ')}`).toBe(money.length);
   });
 
-  it.skip('labels each bar with its own figure — NOT VERIFIABLE HEADLESSLY', () => {
+  it.skip('labels each bar with its own figure, NOT VERIFIABLE HEADLESSLY', () => {
     // ⚠ Left skipped deliberately rather than deleted, so the gap stays
     // visible. Recharts' <LabelList> paints nothing under jsdom: the only text
     // this chart produces here is the two axes, because a bar label needs the
     // bar's computed geometry and jsdom measures nothing.
     //
-    // The content is not unchecked — the labels go through the same
+    // The content is not unchecked, the labels go through the same
     // formatMoney(..., { compact: true }) that format.test.ts sweeps for
-    // collisions — but that they appear at all, above the right bars, is still
+    // collisions, but that they appear at all, above the right bars, is still
     // something only a browser can confirm.
     const markup = render(<CashflowChart data={cashflow} currency="USD" height={CHART_HEIGHT} />);
     const money = labels(markup).filter((label) => label.startsWith('$'));
@@ -247,7 +247,7 @@ describe('both charts', () => {
     // The charts sit in one grid row and the cards stretch to the taller of
     // them. When the cash flow sized itself at a fixed 300px and the category
     // chart grew with its row count, the difference was painted as a band of
-    // empty panel under a three-bar chart — which reads as a chart that failed
+    // empty panel under a three-bar chart, which reads as a chart that failed
     // to load rather than one with three data points.
     const height = categoryChartHeight(byCategory.length);
     const category = render(

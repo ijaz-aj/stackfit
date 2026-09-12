@@ -2,7 +2,7 @@
 
 import type { SizingResult } from '@stackfit/engine';
 
-import { Badge, Card } from '@/components/ui';
+import { Badge, Card, RationaleList } from '@/components/ui';
 import type { BundleSummary, EstimateSummary } from '@/lib/estimate';
 import { formatMoney, formatNumber } from '@/lib/format';
 
@@ -78,7 +78,7 @@ function BundleColumn({
 /**
  * The last step: what the intake produced, before the results dashboard exists.
  *
- * Deliberately a summary and not a proposal — §8's dashboard is Phase 6. What
+ * Deliberately a summary and not a proposal. The dashboard comes later. What
  * matters here is that the analyst can see the intake was understood, and that
  * anything needing a second look is on screen rather than in a report.
  */
@@ -119,11 +119,7 @@ export function StepReview({
               </div>
             </div>
 
-            <ul className="text-faint mt-3 flex flex-col gap-1 text-xs leading-snug">
-              {sizing.rationale.map((line) => (
-                <li key={line}>— {line}</li>
-              ))}
-            </ul>
+            <RationaleList lines={sizing.rationale} className="text-faint mt-3" />
           </>
         )}
       </Card>
@@ -181,9 +177,9 @@ export function StepReview({
 
       <Card title="Next">
         <p className="text-muted text-sm leading-snug">
-          The intake is saved as you type. <strong>Results</strong> opens the full dashboard —
+          The intake is saved as you type. <strong>Results</strong> opens the full dashboard:
           per-category cards, cost breakdown, coverage matrix, gap analysis, the sizing worksheet
-          and the assumptions panel — off the same engine run as the figures above.
+          and the assumptions panel, off the same engine run as the figures above.
         </p>
       </Card>
     </div>

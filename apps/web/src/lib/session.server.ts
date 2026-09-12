@@ -24,16 +24,16 @@ const LOCAL_ANALYST: Analyst = { id: null, email: null, name: null };
 /**
  * Require a signed-in analyst, or redirect to sign-in.
  *
- * On a bare local install — no OAuth configured, which `pnpm dev` allows by
- * design — this returns the local identity rather than redirecting. That
+ * On a bare local install (no OAuth configured, which `pnpm dev` allows by
+ * design) this returns the local identity rather than redirecting. That
  * cannot happen in production: `auth.ts` refuses to start an unconfigured
  * production build at all, so there is no path where this quietly waves
  * somebody through on a hosted instance.
  */
 export async function requireAnalyst(): Promise<Analyst> {
   // Checked here, per request, rather than at module load. `next build` runs
-  // with NODE_ENV=production and no secrets — they are injected at runtime on
-  // every host worth using — so asserting at import time failed the build
+  // with NODE_ENV=production and no secrets, they are injected at runtime on
+  // every host worth using, so asserting at import time failed the build
   // instead of the deployment, which is the wrong thing to break.
   //
   // This also makes the guard unbypassable: it sits in the function every page

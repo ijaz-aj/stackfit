@@ -35,5 +35,5 @@ export const SizingOverrides = z
   .strict();
 export type SizingOverrides = z.infer<typeof SizingOverrides>;
 
-/** No overrides at all — the committed assumptions, unmodified. */
+/** No overrides at all. The committed assumptions, unmodified. */
 export const NO_SIZING_OVERRIDES: SizingOverrides = { eventsPerSecond: {} };

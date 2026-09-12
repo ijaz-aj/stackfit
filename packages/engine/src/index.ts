@@ -1,4 +1,4 @@
-// @stackfit/engine — the pure recommendation + costing engine.
+// @stackfit/engine. The pure recommendation + costing engine.
 //
 // Hard constraints (CONTRIBUTING.md): no React, no DB, no fetch, no fs, no Date.now(),
 // no randomness. The same input must always produce the same output.

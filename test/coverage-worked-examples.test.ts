@@ -89,7 +89,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
 
   it('leaves no unmet PCI mandate at all, now the catalog can fill every category', () => {
     // This assertion inverted during Phase 7 and that is the point of the
-    // phase. It used to name three critical gaps — requirements 1, 7 and 8 —
+    // phase. It used to name three critical gaps (requirements 1, 7 and 8)
     // because the catalog stocked no ngfw, iam or pam product to close them
     // with. It now names none: every PCI control a purchase could satisfy is
     // satisfied by the recommended bundle, at the same USD 25k/yr cap.
@@ -176,7 +176,7 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
 
   it('prices the fix list in money and in people, even when every fix is free', () => {
     // At USD 3,000/yr the bundle affords one EDR. The two products that would
-    // close the most gaps are OpenVAS and Wazuh — both zero-licence, and the
+    // close the most gaps are OpenVAS and Wazuh. Both zero-licence, and the
     // fix list still costs thousands a year and most of an engineer. That is
     // hard rule 8 carried into the gap analysis rather than solved once in the
     // cost stage and forgotten here.

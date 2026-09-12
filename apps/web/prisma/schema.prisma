@@ -14,7 +14,7 @@ datasource db {
 }
 
 /// One saved scoping session: the client profile plus the inventory it was
-/// sized from. Everything else — sizing, costs, bundles, coverage — is derived
+/// sized from. Everything else, sizing, costs, bundles, coverage, is derived
 /// by the engine on read, never stored, because a stored recommendation would
 /// go stale the moment a price or a coefficient changed.
 model Scenario {
@@ -25,7 +25,7 @@ model Scenario {
   ///
   /// Text rather than a Json column because Prisma has no Json scalar on
   /// SQLite and this schema has to run unchanged on Postgres. The validation
-  /// that matters happens in Zod either way — a Json column would only buy
+  /// that matters happens in Zod either way, a Json column would only buy
   /// database-side syntax checking of a blob the database never queries.
   profile String
 

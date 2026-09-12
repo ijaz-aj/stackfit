@@ -8,7 +8,7 @@ import { createStore } from 'zustand/vanilla';
 /**
  * Wizard state (PROJECT_SPEC §3: Zustand for wizard state).
  *
- * Holds the draft and nothing else — no derived numbers. Everything computed
+ * Holds the draft and nothing else. No derived numbers. Everything computed
  * that the wizard shows comes from the engine, so a figure on screen and a
  * figure in the proposal cannot disagree (CONTRIBUTING.md hard rule 4).
  *
@@ -75,8 +75,8 @@ export function createWizardStore(seed: WizardSeed): WizardStore {
      * `null` removes the line, which is not the same as a zero.
      *
      * An absent asset class means "not asked"; a captured zero means "asked,
-     * and there are none". Sizing relies on the difference — the privileged
-     * account count is estimated when absent and trusted when present — and the
+     * and there are none". Sizing relies on the difference, the privileged
+     * account count is estimated when absent and trusted when present, and the
      * wizard would quietly destroy it if clearing a box wrote a 0.
      */
     setAssetCount: (assetClass, count) =>
@@ -97,7 +97,7 @@ export function createWizardStore(seed: WizardSeed): WizardStore {
 
         const line = { ...existing, ...patch };
         // The inventory schema is strict, and `{ internetFacing: undefined }`
-        // is not the same as the key being absent — it fails to parse.
+        // is not the same as the key being absent. It fails to parse.
         if (line.criticality === undefined) delete line.criticality;
         if (line.internetFacing === undefined) delete line.internetFacing;
 
@@ -131,7 +131,8 @@ export function WizardStoreProvider({ seed, children }: { seed: WizardSeed; chil
 
 function useWizardStore(): WizardStore {
   const store = useContext(WizardContext);
-  if (store === null) throw new Error('wizard components must be rendered inside WizardStoreProvider');
+  if (store === null)
+    throw new Error('wizard components must be rendered inside WizardStoreProvider');
   return store;
 }
 

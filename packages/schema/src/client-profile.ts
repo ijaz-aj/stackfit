@@ -1,4 +1,4 @@
-// ClientProfile (PROJECT_SPEC §5.1) — everything the intake wizard collects
+// ClientProfile (PROJECT_SPEC §5.1). Everything the intake wizard collects
 // about the organisation, as opposed to its asset counts.
 
 import { z } from 'zod';
@@ -60,7 +60,7 @@ export const ClientProfile = z
     compliance: z.array(FrameworkId).default([]),
     budget: Budget,
     /**
-     * What the client runs today. A fact, captured on the call — not a wish.
+     * What the client runs today. A fact, captured on the call. Not a wish.
      * `not_asked` is the honest answer when it did not come up, and is the only
      * value that lets the estate's asset counts speak instead.
      */
@@ -71,7 +71,7 @@ export const ClientProfile = z
     /** Product ids they already own and will keep; scored for integration fit. */
     retainedTools: z.array(Slug).default([]),
     /**
-     * Product ids the analyst has ruled out for this client — an incumbent
+     * Product ids the analyst has ruled out for this client. An incumbent
      * relationship gone bad, a failed PoC, a vendor the board will not approve.
      * A §7.3 hard filter.
      *
@@ -87,7 +87,7 @@ export const ClientProfile = z
  * Scoping sessions saved before the environment split still parse.
  *
  * They carry `deploymentPreference`, where `hybrid` *meant* "no strong
- * preference" — that was the wizard's own wording for it. Mapping it to
+ * preference". That was the wizard's own wording for it. Mapping it to
  * `hybrid` would silently change what those clients said, so it maps to
  * `not_asked`, which is what it actually meant. The other three values carried
  * their plain meaning and are kept.
@@ -108,8 +108,8 @@ export type ClientProfile = z.infer<typeof ClientProfile>;
 /**
  * `ClientProfile`, but tolerant of the pre-split shape.
  *
- * Used only where a *persisted* profile is read back. Everything else — the
- * wizard, the presets, the engine — speaks the current shape, so the migration
+ * Used only where a *persisted* profile is read back. Everything else (the
+ * wizard, the presets, the engine) speaks the current shape, so the migration
  * lives at the one boundary that can encounter an old one rather than being
  * spread across every parse in the repo.
  */
@@ -123,9 +123,7 @@ export const StoredClientProfile = z.preprocess((value) => {
   // An unrecognised legacy value is left to fail validation rather than being
   // guessed at: a profile nobody can read is safer than one silently invented.
   const migrated =
-    typeof deploymentPreference === 'string'
-      ? LEGACY_ENVIRONMENT[deploymentPreference]
-      : undefined;
+    typeof deploymentPreference === 'string' ? LEGACY_ENVIRONMENT[deploymentPreference] : undefined;
 
   return migrated === undefined ? rest : { ...rest, environment: migrated };
 }, ClientProfile);

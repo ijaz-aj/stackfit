@@ -192,7 +192,7 @@ function assetCoverage(
     const deviceClass = weights.assetClassDeviceClass[assetClass];
     if (deviceClass === undefined || !remitClasses.has(deviceClass)) continue;
 
-    // Weighted units, not raw counts — the same measure the infrastructure
+    // Weighted units, not raw counts. The same measure the infrastructure
     // stage uses, so a domain controller is not one mailbox.
     const units = count * (categoryWeights.surfaceUnits[assetClass]?.weight ?? 1);
 
@@ -200,7 +200,7 @@ function assetCoverage(
     if (supported.has(deviceClass)) {
       covered += units;
       // Raw counts alongside the weighted units: the units are what the score
-      // is computed from, and the counts are what you say out loud — "covers 38
+      // is computed from, and the counts are what you say out loud: "covers 38
       // Windows servers and 40 POS terminals" (§8.2).
       coveredAssets.push({ assetClass, count });
     } else {
@@ -244,7 +244,7 @@ function complianceCoverage(
 /**
  * How each estate shape reads in a sentence.
  *
- * The enum value is StackFit's vocabulary, not English — `on_prem_centric` with
+ * The enum value is StackFit's vocabulary, not English: `on_prem_centric` with
  * its underscores swapped produces "a on prem centric estate". These strings are
  * wording rather than a tunable assumption, so they stay in code; nothing here
  * changes a number.
@@ -264,7 +264,7 @@ function modeName(mode: DeploymentMode): string {
 }
 
 /**
- * Deployment fit (§7.3), from the environment the client runs — or, when nobody
+ * Deployment fit (§7.3), from the environment the client runs: or, when nobody
  * asked, from what their asset counts imply.
  *
  * The environment is a fact, so it is honoured rather than second-guessed. A
@@ -333,7 +333,8 @@ function deploymentFit(
       score: policy.statedMismatch,
       note:
         `Deploys as ${deploysAs}, against the ${modeName(environment)} environment the client ` +
-        'runs. Workable — delivery is not the same question as where their assets live — but ' +
+        'runs. That is workable, since delivery is not the same question as where their assets ' +
+        'live, but ' +
         'not the shape of their estate.',
     };
   }
@@ -366,7 +367,7 @@ function deploymentFit(
   }
   return {
     score: policy.inferredMismatch,
-    note: `The environment was not asked, and ${ESTATE_PHRASE[estateShape]} points at ${prefers.map(modeName).join(' or ')} rather than ${deploysAs}. Marked down, not ruled out — this is StackFit reading the asset counts, not something the client said.`,
+    note: `The environment was not asked, and ${ESTATE_PHRASE[estateShape]} points at ${prefers.map(modeName).join(' or ')} rather than ${deploysAs}. Marked down, not ruled out: this is StackFit reading the asset counts, not something the client said.`,
   };
 }
 
@@ -420,7 +421,7 @@ function opsFit(
   const policy = weights.opsFit;
 
   if (profile.securityStaffFte === 0) {
-    // No security staff is not "every tool is equally bad" — it is the case
+    // No security staff is not "every tool is equally bad". It is the case
     // where how much running a tool costs matters most. A managed service
     // needing almost no client-side effort is the right answer here, and a
     // self-hosted platform needing half an engineer is not, so the score has to
@@ -476,7 +477,7 @@ function opsFit(
  *
  * In particular the client's `environment` never eliminates on its own, except
  * when it is `air_gapped`: a SaaS product in an air-gapped site cannot work at
- * all, whereas a cloud-delivered product for an on-premises estate works fine —
+ * all, whereas a cloud-delivered product for an on-premises estate works fine:
  * delivery is not the same question as where the assets live. That is a score,
  * not a filter.
  *
@@ -528,13 +529,13 @@ export function hardFilter(product: Product, inputs: ScoringInputs): string[] {
   const client = order.indexOf(sizing.scaleClass);
   if (client < order.indexOf(product.supports.scaleFloor)) {
     reasons.push(
-      `A ${sizing.scaleClass} environment is below this product's ${product.supports.scaleFloor} floor — ` +
+      `A ${sizing.scaleClass} environment is below this product's ${product.supports.scaleFloor} floor, so ` +
         'it is built for larger estates and would be overweight here.',
     );
   }
   if (client > order.indexOf(product.supports.scaleCeiling)) {
     reasons.push(
-      `A ${sizing.scaleClass} environment is above this product's ${product.supports.scaleCeiling} ceiling — ` +
+      `A ${sizing.scaleClass} environment is above this product's ${product.supports.scaleCeiling} ceiling, so ` +
         'it would not carry this estate.',
     );
   }
@@ -582,13 +583,13 @@ function unitsForCap(unit: TierCapUnit, sizing: SizingResult, profile: ClientPro
 /**
  * Pass 1, per tier: the conditions attached to a SKU rather than to a product.
  *
- * A cap or an unmet prerequisite eliminates the tier and only that tier — the
+ * A cap or an unmet prerequisite eliminates the tier and only that tier. The
  * same product's other tiers are scored independently, which is the whole point
  * of catalogue entries like Duo, where Free is capped at ten users and
  * Essentials is not.
  *
- * Allowances never eliminate. They are the limits this engine cannot measure —
- * live workflows, monthly executions — and pretending otherwise would be worse
+ * Allowances never eliminate. They are the limits this engine cannot measure
+ * (live workflows, monthly executions) and pretending otherwise would be worse
  * than carrying them as a note.
  */
 export function tierLimitReasons(
@@ -621,7 +622,7 @@ export function tierLimitReasons(
       reasons.push(
         `${skuName(product.name, tier.name)} requires ${prerequisite.description}, which this ` +
           `client is ` +
-          `not recorded as holding. Add it to retainedTools if they do — otherwise this tier is ` +
+          `not recorded as holding. Add it to retainedTools if they do. Otherwise this tier is ` +
           `not available to them at its stated price.`,
       );
     }
@@ -740,7 +741,7 @@ export function scoreProduct(
   }
 
   // Allowances are the limits this engine cannot measure, so they cannot be
-  // scored or filtered — but a tier that survived scoring while carrying one is
+  // scored or filtered, but a tier that survived scoring while carrying one is
   // exactly where an analyst needs to see it, not buried in the catalog notes.
   for (const allowance of tier.limits?.allowances ?? []) {
     rationale.push(`⚠ Tier allowance, not checked by StackFit: ${allowance}`);
@@ -771,9 +772,9 @@ export function scoreProduct(
  * is quoting.
  *
  * An eliminated product appears exactly once, not once per tier. Every hard
- * filter in §7.3 tests the product — the analyst excluded it, it cannot run
+ * filter in §7.3 tests the product (the analyst excluded it, it cannot run
  * air-gapped, it is outside the scale band, it reaches none of the assets its
- * category exists for — and none of those change with what you pay. Repeating
+ * category exists for) and none of those change with what you pay. Repeating
  * one reason per SKU would pad "why was X ruled out" with the same sentence
  * three times.
  *
@@ -806,7 +807,7 @@ export function scoreProducts(
 /**
  * Surviving SKUs for one category, best first. Ties break on catalog order, so
  * the cheaper tier of a product that scores identically at both is listed
- * first — a tie on fit is decided by price later, and this keeps the order
+ * first. A tie on fit is decided by price later, and this keeps the order
  * stable rather than arbitrary.
  */
 export function rankWithinCategory(

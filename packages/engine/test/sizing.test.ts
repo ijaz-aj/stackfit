@@ -6,7 +6,7 @@ import { buildClientProfile, buildSizingAssumptions } from './fixtures';
 
 const profile = buildClientProfile();
 
-describe('computeSizing — the §7.1 formulas', () => {
+describe('computeSizing: the §7.1 formulas', () => {
   // 10 servers × 1 EPS × verbosity 1 = 10 EPS.
   // GB/day  = 10 × 86,400 × 1,000 / 1e9              = 0.864
   // Licensed = 0.864 × peakFactor 2                  = 1.728
@@ -50,7 +50,7 @@ describe('computeSizing — the §7.1 formulas', () => {
   });
 });
 
-describe('computeSizing — verbosity', () => {
+describe('computeSizing: verbosity', () => {
   const assumptions = buildSizingAssumptions({ windowsServers: { eventsPerSecond: 2 } });
   const base: AssetInventory = { windowsServers: { count: 100 }, networkVendors: [] };
 
@@ -71,7 +71,7 @@ describe('computeSizing — verbosity', () => {
   });
 });
 
-describe('computeSizing — retention is driven by compliance', () => {
+describe('computeSizing: retention is driven by compliance', () => {
   const assumptions = buildSizingAssumptions({ linuxServers: { eventsPerSecond: 1 } });
   const inventory: AssetInventory = { linuxServers: { count: 10 }, networkVendors: [] };
 
@@ -115,7 +115,7 @@ describe('computeSizing — retention is driven by compliance', () => {
   });
 });
 
-describe('computeSizing — headline counts', () => {
+describe('computeSizing: headline counts', () => {
   const assumptions = buildSizingAssumptions({
     windowsEndpoints: { eventsPerSecond: 0.2, role: 'endpoint', monitored: true },
     windowsServers: { eventsPerSecond: 2, role: 'server', monitored: true },
@@ -152,7 +152,7 @@ describe('computeSizing — headline counts', () => {
   });
 });
 
-describe('computeSizing — privileged accounts', () => {
+describe('computeSizing: privileged accounts', () => {
   const assumptions = buildSizingAssumptions({ linuxServers: { eventsPerSecond: 1 } });
   const inventory: AssetInventory = { linuxServers: { count: 10 }, networkVendors: [] };
 
@@ -163,7 +163,7 @@ describe('computeSizing — privileged accounts', () => {
     expect(result.rationale.join('\n')).toContain('Confirm before sizing PAM');
   });
 
-  it('rounds an estimate up — a fractional admin account is not a thing', () => {
+  it('rounds an estimate up: a fractional admin account is not a thing', () => {
     const assumptionsOdd = buildSizingAssumptions(
       { linuxServers: { eventsPerSecond: 1 } },
       { privilegedAccountsPerItStaff: 2.5 },
@@ -197,7 +197,7 @@ describe('computeSizing — privileged accounts', () => {
   });
 });
 
-describe('computeSizing — scale class', () => {
+describe('computeSizing: scale class', () => {
   const assumptions = buildSizingAssumptions({
     windowsEndpoints: { eventsPerSecond: 0.2, role: 'endpoint', monitored: true },
   });
@@ -219,7 +219,7 @@ describe('computeSizing — scale class', () => {
   });
 });
 
-describe('computeSizing — empty inventory', () => {
+describe('computeSizing: empty inventory', () => {
   it('returns zeroes and says the inventory is empty, not that the client is small', () => {
     const result = computeSizing({ networkVendors: [] }, profile, buildSizingAssumptions());
 

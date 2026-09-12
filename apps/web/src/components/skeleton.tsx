@@ -3,8 +3,8 @@ import { cn } from '@/lib/cn';
 /**
  * Loading placeholders.
  *
- * Not decoration. A results page runs the whole pipeline — sizing, costing,
- * scoring, portfolio, coverage — against a 65-product catalog, and measured
+ * Not decoration. A results page runs the whole pipeline (sizing, costing,
+ * scoring, portfolio, coverage) against a 65-product catalog, and measured
  * between 1.4 and 5.6 seconds. Until now it rendered nothing at all for that
  * time: the browser sat on the previous page, then the new one appeared whole.
  * A click with no acknowledgement for five seconds is the single worst

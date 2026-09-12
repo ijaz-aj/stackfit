@@ -1,4 +1,4 @@
-# NIST Cybersecurity Framework 2.0 — the 22 Categories of the CSF Core.
+# NIST Cybersecurity Framework 2.0. The 22 Categories of the CSF Core.
 #
 # Controls are held at Category level, not Subcategory. Categories are the
 # granularity at which a product category ("a SIEM") is a meaningful answer;
@@ -33,11 +33,11 @@ notes: >-
   That workbook is the "with withdrawn CSF 1.1 elements" edition, so it also
   contains ID.BE, ID.GV, ID.RM, ID.SC, PR.AC, PR.IP, PR.MA, PR.PT, DE.DP,
   RS.RP, RS.IM and RC.IM. Those are withdrawn 1.1 categories and are correctly
-  absent here — if a future diff shows them as missing, that is the reason.
+  absent here. If a future diff shows them as missing, that is the reason.
 
 groups:
   # The six CSF 2.0 Functions, in the published order. Every Category id below
-  # is `<Function>.<Category>`, which is NIST's own identifier scheme — the
+  # is `<Function>.<Category>`, which is NIST's own identifier scheme. The
   # grouping is restated here rather than parsed out of the id, because
   # coverage.ts rolls up against it and a structural claim should be declared.
   - id: GV

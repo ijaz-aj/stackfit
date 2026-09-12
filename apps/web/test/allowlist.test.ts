@@ -86,7 +86,9 @@ describe('deciding who may sign in', () => {
     // "everyone" would turn one typo in a hosting dashboard into a full data
     // exposure that looked, from the outside, like everything working.
     for (const email of ['analyst@example.com', 'anyone@anywhere.tld', '', null, undefined]) {
-      expect(isAllowed(email, []), `${String(email)} got in through an empty allowlist`).toBe(false);
+      expect(isAllowed(email, []), `${String(email)} got in through an empty allowlist`).toBe(
+        false,
+      );
     }
   });
 });

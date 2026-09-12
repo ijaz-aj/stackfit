@@ -3,7 +3,7 @@
 # ⚠ Every number here is an analyst estimate from common industry rules of
 # thumb, not a measured figure from a specific environment. They are the
 # defaults an analyst starts from and then overrides in the advanced-sizing
-# panel. They will be wrong for some clients — that is expected, and is why
+# panel. They will be wrong for some clients. That is expected, and is why
 # they live in data/config/ rather than in the engine.
 #
 # `basis` on each asset class is mandatory: a coefficient with no stated
@@ -30,18 +30,18 @@ retention:
     # Only frameworks that state an explicit log-retention period are listed.
     # The longest applicable one wins. A framework that requires logging without
     # naming a duration is deliberately absent rather than given a guessed
-    # number — sizing storage on an invented retention period would be exactly
+    # number: sizing storage on an invented retention period would be exactly
     # the fabrication hard rule 2 forbids.
     pci-dss-4.0: 365 # Requirement 10 mandates 12 months, with 3 months immediately available.
     cert-in: 180 # 2022 Directions: rolling 180 days of ICT logs, stored within India.
     #
     # Deliberately NOT listed, and why:
-    #   hipaa      — 164.316(b)(2)(i)'s 6-year rule covers policies and
+    #   hipaa     : 164.316(b)(2)(i)'s 6-year rule covers policies and
     #                documentation, not audit logs. Six years is common practice
     #                for logs but is not what the regulation says.
-    #   gdpr/nis2/ — require logging, monitoring or breach detection without
+    #   gdpr/nis2/: require logging, monitoring or breach detection without
     #   dpdp-2023    naming a retention period. The 90-day default applies.
-    #   rbi-csf    — Annex 1 could not be read (see the framework file), so no
+    #   rbi-csf   : Annex 1 could not be read (see the framework file), so no
     #                retention figure is asserted.
 
 scaleClassThresholds:
@@ -96,7 +96,7 @@ assetClasses:
     eventsPerSecond: 3.0
     role: server
     monitored: true
-    basis: Kubernetes node — API audit plus aggregated container stdout.
+    basis: Kubernetes node, from API audit plus aggregated container stdout.
   fileServers:
     eventsPerSecond: 5.0
     role: server
@@ -178,7 +178,7 @@ assetClasses:
     monitored: false
     basis: >-
       CloudTrail management events per account. Not counted as a monitored
-      asset — an account is a log source, not something an agent licences.
+      asset. An account is a log source, not something an agent licences.
   azureSubscriptions:
     eventsPerSecond: 5.0
     role: cloud

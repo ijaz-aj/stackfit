@@ -1,7 +1,7 @@
 // How stale is this price?
 //
 // The engine may not call Date.now() (CONTRIBUTING.md), so `today` is passed in. That
-// is not a workaround — it is what makes "what did this scenario look like when
+// is not a workaround. It is what makes "what did this scenario look like when
 // we quoted it in March" answerable, and it is why the determinism test can
 // assert a byte-identical result.
 
@@ -49,7 +49,7 @@ function fromEpochDays(days: number): IsoDate {
   return iso.slice(0, 10);
 }
 
-/** The latest date among a set of sources — the freshest evidence they carry. */
+/** The latest date among a set of sources. The freshest evidence they carry. */
 function newestSourceDate(sources: readonly { asOf: IsoDate }[]): IsoDate | undefined {
   let newest: IsoDate | undefined;
   for (const source of sources) {
@@ -64,7 +64,7 @@ function newestSourceDate(sources: readonly { asOf: IsoDate }[]): IsoDate | unde
  * A catalog `PricingRule` is the usual one, but the MSSP rate card and the FX
  * table are prices too, and they go stale in exactly the same way. Before this
  * existed, only catalog prices were checked and the config-level ones rotted
- * silently — which is the failure hard rule 9 exists to prevent.
+ * silently, which is the failure hard rule 9 exists to prevent.
  */
 export interface DatedPrice {
   readonly pricingConfidence: PricingConfidence;
@@ -142,7 +142,7 @@ const STATUS_SEVERITY: Readonly<Record<FreshnessStatus, number>> = {
   unknown: 3,
 };
 
-/** The worst verdict across a tier's pricing rules — a tier is only as fresh as its stalest price. */
+/** The worst verdict across a tier's pricing rules. A tier is only as fresh as its stalest price. */
 export function assessTierFreshness(
   tier: ProductTier,
   today: IsoDate,

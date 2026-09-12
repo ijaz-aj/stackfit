@@ -61,7 +61,7 @@ export type DeploymentMode = z.infer<typeof DeploymentMode>;
  * What the client actually runs. A fact about their estate, not a preference.
  *
  * This used to be `deploymentPreference: DeploymentMode`, where `hybrid` was
- * quietly overloaded to mean "no strong preference" — so a client who genuinely
+ * quietly overloaded to mean "no strong preference", so a client who genuinely
  * runs both had no way to say so, was scored by inference from asset counts
  * instead of by what they said, and was told in writing that "no preference was
  * stated". Splitting the two apart is the fix: `hybrid` now means both, and the
@@ -83,7 +83,7 @@ export type ClientEnvironment = z.infer<typeof ClientEnvironment>;
  * Separate from the environment because they answer different questions. Where
  * a client's assets live decides which tools *fit*; what delivery their policy
  * permits decides which are *eligible*. A SaaS-delivered EDR manages on-premises
- * endpoints perfectly well, so an on-prem estate must not eliminate it — but a
+ * endpoints perfectly well, so an on-prem estate must not eliminate it, but a
  * data-residency rule forbidding SaaS genuinely does.
  */
 export const DeploymentConstraint = z.enum([
@@ -207,7 +207,7 @@ export const PricingConfidence = z.enum([
 export type PricingConfidence = z.infer<typeof PricingConfidence>;
 
 /**
- * How well an effort figure is grounded — the ops-burden and implementation
+ * How well an effort figure is grounded. The ops-burden and implementation
  * analogue of `PricingConfidence`.
  *
  * A staffing estimate decides whether open source looks cheap or expensive

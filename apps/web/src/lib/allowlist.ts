@@ -33,12 +33,12 @@ export function parseAllowlist(raw: string | undefined): readonly string[] {
  * **An empty allowlist admits nobody.** That is the whole design: a missing or
  * misspelled environment variable is a configuration failure, and the safe
  * reading of a configuration failure in an access check is "no". The
- * alternative — treating "no list" as "everyone" — turns one typo in a hosting
+ * alternative, treating "no list" as "everyone", turns one typo in a hosting
  * dashboard into a full data exposure, and it would fail silently, because
  * everything would appear to work.
  *
  * Comparison is case-insensitive on the whole address. That is not strictly
- * correct — the local part of an email address is case-sensitive per RFC 5321 —
+ * correct, the local part of an email address is case-sensitive per RFC 5321,
  * but every provider this portal accepts normalises case, and an analyst typing
  * their own address with a capital letter is far more likely than two
  * colleagues whose addresses differ only in case.
@@ -56,8 +56,8 @@ export function isAllowed(email: string | null | undefined, allowlist: readonly 
 /**
  * Whether authentication is configured at all.
  *
- * Zero setup is a documented property of this repo — `pnpm dev` works with no
- * `.env` file — and demanding OAuth credentials to run the tests or open the
+ * Zero setup is a documented property of this repo, `pnpm dev` works with no
+ * `.env` file, and demanding OAuth credentials to run the tests or open the
  * app locally would end that. So an unconfigured install runs in single-user
  * local mode.
  *
@@ -79,8 +79,8 @@ export function isAuthConfigured(env: Record<string, string | undefined>): boole
  * Refuse to run a hosted instance with the door open.
  *
  * Throws rather than warns. A warning in a deployment log is read by nobody,
- * and the failure it describes — a shared portal holding prospective clients'
- * asset inventories, reachable by anyone with the URL — is not one to leave
+ * and the failure it describes (a shared portal holding prospective clients'
+ * asset inventories, reachable by anyone with the URL) is not one to leave
  * running while somebody notices.
  */
 export function assertAuthConfiguredInProduction(env: Record<string, string | undefined>): void {
@@ -89,8 +89,8 @@ export function assertAuthConfiguredInProduction(env: Record<string, string | un
 
   throw new Error(
     'Refusing to start: authentication is not configured. This build is production, and an ' +
-      'unauthenticated instance would expose every saved scoping session — including client ' +
-      'asset inventories — to anyone with the URL. Set NEXTAUTH_SECRET, at least one OAuth ' +
+      'unauthenticated instance would expose every saved scoping session, including client ' +
+      'asset inventories, to anyone with the URL. Set NEXTAUTH_SECRET, at least one OAuth ' +
       'provider (GOOGLE_CLIENT_ID/SECRET or GITHUB_CLIENT_ID/SECRET), and a non-empty ' +
       'STACKFIT_ALLOWED_EMAILS.',
   );

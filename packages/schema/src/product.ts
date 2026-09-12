@@ -31,7 +31,7 @@ const FRAMEWORK_ID_ALTERNATION = FrameworkId.options
 /**
  * A control id namespaced by its framework, e.g. `nist-csf-2.0:DE.CM` or
  * `pci-dss-4.0:10`. `pnpm catalog:validate` additionally checks that the
- * control actually exists in data/frameworks — hard rule 2 covers invented
+ * control actually exists in data/frameworks: hard rule 2 covers invented
  * compliance mappings, not just invented prices.
  */
 export const ControlId = z
@@ -45,7 +45,7 @@ export type ControlId = z.infer<typeof ControlId>;
 /**
  * What a tier's cap counts. Every member maps to a figure the sizing stage
  * already produces, because a cap the engine cannot measure is a cap it cannot
- * enforce — and an unenforceable cap belongs in `allowances`, not here.
+ * enforce, and an unenforceable cap belongs in `allowances`, not here.
  */
 export const TierCapUnit = z.enum([
   'users',
@@ -70,7 +70,7 @@ export type TierCap = z.infer<typeof TierCap>;
 
 /**
  * Something the client must already hold for this tier to exist at its stated
- * price — the shape of Microsoft's free Entra ID tier, which is only free
+ * price. The shape of Microsoft's free Entra ID tier, which is only free
  * inside a subscription they are already paying for.
  *
  * Unmet by default and deliberately so. A prerequisite nobody has confirmed is
@@ -96,8 +96,8 @@ export type TierPrerequisite = z.infer<typeof TierPrerequisite>;
 /**
  * The conditions attached to a tier beyond its price.
  *
- * Phase 7 hit seven of these in one pass — user caps, mailbox caps, asset
- * caps, workflow caps, metered executions, prerequisite subscriptions — and
+ * Phase 7 hit seven of these in one pass (user caps, mailbox caps, asset
+ * caps, workflow caps, metered executions, prerequisite subscriptions) and
  * had nowhere to put any of them. Four were approximated by pinning
  * `scaleCeiling` to `small`, which is wrong in both directions, and two tiers
  * were left out of the catalog entirely because a zero-cost tier with an
@@ -105,11 +105,11 @@ export type TierPrerequisite = z.infer<typeof TierPrerequisite>;
  *
  * Three kinds, because the three behave differently:
  *
- *   caps          — measurable against the sizing stage, so enforced. Over the
+ *   caps         : measurable against the sizing stage, so enforced. Over the
  *                   cap the tier is eliminated with a stated reason.
- *   prerequisites — measurable against `retainedTools`, so enforced the same
+ *   prerequisites: measurable against `retainedTools`, so enforced the same
  *                   way, and unmet unless the analyst says otherwise.
- *   allowances    — genuinely unmeasurable here (live workflows, monthly
+ *   allowances   : genuinely unmeasurable here (live workflows, monthly
  *                   executions). Never enforced; carried into the tier's
  *                   scoring rationale so an analyst sees it instead of it
  *                   living only in prose nobody reads.
@@ -130,7 +130,7 @@ export const TierLimits = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:
-          'an empty limits block says nothing — omit the field entirely rather than declaring no limits',
+          'an empty limits block says nothing: omit the field entirely rather than declaring no limits',
       });
     }
 
@@ -140,7 +140,7 @@ export const TierLimits = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['caps', index, 'unit'],
-          message: `two caps on "${cap.unit}" — the tighter one is the only one that can bite`,
+          message: `two caps on "${cap.unit}": the tighter one is the only one that can bite`,
         });
       }
       seen.add(cap.unit);
@@ -163,7 +163,7 @@ export const ProductTier = z
      *
      * Capabilities are sold by tier and control claims were not, so a product
      * whose cheapest tier was selected could be credited with a control only
-     * its top tier delivers — Defender Plan 1 was being credited with CIS 7
+     * its top tier delivers: Defender Plan 1 was being credited with CIS 7
      * continuous vulnerability management while the same entry's own tier list
      * put that in Plan 2.
      *
@@ -191,7 +191,7 @@ export const ProductSupport = z
     deploymentModes: z.array(DeploymentMode).min(1),
     /**
      * Scale band this product is sensible in. Scoring hard-filters anything
-     * whose environment falls outside it (§7.3) — an enterprise SIEM aimed at a
+     * whose environment falls outside it (§7.3). An enterprise SIEM aimed at a
      * 20-person shop is as wrong an answer as an under-powered one.
      */
     scaleFloor: ScaleClass,
@@ -257,7 +257,7 @@ export const Implementation = z
     /** Professional-services days to stand it up. */
     effortDays: z.number().nonnegative().max(500),
     skillLevel: SkillLevel,
-    /** Elapsed calendar weeks, which is not effortDays/5 — it includes waiting. */
+    /** Elapsed calendar weeks, which is not effortDays/5. It includes waiting. */
     typicalWeeks: z.number().nonnegative().max(104),
     /**
      * Graded separately from `opsBurden.confidence`: a vendor that publishes a

@@ -24,7 +24,7 @@ function roundHalfAwayFromZero(value: number): number {
 
 export function addMoney(a: Money, b: Money): Money {
   if (a.currency !== b.currency) {
-    throw new Error(`cannot add ${a.currency} to ${b.currency} — convert first`);
+    throw new Error(`cannot add ${a.currency} to ${b.currency}: convert first`);
   }
   return { amountMinor: a.amountMinor + b.amountMinor, currency: a.currency };
 }
@@ -38,7 +38,7 @@ export function subtractMoney(a: Money, b: Money): Money {
 }
 
 /**
- * Multiplies by a real-valued factor — a unit count, a rate, a discount. The
+ * Multiplies by a real-valued factor. A unit count, a rate, a discount. The
  * result is rounded to whole minor units, because a third of a paisa is not a
  * thing anyone can invoice.
  */
@@ -114,13 +114,13 @@ export function isIdentityBaseRate(fx: FxConfig): boolean {
  *
  * It must look like the rest of the interface. The first version wrote
  * "USD 2,604" on the reasoning that an engine figure should be visibly an
- * engine figure — and it landed in a card next to "$411,903", the same currency
+ * engine figure, and it landed in a card next to "$411,903", the same currency
  * in two notations, which reads as two different currencies. Nobody reading a
  * proposal should have to work out whether those are the same money.
  *
  * So: the same `Intl` call the render boundary makes, with the same fixed
  * locale. Fixed rather than the reader's, because the engine may not vary its
- * output by environment — two people opening one scenario must see one
+ * output by environment. Two people opening one scenario must see one
  * sentence.
  */
 const PROSE_LOCALE: Readonly<Record<string, string>> = {

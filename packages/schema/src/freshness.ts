@@ -20,7 +20,7 @@ import { PricingConfidence } from './enums';
  * `azure_retail_prices` is machine-refreshable: Microsoft publishes an
  * unauthenticated retail price feed keyed by a stable meter id, so
  * `pnpm prices:refresh` can re-read it and report drift without a human.
- * Everything else is `manual` — a URL for a person to open. Being explicit
+ * Everything else is `manual`. A URL for a person to open. Being explicit
  * about which is which is the point: it makes the manual backlog visible
  * instead of letting it hide behind the automated majority.
  */

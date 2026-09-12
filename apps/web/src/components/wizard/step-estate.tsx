@@ -31,7 +31,7 @@ function AssetRow({ assetClass }: { assetClass: AssetClass }) {
         id={assetClass}
         min={0}
         value={line?.count ?? ''}
-        placeholder="—"
+        placeholder="–"
         onChange={(event) => {
           const raw = event.target.value;
           setAssetCount(assetClass, raw === '' ? null : Math.max(0, Number(raw) || 0));
@@ -45,7 +45,7 @@ function AssetRow({ assetClass }: { assetClass: AssetClass }) {
             className="h-6 w-auto py-0 text-xs"
             value={line.criticality ?? ''}
             options={[
-              { value: '', label: 'criticality —' },
+              { value: '', label: 'criticality' },
               ...AssetCriticality.options.map((value) => ({ value, label: humanise(value) })),
             ]}
             onChange={(event) =>
@@ -88,7 +88,7 @@ export function StepEstate() {
     <div className="flex flex-col gap-4">
       <Card
         title="Estate"
-        hint="Counts drive every number downstream. Leave a row blank if it did not come up — blank means not asked, 0 means asked and none."
+        hint="Counts drive every number downstream. Leave a row blank if it did not come up. Blank means not asked, 0 means asked and none."
       >
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Badge tone={lineCount === 0 ? 'warn' : 'accent'}>{lineCount} classes captured</Badge>
@@ -101,8 +101,8 @@ export function StepEstate() {
         {/*
           Columns that flow, not a grid.
 
-          These groups are wildly different lengths — Endpoints has three rows,
-          Network has eight — and a two-column *grid* aligns them in rows, so a
+          These groups are wildly different lengths (Endpoints has three rows,
+          Network has eight) and a two-column *grid* aligns them in rows, so a
           short group beside a tall one leaves a hole the height of the
           difference. On this step that was most of a screen of empty space
           next to the Servers column.

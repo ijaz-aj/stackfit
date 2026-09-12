@@ -22,7 +22,16 @@ function niceTicks(maxMinor: number, count: number): number[] {
   const raw = maxMinor / (count - 1);
   const magnitude = 10 ** Math.floor(Math.log10(raw));
   const normalised = raw / magnitude;
-  const step = (normalised <= 1 ? 1 : normalised <= 2 ? 2 : normalised <= 2.5 ? 2.5 : normalised <= 5 ? 5 : 10) * magnitude;
+  const step =
+    (normalised <= 1
+      ? 1
+      : normalised <= 2
+        ? 2
+        : normalised <= 2.5
+          ? 2.5
+          : normalised <= 5
+            ? 5
+            : 10) * magnitude;
   return Array.from({ length: count }, (_, index) => index * step);
 }
 
@@ -59,7 +68,11 @@ describe('formatMoney', () => {
     // can actually produce across four decades of magnitude.
     const collisions: string[] = [];
 
-    for (let maxMinor = 100_000; maxMinor <= 500_000_000_000; maxMinor = Math.ceil(maxMinor * 1.07)) {
+    for (
+      let maxMinor = 100_000;
+      maxMinor <= 500_000_000_000;
+      maxMinor = Math.ceil(maxMinor * 1.07)
+    ) {
       for (const count of [4, 5, 6, 7]) {
         const labels = niceTicks(maxMinor, count).map((minor) =>
           formatMoney(usd(minor), { compact: true }),
@@ -92,7 +105,7 @@ describe('each currency in its own reading convention', () => {
   // ₹2,03,89,840. The common case was rendered in the foreign convention.
   it('groups rupees in lakh and crore', () => {
     // 2,038,984,000 minor = ₹20,389,840, which an Indian reader writes
-    // ₹2,03,89,840 — two crore, three lakh, eighty-nine thousand.
+    // ₹2,03,89,840, two crore, three lakh, eighty-nine thousand.
     expect(formatMoney({ amountMinor: 2_038_984_000, currency: 'INR' })).toBe('₹2,03,89,840');
     expect(formatMoney({ amountMinor: 203_898_400, currency: 'INR' })).toBe('₹20,38,984');
   });

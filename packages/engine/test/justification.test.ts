@@ -251,11 +251,11 @@ describe('a verdict never says something a reader can disprove', () => {
 describe('tiers of one product', () => {
   // Tiers differ in what they licence, not in how well they fit an estate, so
   // they score identically far more often than not. Running each through the
-  // normal comparison produced rows of literally identical text — the
+  // normal comparison produced rows of literally identical text, the
   // email-security table carried seven of them, all reading "Scores 97.7
-  // against 100 — widest gap on scale fit, 2.3 points."
+  // against 100, widest gap on scale fit, 2.3 points."
   /**
-   * One product, three tiers, identical fit and rising price — the shape that
+   * One product, three tiers, identical fit and rising price, the shape that
    * produced seven identical rows. `buildProduct` ships a single tier, so the
    * tier list is replaced rather than passed as an override.
    */

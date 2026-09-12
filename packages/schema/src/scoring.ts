@@ -115,7 +115,7 @@ export type OpsFitPolicy = z.infer<typeof OpsFitPolicy>;
 export const EstateDeploymentAffinity = z
   .object({
     shape: EstateShape,
-    /** Empty means "nothing can be inferred from this shape" — scored neutral. */
+    /** Empty means "nothing can be inferred from this shape": scored neutral. */
     prefers: z.array(DeploymentMode).default([]),
     basis: z.string().min(1),
   })
@@ -126,14 +126,14 @@ export type EstateDeploymentAffinity = z.infer<typeof EstateDeploymentAffinity>;
  * How deployment fit is scored (§7.3).
  *
  * The client's environment is a fact they stated, so a product that cannot be
- * delivered into it is genuinely not what they can buy. Only `not_asked` — the
- * question never came up — falls back to reading the estate's asset counts, and
+ * delivered into it is genuinely not what they can buy. Only `not_asked`, the
+ * question never came up, falls back to reading the estate's asset counts, and
  * that weaker signal gets the gentler `inferred*` bands so a guess tilts a
  * ranking without overturning it.
  *
  * Two historical mistakes this encodes against. First, `hybrid` used to mean
  * "no strong preference", so every cloud-only and on-prem-only product scored 30
- * out of 100 for a client who had demanded nothing — marking down precisely the
+ * out of 100 for a client who had demanded nothing: marking down precisely the
  * products that suited their estate. Second, once that was patched, a client who
  * genuinely ran both still had their answer discarded and inferred from asset
  * counts instead, and was told so in writing on a client-facing page.
@@ -152,7 +152,7 @@ export const DeploymentFitPolicy = z
      * Not a mismatch: a cloud-only SIEM still ingests from on-premises, and an
      * on-premises one still pulls from cloud. It serves the half it targets
      * natively and the other half through a longer path, which is a real fit
-     * and not the whole answer — so it sits between a match and a miss.
+     * and not the whole answer, so it sits between a match and a miss.
      */
     statedSingleModeInHybrid: z.number().min(0).max(100),
     /** The product suits the estate the client actually runs. */

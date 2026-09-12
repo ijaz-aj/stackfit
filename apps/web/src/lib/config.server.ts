@@ -17,14 +17,20 @@ import {
   loadSizingAssumptions,
 } from '@stackfit/data';
 import type { CostInputs } from '@stackfit/engine';
-import type { Framework, IsoDate, Product, ScenarioPreset, SizingAssumptions } from '@stackfit/schema';
+import type {
+  Framework,
+  IsoDate,
+  Product,
+  ScenarioPreset,
+  SizingAssumptions,
+} from '@stackfit/schema';
 
 /**
  * Server-side access to the committed data/ tree.
  *
  * Everything here reads the filesystem, so it must only ever be imported from a
  * server component or a server action. The engine itself still never reads a
- * file — this is the boundary that keeps that true (CONTRIBUTING.md architecture).
+ * file. This is the boundary that keeps that true (CONTRIBUTING.md architecture).
  */
 
 // data/ sits at the repo root, two levels above apps/web. Resolved from this

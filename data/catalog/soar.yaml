@@ -1,4 +1,4 @@
-# SOAR — orchestration, automation and case management.
+# SOAR: orchestration, automation and case management.
 #
 # Prices are in minor units (hard rule 1).
 #
@@ -12,8 +12,8 @@
 # Community's two-user cap is declared as a tier cap and enforced against
 # headcount. Tines Free's three live workflows and n8n Cloud's metered
 # executions are not quantities the sizing stage produces, so they are declared
-# as allowances — carried into the tier's scoring rationale where an analyst
-# sees them — and Tines keeps `scaleCeiling: small` as the enforcement stand-in.
+# as allowances: carried into the tier's scoring rationale where an analyst
+# sees them, and Tines keeps `scaleCeiling: small` as the enforcement stand-in.
 # It is the last approximation of its kind left in the catalog.
 #
 # ⚠ SOAR IS NOT A STARTER PURCHASE. Every entry here automates a process the
@@ -49,8 +49,8 @@ products:
               checkUrl: https://github.com/Shuffle/Shuffle
               note: >-
                 Re-read the licensing paragraph in the README. Shuffle splits
-                its licence — AGPLv3 for the platform, MIT for apps and the SDK
-                — and a change to the platform half is what would matter.
+                its licence, AGPLv3 for the platform and MIT for the apps and
+                SDK, and a change to the platform half is what would matter.
             sources:
               - url: https://github.com/Shuffle/Shuffle
                 asOf: '2026-09-12'
@@ -101,7 +101,7 @@ products:
       - Runs air-gapped, which no commercial SOAR does
     weaknesses:
       - Youngest and smallest vendor in this file, with the continuity risk that implies
-      - Integration quality varies — the OpenAPI-generated apps are only as good as the spec behind them
+      - Integration quality varies. The OpenAPI-generated apps are only as good as the spec behind them
       - No case management of its own; it orchestrates, and something else has to hold the case
     bestFor:
       - Teams who have runbooks written down and want to stop executing them by hand
@@ -144,7 +144,7 @@ products:
               note: >-
                 Apache 2.0 and community-governed since Extreme Networks stepped
                 back. What is worth re-checking is release activity rather than
-                the licence — a community-run project's real risk is going
+                the licence. A community-run project's real risk is going
                 quiet, not changing terms.
             sources:
               - url: https://github.com/StackStorm/st2
@@ -191,7 +191,7 @@ products:
     weaknesses:
       - 'Infrastructure automation adapted to security, not built for it: no case management, no analyst UI worth the name'
       - Community-governed with no commercial support option, which some procurement functions will refuse
-      - Heavyweight to install and operate — this is a platform, not a tool
+      - Heavyweight to install and operate. This is a platform, not a tool
     bestFor:
       - Organisations already running it for operations who want to extend it to security
       - Teams with Python capability and a real automation backlog
@@ -256,7 +256,7 @@ products:
               old scaleCeiling approximation could not see is now correctly
               ruled out. ⚠ It is enforced against *employee* count, which is
               the closest figure the sizing stage produces and is not the same
-              thing as analyst count — so it is strict rather than exact, and
+              thing as analyst count, so it is strict rather than exact, and
               errs toward ruling the tier out.
 
               Gold and Platinum start at five users and one organisation and are
@@ -308,7 +308,7 @@ products:
       - Produces the incident record that GDPR Article 33 and DPDP breach notification actually require
     weaknesses:
       - 'The free edition is two users: for most teams that is a trial, not a deployment'
-      - Orchestration is thin — it holds the case and relies on Cortex or Shuffle to act
+      - Orchestration is thin. It holds the case and relies on Cortex or Shuffle to act
       - StrangeBee's paid tiers are quote-only, so the upgrade path has no visible price
     bestFor:
       - Teams with a real incident-response process and nowhere to record it
@@ -321,8 +321,8 @@ products:
       - url: https://www.strangebee.com/pricing/
         asOf: '2026-09-12'
     notes: >-
-      Pairs naturally with Shuffle — TheHive holds the case, Shuffle does the
-      work — and the integrations list on both entries says so.
+      Pairs naturally with Shuffle: TheHive holds the case, Shuffle does the
+      work, and the integrations list on both entries says so.
 
   - id: tines
     name: Tines
@@ -364,13 +364,13 @@ products:
 
               ⚠ THREE LIVE WORKFLOWS IS THE ONE LIMIT IN THIS CATALOG THAT
               STILL CANNOT BE ENFORCED. A workflow is not a quantity the sizing
-              stage produces, so it is declared as an allowance — carried into
-              the tier's scoring rationale where an analyst will see it — and
+              stage produces, so it is declared as an allowance: carried into
+              the tier's scoring rationale where an analyst will see it, and
               scaleCeiling stays at "small" as the enforcement stand-in.
 
               That ceiling is doing real work. Catalogued at "mid" this tier was
               selected as the automation answer for an explicitly
-              open-source-first 400-person client, over Shuffle — because a
+              open-source-first 400-person client, over Shuffle, because a
               free-as-in-beer proprietary SaaS beats AGPLv3 software on cost
               every time, and "open source first" is a statement about the
               licence, not about the invoice.
@@ -412,7 +412,7 @@ products:
       confidence: analyst_estimate
 
     strengths:
-      - By far the lowest barrier in this category — a useful workflow in an afternoon, not a sprint
+      - By far the lowest barrier in this category. A useful workflow in an afternoon, not a sprint
       - No-code builder that a competent analyst can use without being an engineer
       - The free tier is genuinely usable for a first automation rather than a trial
     weaknesses:
@@ -431,7 +431,7 @@ products:
         asOf: '2026-09-12'
     notes: >-
       Catalogued for its free tier only, which makes this entry an honest
-      starting point and a dishonest destination. Say so — a client who adopts
+      starting point and a dishonest destination. Say so. A client who adopts
       it and grows past three workflows is in an unpriced negotiation.
 
   - id: n8n
@@ -458,7 +458,7 @@ products:
               checkUrl: https://n8n.io/pricing/
               note: >-
                 ⚠ Re-read the licence terms, not just the price. n8n uses a
-                Sustainable Use Licence — fair-code, not open source — which
+                Sustainable Use Licence: fair-code, not open source, which
                 restricts commercial redistribution and hosting for third
                 parties. That restriction is what an MSP needs to know about.
             sources:
@@ -504,7 +504,7 @@ products:
               see it. A busy security automation burns executions far faster
               than a business workflow does, and the overage is what decides the
               bill. It is declared as a tier allowance so it reaches the
-              analyst, but nothing enforces it — estimate the execution volume
+              analyst, but nothing enforces it: estimate the execution volume
               before quoting this.
 
       - id: cloud-pro

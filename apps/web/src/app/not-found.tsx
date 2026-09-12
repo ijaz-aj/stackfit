@@ -3,7 +3,7 @@ import Link from 'next/link';
 /**
  * 404.
  *
- * Reached most often by `notFound()` in the scenario routes — a session id that
+ * Reached most often by `notFound()` in the scenario routes. A session id that
  * no longer exists, usually because it was deleted in another tab. That is a
  * normal thing to happen rather than a fault, and the wording says so instead
  * of implying the analyst mistyped something.

@@ -251,8 +251,8 @@ describe('determinism', () => {
 
 describe('the budget caps', () => {
   // Both caps bind, and they bind independently. Only the annual one was
-  // compared, so the demo pair built to show the point — one client, one
-  // larger implementation budget — reported "no differences" in its inputs
+  // compared, so the demo pair built to show the point (one client, one
+  // larger implementation budget) reported "no differences" in its inputs
   // while every output moved.
   it('spots a one-time cap that moved', () => {
     const comparison = compareScenarios(

@@ -4,13 +4,13 @@ import { Card } from '@/components/ui';
 import { CATEGORY_LABELS } from '@/components/wizard/labels';
 import { formatMoney } from '@/lib/format';
 
-// Not from './cost-charts' — that module is `'use client'`, and a server
+// Not from './cost-charts'. That module is `'use client'`, and a server
 // component cannot call a function it exports. See chart-geometry.ts.
 import { categoryChartHeight } from './chart-geometry';
 import { CashflowChart, CostByCategoryChart } from './cost-charts';
 
 /**
- * §8.3 — the cost breakdown, as two charts and the table behind them.
+ * §8.3. The cost breakdown, as two charts and the table behind them.
  *
  * The table is not decoration: a tooltip must never be the only way to read a
  * value. It is also the thing an analyst copies into a spreadsheet, which is
@@ -56,7 +56,7 @@ export function CostBreakdown({ bundle }: { bundle: Bundle }) {
   // `lg`, not `xl`. A 1280px breakpoint sounds like a laptop and is not one:
   // the browser here reports 1254 CSS pixels on a 1568px panel, because the
   // display scales at 1.25. Every figure in Tailwind's scale is a CSS pixel, so
-  // `xl:` on a results page is a rule that fires for almost nobody — the layout
+  // `xl:` on a results page is a rule that fires for almost nobody. The layout
   // above was written, shipped and never once seen.
   //
   // Both charts are given the same height so the row does not leave a band of
@@ -68,7 +68,7 @@ export function CostBreakdown({ bundle }: { bundle: Bundle }) {
       <Card
         className="lg:col-span-2"
         title="Annual cost by category"
-        hint="Licence, support, infrastructure and people — the four lines that make up a year."
+        hint="Licence, support, infrastructure and people: the four lines that make up a year."
       >
         <CostByCategoryChart data={byCategory} currency={currency} height={chartHeight} />
       </Card>

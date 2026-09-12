@@ -11,7 +11,7 @@ import type { CurrencyCode, Money, ProductCategory, ScaleClass } from '@stackfit
  *
  * A `PipelineResult` carries the whole catalog, every score and every control;
  * sending that over the wire on each keystroke would be absurd. This is a
- * projection, not a second calculation — every number below is copied from the
+ * projection, not a second calculation. Every number below is copied from the
  * engine's output, never recomputed here (CONTRIBUTING.md hard rule 4).
  */
 
@@ -115,7 +115,7 @@ function summariseBundle(result: PipelineResult, bundle: Bundle): BundleSummary 
 function warningsFrom(result: PipelineResult): string[] {
   const warnings: string[] = [];
 
-  // The costing each selection was made on, tier included — never a second
+  // The costing each selection was made on, tier included. Never a second
   // lookup by product id, which would read the wrong SKU's price.
   for (const selection of result.recommended.selections) {
     const { cost, productId } = selection;
@@ -132,10 +132,12 @@ function warningsFrom(result: PipelineResult): string[] {
     if (!framework.inScope) continue;
     if (framework.sourceQuality === 'provisional') {
       warnings.push(
-        `${framework.name}: control list is provisional — not for a client-facing coverage claim.`,
+        `${framework.name}: control list is provisional, not for a client-facing coverage claim.`,
       );
     } else if (framework.sourceQuality === 'secondary_sources') {
-      warnings.push(`${framework.name}: control list is from secondary sources, not the publisher.`);
+      warnings.push(
+        `${framework.name}: control list is from secondary sources, not the publisher.`,
+      );
     }
   }
 

@@ -1,4 +1,4 @@
-# RBI Cyber Security Framework in Banks — circular RBI/2015-16/418,
+# RBI Cyber Security Framework in Banks: circular RBI/2015-16/418,
 # DBS.CO/CSITE/BC.11/33.01.001/2015-16, dated 2 June 2016, Annex 1 baseline
 # cyber security and resilience requirements.
 #
@@ -31,7 +31,7 @@ notes: >-
   is behind a CAPTCHA and could not be read; the control areas below come from
   secondary summaries only. This framework must be reconciled against Annex 1
   by someone with the original document before it is used in any client-facing
-  coverage claim — treat it as a shortlisting aid, not as an audit position.
+  coverage claim. Treat it as a shortlisting aid, not as an audit position.
 
   Note also that the 2016 circular expects a 24x7 Security Operations Centre
   and annual penetration testing. For a bank, that is a staffing and services

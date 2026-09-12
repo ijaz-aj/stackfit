@@ -27,7 +27,7 @@ export function controlsClaimedBy(
 }
 
 /**
- * Tiers of this product that claim a control its current tier does not — the
+ * Tiers of this product that claim a control its current tier does not. The
  * upgrade an analyst should be offered before being told to buy a second tool.
  *
  * Declaration order, so a catalog that lists tiers cheapest-first yields the

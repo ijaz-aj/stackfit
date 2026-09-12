@@ -11,7 +11,7 @@ import { isUnreadable, parseScenarioRow } from '@/lib/scenario';
 export const dynamic = 'force-dynamic';
 
 /**
- * §8 — the proposal, previewed before it is sent.
+ * §8. The proposal, previewed before it is sent.
  *
  * The spec asks for the HTML preview before the DOCX and PDF, and the reason is
  * the one that matters on a call: an analyst will not send a client a document
@@ -76,7 +76,7 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
 
       <p className="text-faint text-xs print:hidden">
         This is what the client receives. The DOCX is rendered from the same document, so what you
-        read here is what they get — not a separate approximation of it.
+        read here is what they get, not a separate approximation of it.
       </p>
 
       <ProposalPreview document={document} />

@@ -2,7 +2,7 @@
  * Validation of the data/ tree, as a library.
  *
  * Kept separate from the CLI so `pnpm test` can assert the committed catalog is
- * clean without shelling out — a bad `data:` commit should fail the test run,
+ * clean without shelling out. A bad `data:` commit should fail the test run,
  * not just the command nobody remembered to run.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -67,7 +67,7 @@ export interface DataValidationResult {
 
 /**
  * Structural stand-in for a Zod schema's `safeParse`. Declared here rather than
- * imported so this module needs no direct dependency on zod — it only ever
+ * imported so this module needs no direct dependency on zod. It only ever
  * speaks to schemas handed to it by @stackfit/schema.
  */
 interface Parseable<T> {
@@ -183,7 +183,7 @@ export function validateDataTree(dataDir: string): DataValidationResult {
           report(
             file,
             `${product.id}.controlsCovered`,
-            `"${controlId}" does not exist in data/frameworks — a mapping cannot be claimed against a control that is not defined`,
+            `"${controlId}" does not exist in data/frameworks: a mapping cannot be claimed against a control that is not defined`,
           );
         }
       }
@@ -239,7 +239,7 @@ export function validateDataTree(dataDir: string): DataValidationResult {
   }
 
   // ---- Presets. Each one is an assertion about a typical estate, so it is
-  // validated like any other data file — and a preset naming a framework that
+  // validated like any other data file, and a preset naming a framework that
   // does not exist would break the wizard at the point of use.
   const presetFiles = yamlFilesIn(join(dataDir, 'presets'));
   const presetIds = new Map<string, string>();

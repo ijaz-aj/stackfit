@@ -1,4 +1,4 @@
-# SOC 2 — AICPA Trust Services Criteria.
+# SOC 2: AICPA Trust Services Criteria.
 #
 # Held at criteria-series level: the nine Common Criteria (CC1–CC9) that every
 # SOC 2 engagement covers, plus the four optional categories. The 33 individual
@@ -7,7 +7,7 @@
 #
 # `satisfiedBy` is StackFit's own mapping, not part of the TSC.
 #
-# Nothing is marked mandatory. SOC 2 has no prescribed control list — the
+# Nothing is marked mandatory. SOC 2 has no prescribed control list. The
 # service organisation designs controls to meet the criteria, and an auditor
 # opines on whether they do. A tool cannot decide that a given purchase is
 # required.
@@ -33,7 +33,7 @@ notes: >-
   Security (the Common Criteria) is the only category required in every SOC 2.
   Availability, Confidentiality, Processing Integrity and Privacy are opted
   into, so a coverage figure against this framework depends on which categories
-  the client is actually in scope for — worth asking during intake rather than
+  the client is actually in scope for: worth asking during intake rather than
   assuming all five.
 
 controls:
@@ -48,7 +48,7 @@ controls:
     title: Risk Assessment
     satisfiedBy: []
     notes: >-
-      COSO risk assessment — objectives, risk identification, fraud and change
+      COSO risk assessment: objectives, risk identification, fraud and change
       analysis. Governance, and far wider than technical vulnerability.
   - id: CC4
     title: Monitoring Activities

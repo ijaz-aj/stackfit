@@ -5,7 +5,7 @@
 // cover, is the wiring itself: that the client's own framework selections drive
 // the recommendation, that CSF is always *also* reported without being treated
 // as an obligation, and that running the whole thing twice gives the same
-// answer — the property every caller depends on and none of them can check.
+// answer. The property every caller depends on and none of them can check.
 
 import type { AssetInventory, Framework, Product, ProductCategory } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';

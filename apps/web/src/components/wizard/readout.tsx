@@ -24,7 +24,7 @@ function blockedByOneTimeCap(reasons: readonly UnfundedCategory[]): boolean {
  * sizing coefficients, so it moves on the keystroke. The budget needs the
  * catalog, eleven config files and the framework library, so it comes back from
  * a server action a moment later and says so while it is in flight. Nothing
- * here calculates anything — both numbers are the engine's (hard rule 4).
+ * here calculates anything. Both numbers are the engine's (hard rule 4).
  */
 export function LiveReadout({
   sizing,
@@ -68,13 +68,11 @@ export function LiveReadout({
       </section>
 
       <section className="border-line flex flex-col gap-3 border-t pt-4">
-        <h3 className="text-faint text-2xs tracking-wide uppercase">
-          Indicative spend — recommended
-        </h3>
+        <h3 className="text-faint text-2xs tracking-wide uppercase">Recommended spend</h3>
         {sizing !== null && sizing.monitoredAssetCount === 0 && (
           <p className="text-warn text-xs leading-snug">
             No estate captured yet. Nothing is licensed, so the figures below are the floor cost of
-            owning these tools — minimum infrastructure and the people to run them — not a quote.
+            owning these tools (minimum infrastructure and the people to run them), not a quote.
           </p>
         )}
         {estimate === null ? (
@@ -145,7 +143,7 @@ export function LiveReadout({
               <p className="text-bad text-xs leading-snug">
                 Unfunded mandatory: {estimate.recommended.unfundedMandatory.join(', ')}
                 {blockedByOneTimeCap(estimate.recommended.unfundedReasons) && (
-                  <> — stopped by the one-time budget, not the annual one.</>
+                  <>. Stopped by the one-time budget, not the annual one.</>
                 )}
               </p>
             )}

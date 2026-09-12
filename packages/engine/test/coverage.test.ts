@@ -281,7 +281,7 @@ describe('the coverage matrix', () => {
       }),
     );
 
-    // Requirement 10 maps to siem, and a siem is in the stack — but this one
+    // Requirement 10 maps to siem, and a siem is in the stack, but this one
     // does not claim it. That is a prompt to check, not a coverage claim.
     expect(statusOf(result, 'pci-dss-4.0:10')).toBe('partial');
     expect(result.frameworks[0]!.coveredControls).toBe(0);
@@ -303,7 +303,7 @@ describe('the coverage matrix', () => {
     );
 
     expect(statusOf(result, 'pci-dss-4.0:12')).toBe('not_addressable');
-    // 4 controls, 3 of them buyable, 2 covered — 67%, not 50%. Counting
+    // 4 controls, 3 of them buyable, 2 covered: 67%, not 50%. Counting
     // requirement 12 would mark the stack down for not buying a policy.
     expect(result.frameworks[0]!.addressableControls).toBe(3);
     expect(result.frameworks[0]!.coveragePercent).toBe(66.7);
@@ -556,8 +556,8 @@ describe('what it would cost to fix', () => {
       }),
     );
 
-    // Control 11 is a partial — the bundle's SIEM is the right kind of tool and
-    // claims nothing here — and no product or tier in this catalog claims it
+    // Control 11 is a partial, the bundle's SIEM is the right kind of tool and
+    // claims nothing here, and no product or tier in this catalog claims it
     // either, so it is as unclosable as the one nothing addresses at all.
     expect(result.unclosableGaps).toEqual(['pci-dss-4.0:5', 'pci-dss-4.0:11']);
     expect(result.gaps.every((gap) => gap.cheapestCloser === null)).toBe(true);
@@ -669,7 +669,7 @@ describe('what it would cost to fix', () => {
     );
 
     const option = result.remediation.find((entry) => entry.productId === 'claiming-edr');
-    // Procurement spend only — licence, support, infrastructure. Salary is not
+    // Procurement spend only: licence, support, infrastructure. Salary is not
     // procurement, and the FTE is reported next to it instead of inside it.
     expect(option?.annualSpend).toEqual(usd(300_000));
     expect(option?.opsFte).toBeGreaterThan(0);
@@ -715,7 +715,7 @@ describe('a claim belongs to the tier that was bought', () => {
   it('does not credit the cheap tier with what only the expensive one delivers', () => {
     // Was: `controlsCovered` was product-level while capabilities are sold by
     // tier, so Defender Plan 1 was credited with CIS 7 continuous
-    // vulnerability management — which the same catalog entry's own tier list
+    // vulnerability management, which the same catalog entry's own tier list
     // puts in Plan 2. A bundle must not claim coverage the selected tier does
     // not buy.
     expect(statusOf('plan-1', 'pci-dss-4.0:11')).toBe('partial');
@@ -837,7 +837,7 @@ describe('determinism', () => {
 describe('the coverage disclaimer', () => {
   // A coverage percentage is the number in this tool most likely to be
   // misread. "PCI DSS 100% covered" invites a reader to conclude the audit is
-  // handled, when no product satisfies a control on its own — policy, process,
+  // handled, when no product satisfies a control on its own: policy, process,
   // configuration, evidence and an assessor's judgement decide compliance, and
   // none of them are visible here. The mapping bodies say as much about their
   // own mappings; this says it about ours.

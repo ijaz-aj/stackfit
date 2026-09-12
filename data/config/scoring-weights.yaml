@@ -12,7 +12,7 @@
 #     covers mailboxes; scored against every asset the client owns it would
 #     look permanently terrible, and §7.4 step 2 compares fit scores across
 #     categories when it ranks value density. Against its remit, a gateway
-#     covering every mailbox scores 100 — the honest answer.
+#     covering every mailbox scores 100. The honest answer.
 #
 #   - `opsFit`. §7.3 says "penalise when required FTE > available FTE" without
 #     saying how hard. The curve is below, and the zero-staff case is called out
@@ -48,7 +48,7 @@ dimensions:
     basis: §7.3. Being inside the supported band is a hard filter; this scores how centred they are in it.
   - dimension: maturity
     weight: 5
-    basis: §7.3. Deliberately the smallest weight — maturity is a tie-breaker, not a reason.
+    basis: Deliberately the smallest weight, because maturity is a tie-breaker rather than a reason.
 
 # procurementBias shifts the weights, then everything is renormalised to 100.
 biasAdjustments:
@@ -82,7 +82,7 @@ opsFit:
   basis: >-
     One product may take about a third of the security team before its score
     starts to fall, and is scored zero once it would need more than the whole
-    team — at 1.2 FTE against 1.0 available, nothing else gets run. The
+    team: at 1.2 FTE against 1.0 available, nothing else gets run. The
     zero-staff score is low but not zero: a client with no security staff can
     still buy something, it just cannot be something they operate, and the MDR
     alternative in §7.4 step 6 is the honest answer for them.
@@ -93,7 +93,7 @@ opsFit:
     that figure the score falls linearly from 100, so a managed service needing
     0.1 FTE scores around 80 and a self-hosted SIEM needing 0.6 sits on the
     floor. Tune this first if managed options look too strong or too weak for
-    the zero-staff case — it is the single number that decides PROJECT_SPEC
+    the zero-staff case. It is the single number that decides PROJECT_SPEC
     §12.2.
 
 maturityScores:
@@ -151,7 +151,7 @@ categoryRemits:
     deviceClasses: [network_device, firewall, server, ot_ics, iot, cloud_workload]
     basis: >-
       Everything that puts traffic on a wire, including the unmanaged devices
-      that are the reason to buy it. Not workstations — they are better served
+      that are the reason to buy it. Not workstations. They are better served
       by an agent.
   - category: pam
     deviceClasses: [identity, domain_controller, server, cloud_workload, database]
@@ -194,13 +194,13 @@ categoryRemits:
        firewall, cloud_workload, saas_tenant, identity, mailbox, ot_ics]
     basis: >-
       Follows the telemetry the provider is given, so its remit is close to a
-      SIEM's. OT is included but most providers cover it thinly — see the
+      SIEM's. OT is included but most providers cover it thinly. See the
       category-weights.yaml affinity.
 
 # How deployment fit is scored (§7.3).
 #
 # `deploymentPreference: hybrid` is how this tool spells "no strong preference"
-# — it is the wording the wizard uses — so it is not scored as a demand for a
+#. It is the wording the wizard uses, so it is not scored as a demand for a
 # hybrid product. It is scored against the estate the client actually runs.
 #
 # Before this block existed, a client with no preference scored every cloud-only
@@ -213,7 +213,7 @@ deploymentFit:
   statedMismatch: 30
 
   # The client runs both, and this product offers one of the two. It serves the
-  # half it targets natively and the other half through a longer path — real
+  # half it targets natively and the other half through a longer path: real
   # fit, not the whole answer. A hybrid-capable product still scores 100.
   statedSingleModeInHybrid: 85
 
@@ -267,7 +267,7 @@ deploymentFit:
 
   basis: >-
     The stated bands are unchanged from the original §7.3 implementation. The
-    inferred bands are deliberately compressed around neutral — 55 to 100
-    against 30 to 100 — because the tool is reading asset counts rather than
+    inferred bands are deliberately compressed around neutral: 55 to 100
+    against 30 to 100, because the tool is reading asset counts rather than
     repeating something the client said, and a guess should move a ranking
     without overturning it.

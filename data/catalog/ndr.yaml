@@ -1,11 +1,11 @@
-# NDR — network detection, traffic analysis and packet capture.
+# NDR: network detection, traffic analysis and packet capture.
 #
 # Prices are in minor units (hard rule 1).
 #
 # ⚠ THE COMMERCIAL HALF OF THIS MARKET IS UNPRICEABLE AND THEREFORE ABSENT.
 # Darktrace, Vectra AI, ExtraHop and Corelight were all checked on 2026-09-12.
 # None publishes a list price and none quotes a rate publicly; the only figures
-# available are third-party ranges so wide they cannot be a number — one source
+# available are third-party ranges so wide they cannot be a number. One source
 # put a 100–500 device Darktrace deployment anywhere between USD 50,000 and
 # USD 150,000 a year. A 3× spread is not a price, and inventing a point inside
 # it would be exactly the fabrication hard rule 2 forbids.
@@ -50,7 +50,7 @@ products:
               note: >-
                 OISF is a non-profit foundation, which makes a licence change
                 very unlikely. Re-check instead which rule sets the client is
-                relying on — Emerging Threats Open is free, ET Pro is not, and
+                relying on: Emerging Threats Open is free, ET Pro is not, and
                 that is where the real cost decision sits.
             sources:
               - url: https://github.com/OISF/suricata
@@ -126,7 +126,7 @@ products:
         name: Zeek (self-hosted)
         capabilities:
           - Application-layer protocol analysis with per-connection logs
-          - Rich network metadata — connections, files, certificates, DNS, HTTP, SSH
+          - 'Rich network metadata: connections, files, certificates, DNS, HTTP, SSH'
           - A scripting language for site-specific detection policy
           - File extraction and hashing
           - Long-retention metadata at a fraction of full packet capture volume
@@ -188,13 +188,13 @@ products:
       - The scripting language makes site-specific detection genuinely possible
     weaknesses:
       - 'Specialist tooling: writing Zeek script is a skill, and without it the logs are just logs'
-      - No alerts out of the box worth the name — it describes the network, it does not judge it
+      - No alerts out of the box worth the name. It describes the network, it does not judge it
       - Highest ops burden in this file, which is saying something
     bestFor:
       - Clients with a real incident-response capability who need evidence, not alerts
       - Environments where full packet capture is unaffordable but months of metadata is not
     avoidWhen:
-      - Security staffing is thin — this is the fastest way to buy a system nobody uses
+      - Security staffing is thin. This is the fastest way to buy a system nobody uses
       - The client wants an appliance that tells them what is wrong
 
     sources:
@@ -242,7 +242,7 @@ products:
             notes: >-
               Elastic License 2.0. Free to download and run, including
               commercially, but ELv2 is source-available rather than OSI open
-              source — it forbids offering the software to third parties as a
+              source. It forbids offering the software to third parties as a
               managed service. That matters for an MSP and not for an end
               client. Security Onion Solutions sells appliances, training and
               support separately, all quote-only.
@@ -292,7 +292,7 @@ products:
       - Air-gapped deployment is supported and documented, which commercial NDR rarely is
     weaknesses:
       - 'Elastic License 2.0, not open source: an MSP cannot resell it as a service'
-      - Storage-hungry — full packet capture retention is the cost nobody budgets for
+      - 'Storage-hungry: full packet capture retention is the cost nobody budgets for'
       - Still needs an analyst; it surfaces alerts rather than resolving them
     bestFor:
       - Clients who want real network visibility and cannot fund a commercial NDR
@@ -386,7 +386,7 @@ products:
       - Proven at very high throughput
     weaknesses:
       - 'Storage cost dominates everything else: days of retention at a gigabit is terabytes'
-      - Raises no alerts — it is a recorder, and it needs something else to tell it where to look
+      - Raises no alerts. It is a recorder, and it needs something else to tell it where to look
       - Full packet capture has privacy and data-protection consequences that need answering before deployment
     bestFor:
       - Clients with a regulatory or contractual forensic-readiness obligation
@@ -428,7 +428,7 @@ products:
               checkUrl: https://github.com/ntop/ntopng
               note: >-
                 Confirm the Community Edition is still GPLv3 and still carries
-                the alerting features — ntop moves capability between Community
+                the alerting features: ntop moves capability between Community
                 and Pro between major versions, and that is what changes here,
                 not the licence.
             sources:
@@ -440,7 +440,7 @@ products:
 
               The paid editions are real and are NOT catalogued as tiers,
               because the cost model cannot express them. ntop's shop publishes
-              perpetual licences with one year of maintenance included —
+              perpetual licences with one year of maintenance included:
               ntopng Pro EUR 299.95, Enterprise M EUR 699.95, Enterprise L
               EUR 899.95, Enterprise XL EUR 1,499.95, each per system. A
               perpetual licence is capex followed by a maintenance renewal, the

@@ -30,7 +30,7 @@ sources:
 notes: >-
   sourceQuality is provisional. The substance of each direction is corroborated
   across independent legal summaries, but the official direction numbering
-  could not be verified — the CERT-In PDF is not machine-readable and secondary
+  could not be verified. The CERT-In PDF is not machine-readable and secondary
   sources use their own labelling. Reconcile the ids below against the original
   PDF before this framework appears in a client-facing coverage claim.
 
@@ -45,7 +45,7 @@ controls:
     satisfiedBy: []
     mandatory: true
     notes: >-
-      Configuration, not a purchase — but it is a precondition for logs being
+      Configuration, not a purchase, but it is a precondition for logs being
       admissible and correlatable, so it gates the value of everything else.
 
   - id: incident-report-6-hours
@@ -54,7 +54,7 @@ controls:
     mandatory: true
     notes: >-
       Six hours is the tightest reporting clock in any framework in this
-      catalog — tighter than GDPR's 72. An organisation with no detection
+      catalog: tighter than GDPR's 72. An organisation with no detection
       capability cannot meet it, which makes this a genuine SIEM/MDR driver
       rather than a paperwork exercise.
 

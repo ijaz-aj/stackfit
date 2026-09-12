@@ -5,7 +5,7 @@ import { CURRENCY_MINOR_UNIT_EXPONENT, type CurrencyCode, type Money } from '@st
  *
  * Rupees group in lakh and crore: ₹2,03,89,840, and ₹16.4Cr rather than
  * ₹164M. Formatting INR with Western grouping produced ₹20,389,840, which is
- * a number no Indian reader parses at a glance — and India is this tool's
+ * a number no Indian reader parses at a glance, and India is this tool's
  * primary region, so that was the common case rendered in the foreign
  * convention.
  *

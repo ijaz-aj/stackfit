@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 /**
  * `YYYY-MM-DD`. Kept as a string so catalog data stays diffable and
- * timezone-free — a Date would drift depending on where the analyst is sitting.
+ * timezone-free. A Date would drift depending on where the analyst is sitting.
  *
  * Lives in its own module because both pricing and freshness need it, and
  * having either import from the other would make a cycle.

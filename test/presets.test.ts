@@ -94,8 +94,8 @@ describe('the committed intake presets', () => {
 
   it('runs end to end through the engine without a scope question going unanswered', () => {
     // The whole point of a preset is that it produces a result immediately.
-    // Anything it cannot fund must be a category the catalog does not stock —
-    // never a silent empty bundle.
+    // Anything it cannot fund must be a category the catalog does not stock.
+    // Never a silent empty bundle.
     for (const preset of presets) {
       const result = runScenario(
         { ...preset.profile, orgName: preset.name },

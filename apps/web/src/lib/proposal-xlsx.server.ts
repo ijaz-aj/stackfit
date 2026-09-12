@@ -12,8 +12,8 @@ import writeXlsxFile, { type Row, type SheetData } from 'write-excel-file/node';
  *
  * The distinction from the DOCX is the whole point. The DOCX is prose for a
  * client and every figure in it is a formatted string. This is a spreadsheet
- * for an analyst, so money is written as a *number* with a currency format —
- * the sheet exists to be sorted, summed and pivoted, and a column of text
+ * for an analyst, so money is written as a *number* with a currency format.
+ * The sheet exists to be sorted, summed and pivoted, and a column of text
  * cannot be.
  *
  * That is also why money is divided by its minor-unit exponent exactly once,

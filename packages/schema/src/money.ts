@@ -1,5 +1,5 @@
 // Money. CONTRIBUTING.md hard rule 1: an integer in minor units plus an ISO currency
-// code — never a float, never a bare number.
+// code. Never a float, never a bare number.
 //
 // Catalog YAML therefore spells prices out in minor units:
 //
@@ -32,7 +32,7 @@ export const Money = z
   .strict();
 export type Money = z.infer<typeof Money>;
 
-/** Money that cannot be negative — prices, budgets, costs. */
+/** Money that cannot be negative: prices, budgets, costs. */
 export const NonNegativeMoney = Money.extend({
   amountMinor: z.number().int().nonnegative(),
 });

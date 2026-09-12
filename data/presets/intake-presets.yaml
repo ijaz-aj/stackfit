@@ -2,14 +2,14 @@
 #
 # "Scoping calls do not produce clean data." A preset gets the analyst to a
 # plausible environment in one click, which they then edit in front of the
-# client — the difference between a 4-minute intake and a 40-minute one.
+# client. The difference between a 4-minute intake and a 40-minute one.
 #
 # ⚠ Every count here is an analyst estimate of what an estate of this shape
 # typically looks like. None of it is measured, none of it is any particular
 # client, and every preset states the arithmetic it was built from in `basis` so
 # it can be argued with. They are starting points, never answers.
 #
-# Budget caps are procurement spend — licence, support and infrastructure — to
+# Budget caps are procurement spend: licence, support and infrastructure: to
 # match what the engine constrains. Salary is not procurement.
 
 notes: >-
@@ -119,8 +119,8 @@ presets:
     name: Manufacturer, 2 plants
     description: Flat OT network, NIS2 in scope, on-premises by preference.
     basis: >-
-      Two plants plus a head office. Roughly 450 OT devices per plant — PLCs,
-      HMIs, drives, sensors — which is mid-sized for discrete manufacturing.
+      Two plants plus a head office. Roughly 450 OT devices per plant: PLCs,
+      HMIs, drives, sensors, which is mid-sized for discrete manufacturing.
       520 office PCs across 850 staff, because line workers share terminals.
       Segmentation is the open question this shape always raises, which is why
       the firewall and switch counts matter more here than the endpoint count.
@@ -173,7 +173,7 @@ presets:
       300 beds, roughly 1,400 staff across three shifts. Clinical workstations
       outnumber staff on duty because they live in wards and theatres rather
       than with people. 1,600 connected devices covers infusion pumps, imaging,
-      monitors and cameras — the class that cannot take an agent, which is the
+      monitors and cameras. The class that cannot take an agent, which is the
       finding this preset exists to produce.
     profile:
       industry: healthcare
@@ -225,8 +225,8 @@ presets:
     basis: >-
       60 branches and a data centre. Per branch: 25 staff PCs, an ATM, 8
       cameras, a firewall, a router, 3 switches. Privileged and service account
-      counts are high on purpose — core banking, middleware and reconciliation
-      jobs each hold their own — and they are what size the PAM line.
+      counts are high on purpose: core banking, middleware and reconciliation
+      jobs each hold their own, and they are what size the PAM line.
     profile:
       industry: bfsi
       region: in
@@ -275,7 +275,7 @@ presets:
     description: All SaaS, no compliance obligation, nobody whose job is security.
     basis: >-
       45 consultants, laptops and Microsoft 365, one small AWS account for the
-      client portal. No server room, no security hire — the case §5.1 calls out
+      client portal. No server room, no security hire. The case §5.1 calls out
       as valid and very important, and the one where the managed alternative
       usually wins. Open-source-first is set deliberately: at this size the
       question is always whether free tools are actually cheaper.

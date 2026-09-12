@@ -6,7 +6,7 @@
 //
 // The catalog holds 65 products across all 13 categories. It held 8 across 3
 // until Phase 7, and two assertions here were standing in for what could not
-// be checked against so thin a catalog — §12.1's "every mandated category is
+// be checked against so thin a catalog. The requirement that "every mandated category is
 // funded" and §12.2's "managed options outrank self-hosted". Both were
 // tightened when the catalog landed, and neither stands in for anything now.
 //
@@ -26,7 +26,7 @@ import {
 
 const usd = (amountMinor: number) => ({ amountMinor, currency: 'USD' as const });
 
-describe('§12.1 — small retail client, PCI DSS, USD 25k/yr cap', () => {
+describe('§12.1: small retail client, PCI DSS, USD 25k/yr cap', () => {
   const profile = profileOf({
     orgName: 'Retail Co',
     industry: 'retail',
@@ -54,7 +54,7 @@ describe('§12.1 — small retail client, PCI DSS, USD 25k/yr cap', () => {
     expect(result.essential.withinAnnualCap).toBe(true);
   });
 
-  it('funds log retention — PCI requirement 10 mandates a SIEM, and one is selected', () => {
+  it('funds log retention: PCI requirement 10 mandates a SIEM, and one is selected', () => {
     // "including log retention" from §12.1: requirement 10 is what forces it,
     // and the sizing stage already lengthens retention to 365 days for PCI.
     expect(result.sizing.retentionDays).toBe(365);
@@ -65,8 +65,8 @@ describe('§12.1 — small retail client, PCI DSS, USD 25k/yr cap', () => {
   it('covers the requirement file integrity monitoring exists to satisfy', () => {
     // §12.1 asks for "log retention and FIM". Retention is above; FIM is the
     // half that went unasserted for six phases, because it is not a thing this
-    // model has. FIM is a product *capability* — a line in a tier's capability
-    // list — and nothing in the engine reasons about capabilities. What the
+    // model has. FIM is a product *capability*, a line in a tier's capability
+    // list, and nothing in the engine reasons about capabilities. What the
     // engine reasons about is controls, and the control FIM is bought to
     // satisfy is PCI requirement 11.
     //
@@ -117,7 +117,7 @@ describe('§12.1 — small retail client, PCI DSS, USD 25k/yr cap', () => {
   });
 });
 
-describe('§12.2 — zero security staff, 300 endpoints', () => {
+describe('§12.2: zero security staff, 300 endpoints', () => {
   const profile = profileOf({
     orgName: 'No SecOps Ltd',
     employeeCount: 300,
@@ -184,13 +184,13 @@ describe('§12.2 — zero security staff, 300 endpoints', () => {
     expect(categories).toContain('mdr');
 
     // The generic managed alternative is still costed and presented alongside
-    // it — they answer different questions, and both should be on the table.
+    // it. They answer different questions, and both should be on the table.
     expect(result.recommended.mssp.annual.amountMinor).toBeGreaterThan(0);
     expect(allRationale(result.recommended)).toContain('managed');
   });
 });
 
-describe('§12.3 — open-source-first, low budget, 2 security FTE', () => {
+describe('§12.3: open-source-first, low budget, 2 security FTE', () => {
   const profile = profileOf({
     orgName: 'OSS First',
     employeeCount: 400,
@@ -217,7 +217,7 @@ describe('§12.3 — open-source-first, low budget, 2 security FTE', () => {
 
   it('recommends an open-source stack, not a token open-source product', () => {
     // §12.3: "OSS stack recommended". Every selection must be open source or
-    // open core — at this budget nothing else is affordable, and the bias
+    // open core: at this budget nothing else is affordable, and the bias
     // resolves any remaining tie.
     const byId = new Map(result.products.map((product) => [product.id, product]));
     expect(result.recommended.selections.length).toBeGreaterThan(1);
@@ -252,7 +252,7 @@ describe('§12.3 — open-source-first, low budget, 2 security FTE', () => {
   });
 });
 
-describe('§12.4 — air-gapped OT environment', () => {
+describe('§12.4: air-gapped OT environment', () => {
   const profile = profileOf({
     orgName: 'Air Gapped Plant',
     industry: 'manufacturing',
@@ -306,7 +306,7 @@ describe('§12.4 — air-gapped OT environment', () => {
   });
 });
 
-describe('§12.5 — impossible budget: HIPAA client, USD 3k/yr cap', () => {
+describe('§12.5: impossible budget: HIPAA client, USD 3k/yr cap', () => {
   const profile = profileOf({
     orgName: 'Tiny Clinic',
     industry: 'healthcare',
@@ -344,7 +344,7 @@ describe('§12.5 — impossible budget: HIPAA client, USD 3k/yr cap', () => {
   });
 });
 
-describe('§12.6 — determinism', () => {
+describe('§12.6: determinism', () => {
   const profile = profileOf({
     orgName: 'Determinism',
     compliance: ['pci-dss-4.0'],
@@ -373,7 +373,7 @@ describe('§12.6 — determinism', () => {
   });
 });
 
-describe('§12.7 — currency', () => {
+describe('§12.7: currency', () => {
   const inventory = inventoryOf({
     windowsEndpoints: 200,
     windowsServers: 30,
@@ -414,7 +414,7 @@ describe('§12.7 — currency', () => {
   });
 
   it('converts totals consistently under the configured rate', () => {
-    // Not equality — rounding to whole minor units happens per line — but the
+    // Not equality, rounding to whole minor units happens per line, but the
     // INR total must track the USD total to within a rounding tolerance.
     const usdTotal = inUsd.recommended.tco.amountMinor;
     const inrTotal = inInr.recommended.tco.amountMinor;

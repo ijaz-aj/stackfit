@@ -37,7 +37,7 @@ const optionsFrom = (values: readonly string[], labels: Readonly<Record<string, 
  * "no strong preference", so a client who genuinely ran both could not say so
  * and was scored by inference from their asset counts instead.
  *
- * The constraint beside it is the separate question — what their procurement
+ * The constraint beside it is the separate question, what their procurement
  * policy forbids. Only that, and an air-gapped environment, eliminate anything.
  * A cloud-delivered tool still protects on-premises endpoints, so an on-prem
  * estate marks cloud delivery down rather than ruling it out.
@@ -86,7 +86,7 @@ export function StepPreferences({ products }: { products: readonly ProductOption
           <Field
             label="Delivery their policy forbids"
             htmlFor="deploymentConstraint"
-            hint="A procurement rule, not a preference — this is the only thing here that rules products out."
+            hint="A procurement rule, not a preference. This is the only thing here that rules products out."
           >
             <Select
               id="deploymentConstraint"
@@ -103,7 +103,7 @@ export function StepPreferences({ products }: { products: readonly ProductOption
           <Field
             label="Procurement bias"
             htmlFor="procurementBias"
-            hint="Open source first raises the weight on operability as well as tilting the ranking — free tools still have to be runnable by this team."
+            hint="Open source first raises the weight on operability as well as tilting the ranking. Free tools still have to be runnable by this team."
             className="sm:col-span-2"
           >
             <Select
@@ -193,9 +193,9 @@ export function StepPreferences({ products }: { products: readonly ProductOption
           </div>
         )}
         <p className="text-faint mt-3 text-xs leading-snug">
-          Ruling a product out is a judgement about this client — a failed proof of concept, a
-          vendor the board will not approve. It does not remove the product from the catalog for
-          anyone else.
+          Ruling a product out is a judgement about this client: a failed proof of concept, a vendor
+          the board will not approve. It does not remove the product from the catalog for anyone
+          else.
         </p>
       </Card>
     </div>

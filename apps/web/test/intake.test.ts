@@ -46,17 +46,17 @@ describe('a blank intake', () => {
     // §9 requires each step to be skippable with sane defaults. That is only
     // true if the defaults on their own pass the schema the engine demands.
     expect(ClientProfile.safeParse(NEW_PROFILE).success).toBe(true);
-    expect(ScenarioDraft.safeParse({ id: 'x', profile: NEW_PROFILE, inventory: NEW_INVENTORY }).success).toBe(
-      true,
-    );
+    expect(
+      ScenarioDraft.safeParse({ id: 'x', profile: NEW_PROFILE, inventory: NEW_INVENTORY }).success,
+    ).toBe(true);
   });
 
   it('runs the whole engine without an estate, and does not pretend it is free', () => {
     // An analyst who opens the tool and types nothing must still see a page.
     //
     // An empty inventory means "not asked", never "does not exist", so nothing
-    // is eliminated and a stack is still proposed. Nothing is licensed — there
-    // are no assets to license — but the figure is *not* zero: a self-hosted
+    // is eliminated and a stack is still proposed. Nothing is licensed, there
+    // are no assets to license, but the figure is *not* zero: a self-hosted
     // tool still needs its minimum footprint, and somebody still has to run it.
     // That is the floor cost of owning these tools, and the readout labels it
     // as such rather than leaving a suspiciously cheap stack on screen.

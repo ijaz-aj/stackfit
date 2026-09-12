@@ -81,7 +81,7 @@ export const PricingRule = z
     unitPrice: NonNegativeMoney.optional(),
     /** Required for `flat_tiered`, forbidden otherwise. */
     tiers: z.array(PricingTier).min(1).optional(),
-    /** What one unit is, for `consumption` — e.g. "GB ingested". */
+    /** What one unit is, for `consumption`: e.g. "GB ingested". */
     consumptionUnit: z.string().min(1).optional(),
     /** Vendor floor: fewer units than this are still billed at this count. */
     minimumUnits: z.number().int().positive().optional(),
@@ -93,7 +93,7 @@ export const PricingRule = z
     sources: z.array(Source).default([]),
     /**
      * How to re-check this price. Optional so existing entries stay valid, but
-     * `pnpm catalog:staleness` lists everything missing one — a price with no
+     * `pnpm catalog:staleness` lists everything missing one. A price with no
      * declared way to re-check it is a price nobody will re-check.
      */
     refresh: PriceRefresh.optional(),

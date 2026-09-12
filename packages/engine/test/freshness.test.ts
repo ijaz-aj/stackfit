@@ -110,7 +110,7 @@ describe('assessPriceFreshness', () => {
     expect(result.refreshMethod).toBe('azure_retail_prices');
   });
 
-  it('is timezone-independent — the answer does not depend on where you run it', () => {
+  it('is timezone-independent: the answer does not depend on where you run it', () => {
     // Both dates parse at UTC midnight, so the gap is exactly 30 whole days
     // regardless of the host timezone.
     expect(assessPriceFreshness(rule(), '2026-01-31', policy).ageDays).toBe(30);

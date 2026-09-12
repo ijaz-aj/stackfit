@@ -1,4 +1,4 @@
-// Cost assumptions (PROJECT_SPEC §7.2) — labour rates, infrastructure rates
+// Cost assumptions (PROJECT_SPEC §7.2): labour rates, infrastructure rates
 // and the commercial assumptions that turn a catalog price into a TCO.
 //
 // All of it lives in data/config/ (hard rule 6). The engine is handed a parsed
@@ -14,7 +14,7 @@ export const RegionLabourRate = z
   .object({
     /**
      * Fully-loaded annual cost of one security FTE: base salary plus employer
-     * taxes, benefits and overhead. Not base salary — using base salary would
+     * taxes, benefits and overhead. Not base salary: using base salary would
      * understate every open-source option in the catalog.
      */
     loadedAnnualCost: NonNegativeMoney,
@@ -41,7 +41,7 @@ export type LabourRates = z.infer<typeof LabourRates>;
 
 /**
  * A deliberately crude cloud rate card for self-hosted tooling. Precision here
- * is not the point — the point is that self-hosting is not free, and that the
+ * is not the point. The point is that self-hosting is not free, and that the
  * infrastructure line appears next to the zero licence fee.
  */
 /**
@@ -72,7 +72,7 @@ export const InfraCategoryFootprint = z
     vcpuBasis: InfraVcpuBasis,
     /**
      * Floor, however small the estate. Also the whole answer for a category
-     * whose load does not scale with the estate at all — set
+     * whose load does not scale with the estate at all: set
      * `vcpuPerThousandAssets` to 0 and this is the footprint.
      */
     minimumVcpu: z.number().int().positive(),
@@ -112,7 +112,7 @@ export const InfraRates = z
      */
     minimumVcpu: z.number().int().positive(),
     /**
-     * One entry per product category — all of them, checked below. A new
+     * One entry per product category: all of them, checked below. A new
      * category in the enum must come with a decision about what its self-hosted
      * footprint costs, rather than silently inheriting a log platform's.
      */
@@ -139,9 +139,9 @@ export const InfraRates = z
         code: z.ZodIssueCode.custom,
         path: ['byCategory'],
         message:
-          `no self-hosted infrastructure footprint for ${missing.join(', ')} — ` +
+          `no self-hosted infrastructure footprint for ${missing.join(', ')}: ` +
           'every category needs one, so that adding a category forces the decision ' +
-          'rather than inheriting a log platform\'s sizing by accident',
+          "rather than inheriting a log platform's sizing by accident",
       });
     }
   });

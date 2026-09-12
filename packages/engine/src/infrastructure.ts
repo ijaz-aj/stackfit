@@ -89,8 +89,8 @@ function countOf(inventory: AssetInventory, assetClass: AssetClass): number {
 /**
  * Stage 1b: what shape is this estate?
  *
- * Raw asset counts cannot be compared across classes — 5,000 mailboxes is not
- * "more estate" than 4 firewalls — so each class contributes
+ * Raw asset counts cannot be compared across classes (5,000 mailboxes is not
+ * "more estate" than 4 firewalls) so each class contributes
  * `count × surfaceUnits[class].weight` instead of its raw count.
  */
 export function computeInfrastructureProfile(
@@ -171,7 +171,7 @@ export function computeInfrastructureProfile(
 }
 
 /**
- * Names the estate from where the computing actually lives — owned
+ * Names the estate from where the computing actually lives: owned
  * infrastructure, cloud tenancy, or SaaS. Endpoints and accounts are excluded
  * from that judgement because every estate has them, so they say nothing about
  * its shape.
@@ -201,7 +201,7 @@ function classifyShape(
 
   if (locus === 0) {
     rationale.push(
-      'Only endpoints, accounts or OT were captured — nothing that says where this ' +
+      'Only endpoints, accounts or OT were captured, and nothing that says where this ' +
         "client's computing actually happens. The estate shape is left unknown rather " +
         'than guessed.',
     );
@@ -254,7 +254,7 @@ function classifyShape(
  *
  * This does not consider compliance. Compliance promotes a category to
  * mandatory in `portfolio.ts`; this says what the infrastructure alone is
- * asking for — which for a client with no obligations is the whole answer.
+ * asking for, which for a client with no obligations is the whole answer.
  */
 export function computeCategoryRelevance(
   profile: InfrastructureProfile,

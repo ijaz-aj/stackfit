@@ -10,7 +10,7 @@
 // stands for, so typecheck was clean. eslint has no rule for it. The charts'
 // own tests import the same module directly, which is legal, so 533 tests were
 // green against a page that would not render. It is a runtime-only violation
-// that only shows up in the server render — which is to say, only in a browser.
+// that only shows up in the server render, which is to say, only in a browser.
 //
 // This is the rule instead: a module without `'use client'` may import
 // components and types from one, and nothing else.
@@ -90,7 +90,7 @@ function valueImports(source: string): Import[] {
       .split(',')
       .map((binding) => binding.trim())
       .filter((binding) => binding.length > 0 && !binding.startsWith('type '))
-      // `Foo as Bar` — what matters is the exported name on the left.
+      // `Foo as Bar`, what matters is the exported name on the left.
       .map((binding) => binding.split(/\s+as\s+/)[0]!.trim());
 
     if (values.length > 0) found.push({ specifier: match[3]!, values });

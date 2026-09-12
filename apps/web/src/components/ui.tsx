@@ -10,8 +10,8 @@ import { cn } from '@/lib/cn';
 /**
  * The whole primitive set, in one file.
  *
- * shadcn/ui's conventions — native elements, Tailwind classes, variants as
- * plain data — without pulling in a component library for a form. Anything that
+ * shadcn/ui's conventions (native elements, Tailwind classes, variants as
+ * plain data) without pulling in a component library for a form. Anything that
  * genuinely needs a portal or focus trap can be added when something needs one.
  */
 
@@ -52,7 +52,7 @@ export function Card({
   hint?: string;
   children: ReactNode;
   className?: string;
-  /** Sits opposite the title — a link or control that belongs to the card. */
+  /** Sits opposite the title. A link or control that belongs to the card. */
   action?: ReactNode;
 }) {
   return (
@@ -123,7 +123,7 @@ export function NumberInput({ className, ...props }: InputHTMLAttributes<HTMLInp
 /**
  * A select that looks like one.
  *
- * `appearance-none` strips the native chevron, and nothing replaced it — so
+ * `appearance-none` strips the native chevron, and nothing replaced it, so
  * every dropdown in the intake was visually identical to a text input, with no
  * affordance that it opened at all. `.select-chevron` (globals.css) draws it
  * back as a background image: it cannot be tabbed to, cannot intercept a click,
@@ -220,8 +220,8 @@ export function Badge({
 /**
  * The engine's `rationale: string[]`, rendered.
  *
- * Eight components were each writing `<li>— {line}</li>`, which put the dash in
- * the content: a wrapped line ran back under it and the list lost its left
+ * Eight components were each writing the dash into the content of the item,
+ * so a wrapped line ran back under it and the list lost its left
  * edge. `.rationale` (globals.css) hangs the marker instead, and `.measure`
  * stops the sentences running 190 characters wide.
  */
@@ -235,7 +235,7 @@ export function RationaleList({
   if (lines.length === 0) return null;
 
   // `text-sm`, not `text-xs`. These are the sentences that explain every figure
-  // on the page, and they were being set at 11.5px — smaller than the table
+  // on the page, and they were being set at 11.5px: smaller than the table
   // rows they justify, which inverts the importance. 12.5px is this scale's
   // stated workhorse, and at that size 76ch is also a wider box, so the column
   // stops looking stranded in a full-width card.
@@ -249,7 +249,7 @@ export function RationaleList({
       {lines.map((line) => {
         /*
           A leading ⚠ is the engine's own convention for "this line is the one
-          that matters" — `cost.ts`, `coverage.ts` and `compare.ts` all emit it.
+          that matters": `cost.ts`, `coverage.ts` and `compare.ts` all emit it.
           Rendered as plain text it was a glyph in the middle of six
           identically-grey bullets, which is the opposite of a warning: "this
           bundle needs more people than the client has" sat unhighlighted
@@ -279,7 +279,7 @@ export function RationaleList({
  *
  * The two-column rail is what makes the width work. Prose has to stay near 75
  * characters to be readable, so in a 1,350px card a single column of text is a
- * narrow ribbon stranded against 900px of empty panel — which reads as a
+ * narrow ribbon stranded against 900px of empty panel, which reads as a
  * layout bug even though the measure is correct. Putting the heading and its
  * one-line summary in a fixed rail spends that width on structure instead:
  * the reader can scan six headings down the left edge without reading a word
@@ -317,7 +317,7 @@ export function CardSection({
 /**
  * A grade, as a dot and a word.
  *
- * The assumptions panel showed 26 amber `Badge`s in one section — every
+ * The assumptions panel showed 26 amber `Badge`s in one section. Every
  * effort figure in the bundle is an analyst estimate, so every pill was the
  * warning colour. A warning that appears 26 times consecutively is not a
  * warning, it is a texture, and it drowned the two rows that genuinely needed

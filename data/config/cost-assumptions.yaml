@@ -1,14 +1,14 @@
 # Commercial assumptions for the cost model (PROJECT_SPEC §7.2).
 #
 # ⚠ Analyst estimates, all of them. They are assumptions the tool states out
-# loud rather than bakes in silently — the discount bands especially, which
+# loud rather than bakes in silently. The discount bands especially, which
 # PROJECT_SPEC §6 rule 5 requires to be an explicit toggle.
 
 asOf: '2026-09-09'
 
 annualUpliftRate: 0.05 # Typical year-on-year subscription uplift. Applied to licence and support from year 2.
 supportRateOfLicence: 0.0 # Zero by default: catalog prices here are subscriptions with support bundled. Raise it for perpetual-licence products where maintenance is billed separately.
-trainingDaysRatio: 0.15 # Training days as a fraction of implementation days — roughly 3 days on a 20-day build.
+trainingDaysRatio: 0.15 # Training days as a fraction of implementation days: roughly 3 days on a 20-day build.
 
 # Real-world discounting by deal size (§6 rule 5). Bands are matched on annual
 # list licence spend and evaluated in order; exactly one must be open-ended.
@@ -19,7 +19,7 @@ discountBands:
       amountMinor: 2500000 # USD 25,000
       currency: USD
     discountRate: 0.0
-    label: SMB, under USD 25k annual — usually transactional list pricing
+    label: SMB, under USD 25k annual, usually transactional list pricing
   - maxAnnualSpend:
       amountMinor: 10000000 # USD 100,000
       currency: USD
@@ -30,7 +30,7 @@ discountBands:
     label: enterprise, over USD 100k annual
 
 # A deliberately crude cloud rate card for self-hosted tooling. Precision is not
-# the point — the point is that self-hosting is never free, and that this line
+# the point. The point is that self-hosting is never free, and that this line
 # appears next to the zero licence fee.
 infra:
   asOf: '2026-09-09'
@@ -53,7 +53,7 @@ infra:
   # for every self-hostable product, whatever it was. A honeypot, a credential
   # vault and a SIEM were each charged for 4 vCPU sized from the whole estate's
   # log volume, so a bundle with eleven self-hosted products counted one
-  # log-volume figure eleven times — on a 300-bed hospital that was about
+  # log-volume figure eleven times: on a 300-bed hospital that was about
   # USD 69,500/yr of infrastructure and thirteen identical segments on the
   # cost-by-category chart. Defensible when a bundle held three or four log
   # platforms; wrong at thirteen categories.
@@ -62,7 +62,7 @@ infra:
   #   log_ingest       vCPU = max(minimumVcpu, ceil(gbPerDay / gbPerDayPerVcpu))
   #   monitored_assets vCPU = max(minimumVcpu, ceil(assets / 1000 × perThousand))
   #
-  # `vcpuPerThousandAssets: 0` means a flat footprint — the minimum is the whole
+  # `vcpuPerThousandAssets: 0` means a flat footprint. The minimum is the whole
   # answer. Only the categories that genuinely hold the logs pay for the
   # retention storage the sizing stage derives.
   #
@@ -78,7 +78,7 @@ infra:
       basis: >-
         The log platform itself. Indexing and search is the work, the ingest
         volume is what drives it, and the retention storage is genuinely its
-        bill — this is the one category the old estate-wide sizing was right
+        bill. This is the one category the old estate-wide sizing was right
         about.
 
     - category: ndr
@@ -117,7 +117,7 @@ infra:
       vcpuPerThousandAssets: 0.25
       chargesLogRetentionStorage: false
       basis: >-
-        Lighter than a scanner — discovery sweeps and an inventory database.
+        Lighter than a scanner: discovery sweeps and an inventory database.
         Nmap on a small VM is the honest picture at the bottom of this
         category.
 
@@ -159,7 +159,7 @@ infra:
       basis: >-
         Flat, and small. A self-hosted OPNsense or pfSense is a modest VM or a
         modest box. ⚠ The appliance itself is capex the cost engine has no line
-        for at all — see the header of data/catalog/ngfw.yaml.
+        for at all. See the header of data/catalog/ngfw.yaml.
 
     - category: soar
       vcpuBasis: monitored_assets
@@ -181,8 +181,8 @@ infra:
         STORAGE IS NOT MODELLED, and it is the dominant cost of a backup
         product. The sizing stage derives log-retention TB and nothing about
         how much data the client actually holds, and charging a backup server
-        for a SIEM's retention — which is what happened before this table
-        existed — is a wrong number rather than a missing one. Quote storage
+        for a SIEM's retention, which is what happened before this table
+        existed: is a wrong number rather than a missing one. Quote storage
         separately, exactly as data/catalog/backup.yaml says for Azure Backup.
 
     - category: deception
@@ -193,7 +193,7 @@ infra:
       basis: >-
         The smallest footprint in the catalog, and deliberately so. A decoy is a
         small VM pretending to be a server; OpenCanary runs on almost nothing.
-        T-Pot is the outlier — twenty-plus containers and an Elastic stack — and
+        T-Pot is the outlier: twenty-plus containers and an Elastic stack, and
         this understates it.
 
     - category: mdr
@@ -204,7 +204,7 @@ infra:
       basis: >-
         Present for completeness only. Every MDR product in the catalog is a
         managed service with no on-premises deployment mode, so this footprint
-        is never charged — the infrastructure is the provider's, which is what
+        is never charged. The infrastructure is the provider's, which is what
         the client is paying them for.
 
   sources:

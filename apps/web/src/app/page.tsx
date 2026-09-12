@@ -28,7 +28,7 @@ export default async function ScenariosPage() {
 
       <Card
         title="Start from a typical estate"
-        hint="Analyst estimates of what an estate of this shape usually looks like — a starting point to edit, never an answer."
+        hint="Analyst estimates of what an estate of this shape usually looks like. A starting point to edit, never an answer."
       >
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {presets.map((preset) => (
@@ -90,7 +90,7 @@ export default async function ScenariosPage() {
                     {scenario.name}
                   </Link>
                   {isUnreadable(scenario) ? (
-                    <p className="text-bad text-xs">Cannot be opened — {scenario.problem}</p>
+                    <p className="text-bad text-xs">Cannot be opened. {scenario.problem}</p>
                   ) : (
                     <p className="text-faint text-xs">
                       {scenario.profile.industry} · {formatNumber(scenario.profile.employeeCount)}{' '}

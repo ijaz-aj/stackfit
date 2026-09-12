@@ -1,4 +1,4 @@
-# IAM — workforce identity, SSO and MFA.
+# IAM: workforce identity, SSO and MFA.
 #
 # Prices are in minor units (hard rule 1). Every rate below is read from the
 # vendor's own published pricing page; tiers that are quote-only are named in
@@ -13,7 +13,7 @@
 #
 # Two free tiers carry a condition rather than a price. Duo Free is capped at
 # ten users; Entra ID Free needs an Azure or Microsoft 365 subscription the
-# client must already hold. Both are declared as tier limits and enforced — a
+# client must already hold. Both are declared as tier limits and enforced. A
 # zero-cost tier whose condition the engine cannot see beats every priced
 # option by construction, which both of these did before the limits block
 # existed.
@@ -102,11 +102,11 @@ products:
     strengths:
       - No per-user licence, so identity cost does not scale with headcount
       - Runs fully air-gapped, which no SaaS IdP does
-      - Standards-first — anything speaking OIDC or SAML federates without a connector catalogue
+      - 'Standards-first: anything speaking OIDC or SAML federates without a connector catalogue'
     weaknesses:
       - 'Availability is now yours: an IdP outage is a total outage, so HA and DR are mandatory, not optional'
       - Major versions move quickly and upgrades are a standing commitment
-      - No pre-built SaaS app catalogue and no outbound provisioning — every integration is hand-built
+      - No pre-built SaaS app catalogue and no outbound provisioning. Every integration is hand-built
     bestFor:
       - Air-gapped or data-residency-constrained environments
       - Estates with a platform team already running Kubernetes or containers
@@ -123,7 +123,7 @@ products:
     notes: >-
       opsBurden and implementation are analyst estimates for a self-managed HA
       pair fronting an existing directory, not vendor figures. The figure most
-      worth arguing with is baseFte — an IdP that nobody owns is an outage
+      worth arguing with is baseFte. An IdP that nobody owns is an outage
       waiting to happen, so 0.4 is a floor rather than a midpoint.
 
   - id: microsoft-entra-id
@@ -153,7 +153,7 @@ products:
               method: manual
               checkUrl: https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing
               note: >-
-                Watch for capabilities moving out of Free into P1 — that is how
+                Watch for capabilities moving out of Free into P1. That is how
                 this tier's price actually changes.
             sources:
               - url: https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing
@@ -163,7 +163,7 @@ products:
               an Azure or Microsoft 365 subscription. A client with neither
               cannot buy this tier and a client with either already has it, so
               costing it at zero is correct for the second case and only for
-              that case. The prerequisite above encodes exactly that — the tier
+              that case. The prerequisite above encodes exactly that. The tier
               is unavailable unless the analyst records the subscription in
               retainedTools.
 
@@ -194,7 +194,7 @@ products:
             notes: >-
               USD 7.00 per user per month with an annual commitment, so USD
               84.00 per user per year. Most clients will already hold this
-              inside Microsoft 365 E3 or a Business Premium subscription — check
+              inside Microsoft 365 E3 or a Business Premium subscription. Check
               before quoting it as a new line, because the honest answer is
               frequently that they are already paying for it.
         controlsCovered:
@@ -306,7 +306,7 @@ products:
         asOf: '2026-09-12'
     notes: >-
       The number that decides this line on a real deal is almost never the
-      standalone rate — it is whether the client is on Business Premium, E3 or
+      standalone rate. It is whether the client is on Business Premium, E3 or
       E5. Business Premium and E3 include P1; E5 includes P2. Establish that
       before putting a per-user figure in a proposal.
 
@@ -319,7 +319,7 @@ products:
       see beats every priced option by construction.
 
       The prerequisite is unmet by default, which is the conservative and
-      correct default — most clients in scope for this tool do hold Microsoft
+      correct default. Most clients in scope for this tool do hold Microsoft
       365, but the tool should not assume it. Record it in retainedTools and the
       tier becomes available; leave it out and the P1 rate is quoted instead.
 
@@ -363,7 +363,7 @@ products:
               USD 6.00 per user per month billed annually, so USD 72.00 per
               user per year. Okta states a USD 1,500 minimum annual contract
               for Workforce Identity, which is what the minimumAnnual floor
-              above encodes — below roughly 21 users the rate stops mattering.
+              above encodes: below roughly 21 users the rate stops mattering.
 
       - id: core-essentials
         name: Core Essentials
@@ -389,7 +389,7 @@ products:
               checkUrl: https://www.okta.com/pricing/
               note: >-
                 Check whether Core Essentials and Essentials still carry the
-                same headline feature list at different rates — see the notes
+                same headline feature list at different rates. See the notes
                 on this product.
             sources:
               - url: https://www.okta.com/pricing/
@@ -695,7 +695,7 @@ products:
                 asOf: '2026-09-12'
             notes: >-
               No charge for up to 10 users. Genuinely free and genuinely
-              capped — for a ten-person company this is the right answer and
+              capped: for a ten-person company this is the right answer and
               costs nothing, which is exactly why the cap has to be enforced
               rather than described.
 
@@ -800,7 +800,7 @@ products:
 
     controlsCovered:
       # Duo authenticates people and gates access. It does not manage accounts,
-      # so cis-v8:5 (Account Management) is deliberately absent — the directory
+      # so cis-v8:5 (Account Management) is deliberately absent. The directory
       # it sits in front of is what closes that control.
       - cis-v8:6
       - nist-csf-2.0:PR.AA
@@ -828,7 +828,7 @@ products:
       - Sits in front of an existing directory rather than replacing it, so there is no migration
       - Covers on-premises VPN, RDP and SSH, which most cloud-native IdPs do not
     weaknesses:
-      - Not a directory — it needs a source of identity to protect
+      - Not a directory. It needs a source of identity to protect
       - Adds a second identity vendor to the estate and a second console to operate
       - 'Purchasing increments distort small deals: a 62-user client pays for 75'
     bestFor:
@@ -843,7 +843,7 @@ products:
         asOf: '2026-09-12'
     notes: >-
       Duo Free is catalogued as a tier again. It was left out while the schema
-      had no way to express a headcount cap — a free tier with an unmodelled
+      had no way to express a headcount cap. A free tier with an unmodelled
       cap is offered to a 500-person client at zero cost, which is worse than
       not offering it at all. The cap is now declared and enforced, so the tier
       is available to the ten-person client it is meant for and invisible to

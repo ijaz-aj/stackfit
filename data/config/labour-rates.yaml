@@ -1,4 +1,4 @@
-# Labour rates — the cost of the people who run the tools.
+# Labour rates. The cost of the people who run the tools.
 #
 # This file decides whether open source looks cheap or expensive, so it is worth
 # arguing about. `loadedAnnualCost` is fully-loaded employer cost, not base
@@ -8,7 +8,7 @@
 #
 # ⚠ Every figure is an analyst estimate built from public salary aggregators for
 # a mid-level security engineer, then loaded. Salary aggregators disagree with
-# each other by wide margins — the UK figure below is a good example — so treat
+# each other by wide margins. The UK figure below is a good example, so treat
 # these as starting points to override per engagement, not as facts.
 #
 # Prices are in minor units (hard rule 1). Rates are held in each region's
@@ -38,7 +38,7 @@ byRegion:
     basis: >-
       Base around INR 1,076,000 (Glassdoor India average for a security
       engineer, within the commonly quoted INR 800k–2,000k band), loaded ×1.25.
-      India is the widest band in this file — a Bengaluru product-security role
+      India is the widest band in this file. A Bengaluru product-security role
       and a tier-2-city SOC role are not the same number.
 
   us:

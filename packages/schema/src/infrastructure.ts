@@ -4,7 +4,7 @@
 // This exists because of a gap in PROJECT_SPEC §7.4 step 1, which ranks
 // categories by "risk-reduction weight, adjusted by industry and compliance".
 // A client with no compliance obligation therefore got a ranking driven only by
-// generic risk weights — so an all-SaaS consultancy and an all-on-prem
+// generic risk weights, so an all-SaaS consultancy and an all-on-prem
 // manufacturer received the same stack. Infrastructure is the missing term, and
 // for an unregulated client it is the *only* term that should be driving the
 // recommendation.
@@ -24,7 +24,7 @@ import { Industry, ProductCategory } from './enums';
  * figure means something.
  */
 export const InfrastructureSurface = z.enum([
-  /** Laptops and desktops — where most malware ultimately executes. */
+  /** Laptops and desktops, where most malware ultimately executes. */
   'endpoint',
   /** Servers, hypervisors, containers, databases, internal apps. */
   'on_prem_server',
@@ -34,7 +34,7 @@ export const InfrastructureSurface = z.enum([
   'public_app',
   /** AWS accounts, Azure subscriptions, GCP projects and their workloads. */
   'cloud_iaas',
-  /** M365 / Workspace seats and other critical SaaS — the identity perimeter. */
+  /** M365 / Workspace seats and other critical SaaS. The identity perimeter. */
   'saas_identity',
   /** OT / ICS / SCADA, and the IoT / CCTV / POS estate. */
   'ot_ics',
@@ -45,7 +45,7 @@ export type InfrastructureSurface = z.infer<typeof InfrastructureSurface>;
 
 /**
  * A plain-language summary of the estate, for the intake screen and the
- * proposal. Derived, never captured — the analyst enters counts, not a label.
+ * proposal. Derived, never captured. The analyst enters counts, not a label.
  */
 export const EstateShape = z.enum([
   /** Work happens in someone else's SaaS; little or no owned infrastructure. */
@@ -70,7 +70,7 @@ export type EstateShape = z.infer<typeof EstateShape>;
 /**
  * How much attack surface one unit of an asset class represents.
  *
- * Raw counts cannot be compared across classes — an estate with 5,000 M365
+ * Raw counts cannot be compared across classes. An estate with 5,000 M365
  * seats and 4 firewalls is not 99.9% "SaaS". These weights are what make a
  * share-of-estate figure meaningful, and they are the same kind of analyst
  * estimate as the EPS coefficients in sizing-assumptions.yaml.
@@ -78,7 +78,7 @@ export type EstateShape = z.infer<typeof EstateShape>;
 export const SurfaceUnit = z
   .object({
     surface: InfrastructureSurface,
-    /** Attack-surface units per asset. Relative, not absolute — only ratios matter. */
+    /** Attack-surface units per asset. Relative, not absolute. Only ratios matter. */
     weight: z.number().nonnegative(),
     /** Mandatory: a weight cannot land without stating where it came from. */
     basis: z.string().min(1),
@@ -114,7 +114,7 @@ export const CategoryWeight = z
     /**
      * Surfaces on which this category can do its job at all. If an estate has
      * none of them, the category is not applicable and is dropped with a reason
-     * rather than ranked last — recommending NDR to an estate with no network
+     * rather than ranked last: recommending NDR to an estate with no network
      * is not a cheaper recommendation, it is a wrong one.
      */
     requiresAnyOf: z.array(InfrastructureSurface).min(1),

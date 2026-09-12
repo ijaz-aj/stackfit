@@ -1,7 +1,7 @@
 // Portfolio assembly config (PROJECT_SPEC §7.4).
 //
-// How bundles are put together, as opposed to how categories are weighted —
-// that lives in category-weights.yaml. Everything here is a judgement about
+// How bundles are put together, as opposed to how categories are weighted.
+// That lives in category-weights.yaml. Everything here is a judgement about
 // procurement rather than about risk.
 
 import { z } from 'zod';
@@ -22,7 +22,7 @@ export const RoadmapPhase = z
     horizon: z.string().min(1),
     /**
      * Elapsed weeks of delivery this phase can absorb, across all parallel
-     * workstreams. `null` marks the final, open-ended phase — everything left
+     * workstreams. `null` marks the final, open-ended phase. Everything left
      * lands there, so nothing can fall off the end of the roadmap.
      */
     elapsedWeeks: z.number().positive().nullable(),
@@ -59,7 +59,7 @@ export const RoadmapAssumptions = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['phases', index, 'elapsedWeeks'],
-          message: 'only the final phase may be open-ended — an earlier one would absorb everything',
+          message: 'only the final phase may be open-ended: an earlier one would absorb everything',
         });
       }
     });
@@ -136,8 +136,8 @@ export const PortfolioAssumptions = z
      * Points added when ranking an open-source or open-core product for a
      * client whose `procurementBias` is `open_source_first`.
      *
-     * §7.3 has that bias *raise* the ops-fit weight, which is honest — the
-     * failure mode of open source is operational — but on its own it penalises
+     * §7.3 has that bias *raise* the ops-fit weight, which is honest, the
+     * failure mode of open source is operational, but on its own it penalises
      * open source, because operability is exactly where it is weakest. Nothing
      * then acted on the "first" in the field's name, and §12.3's acceptance
      * criterion ("OSS stack recommended") went unmet.

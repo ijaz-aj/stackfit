@@ -32,7 +32,7 @@ import {
  *
  * Every one of these now opens with `requireAnalyst()`. A server action is a
  * POST endpoint with a generated URL, reachable by anyone who can read the
- * page source — gating the *page* that renders the form protects nothing at
+ * page source: gating the *page* that renders the form protects nothing at
  * all. This is the authz home Q3 described, and it is used rather than
  * described.
  */
@@ -90,7 +90,7 @@ export interface SaveResult {
 
 /**
  * Continuous save (§9). Called on a debounce as the analyst types, so it has to
- * be cheap and it has to be safe to call with a half-finished intake — which is
+ * be cheap and it has to be safe to call with a half-finished intake, which is
  * why the schema's defaults are sane rather than strict.
  */
 export async function saveScenario(input: unknown): Promise<SaveResult> {
@@ -126,7 +126,7 @@ export async function saveScenario(input: unknown): Promise<SaveResult> {
  * Clone a scenario (§11 phase 9).
  *
  * The whole point of cloning is to change one thing and see what it does, so
- * the copy carries everything — profile, inventory and the sizing overrides.
+ * the copy carries everything: profile, inventory and the sizing overrides.
  * An override the analyst corrected on the call is part of what makes the two
  * runs comparable; dropping it would silently change a second variable.
  *
@@ -179,7 +179,7 @@ export async function deleteScenario(formData: FormData): Promise<void> {
  *
  * Writes only the overrides column. The wizard's autosave writes only profile
  * and inventory, so two tabs open on one scenario cannot undo each other's
- * work — which they would if either wrote the whole row.
+ * work, which they would if either wrote the whole row.
  */
 export async function saveSizingOverrides(input: unknown): Promise<SaveResult> {
   await requireAnalyst();
@@ -190,7 +190,8 @@ export async function saveSizingOverrides(input: unknown): Promise<SaveResult> {
     return {
       ok: false,
       savedAt: new Date().toISOString(),
-      problem: issue === undefined ? 'invalid override' : `${issue.path.join('.')}: ${issue.message}`,
+      problem:
+        issue === undefined ? 'invalid override' : `${issue.path.join('.')}: ${issue.message}`,
     };
   }
 
@@ -213,7 +214,7 @@ export interface EstimateResult {
  * Run the engine over an unsaved draft and hand back what the sidebar shows.
  *
  * On the server because it needs the catalog, eleven config files and the
- * framework library — the client gets a summary, not a copy of the data tree.
+ * framework library. The client gets a summary, not a copy of the data tree.
  * The engine call itself is pure; `today` is read here, at the edge.
  */
 export async function estimateScenario(input: unknown): Promise<EstimateResult> {

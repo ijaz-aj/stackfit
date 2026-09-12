@@ -279,7 +279,7 @@ const pciMandatingSiem: Framework = buildFramework({
   controls: [{ id: '10', title: 'Log and monitor', satisfiedBy: ['siem'], mandatory: true }],
 });
 
-describe('step 1 — category ranking', () => {
+describe('step 1: category ranking', () => {
   it('marks a category mandatory when a selected framework requires it', () => {
     const { rankings } = buildPortfolio(
       buildInputs({
@@ -300,7 +300,7 @@ describe('step 1 — category ranking', () => {
   });
 });
 
-describe('the Operable bundle — what this team can actually run', () => {
+describe('the Operable bundle: what this team can actually run', () => {
   // Recommended answers "what does the estate need, inside the budget", and on
   // the hospital demo that is thirteen categories needing 8.58 FTE from a
   // two-person team. Operable answers "what can they run on Monday". The gap
@@ -330,7 +330,7 @@ describe('the Operable bundle — what this team can actually run', () => {
     expect(operable.selections.length).toBeLessThan(3);
   });
 
-  it('leaves Recommended alone — a short-staffed client still sees what they need', () => {
+  it('leaves Recommended alone: a short-staffed client still sees what they need', () => {
     // The whole point of a fourth bundle rather than a constraint. What the
     // estate warrants does not shrink because the client is short-handed.
     const inputs = buildInputs({
@@ -404,13 +404,13 @@ describe('the Operable bundle — what this team can actually run', () => {
 
 describe('cheapest to buy is not cheapest to own', () => {
   // Found on the hospital demo. `cheapest` ranks on procurement, which is right
-  // for its job — stretching a tight purchase-order budget over every mandatory
+  // for its job: stretching a tight purchase-order budget over every mandatory
   // category. The price of that is hard rule 8 inverted: a self-hosted tool
   // with no licence fee looks free and wins even where a commercial product is
   // better *and* cheaper once the people to run it are counted.
   //
   // The real numbers were Velociraptor at $1,080 of licence against Defender
-  // for Endpoint P1 at $42,840 — P1 scoring 95.7 to 89.8 and costing $172,928 a
+  // for Endpoint P1 at $42,840: P1 scoring 95.7 to 89.8 and costing $172,928 a
   // year all-in against $185,797. The bundle took the worse, dearer one, and
   // asked a two-person team for 8.58 FTE.
   function withOps(id: string, annualMinor: number, baseFte: number): Product {
@@ -441,7 +441,7 @@ describe('cheapest to buy is not cheapest to own', () => {
   it('still stretches a tight budget with the cheapest licence', () => {
     // The counterweight. When procurement is the binding constraint, the
     // licence price is the right ranking and the free tool is the only one that
-    // fits — picking on total cost here would fund nothing at all.
+    // fits: picking on total cost here would fund nothing at all.
     const freeButHeavy = withOps('siem-free', 0, 2);
     const paidButLight = withOps('siem-paid', 20_000_00, 0.1);
 
@@ -459,7 +459,7 @@ describe('cheapest to buy is not cheapest to own', () => {
   });
 });
 
-describe('step 7 — the budget that cannot buy compliance', () => {
+describe('step 7: the budget that cannot buy compliance', () => {
   it('reports a shortfall rather than silently dropping a mandatory category', () => {
     // A SIEM costing 500 against a cap of 100. The bundle must not pretend.
     const { recommended } = buildPortfolio(
@@ -504,7 +504,7 @@ describe('step 7 — the budget that cannot buy compliance', () => {
     // Found on the retail preset, which is the first thing the home page
     // offers. Seven mandatory categories were unfunded with two thirds of the
     // annual cap unspent, and the only explanation offered named the annual
-    // cap — so the analyst goes back to the client for a bigger annual budget,
+    // cap, so the analyst goes back to the client for a bigger annual budget,
     // gets it, and nothing changes.
     //
     // A generous annual cap and a tight implementation one: the licence is
@@ -594,7 +594,7 @@ describe('step 7 — the budget that cannot buy compliance', () => {
   });
 });
 
-describe('steps 3 and 4 — selection', () => {
+describe('steps 3 and 4: selection', () => {
   it('picks exactly one product per category', () => {
     const inputs = buildInputs({
       products: [
@@ -643,7 +643,7 @@ describe('steps 3 and 4 — selection', () => {
   });
 });
 
-describe('step 5 — the three bundles', () => {
+describe('step 5: the three bundles', () => {
   const products = [
     product('siem-a', 'siem', 10_000_00),
     product('edr-a', 'edr', 10_000_00),
@@ -687,7 +687,7 @@ describe('step 5 — the three bundles', () => {
   });
 });
 
-describe('tiers — the SKU is part of the recommendation', () => {
+describe('tiers: the SKU is part of the recommendation', () => {
   /**
    * One product, two SKUs. Only the upper one claims the control the client's
    * framework asks for, and it costs four times as much.
@@ -736,7 +736,7 @@ describe('tiers — the SKU is part of the recommendation', () => {
 
   it('recommends the cheaper SKU on value and the better one for ideal', () => {
     // The heart of it. Value density is risk-reduction per pound, so the entry
-    // tier wins when money is the binding constraint — and Ideal, which exists
+    // tier wins when money is the binding constraint, and Ideal, which exists
     // to quantify the gap, has to be free to say the dearer SKU is the one the
     // client actually wants. Before Ideal had its own objective it sorted on
     // density too, so it named the same SKU and quantified a gap of nothing.
@@ -768,7 +768,7 @@ describe('tiers — the SKU is part of the recommendation', () => {
   });
 });
 
-describe('step 6 — the MSSP alternative', () => {
+describe('step 6: the MSSP alternative', () => {
   it('costs the managed option from the rate card', () => {
     const inputs = buildInputs({ products: [product('siem-a', 'siem', 100_000)] });
     const alternative = msspAlternative(inputs);
@@ -821,7 +821,7 @@ describe('determinism', () => {
 describe('regressions', () => {
   it('applies the suite discount to TCO, not just the annual figure', () => {
     // Was: annualRecurring carried the discount and tco did not, so two fields
-    // in the same selection disagreed about the same product — and the wrong
+    // in the same selection disagreed about the same product, and the wrong
     // one was the headline number.
     const inputs = buildInputs({
       products: [
@@ -845,7 +845,7 @@ describe('regressions', () => {
 
   it('surfaces a mandated category the estate has nothing for, instead of dropping it', () => {
     // Was: mandatory required `applicable`, so a framework demand against an
-    // absent surface vanished with no output at all — the exact failure step 7
+    // absent surface vanished with no output at all. The exact failure step 7
     // exists to prevent.
     const inputs = buildInputs({
       products: [product('siem-a', 'siem', 100_000)],
@@ -909,15 +909,15 @@ describe('regressions', () => {
 
   it('does not buy less compliance with more budget when both strategies fund the same categories', () => {
     // Was: buildRecommended compared the two strategies on weighted need alone.
-    // They optimise different denominators — cheapest ranks on what a product
-    // costs to buy, value density on fit per unit of what it costs to own — so
+    // They optimise different denominators (cheapest ranks on what a product
+    // costs to buy, value density on fit per unit of what it costs to own) so
     // they can fund exactly the same categories with different products. That
     // tied, density won by default, and the stack satisfied fewer mandated
     // controls than a smaller budget would have bought.
     //
     // Found when the iam category landed: at a USD 20,000 cap identity was
     // Keycloak, claiming CIS Controls 5 and 6; at USD 50,000 it became Duo
-    // Essentials — dearer to buy, far cheaper to own, and deliberately claiming
+    // Essentials: dearer to buy, far cheaper to own, and deliberately claiming
     // only Control 6 because it is not a directory.
     const twoIamControls = buildFramework({
       id: 'cis-v8',
@@ -933,7 +933,7 @@ describe('regressions', () => {
       ],
     });
 
-    // Cheap to buy, expensive to own, closes both controls — the directory.
+    // Cheap to buy, expensive to own, closes both controls. The directory.
     const broad: Product = {
       ...buildProduct({
         id: 'broad-iam',
@@ -951,7 +951,7 @@ describe('regressions', () => {
       supports: { ...buildProduct().supports, deviceClasses: ['server', 'workstation'] },
     };
 
-    // Dearer to buy, almost free to own, closes one control — the MFA bolt-on.
+    // Dearer to buy, almost free to own, closes one control. The MFA bolt-on.
     const narrow: Product = {
       ...buildProduct({
         id: 'narrow-iam',
@@ -988,7 +988,7 @@ describe('regressions', () => {
 
   it('meets a mandate rather than funding one more optional category', () => {
     // Found when the ndr category landed. For the PCI-scoped retailer the
-    // portfolio began funding a ninth category — network detection — by
+    // portfolio began funding a ninth category, network detection, by
     // switching the endpoint pick to one that does not claim PCI requirement 5,
     // anti-malware. More categories funded, a mandatory control lost, in a
     // cardholder data environment. No QSA would accept that stack, so weighted
@@ -1158,9 +1158,9 @@ describe('regressions', () => {
 });
 
 describe('rationale that repeats itself', () => {
-  // A product with four SKUs produced three near-identical sentences —
-  // "Community subscription costs more and scores no better", then Basic, then
-  // Standard — differing only in the name. They are named together now.
+  // A product with four SKUs produced three near-identical sentences
+  // ("Community subscription costs more and scores no better", then Basic, then
+  // Standard) differing only in the name. They are named together now.
   function withTiers(id: string, category: ProductCategory, prices: readonly number[]): Product {
     const base = buildProduct({ id });
     return {
@@ -1211,13 +1211,13 @@ describe('rationale that repeats itself', () => {
     // The range is what the collapsed line adds over the three it replaces.
     expect(dearer[0]).toMatch(/\$[\d,]+ to \$[\d,]+ a year/);
     // And in the interface's own notation. This read "USD 1,000" while the
-    // card beside it read "$411,903" — the same currency written two ways,
+    // card beside it read "$411,903". The same currency written two ways,
     // which reads as two currencies.
     expect(dearer[0]).not.toMatch(/USD \d/);
   });
 
   it('still gives a better-scoring tier a line of its own', () => {
-    // Each is a distinct proposition with its own price — the sentence an
+    // Each is a distinct proposition with its own price. The sentence an
     // analyst repeats when a client asks about the upgrade.
     const { recommended } = buildPortfolio(
       buildInputs({

@@ -1,7 +1,7 @@
 import type { AssetClass, ScoringDimension } from '@stackfit/schema';
 
 /**
- * What the analyst reads on screen. Presentation only — the engine's vocabulary
+ * What the analyst reads on screen. Presentation only. The engine's vocabulary
  * is the enum, and this file never decides anything, it only names things.
  */
 
@@ -17,7 +17,7 @@ export const ASSET_GROUPS: readonly {
   },
   {
     title: 'Servers',
-    hint: 'Domain controllers are counted separately — they are the loudest thing in a Windows estate.',
+    hint: 'Domain controllers are counted separately: they are the loudest thing in a Windows estate.',
     classes: ['windowsServers', 'windowsDomainControllers', 'linuxServers', 'fileServers'],
   },
   {
@@ -133,24 +133,24 @@ export const SENSITIVITY_LABELS: Readonly<Record<string, string>> = {
 };
 
 /**
- * What the client runs. Stated as a fact, because that is what it is — the
- * previous wording ("… preferred", "Hybrid — no strong preference") invited the
+ * What the client runs. Stated as a fact, because that is what it is (the
+ * previous wording ("… preferred", "Hybrid) no strong preference") invited the
  * analyst to record an opinion and left a genuinely hybrid client unable to say
  * so.
  */
 export const ENVIRONMENT_LABELS: Readonly<Record<string, string>> = {
-  cloud: 'Cloud / SaaS — everything is in someone else’s cloud',
-  on_prem: 'On premises — they run their own infrastructure',
-  hybrid: 'Hybrid — materially both',
-  air_gapped: 'Air-gapped — no internet path at all',
-  not_asked: 'Not asked — infer it from the estate',
+  cloud: 'Cloud / SaaS: everything is in someone else’s cloud',
+  on_prem: 'On premises: they run their own infrastructure',
+  hybrid: 'Hybrid: materially both',
+  air_gapped: 'Air-gapped: no internet path at all',
+  not_asked: 'Not asked: infer it from the estate',
 };
 
 /** The separate question: what procurement will not sign off on. */
 export const CONSTRAINT_LABELS: Readonly<Record<string, string>> = {
   none: 'No restriction',
-  saas_not_permitted: 'SaaS not permitted — data residency or a regulator',
-  self_hosted_not_permitted: 'Will not self-host — nobody to run it',
+  saas_not_permitted: 'SaaS not permitted: data residency or a regulator',
+  self_hosted_not_permitted: 'Will not self-host: nobody to run it',
 };
 
 export const BIAS_LABELS: Readonly<Record<string, string>> = {
@@ -160,9 +160,9 @@ export const BIAS_LABELS: Readonly<Record<string, string>> = {
 };
 
 export const RISK_LABELS: Readonly<Record<string, string>> = {
-  low: 'Low — regulated, board-level scrutiny',
+  low: 'Low: regulated, board-level scrutiny',
   medium: 'Medium',
-  high: 'High — pragmatic, cost-led',
+  high: 'High: pragmatic, cost-led',
 };
 
 export const CATEGORY_LABELS: Readonly<Record<string, string>> = {

@@ -35,12 +35,12 @@ export default defineConfig({
       },
       {
         // PROJECT_SPEC §3: "UI gets smoke tests only". These cover the app's
-        // logic — defaults, the storage boundary, the money boundary and the
-        // estimate projection — and deliberately not its JSX, which would need
+        // logic, defaults, the storage boundary, the money boundary and the
+        // estimate projection, and deliberately not its JSX, which would need
         // a DOM, a component library of test helpers, and would assert layout
         // rather than behaviour.
         // The `@/` alias Next resolves from tsconfig paths. Vitest does not read
-        // those, and the app's own components use it — so without this a test
+        // those, and the app's own components use it, so without this a test
         // that imports a component fails to resolve rather than failing to pass.
         resolve: {
           alias: { '@': fileURLToPath(new URL('./apps/web/src', import.meta.url)) },

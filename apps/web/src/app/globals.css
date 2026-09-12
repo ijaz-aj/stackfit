@@ -5,7 +5,7 @@
  * a working tool used in a call, not a landing page, and a second palette is a
  * second thing to keep consistent for no benefit anyone asked for.
  *
- * Tailwind v4 is configured in CSS, so these tokens *are* the config — every
+ * Tailwind v4 is configured in CSS, so these tokens *are* the config. Every
  * name below becomes a utility (`bg-panel`, `text-muted`, `border-line`).
  *
  * Contrast is measured, not judged by eye. Every foreground token below clears
@@ -22,13 +22,13 @@
   /*
    * Two border weights, and the distinction is not decorative.
    *
-   * `line` separates things — card edges, table rules. WCAG exempts purely
+   * `line` separates things: card edges, table rules. WCAG exempts purely
    * decorative boundaries, so it stays quiet at 1.33:1 and the interface keeps
    * its density.
    *
    * `line-control` outlines something you click or type into. That is a UI
    * component under 1.4.11 and needs 3:1, which the old #33475c missed at
-   * 1.87:1 — inputs and selects were, measurably, edges you had to already know
+   * 1.87:1: inputs and selects were, measurably, edges you had to already know
    * were there. 3.50:1 on ground, 3.23:1 on panel.
    */
   --color-line: #24272e;
@@ -38,7 +38,7 @@
   /* Text. Ratios are the worst case, against panel-raised. */
   --color-ink: #eef0f4; /* 14.05:1 */
   --color-muted: #a6acb8; /* 6.45:1 */
-  --color-faint: #858c99; /* 4.67:1 — was #64748b at 3.45:1, which failed AA
+  --color-faint: #858c99; /* 4.67:1. Was #64748b at 3.45:1, which failed AA
                              at the 10 and 11px sizes it is used at. */
 
   --color-accent: #7c8cff; /* 6.51:1 */
@@ -50,7 +50,7 @@
   /*
    * The type scale, named.
    *
-   * These were arbitrary values — `text-[10px]`, `text-[11px]`, `text-[13px]` —
+   * These were arbitrary values (`text-[10px]`, `text-[11px]`, `text-[13px]`)
    * scattered across thirty files, which is five sizes with no relationship to
    * each other and nowhere to change them. Same rendered sizes, now a scale:
    * one place to tune, and a name that says what a size is *for*.
@@ -64,7 +64,7 @@
   --text-2xs--letter-spacing: 0.04em;
   --text-xs: 11.5px; /* hints, secondary detail, table sub-text */
   --text-xs--line-height: 1.5;
-  --text-sm: 12.5px; /* table body, rationale — the workhorse */
+  --text-sm: 12.5px; /* table body, rationale: the workhorse */
   --text-sm--line-height: 1.55;
   --text-base: 13.5px; /* controls, buttons, primary body */
   --text-base--line-height: 1.55;
@@ -72,7 +72,7 @@
   /*
    * Headings step up properly, and tighten as they grow.
    *
-   * A card heading used to be 13px against 12px body — a half-point of
+   * A card heading used to be 13px against 12px body. A half-point of
    * difference carrying the entire hierarchy of the page, which is why every
    * screen read as one uniform texture with nowhere for the eye to land. 16px
    * for a card and 22px for a page is the smallest step that actually reads as
@@ -96,7 +96,7 @@
 
   /*
    * One motion vocabulary. Durations short enough to feel like response rather
-   * than animation — past about 200ms a hover state stops feeling attached to
+   * than animation. Past about 200ms a hover state stops feeling attached to
    * the pointer.
    */
   /*
@@ -140,7 +140,7 @@ body {
  * A card.
  *
  * One class rather than five utilities repeated across thirty components, so
- * elevation is a decision made once. `transition` on the shadow alone — a card
+ * elevation is a decision made once. `transition` on the shadow alone. A card
  * that animates its border colour on hover looks like a link.
  */
 .surface {
@@ -164,8 +164,8 @@ body {
  *
  * `outline-offset` is positive so the ring sits outside the element rather than
  * on its border, which keeps it visible on a control that also changes border
- * colour on focus. The radius matches the 4px the components actually use —
- * the old 2px left a visibly squarer ring around a rounder control.
+ * colour on focus. The radius matches the 4px the components actually use.
+ * The old 2px left a visibly squarer ring around a rounder control.
  */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--color-accent);
@@ -206,7 +206,7 @@ body {
  * Respect the OS setting. Someone who gets motion sickness from a transition
  * has told their computer so, and a working tool is the last place to argue.
  *
- * Not `animation: none` — that can strand a component mid-animation. Reducing
+ * Not `animation: none`. That can strand a component mid-animation. Reducing
  * to ~0 lets every animation still complete and fire its end events.
  */
 @media (prefers-reduced-motion: reduce) {
@@ -270,7 +270,7 @@ body {
 }
 
 /*
- * Measure — the one typographic rule this interface was breaking everywhere.
+ * Measure. The one typographic rule this interface was breaking everywhere.
  *
  * The assumptions panel ran its prose the full width of a 1352px card, which is
  * roughly 190 characters a line. Every study of reading since Tinker puts the
@@ -290,7 +290,7 @@ body {
  * A rationale list.
  *
  * The engine emits `rationale: string[]` and eight components rendered it as
- * `<li>— {line}</li>` — the dash typed into the content. On any line that wrapped,
+ * `<li>, {line}</li>`, the dash typed into the content. On any line that wrapped,
  * the continuation ran back underneath the dash, so the left edge of the text
  * broke on every multi-line item and the list stopped reading as a list.
  *
@@ -306,16 +306,25 @@ body {
   padding-left: 1.15em;
 }
 .rationale > li::before {
-  content: '—';
+  /*
+   * A small dot, not an em dash.
+   *
+   * The dash was doing two jobs badly: it is a punctuation mark, so it reads as
+   * part of the sentence rather than as a marker, and a page of prose hung off
+   * em dashes has a particular machine-written cadence that a reader notices
+   * before they notice anything else. A bullet is a bullet.
+   */
+  content: '•';
   position: absolute;
-  left: 0;
+  left: 0.15em;
+  font-size: 0.85em;
   color: var(--color-line-control);
 }
 
 /*
  * The engine prefixes a rationale line with ⚠ when it is the one that matters.
  * The marker becomes the symbol rather than the dash, so the line still sits in
- * the same list and the same left edge — a warning that breaks the alignment
+ * the same list and the same left edge. A warning that breaks the alignment
  * would read as a different kind of content rather than an important one.
  */
 .rationale > li.warned::before {

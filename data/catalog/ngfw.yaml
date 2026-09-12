@@ -1,11 +1,11 @@
-# NGFW — network security controls at the edge and between segments.
+# NGFW: network security controls at the edge and between segments.
 #
 # Prices are in minor units (hard rule 1).
 #
 # ⚠ TWO COST LINES THIS CATEGORY NEEDS AND THE ENGINE DOES NOT HAVE.
 #
 # (1) Hardware capex. An on-premises firewall is an appliance before it is a
-#     subscription, and the cost model has no hardware line — §7.2 names one,
+#     subscription, and the cost model has no hardware line. The spec names one,
 #     the implementation is licence, support, infrastructure, ops FTE,
 #     implementation and training. For the appliance vendors below that means
 #     the first year is understated by whatever the box costs. Every affected
@@ -58,7 +58,7 @@ products:
             notes: >-
               2-Clause BSD. OPNsense states it "is and will always be available
               under the 2-Clause BSD license". No licence fee, no throughput
-              limit, no feature gate — the business edition below buys a
+              limit, no feature gate. The business edition below buys a
               different update track and support, not capability.
 
       - id: business
@@ -94,7 +94,7 @@ products:
               note: >-
                 Read the annual price from the OPNsense shop. Also re-check the
                 one-installation restriction, which is what makes the banding
-                below necessary, and whether VAT is stated — the shop does not
+                below necessary, and whether VAT is stated. The shop does not
                 say, and for an EU client that is a 20%-ish difference.
             sources:
               - url: https://shop.opnsense.com/product/opnsense-business-edition/
@@ -171,7 +171,7 @@ products:
         asOf: '2026-09-12'
     notes: >-
       Hardware is not costed. OPNsense runs on commodity x86 or on Deciso
-      appliances, and neither appears in the TCO — see the file header. For a
+      appliances, and neither appears in the TCO. See the file header. For a
       multi-site estate that omission is larger than the entire licence line.
 
   - id: pfsense
@@ -239,7 +239,7 @@ products:
               method: manual
               checkUrl: https://www.netgate.com/pfsense-plus-software
               note: >-
-                Netgate quotes "Starting At $129/yr" — confirm whether that is
+                Netgate quotes "Starting At $129/yr". Confirm whether that is
                 still the flat rate or has become the bottom of a range, because
                 "starting at" is doing work in that sentence.
             sources:
@@ -251,8 +251,8 @@ products:
               start at USD 225 and cloud instances at USD 0.08/hr; neither is
               modelled here.
 
-              ⚠ Same banding assumption as OPNsense — one firewall per 500
-              monitored assets — and the same caveat: a real estate is
+              ⚠ Same banding assumption as OPNsense. One firewall per 500
+              monitored assets, and the same caveat: a real estate is
               segmented by site and zone, not by asset count.
 
     supports:
@@ -362,9 +362,9 @@ products:
               running.
 
               Data processing is NOT included: Basic also bills USD 0.065 per
-              GB processed. The catalog has no network-throughput figure — the
+              GB processed. The catalog has no network-throughput figure. The
               sizing stage derives log ingest, which is a different and much
-              smaller quantity — so charging traffic against it would be
+              smaller quantity, so charging traffic against it would be
               confidently wrong. Estimate the traffic volume separately.
 
       - id: standard
@@ -396,7 +396,7 @@ products:
             notes: >-
               USD 1.25 per deployment hour for East US, so USD 10,950 for a year
               of continuous running. Data processed is billed separately at USD
-              0.016 per GB and is not modelled — see the Basic tier.
+              0.016 per GB and is not modelled. See the Basic tier.
 
       - id: premium
         name: Premium
@@ -427,7 +427,7 @@ products:
             notes: >-
               USD 1.75 per deployment hour for East US, so USD 15,330 for a year
               of continuous running. Data processed is billed separately at USD
-              0.016 per GB and is not modelled — see the Basic tier.
+              0.016 per GB and is not modelled. See the Basic tier.
         controlsCovered:
           - cis-v8:13
           - iso-27001-2022:A.8.23
@@ -487,7 +487,7 @@ products:
     notes: >-
       Costed on the deployment fee alone. For a high-traffic estate the
       data-processing charge is a material second line and this entry will
-      understate — see the file header for why it is omitted rather than
+      understate. See the file header for why it is omitted rather than
       guessed.
 
   - id: aws-network-firewall
@@ -538,7 +538,7 @@ products:
               reason in the file header.
               (2) One endpoint per availability zone. A production VPC across
               three AZs needs three, and secondary endpoints are cheaper at USD
-              0.158/hour — this entry models one.
+              0.158/hour. This entry models one.
               (3) TLS inspection adds USD 0.489/hour and Advanced Threat
               Protection adds USD 0.005/GB, neither included.
 
@@ -584,7 +584,7 @@ products:
     weaknesses:
       - 'Protects VPC traffic only: nothing outside AWS is in scope'
       - The per-endpoint-per-AZ model makes a resilient deployment cost two or three times the headline
-      - No GUI policy authoring worth the name — this is rules as code or nothing
+      - No GUI policy authoring worth the name. This is rules as code or nothing
     bestFor:
       - AWS-resident estates needing egress filtering and inspection between VPCs
       - Clients already writing Suricata rules elsewhere
@@ -651,8 +651,8 @@ products:
             notes: >-
               ⚠ NOT VENDOR-PUBLISHED. Fortinet publishes no list price. These
               are reseller-listed one-year Unified Threat Protection bundle
-              renewal prices — FortiGate 60F at USD 536 and FortiGate 100F at
-              USD 2,268 — mapped to estate size: the 60F band up to 250
+              renewal prices: FortiGate 60F at USD 536 and FortiGate 100F at
+              USD 2,268: mapped to estate size: the 60F band up to 250
               monitored assets and the 100F band above it.
 
               Three limitations, all of which understate.
@@ -661,14 +661,14 @@ products:
               for it (see the file header).
               (2) Only two models are modelled. A client above about a thousand
               assets needs a larger FortiGate whose price is not here, which is
-              why scaleCeiling is "mid" — above that band this entry is
+              why scaleCeiling is "mid": above that band this entry is
               hard-filtered out rather than quoted wrongly.
               (3) One appliance per estate. A multi-site client buys one per
               site, plus a high-availability pair at each that matters.
 
               Catalogued despite all of that because an NGFW shortlist with no
-              commercial appliance vendor on it would misrepresent the market —
-              the same call made for Veeam in backup.yaml and Proofpoint in
+              commercial appliance vendor on it would misrepresent the market.
+              The same call made for Veeam in backup.yaml and Proofpoint in
               email-security.yaml.
 
     supports:

@@ -1,8 +1,8 @@
 // The §8 proposal: a document model three renderers share.
 //
-// The tests that matter here are the ones about honesty — the mandated
+// The tests that matter here are the ones about honesty (the mandated
 // disclaimer, the shortfall that must not be absorbed, the estimated prices
-// that must be named — and the roadmap, which is the only genuinely new
+// that must be named) and the roadmap, which is the only genuinely new
 // recommendation in this stage.
 
 import type { AssetInventory, ClientProfile, ProductCategory } from '@stackfit/schema';
@@ -157,7 +157,7 @@ describe('the mandated disclaimer', () => {
   });
 
   it('names the date the figures were read, not the date the file was made', () => {
-    // The engine has no clock, so this can only come from the caller — which is
+    // The engine has no clock, so this can only come from the caller, which is
     // also what makes the same scenario export identically twice.
     const document = buildProposal({ ...proposalInputs(), asOf: '2025-01-01' });
     expect(document.disclaimer).toContain('as of 2025-01-01');
@@ -280,7 +280,7 @@ describe('the document model', () => {
       ?.blocks.filter((block) => block.kind === 'callout');
 
     // The fixture prices everything at public_list, so there is nothing to warn
-    // about — and the absence must be an absence, not a silent omission.
+    // about, and the absence must be an absence, not a silent omission.
     expect(estimated?.length).toBe(1);
   });
 });

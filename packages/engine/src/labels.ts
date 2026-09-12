@@ -1,7 +1,7 @@
 // The names these enums have in a sentence.
 //
-// The engine's `rationale` strings are prose, and four renderers — the results
-// page, the HTML preview, the DOCX and the PDF — print them verbatim to a
+// The engine's `rationale` strings are prose, and four renderers (the results
+// page, the HTML preview, the DOCX and the PDF) print them verbatim to a
 // reader who has never seen this codebase. An enum value interpolated into one
 // of those sentences arrives as `vulnerability_management` or `"mdr" service
 // level`, which reads as a leaked database field, because it is one.
@@ -42,7 +42,7 @@ export const SERVICE_LEVEL_LABELS: Readonly<Record<string, string>> = {
  * How a price is known, in words.
  *
  * `replace(/_/g, ' ')` was the idiom at a dozen call sites and produced
- * "public list" and "analyst estimate" — readable, but not what either thing is
+ * "public list" and "analyst estimate": readable, but not what either thing is
  * called. These are the terms a procurement reader already knows.
  */
 export const PRICING_CONFIDENCE_LABELS: Readonly<Record<PricingConfidence, string>> = {
@@ -64,7 +64,7 @@ export const EFFORT_CONFIDENCE_LABELS: Readonly<Record<string, string>> = {
  * "A, B and C".
  *
  * A comma-joined list of eight categories is a string; this is a sentence. The
- * serial comma is deliberately absent — house style follows the disclaimers,
+ * serial comma is deliberately absent: house style follows the disclaimers,
  * which are written without it.
  */
 export function listOf(items: readonly string[]): string {
@@ -107,7 +107,7 @@ export function article(word: string): string {
  *
  * Fixing the catalog instead would mean renaming tiers away from what the
  * vendor's own price list calls them, which is worse: the tier name is what an
- * analyst searches for. So the overlap is elided here, at the join — the
+ * analyst searches for. So the overlap is elided here, at the join: the
  * longest run of whole words that ends the product name and begins the tier
  * name. Word boundaries matter: without them "Nessus" and "Nessus Expert"
  * would collapse on the shared "Nessus" and read as "Tenable Expert".
@@ -131,7 +131,7 @@ export function skuName(productName: string, tierName: string): string {
 /**
  * Group separators, for a figure inside a sentence.
  *
- * Not `formatMoney` — this is a count, not money, and the render boundary rule
+ * Not `formatMoney`. This is a count, not money, and the render boundary rule
  * is about currency. `1260 endpoints` and `1,260 endpoints` are the difference
  * between a log line and a document.
  */

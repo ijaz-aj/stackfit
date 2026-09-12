@@ -1,4 +1,4 @@
-# MDR — managed detection and response, bought as a service.
+# MDR: managed detection and response, bought as a service.
 #
 # Prices are in minor units (hard rule 1).
 #
@@ -17,8 +17,8 @@
 # ⚠ RELATIONSHIP TO THE MSSP RATE CARD. data/config/mssp-rate-card.yaml models
 # the generic "buy it as a service instead" alternative that every bundle
 # carries. This file is different: these are named products the portfolio can
-# select into a bundle like any other. A scenario can end up with both — an
-# MDR product in the stack and an MSSP alternative quoted beside it — and that
+# select into a bundle like any other. A scenario can end up with both. An
+# MDR product in the stack and an MSSP alternative quoted beside it, and that
 # is correct, because they answer different questions.
 #
 # ⚠ OPS BURDEN IS NOT ZERO. Buying MDR does not remove the client's side of the
@@ -69,7 +69,7 @@ products:
               USD 7.99 per endpoint per month at the published 100-endpoint
               example, so USD 95.88 per endpoint per year. Huntress states the
               per-unit cost decreases at higher volumes, so this rate overstates
-              for a large estate — the safe direction for a budget estimate,
+              for a large estate. The safe direction for a budget estimate,
               but say so.
 
       - id: managed-itdr
@@ -147,9 +147,9 @@ products:
     strengths:
       - Publishes a price, which two thirds of this category refuses to do
       - The SOC is included rather than an upsell, so the quoted rate is close to the real one
-      - Lowest barrier in the category — deployable by an IT generalist in days
+      - 'Lowest barrier in the category: deployable by an IT generalist in days'
     weaknesses:
-      - Deliberately narrower than a full XDR — it does a few things well rather than everything
+      - Deliberately narrower than a full XDR. It does a few things well rather than everything
       - Aimed at SMB and lower mid-market; large estates outgrow the model
       - SaaS-only, with no air-gapped option
     bestFor:
@@ -196,7 +196,7 @@ products:
               checkUrl: https://www.blumira.com/pricing
               note: >-
                 Read the per-employee-per-month figure and multiply by 12. Also
-                re-read Blumira's definition of "employee" — it counts knowledge
+                re-read Blumira's definition of "employee". It counts knowledge
                 workers with a corporate email address and a device, not total
                 headcount, and that definition is what decides the bill.
             sources:
@@ -205,7 +205,7 @@ products:
             notes: >-
               USD 12 per employee per month, so USD 144 per employee per year,
               on an annual contract. A one-time onboarding fee of USD 500
-              applies to this edition and is not modelled — the cost engine's
+              applies to this edition and is not modelled. The cost engine's
               one-off line is implementation services, and a vendor onboarding
               fee is neither that nor a licence.
 
@@ -328,8 +328,8 @@ products:
       Blumira's one-time onboarding fees (USD 500 for Detect, USD 250 for
       Respond, included for Automate) are published and deliberately not
       modelled. The cost engine's only one-off lines are implementation services
-      and training, and a vendor onboarding fee is neither. Add it by hand —
-      it changes the year-one figure and nothing else.
+      and training, and a vendor onboarding fee is neither. Add it by hand.
+      It changes the year-one figure and nothing else.
 
   - id: sophos-mdr
     name: Sophos MDR
@@ -359,7 +359,7 @@ products:
               checkUrl: https://www.sophos.com/en-us/products/managed-detection-and-response
               note: >-
                 Check first whether Sophos has started publishing a rate; if it
-                has, regrade to public_list. Otherwise get a partner quote —
+                has, regrade to public_list. Otherwise get a partner quote:
                 Sophos MDR is sold partner-led, and partner pricing for this
                 product is known to diverge from any published benchmark.
             sources:
@@ -392,7 +392,7 @@ products:
             refresh:
               method: manual
               checkUrl: https://www.sophos.com/en-us/products/managed-detection-and-response
-              note: See the Essentials tier — the whole product is on estimated pricing.
+              note: See the Essentials tier. The whole product is on estimated pricing.
             sources:
               - url: https://www.sophos.com/en-us/products/managed-detection-and-response
                 asOf: '2026-09-12'
@@ -467,7 +467,7 @@ products:
         asOf: '2026-09-12'
     notes: >-
       Both tiers carry analyst-estimated pricing and will show a confidence
-      warning wherever they are costed. The warning is correct — treat these
+      warning wherever they are costed. The warning is correct. Treat these
       figures as a budget placeholder pending a partner quote.
 
   - id: crowdstrike-falcon-complete
@@ -500,7 +500,7 @@ products:
               note: >-
                 CrowdStrike publishes Falcon Go openly and nothing above it, so
                 check whether Complete has joined the published bundles. If not,
-                get a quote — the reported band is wide and the volume
+                get a quote. The reported band is wide and the volume
                 sensitivity is high.
             sources:
               - url: https://www.crowdstrike.com/products/bundles/falcon-complete/
@@ -565,7 +565,7 @@ products:
       - Managed threat hunting included rather than sold separately
     weaknesses:
       - 'The most expensive option here by a distance, and unpriced: the figure above is a benchmark'
-      - Endpoint-centric — network and OT coverage needs other modules
+      - 'Endpoint-centric: network and OT coverage needs other modules'
       - SaaS-only, so air-gapped scopes eliminate it
     bestFor:
       - Clients who can fund a premium service and want the response obligation transferred
@@ -620,8 +620,8 @@ products:
             notes: >-
               ⚠ NOT VENDOR-PUBLISHED, AND THE BILLING UNIT IS AN
               APPROXIMATION. Arctic Wolf publishes no rate and prices on the
-              shape of the environment — users, sensors, log sources and cloud
-              accounts together — rather than on any single unit this catalog
+              shape of the environment: users, sensors, log sources and cloud
+              accounts together: rather than on any single unit this catalog
               holds. USD 20 per user per month, so USD 240 per year, is a
               mid-market benchmark from independent MDR pricing trackers,
               expressed per user because that is the closest sizing figure

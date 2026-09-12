@@ -12,12 +12,12 @@ const RISK_TONE = {
 } as const;
 
 /**
- * §8.5 — what is not covered, and what closing it would cost.
+ * §8.5, what is not covered, and what closing it would cost.
  *
  * Two views of one answer, and they cross-reference rather than compete. Each
  * gap names the cheapest single fix, which is the question §7.5 asks. The
  * remediation plan names the fewest purchases that close the most gaps, which is
- * the question a shopping list answers — one product doing three jobs beats
+ * the question a shopping list answers. One product doing three jobs beats
  * three products doing one each.
  */
 export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
@@ -72,7 +72,7 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
                         <>
                           <span className="text-ink block">
                             {gap.cheapestCloser.productName}
-                            <span className="text-faint"> — {gap.cheapestCloser.tierName}</span>
+                            <span className="text-faint"> · {gap.cheapestCloser.tierName}</span>
                           </span>
                           {gap.cheapestCloser.upgradeFromTierName !== null && (
                             <span className="text-good block text-2xs">
@@ -95,7 +95,7 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
                     </td>
                     <td className="tabular py-2 text-right">
                       {gap.cheapestCloser === null
-                        ? '—'
+                        ? '–'
                         : formatMoney(gap.cheapestCloser.annualSpend)}
                     </td>
                   </tr>
@@ -109,7 +109,7 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
       {remediation.length > 0 && (
         <Card
           title="What it would cost to fix"
-          hint="The fewest purchases that close the most gaps — not the cheapest fix for each gap taken one at a time, which buys a second tool to do a job something on the list already does."
+          hint="The fewest purchases that close the most gaps, not the cheapest fix for each gap taken one at a time, which buys a second tool to do a job something on the list already does."
         >
           <ul className="flex flex-col gap-2">
             {remediation.map((option) => (
@@ -120,7 +120,7 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
                 <div className="flex flex-wrap items-baseline gap-2">
                   <span className="text-ink text-base">
                     {option.productName}
-                    <span className="text-muted"> — {option.tierName}</span>
+                    <span className="text-muted"> · {option.tierName}</span>
                   </span>
                   {option.upgradeFromTierName !== null && (
                     <Badge tone="good">upgrade, not a new tool</Badge>
@@ -169,7 +169,7 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
             them for this client: {coverage.unclosableGaps.join(', ')}.
           </p>
           <p className="text-faint mt-1 text-xs leading-snug">
-            That is a gap in the catalog, not in the client — either no product here claims the
+            That is a gap in the catalog, not in the client: either no product here claims the
             control, or no product category can satisfy it at all. Say so rather than letting a
             coverage percentage imply it was considered.
           </p>

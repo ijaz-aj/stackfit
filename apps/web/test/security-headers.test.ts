@@ -6,7 +6,7 @@
 // being applied is not something anyone notices by using the app.
 //
 // The regression this guards is real rather than theoretical. Next has already
-// renamed this convention once — `middleware.ts` became `proxy.ts` in 16 — and
+// renamed this convention once, `middleware.ts` became `proxy.ts` in 16, and
 // a rename that leaves the file exporting the right function under the wrong
 // name disables every header here without failing a build, a lint or a type
 // check.

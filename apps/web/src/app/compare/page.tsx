@@ -11,7 +11,7 @@ import { isUnreadable, parseScenarioRow, type ScenarioRecord } from '@/lib/scena
 export const dynamic = 'force-dynamic';
 
 /**
- * §11 phase 9 — two scenarios, diffable side by side.
+ * §11 phase 9. Two scenarios, diffable side by side.
  *
  * The two ids live in the query string rather than in client state, so a
  * particular comparison is a link an analyst can send to someone. Everything on
@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Only the three kinds that get a badge. "same" renders as plain text, so it
- * never reaches here — and with exactOptionalPropertyTypes, a tone of
+ * never reaches here, and with exactOptionalPropertyTypes, a tone of
  * `undefined` is not the same thing as no tone at all.
  */
 function toneFor(kind: Exclude<ChangeKind, 'same'>): 'warn' | 'accent' {
@@ -36,13 +36,13 @@ function ChangeRow({ change }: { change: ValueChange }) {
     <tr className="border-line border-t">
       <td className="text-muted py-2 pr-3">{change.label}</td>
       <td className="tabular py-2 pr-3 text-right">
-        {change.left === null ? <span className="text-faint">—</span> : renderCell(change.left)}
+        {change.left === null ? <span className="text-faint">–</span> : renderCell(change.left)}
       </td>
       <td className="tabular py-2 pr-3 text-right">
-        {change.right === null ? <span className="text-faint">—</span> : renderCell(change.right)}
+        {change.right === null ? <span className="text-faint">–</span> : renderCell(change.right)}
       </td>
       <td className={`tabular py-2 text-right ${changed ? 'text-accent' : 'text-faint'}`}>
-        {change.delta === null ? (changed ? 'changed' : '—') : renderCell(change.delta)}
+        {change.delta === null ? (changed ? 'changed' : '–') : renderCell(change.delta)}
       </td>
     </tr>
   );
@@ -216,7 +216,7 @@ export default async function ComparePage({
       {comparison.currencyMismatch !== null && (
         <div className="border-bad/40 bg-bad/10 rounded border px-3 py-2">
           <p className="text-bad text-sm leading-snug">
-            These scenarios are priced in different currencies — {comparison.currencyMismatch.left}{' '}
+            These scenarios are priced in different currencies: {comparison.currencyMismatch.left}{' '}
             against {comparison.currencyMismatch.right}. Every money figure is shown in its own
             currency and no difference is calculated, because subtracting one from the other would
             produce a number that looks like an answer.
@@ -244,7 +244,7 @@ export default async function ComparePage({
         620px, so `overflow-x-auto` clipped the right-hand Difference column
         mid-number: ₹3,760,217 rendered as "₹3,760" and looked like a complete
         figure. A money column that silently drops three digits is worse than
-        one that is missing — the reader has no way to tell they are reading a
+        one that is missing, the reader has no way to tell they are reading a
         number a thousand times too small.
         
         These tables carry two scenario names as column headers and are wide by

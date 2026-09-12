@@ -91,7 +91,7 @@ describe('ClientProfile', () => {
 });
 
 describe('AssetInventory', () => {
-  it('treats every asset class as optional — scoping calls are incomplete', () => {
+  it('treats every asset class as optional: scoping calls are incomplete', () => {
     const inventory = AssetInventory.parse({});
     expect(inventory.networkVendors).toEqual([]);
     expect(inventory.windowsServers).toBeUndefined();
@@ -144,7 +144,7 @@ describe('FxConfig', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects a fractional rate — rates are integers in millionths', () => {
+  it('rejects a fractional rate: rates are integers in millionths', () => {
     const result = FxConfig.safeParse({
       ...base,
       rates: [base.rates[0], { currency: 'INR', rateMicros: 83.25 }, base.rates[2]],
@@ -203,7 +203,7 @@ describe('profiles saved before the environment split', () => {
   } as const;
 
   it('reads a legacy "hybrid" as not_asked, because that is what it meant', () => {
-    // Mapping it to `hybrid` would silently change what the client said — from
+    // Mapping it to `hybrid` would silently change what the client said: from
     // "we did not discuss it" into "we run both".
     const parsed = StoredClientProfile.parse({ ...legacy, deploymentPreference: 'hybrid' });
     expect((parsed as ClientProfile).environment).toBe('not_asked');
@@ -228,7 +228,11 @@ describe('profiles saved before the environment split', () => {
   });
 
   it('leaves a current profile completely alone', () => {
-    const current = { ...legacy, environment: 'hybrid', deploymentConstraint: 'saas_not_permitted' };
+    const current = {
+      ...legacy,
+      environment: 'hybrid',
+      deploymentConstraint: 'saas_not_permitted',
+    };
     const parsed = StoredClientProfile.parse(current);
     expect((parsed as ClientProfile).environment).toBe('hybrid');
     expect((parsed as ClientProfile).deploymentConstraint).toBe('saas_not_permitted');

@@ -50,8 +50,8 @@ export function StepCompliance({ frameworks }: { frameworks: readonly FrameworkO
       {suggested.length > 0 && (
         <p className="text-faint mb-3 text-xs">
           Common in {profile.region.toUpperCase()}:{' '}
-          {suggested.map((framework) => framework.name).join(', ')}. Suggestions only — the region
-          is a hint, never a constraint.
+          {suggested.map((framework) => framework.name).join(', ')}. Suggestions only. The region is
+          a hint, never a constraint.
         </p>
       )}
 

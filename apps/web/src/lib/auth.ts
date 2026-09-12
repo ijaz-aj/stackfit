@@ -18,13 +18,13 @@ import { isAllowed, isAuthConfigured, parseAllowlist } from './allowlist';
  * prospective client's asset inventory.
  *
  * Sessions are JWTs rather than database rows. No adapter, no schema change,
- * and nothing to migrate when the database moves from SQLite to Postgres —
+ * and nothing to migrate when the database moves from SQLite to Postgres,
  * which matters because the alternative would put an auth migration in the
  * middle of the hosting change.
  *
  * ⚠ `next-auth` is pinned to 4.24.15, the stable line, not the 5.x beta. The
  * v5 API suits the App Router better and this repo does not put a beta in the
- * authentication path — the same judgement recorded against Prisma 8's release
+ * authentication path. The same judgement recorded against Prisma 8's release
  * candidate. v4 is in maintenance, which means security fixes, and those are
  * the fixes that matter here.
  */
@@ -35,7 +35,10 @@ const allowlist = parseAllowlist(process.env.STACKFIT_ALLOWED_EMAILS);
 function configuredProviders(): NextAuthOptions['providers'] {
   const providers: NextAuthOptions['providers'] = [];
 
-  if ((process.env.GOOGLE_CLIENT_ID ?? '') !== '' && (process.env.GOOGLE_CLIENT_SECRET ?? '') !== '') {
+  if (
+    (process.env.GOOGLE_CLIENT_ID ?? '') !== '' &&
+    (process.env.GOOGLE_CLIENT_SECRET ?? '') !== ''
+  ) {
     providers.push(
       GoogleProvider({
         clientId: process.env.GOOGLE_CLIENT_ID ?? '',
@@ -44,7 +47,10 @@ function configuredProviders(): NextAuthOptions['providers'] {
     );
   }
 
-  if ((process.env.GITHUB_CLIENT_ID ?? '') !== '' && (process.env.GITHUB_CLIENT_SECRET ?? '') !== '') {
+  if (
+    (process.env.GITHUB_CLIENT_ID ?? '') !== '' &&
+    (process.env.GITHUB_CLIENT_SECRET ?? '') !== ''
+  ) {
     providers.push(
       GithubProvider({
         clientId: process.env.GITHUB_CLIENT_ID ?? '',
@@ -98,7 +104,7 @@ export const authOptions: NextAuthOptions = {
  *
  * False on a bare local install, which is deliberate: `pnpm dev` works with no
  * `.env` file, and that is a documented property of the repo. It cannot be
- * false on a hosted instance — `requireAnalyst` asserts the production
+ * false on a hosted instance: `requireAnalyst` asserts the production
  * configuration on every request before it consults this.
  */
 export function authEnabled(): boolean {
@@ -116,10 +122,16 @@ export function authEnabled(): boolean {
  */
 export function configuredProviderIds(): readonly ('google' | 'github')[] {
   const ids: ('google' | 'github')[] = [];
-  if ((process.env.GOOGLE_CLIENT_ID ?? '') !== '' && (process.env.GOOGLE_CLIENT_SECRET ?? '') !== '') {
+  if (
+    (process.env.GOOGLE_CLIENT_ID ?? '') !== '' &&
+    (process.env.GOOGLE_CLIENT_SECRET ?? '') !== ''
+  ) {
     ids.push('google');
   }
-  if ((process.env.GITHUB_CLIENT_ID ?? '') !== '' && (process.env.GITHUB_CLIENT_SECRET ?? '') !== '') {
+  if (
+    (process.env.GITHUB_CLIENT_ID ?? '') !== '' &&
+    (process.env.GITHUB_CLIENT_SECRET ?? '') !== ''
+  ) {
     ids.push('github');
   }
   return ids;

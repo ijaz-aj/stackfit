@@ -185,7 +185,7 @@ export async function proposalToDocx(document: ProposalDocument): Promise<Buffer
 
   // ⚠ The document's Created and Modified dates cannot be set. docx 9.7.1
   // hard-codes `new Date()` inside its TimestampElement and exposes no option
-  // for it — `created`/`modified` are not even in IPropertiesOptions — so
+  // for it, `created`/`modified` are not even in IPropertiesOptions, so
   // docProps/core.xml always carries the moment the file was generated rather
   // than the day the figures were priced.
   //
@@ -196,7 +196,7 @@ export async function proposalToDocx(document: ProposalDocument): Promise<Buffer
   // for this reason rather than by oversight.
   const file = new Document({
     creator: 'StackFit',
-    title: `${document.title} — ${document.preparedFor}`,
+    title: `${document.title}: ${document.preparedFor}`,
     description: document.disclaimer,
     sections: [{ children }],
   });

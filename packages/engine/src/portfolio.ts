@@ -5,7 +5,7 @@
 //   1. rank categories by weight, adjusted by industry and compliance
 //   2. value density = (riskReduction × fitScore) / annualisedTCO
 //   3. greedy knapsack under the budget caps, mandatory categories first
-//   4. bundle synergy — suite discount, integration bonus, no duplicate jobs
+//   4. bundle synergy: suite discount, integration bonus, no duplicate jobs
 //   5. emit Essential / Recommended / Ideal
 //   6. emit an MSSP alternative for each
 //   7. if the budget cannot cover the mandatory set, say so plainly
@@ -66,8 +66,8 @@ export interface CategoryRanking {
   readonly essential: boolean;
   /**
    * A framework demands this category but the estate has nothing for it to
-   * protect. Not treated as mandatory — that would demand a purchase covering
-   * nothing — but never silently dropped either: a compliance obligation
+   * protect. Not treated as mandatory, that would demand a purchase covering
+   * nothing, but never silently dropped either: a compliance obligation
    * disappearing without a word is the exact failure §7.4 step 7 exists to
    * prevent. It surfaces as a scoping question instead.
    */
@@ -101,7 +101,7 @@ export interface BundleSelection {
   readonly categoryWeight: number;
   readonly mandatory: boolean;
   readonly valueDensity: number;
-  /** Total recurring cost including operational FTE — the honest §7.2 figure. */
+  /** Total recurring cost including operational FTE. The honest §7.2 figure. */
   readonly annualRecurring: Money;
   /**
    * Money leaving the business: licence, support, infrastructure. This is what
@@ -131,7 +131,7 @@ export interface MsspAlternative {
   readonly serviceLevel: string;
   /** Bundle categories this service level actually operates. */
   readonly coversCategories: readonly ProductCategory[];
-  /** Bundle categories it does not — still the client's to buy. */
+  /** Bundle categories it does not: still the client's to buy. */
   readonly uncoveredCategories: readonly ProductCategory[];
   /** Annual licence and ops for the uncovered categories, on top of the fee. */
   readonly residualAnnual: Money;
@@ -148,7 +148,7 @@ export interface Bundle {
   readonly selections: readonly BundleSelection[];
   /** Total recurring cost including people. */
   readonly annualRecurring: Money;
-  /** Procurement spend only — what `withinAnnualCap` is judged against. */
+  /** Procurement spend only, what `withinAnnualCap` is judged against. */
   readonly annualSpend: Money;
   readonly oneTime: Money;
   readonly tco: Money;
@@ -287,7 +287,7 @@ export function rankCategoriesForClient(inputs: PortfolioInputs): readonly Categ
         rationale.push(
           `⚠ ${mandates.join(', ')} require${mandates.length === 1 ? 's' : ''} a ${category} ` +
             'control, but nothing in the captured inventory needs one. This has NOT been funded ' +
-            'and is NOT a satisfied requirement — either the inventory is incomplete, or the ' +
+            'and is not a satisfied requirement: either the inventory is incomplete, or the ' +
             'control is out of scope for this client and the assessor needs to say so. Confirm ' +
             'before the proposal goes out.',
         );
@@ -376,7 +376,7 @@ function oneTimeOf(cost: ProductCost): Money {
  * Asked once no candidate fits both. Each cap is tested on its own, so the
  * answer distinguishes the three cases an analyst would act on differently:
  * the licence is unaffordable, the implementation is unaffordable, or neither
- * fits — including the case where some SKU clears each cap separately but none
+ * fits: including the case where some SKU clears each cap separately but none
  * clears both, which is still a two-cap problem.
  */
 function blockingCap(
@@ -404,13 +404,13 @@ interface SelectionOptions {
   /**
    * What this bundle is optimising for.
    *
-   * `value_density` is §7.4 step 2 — risk-reduction per pound, which is the
+   * `value_density` is §7.4 step 2: risk-reduction per pound, which is the
    * right objective when money is the binding constraint.
    *
    * `cheapest` is step 3's "cheapest acceptable option if budget is tight".
    *
    * `best_fit` is what Ideal needs and did not have. §7.4 step 5 says Ideal
-   * "ignores the budget cap; exists to quantify the gap" — and a gap measured
+   * "ignores the budget cap; exists to quantify the gap", and a gap measured
    * with a value-for-money objective is not the gap, because the best-value
    * option is by construction the *cheap* one. With one candidate per SKU that
    * stopped being a subtlety: density will pick the entry-level tier of every
@@ -432,7 +432,7 @@ interface SelectionOptions {
    * USD 30,000 cap funded *less* risk-reduction than a USD 20,000 cap, because
    * the extra money reached `mdr` (weight 65, USD 17,280) and buying it
    * starved `email_security` (weight 53, USD 1,080) and `soar` (weight 45,
-   * USD 1,080) — 65 bought, 98 lost.
+   * USD 1,080): 65 bought, 98 lost.
    *
    * Neither order is right on its own, which is why `buildRecommended` runs
    * both and keeps whichever bundle is actually better.
@@ -453,7 +453,7 @@ interface SelectionOptions {
  * Steps 3 and 4: greedy fill under the caps, mandatory categories first, with
  * suite synergy applied as products are chosen.
  *
- * One product per category — §7.4 step 4's "avoid selecting two products that
+ * One product per category. The rule is to avoid selecting two products that
  * do the same job" is enforced structurally rather than by a penalty, because
  * two SIEMs is not a bundle worth costing.
  */
@@ -543,7 +543,7 @@ function select(
 
         // A stated open-source preference tilts the ranking. The ops-fit weight
         // is still raised for this bias (§7.3), so a tool the client cannot
-        // operate still loses — this only decides close calls.
+        // operate still loses. This only decides close calls.
         const openSourcePreferred =
           profile.procurementBias === 'open_source_first' &&
           (candidate.licenceModel === 'open_source' || candidate.licenceModel === 'open_core');
@@ -598,7 +598,7 @@ function select(
             );
           case 'lowest_tco':
             // Cheapest to *own*. The counterweight to `cheapest`: ranking on
-            // procurement alone is hard rule 8 inverted — it makes a
+            // procurement alone is hard rule 8 inverted. It makes a
             // self-hosted tool look free and picks it over a commercial one
             // that is both better and cheaper once the people are counted.
             //
@@ -630,7 +630,7 @@ function select(
       // affordable per year and impossible to implement.
       //
       // `find` already scans the whole list in objective order, so a category
-      // whose best-value option is too dear still gets a cheaper one — there is
+      // whose best-value option is too dear still gets a cheaper one. There is
       // no need for, and used to be, a second "fall back to the cheapest that
       // fits" pass for mandatory categories. That pass could never find
       // anything: it ran only when this `find` returned nothing, which means
@@ -690,7 +690,7 @@ function select(
       );
       /*
        * A line per sibling tier produced three near-identical sentences on any
-       * product with four SKUs — "Community subscription costs more and scores
+       * product with four SKUs: "Community subscription costs more and scores
        * no better", then Basic, then Standard, differing only in the name. The
        * ones that lose the same way are named together, with the range, which
        * is both shorter and says more than any single line did.
@@ -730,8 +730,8 @@ function select(
               `${moneyInWords({ amountMinor: extra[extra.length - 1] ?? 0, currency })}`;
 
         rationale.push(
-          `${listOf(names)} cost more and score no better for this client — ${range} a year ` +
-            'more in procurement, buying nothing measurable on this estate — so the cheaper SKU ' +
+          `${listOf(names)} cost more and score no better for this client, at ${range} a year ` +
+            'more in procurement for nothing measurable on this estate, so the cheaper SKU ' +
             'is the honest recommendation.',
         );
       }
@@ -871,7 +871,7 @@ export function msspAlternative(
     rationale.push(
       coversCategories.length > 0
         ? `Replaces ${listOf(coversCategories.map((category) => CATEGORY_LABELS[category]))} from this bundle.`
-        : 'Replaces nothing in this bundle — none of its categories are delivered at this service level.',
+        : 'Replaces nothing in this bundle: none of its categories are delivered at this service level.',
     );
     if (uncoveredCategories.length > 0) {
       rationale.push(
@@ -890,7 +890,7 @@ export function msspAlternative(
   }
 
   rationale.push(
-    `⚠ The MSSP rate card is ${mssp.confidence.replace('_', ' ')} — no provider publishes one. ` +
+    `⚠ The MSSP rate card is ${mssp.confidence.replace('_', ' ')}, because no provider publishes one. ` +
       'Treat this as a comparison, not a quote.',
   );
 
@@ -930,7 +930,7 @@ function buildBundle(
   // §7.4 step 7. What would it take to cover everything mandatory?
   const mandatoryCategories = rankings.filter((ranking) => ranking.mandatory);
   // Mandatory categories with nothing in the catalog to buy. Their cost is
-  // unknown, not zero, so the floor below is a lower bound and says so —
+  // unknown, not zero, so the floor below is a lower bound and says so:
   // quoting it as a minimum viable budget would understate what compliance costs.
   const mandatoryWithoutCandidates = mandatoryCategories
     .filter((ranking) => !candidates.some((candidate) => candidate.category === ranking.category))
@@ -1004,7 +1004,7 @@ function buildBundle(
         rationale.push(
           profile.securityStaffFte === 0
             ? '⚠ Nothing. This client has no security staff, so there is no tool they can operate ' +
-                'themselves — not the cheapest one, and not a free one. Every option in the ' +
+                'themselves, not the cheapest one and not a free one. Every option in the ' +
                 'recommendation above assumes somebody runs it. For this client the managed ' +
                 'alternative is not a comparison, it is the only route.'
             : `⚠ Nothing fits. Every candidate costs more than the ${round(capacityFte, 2)} FTE ` +
@@ -1014,11 +1014,11 @@ function buildBundle(
       rationale.push(
         '⚠ Both figures behind this are soft, and it is a planning aid rather than a measurement: ' +
           'every operational-effort estimate in the catalog is an analyst estimate, none is ' +
-          'vendor-stated, and effort is summed across products with no overlap — one engineer ' +
+          'vendor-stated, and effort is summed across products with no overlap, so one engineer ' +
           'genuinely does run several tools, so the total overstates a real team’s load.',
       );
       rationale.push(
-        '⚠ Effort here means administering the tools — deploying, tuning, maintaining them. It ' +
+        '⚠ Effort here means administering the tools: deploying, tuning and maintaining them. It ' +
           'excludes staffing continuous monitoring, which published benchmarks put at several ' +
           'analysts across shifts for in-house 24/7 operation. A team that clears this bar can ' +
           'keep the stack running; whether anyone is watching it out of hours is a separate ' +
@@ -1093,7 +1093,7 @@ function buildBundle(
     rationale.push(
       `⚠ SCOPE QUESTION: ${notApplicableButMandated.map((r) => r.category).join(', ')} ` +
         `${notApplicableButMandated.length === 1 ? 'is' : 'are'} required by the selected ` +
-        'frameworks but nothing in the captured inventory needs one. Not funded and not satisfied — ' +
+        'frameworks but nothing in the captured inventory needs one. Not funded and not satisfied, ' +
         'confirm whether the inventory is incomplete or the control is genuinely out of scope.',
     );
   }
@@ -1157,15 +1157,15 @@ function buildBundle(
  * three. A client whose budget went *up* would have been shown a worse stack,
  * which is indefensible.
  *
- * §7.4 step 3 already anticipates this — "cheapest acceptable option if budget
- * is tight" — so the fix is to run that strategy too and keep whichever covers
+ * §7.4 step 3 already anticipates this, "cheapest acceptable option if budget
+ * is tight", so the fix is to run that strategy too and keep whichever covers
  * more of the estate's weighted need. Density still wins ties, so an
  * unconstrained budget is unaffected and still gets the better products.
  *
  * ⚠ Weighted need is not the only thing that can go backwards, and comparing on
  * it alone left a second version of the same pathology alive. The two
- * strategies optimise different denominators — `cheapest` ranks on what a thing
- * costs to *buy*, `value_density` on fit per unit of what it costs to *own* —
+ * strategies optimise different denominators (`cheapest` ranks on what a thing
+ * costs to *buy*, `value_density` on fit per unit of what it costs to *own*)
  * so they can fund exactly the same categories with different products. When
  * they do, weighted need ties, density wins by default, and the client can be
  * shown a stack that satisfies fewer of their mandated controls than the one a
@@ -1217,7 +1217,7 @@ function buildRecommended(
 
   // Cheapest to own rather than cheapest to buy. `cheapest` has to rank on
   // procurement to do its job, and the price of that is a stack of free tools
-  // nobody has the people to run — 8.58 FTE against 2 available on the hospital
+  // nobody has the people to run: 8.58 FTE against 2 available on the hospital
   // scenario. This fills the same categories choosing the lowest total cost in
   // each, and wins whenever it covers as much, which at a comfortable budget it
   // does. The comparison below decides; neither objective is trusted on its own.
@@ -1268,10 +1268,10 @@ function buildRecommended(
    * The three things a stack is judged on, in the order a client would defend
    * it in:
    *
-   *   1. mandates met  — an obligation the analyst ticked and the framework
+   *   1. mandates met . An obligation the analyst ticked and the framework
    *                      marked mandatory. Nothing outranks this.
-   *   2. weighted need — how much of the estate's risk the stack addresses.
-   *   3. controls met  — the remaining in-scope controls, mandatory or not.
+   *   2. weighted need, how much of the estate's risk the stack addresses.
+   *   3. controls met . The remaining in-scope controls, mandatory or not.
    */
   const measure = (bundle: Bundle) => ({ ...controlsMet(bundle), weight: coveredWeight(bundle) });
 

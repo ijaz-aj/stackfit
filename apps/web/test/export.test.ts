@@ -1,7 +1,7 @@
 // Phase 8's definition of done is "proposal opens cleanly in Word".
 //
 // A DOCX is a zip of XML parts, and Word reports the whole file as corrupt if
-// any one of them is malformed — so "opens cleanly" is checkable here rather
+// any one of them is malformed, so "opens cleanly" is checkable here rather
 // than only by opening Word. These tests unzip the generated file, parse every
 // XML part, and read the text back out.
 //
@@ -131,8 +131,8 @@ describe('the DOCX export', () => {
 
   it('carries the coverage disclaimer, verbatim', async () => {
     // The other sentence that has to survive the export. A coverage percentage
-    // is the number most likely to be misread — "PCI DSS 100% covered" invites
-    // a reader to conclude the audit is handled — and no product satisfies a
+    // is the number most likely to be misread: "PCI DSS 100% covered" invites
+    // a reader to conclude the audit is handled, and no product satisfies a
     // control on its own.
     const document = documentFor();
     const body = await docxText(await proposalToDocx(document));
@@ -143,7 +143,7 @@ describe('the DOCX export', () => {
 
   it('writes every section of the document model into the file', async () => {
     // If a section is missing from the DOCX it must be missing from the model,
-    // not lost by the renderer — otherwise the file a client opens and the page
+    // not lost by the renderer, otherwise the file a client opens and the page
     // the analyst read are different documents.
     const document = documentFor();
     const body = await docxText(await proposalToDocx(document));
@@ -172,14 +172,11 @@ describe('the DOCX export', () => {
     // hard-codes `new Date()` in its timestamp element with no option to
     // override, so docProps/core.xml carries the generation time.
     //
-    // Everything that says anything — the document body, the styles, the
-    // relationships — is stable, and that is what is asserted: two exports of
+    // Everything that says anything, the document body, the styles, the
+    // relationships, is stable, and that is what is asserted: two exports of
     // one scenario say the same thing.
     const document = documentFor();
-    const [first, second] = await Promise.all([
-      proposalToDocx(document),
-      proposalToDocx(document),
-    ]);
+    const [first, second] = await Promise.all([proposalToDocx(document), proposalToDocx(document)]);
 
     const [a, b] = await Promise.all([JSZip.loadAsync(first), JSZip.loadAsync(second)]);
     expect(Object.keys(a.files)).toEqual(Object.keys(b.files));
@@ -295,9 +292,7 @@ describe('the XLSX cost model', () => {
     const document = documentFor();
     for (const row of document.costModel) {
       const lines =
-        row.licenceAnnual.amountMinor +
-        row.supportAnnual.amountMinor +
-        row.infraAnnual.amountMinor;
+        row.licenceAnnual.amountMinor + row.supportAnnual.amountMinor + row.infraAnnual.amountMinor;
       expect(lines, `${row.productName}: spend does not equal its own cost lines`).toBe(
         row.annualSpend.amountMinor,
       );
@@ -308,8 +303,8 @@ describe('the XLSX cost model', () => {
 /**
  * Text out of a PDF, without a parser dependency.
  *
- * react-pdf writes its glyphs as hex strings inside TJ arrays — a line reads
- * `[<53> 0 <656375...> 20 ...] TJ` rather than `(Security...) Tj` — so the
+ * react-pdf writes its glyphs as hex strings inside TJ arrays, a line reads
+ * `[<53> 0 <656375...> 20 ...] TJ` rather than `(Security...) Tj`, so the
  * naive "find the parenthesised strings" approach finds nothing at all and
  * would make these tests pass while proving nothing.
  *
@@ -369,22 +364,17 @@ describe('the PDF export', () => {
     const flat = pdfText(await proposalToPdf(document)).replace(/\s+/g, ' ');
 
     for (const section of document.sections) {
-      expect(flat, `section "${section.heading}" did not reach the PDF`).toContain(
-        section.heading,
-      );
+      expect(flat, `section "${section.heading}" did not reach the PDF`).toContain(section.heading);
     }
     expect(flat).toContain(document.title);
   });
 
   it('says the same thing as the DOCX', async () => {
     // The reason the document model exists. Two renderers, one set of content
-    // decisions — so a client reading the PDF and a client reading the Word
+    // decisions, so a client reading the PDF and a client reading the Word
     // file must not be reading different proposals.
     const document = documentFor();
-    const [pdf, docx] = await Promise.all([
-      proposalToPdf(document),
-      proposalToDocx(document),
-    ]);
+    const [pdf, docx] = await Promise.all([proposalToPdf(document), proposalToDocx(document)]);
 
     const inPdf = pdfText(pdf).replace(/\s+/g, ' ');
     const inDocx = (await docxText(docx)).replace(/\s+/g, ' ');

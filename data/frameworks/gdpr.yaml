@@ -1,7 +1,7 @@
-# GDPR — Regulation (EU) 2016/679.
+# GDPR: Regulation (EU) 2016/679.
 #
 # Only the security-relevant Articles are listed. GDPR has 99 Articles, most of
-# them about lawful basis, data subject rights and cross-border transfer — none
+# them about lawful basis, data subject rights and cross-border transfer: none
 # of which a security product closes. Including them all would give a coverage
 # denominator this tool has no business scoring against.
 #
@@ -29,10 +29,10 @@ notes: >-
   the gdpr-info.eu mirror rather than from EUR-Lex, which is listed as the
   authoritative text but was not the copy consulted. The Articles selected are
   uncontroversial and the numbering is stable, so the risk here is lower than
-  for the provisional frameworks — but re-read against EUR-Lex before a
+  for the provisional frameworks, but re-read against EUR-Lex before a
   client-facing coverage claim.
 
-  Scoped to the security-relevant Articles only — see the file header. A
+  Scoped to the security-relevant Articles only. See the file header. A
   bundle's score against this framework must never be presented to a client as
   "GDPR compliance"; it is coverage of the technical measures Article 32 and
   its neighbours call for, and nothing more.
@@ -46,7 +46,7 @@ controls:
     title: Data protection by design and by default
     satisfiedBy: []
     notes: >-
-      An architectural and design obligation — data minimisation, purpose
+      An architectural and design obligation: data minimisation, purpose
       limitation, defaults. Products can express it; none of them satisfies it.
   - id: art-30
     title: Records of processing activities
@@ -68,7 +68,7 @@ controls:
     title: Notification of a personal data breach to the supervisory authority
     satisfiedBy: [siem, soar, mdr]
     mandatory: true
-    notes: The 72-hour clock is unmeetable without detection — which is why this is a SIEM driver.
+    notes: The 72-hour clock is unmeetable without detection, which is why this is a SIEM driver.
   - id: art-34
     title: Communication of a personal data breach to the data subject
     satisfiedBy: []

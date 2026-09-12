@@ -1,5 +1,5 @@
 /**
- * `pnpm catalog:staleness` — what needs re-checking, and how.
+ * `pnpm catalog:staleness`, what needs re-checking, and how.
  *
  * Exits non-zero when anything is stale or undateable, so it can gate a release
  * the same way a failing test does. Ageing prices are reported but do not fail:
@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { loadCatalog, loadFreshnessPolicy, loadFxConfig, loadMsspRateCard } from '@stackfit/data';
 import { assessCatalogStaleness, assessConfigStaleness, type PriceStatus } from './lib/staleness';
 
-/** Today, read once here — the boundary where a clock is allowed. */
+/** Today, read once here. The boundary where a clock is allowed. */
 function today(): string {
   const now = process.env['STACKFIT_TODAY'];
   return now !== undefined && now !== '' ? now : new Date().toISOString().slice(0, 10);
@@ -38,7 +38,7 @@ const policy = loadFreshnessPolicy(DATA_DIR);
 const report = assessCatalogStaleness(loadCatalog(DATA_DIR), asOf, policy);
 
 // Config-level prices. These are prices too, and before they were walked here
-// they aged silently — the MSSP rate card and the FX table both carry an asOf.
+// they aged silently. The MSSP rate card and the FX table both carry an asOf.
 const msspCard = loadMsspRateCard(DATA_DIR);
 const fx = loadFxConfig(DATA_DIR);
 const configReport = assessConfigStaleness(
@@ -61,29 +61,29 @@ const configReport = assessConfigStaleness(
   policy,
 );
 
-console.log(`catalog:staleness — ${report.all.length} price(s) assessed as at ${asOf}\n`);
+console.log(`catalog:staleness: ${report.all.length} price(s) assessed as at ${asOf}\n`);
 
 if (report.stale.length > 0) {
-  console.log(`STALE — past their allowance, do not quote these (${report.stale.length}):`);
+  console.log(`STALE: past their allowance, do not quote these (${report.stale.length}):`);
   for (const status of report.stale) console.log(describe(status));
   console.log('');
 }
 
 if (report.unknown.length > 0) {
-  console.log(`UNDATEABLE — no dated source (${report.unknown.length}):`);
+  console.log(`UNDATEABLE: no dated source (${report.unknown.length}):`);
   for (const status of report.unknown) console.log(describe(status));
   console.log('');
 }
 
 if (report.ageing.length > 0) {
-  console.log(`AGEING — still valid, worth re-checking soon (${report.ageing.length}):`);
+  console.log(`AGEING: still valid, worth re-checking soon (${report.ageing.length}):`);
   for (const status of report.ageing) console.log(describe(status));
   console.log('');
 }
 
 if (report.undeclared.length > 0) {
   console.log(
-    `NO REFRESH METHOD — nothing will ever re-check these automatically (${report.undeclared.length}):`,
+    `NO REFRESH METHOD: nothing will ever re-check these automatically (${report.undeclared.length}):`,
   );
   for (const status of report.undeclared) {
     console.log(`  ${status.productId}/${status.tierId}`);
@@ -92,12 +92,12 @@ if (report.undeclared.length > 0) {
 }
 
 // ---- Config-level prices, reported separately so the two backlogs stay legible.
-console.log(`config prices — ${configReport.all.length} assessed`);
+console.log(`config prices: ${configReport.all.length} assessed`);
 for (const status of configReport.all) {
   const mark =
     status.freshness.status === 'fresh' ? 'ok  ' : status.freshness.status.toUpperCase().padEnd(4);
   console.log(
-    `  ${mark} ${status.productId} — ${status.freshness.ageDays ?? '?'} days old, ` +
+    `  ${mark} ${status.productId}: ${status.freshness.ageDays ?? '?'} days old, ` +
       `allowance ${status.freshness.maxAgeDays}` +
       (status.checkUrl !== undefined ? `\n       → ${status.checkUrl}` : ''),
   );
@@ -117,6 +117,6 @@ console.log(
 );
 
 if (staleCount > 0 || unknownCount > 0) {
-  console.error('\ncatalog:staleness — FAILED: stale or undateable prices present.');
+  console.error('\ncatalog:staleness: FAILED: stale or undateable prices present.');
   process.exitCode = 1;
 }

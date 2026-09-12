@@ -1,4 +1,4 @@
-// Sizing assumptions (PROJECT_SPEC §7.1) — the coefficients that turn an asset
+// Sizing assumptions (PROJECT_SPEC §7.1). The coefficients that turn an asset
 // inventory into EPS, GB/day and storage.
 //
 // These live in data/config/sizing-assumptions.yaml (hard rule 6) and are
@@ -54,7 +54,7 @@ const assetClassAssumptionShape = Object.fromEntries(
 ) as { [K in AssetClass]: typeof AssetClassAssumption };
 
 /**
- * Every asset class needs a coefficient — no partial. Adding a class to
+ * Every asset class needs a coefficient. No partial. Adding a class to
  * AssetClass without adding its coefficient here must fail validation rather
  * than silently size that class at zero.
  */

@@ -1,4 +1,4 @@
-# MSSP / MDR rate card — the build-vs-buy side of PROJECT_SPEC §7.4 step 6.
+# MSSP / MDR rate card. The build-vs-buy side of PROJECT_SPEC §7.4 step 6.
 #
 # ANSWERS §13 Q2. Yes, an MSSP alternative ships in v1, and the shape is a
 # blend: a base platform fee that varies by scale class, plus per-endpoint,
@@ -8,7 +8,7 @@
 #
 #   Published SMB quotes decide it. A 50-endpoint client is quoted roughly USD
 #   1,500–5,000 a month, which a per-endpoint rate of USD 8–35 cannot reach on
-#   its own — 50 × 35 is 1,750 at the very top of the range, and the typical
+#   its own: 50 × 35 is 1,750 at the very top of the range, and the typical
 #   quote is well above that. Most of a small engagement is fixed platform and
 #   staffing cost that does not care how many endpoints there are. A model with
 #   no base fee understates small clients badly and overstates large ones.
@@ -23,7 +23,7 @@
 # by pricing aggregators and buyer guides, cross-checked for internal
 # consistency against the worked examples below. They are for comparison, never
 # for quoting. Replace the whole file with real numbers the moment an actual
-# MSSP quote exists — and note that the in-house MSSP option (§13 Q2's original
+# MSSP quote exists, and note that the in-house MSSP option (§13 Q2's original
 # framing) would use this same shape with the client's own cost base.
 #
 # Worked checks against the published bands, at the `monitoring` service level:
@@ -99,7 +99,7 @@ serviceLevels:
     basis: >-
       The baseline the rates above are expressed in. Alerts are triaged and
       handed over; the client still does the responding. The provider runs the
-      detection platform and nothing else — every other category stays the
+      detection platform and nothing else. Every other category stays the
       client's to buy and operate.
   - level: mdr
     multiplier: 1.35
@@ -109,13 +109,13 @@ serviceLevels:
       tooling the provider responds through. The uplift is people and
       out-of-hours capacity, which is what the reported spread between
       "monitoring" and "response" offerings mostly reflects. Note that identity,
-      backup, mail and vulnerability management are still the client's — this is
+      backup, mail and vulnerability management are still the client's. This is
       the line buyers most often assume is further right than it is.
   - level: managed_security
     multiplier: 1.7
     coveredCategories: [siem, mdr, edr, soar, ndr, ngfw, email_security, vulnerability_management]
     basis: >-
-      Adds management of the underlying devices — policy changes, tuning,
+      Adds management of the underlying devices: policy changes, tuning,
       upgrades. Closer to outsourced operations than to detection. Identity,
       privileged access and backup are deliberately excluded: providers will
       monitor them, but running them is rarely on the contract.

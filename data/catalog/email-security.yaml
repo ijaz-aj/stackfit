@@ -1,4 +1,4 @@
-# Email security — the gateway, the filter and the phishing defence.
+# Email security. The gateway, the filter and the phishing defence.
 #
 # Prices are in minor units (hard rule 1).
 #
@@ -50,7 +50,7 @@ products:
             notes: >-
               Apache License 2.0. No licence fee at any mail volume. The cost is
               the mail-relay infrastructure it runs on and the engineer who
-              tunes it — and tuning is not optional, because an untuned filter
+              tunes it, and tuning is not optional, because an untuned filter
               either passes phishing or eats invoices.
 
     supports:
@@ -138,7 +138,7 @@ products:
               checkUrl: https://www.microsoft.com/en-us/security/business/siem-and-xdr/microsoft-defender-office-365
               note: >-
                 Read the per-user-per-month figure and multiply by 12. Check
-                whether the capability has moved into a bundle — Microsoft
+                whether the capability has moved into a bundle: Microsoft
                 reshuffles what sits in E3 and E5 more often than it changes
                 the standalone rate.
             sources:
@@ -147,7 +147,7 @@ products:
             notes: >-
               USD 2.00 per user per month, paid yearly on an auto-renewing
               annual subscription, so USD 24.00 per user per year. Included in
-              Microsoft 365 Business Premium — check before quoting it.
+              Microsoft 365 Business Premium. Check before quoting it.
 
       - id: plan-2
         name: Plan 2
@@ -212,7 +212,7 @@ products:
       confidence: analyst_estimate
 
     strengths:
-      - No MX change and no mail routing project — it is a policy change inside a tenant the client already has
+      - No MX change and no mail routing project. It is a policy change inside a tenant the client already has
       - Signal flows straight into Defender XDR and Sentinel with nothing to build
       - Published price, which almost nothing else in this category has
     weaknesses:
@@ -300,7 +300,7 @@ products:
               checkUrl: https://www.proxmox.com/en/products/proxmox-mail-gateway/pricing
               note: >-
                 Read the per-host annual rate. Re-check the coverage sentence
-                too — it is per host with unlimited users and unlimited domains,
+                too. It is per host with unlimited users and unlimited domains,
                 and if that changes the banding below stops making sense.
             sources:
               - url: https://www.proxmox.com/en/products/proxmox-mail-gateway/pricing
@@ -406,7 +406,7 @@ products:
       confidence: analyst_estimate
 
     strengths:
-      - A complete gateway appliance rather than a filter library — quarantine, policy and reporting included
+      - 'A complete gateway appliance rather than a filter library: quarantine, policy and reporting included'
       - Priced per host with unlimited users, so mailbox growth is free
       - Runs fully air-gapped and in front of any mail system, including Microsoft 365
     weaknesses:
@@ -462,7 +462,7 @@ products:
               method: manual
               checkUrl: https://github.com/sublime-security/sublime-platform
               note: >-
-                Confirm the licence is still MIT and — more importantly —
+                Confirm the licence is still MIT and, more importantly,
                 re-read the mailbox limit on the self-hosted deployment. That
                 limit, not the licence, is what decides whether this product is
                 viable for a given client, and it is now declared on the tier
@@ -504,7 +504,7 @@ products:
       confidence: analyst_estimate
 
     strengths:
-      - Detection-as-code — every rule is readable, testable and version-controlled, which no commercial gateway offers
+      - Detection-as-code. Every rule is readable, testable and version-controlled, which no commercial gateway offers
       - Sits alongside Microsoft 365 or Google Workspace rather than in front of the MX record
       - Genuinely strong on BEC and credential phishing, which is where the money is lost
     weaknesses:
@@ -562,7 +562,7 @@ products:
                 Check first whether Proofpoint has started publishing a rate on
                 its own site; if it has, regrade this entry to public_list
                 immediately. Otherwise re-derive from resellers and expect them
-                to disagree — see the notes.
+                to disagree. See the notes.
             sources:
               - url: https://www.proofpoint.com/us/products/email-security-and-protection
                 asOf: '2026-09-12'
@@ -575,7 +575,7 @@ products:
               put Essentials Business at anywhere between USD 3.03 and USD 3.93
               per user per month, a spread of about 30%.
 
-              The higher figure is used deliberately — for a budget estimate
+              The higher figure is used deliberately: for a budget estimate
               the cost of overstating is a conversation and the cost of
               understating is a proposal that cannot be honoured. Get a quote
               before this number reaches a client.
@@ -597,7 +597,7 @@ products:
             refresh:
               method: manual
               checkUrl: https://www.proofpoint.com/us/products/email-security-and-protection
-              note: See the Business tier's note — the whole product is on estimated pricing.
+              note: See the Business tier's note. The whole product is on estimated pricing.
             sources:
               - url: https://www.proofpoint.com/us/products/email-security-and-protection
                 asOf: '2026-09-12'
@@ -623,7 +623,7 @@ products:
             refresh:
               method: manual
               checkUrl: https://www.proofpoint.com/us/products/email-security-and-protection
-              note: See the Business tier's note — the whole product is on estimated pricing.
+              note: See the Business tier's note. The whole product is on estimated pricing.
             sources:
               - url: https://www.proofpoint.com/us/products/email-security-and-protection
                 asOf: '2026-09-12'
@@ -674,7 +674,7 @@ products:
 
     strengths:
       - Proofpoint's detection on an SMB-priced packaging, and the detection is the reason to buy it
-      - Mail-agnostic — works in front of Microsoft 365, Google Workspace or on-premises Exchange
+      - 'Mail-agnostic: works in front of Microsoft 365, Google Workspace or on-premises Exchange'
       - Email continuity means a mail outage stops being a business outage
     weaknesses:
       - 'No published price: the rates here are reported and the sources disagree by about 30%'
@@ -693,6 +693,6 @@ products:
     notes: >-
       Every tier of this product is on analyst-estimated pricing and will show a
       pricing-confidence warning wherever it is costed. That warning is correct.
-      It is catalogued because the alternative — an email-security shortlist
-      with no specialist gateway on it — would misrepresent the market more than
+      It is catalogued because the alternative, an email-security shortlist
+      with no specialist gateway on it, would misrepresent the market more than
       a flagged estimate does.

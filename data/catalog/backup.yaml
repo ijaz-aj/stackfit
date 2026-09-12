@@ -14,7 +14,7 @@
 # in docs/STATUS.md under known placeholders.
 #
 # Storage is deliberately NOT priced as a licence line. Every product here
-# needs somewhere to put the data, and that is infrastructure — the cost engine
+# needs somewhere to put the data, and that is infrastructure. The cost engine
 # charges it for anything self-hostable, sized from the storage TB the sizing
 # stage derives.
 
@@ -92,7 +92,7 @@ products:
               checkUrl: https://www.proxmox.com/en/products/proxmox-backup-server/pricing
               note: >-
                 Read the per-server annual rate for each tier. Also re-check the
-                coverage sentence — the subscription is per server with
+                coverage sentence. The subscription is per server with
                 unlimited storage and unlimited clients, and if that changes the
                 banding below stops being a sensible model.
             sources:
@@ -221,7 +221,7 @@ products:
     weaknesses:
       - Strongest with Proxmox VE; VMware and Hyper-V estates are served through the file-level agent, not natively
       - No SaaS or Microsoft 365 protection at all
-      - Restore testing and monitoring are still your job — the tool does not nag
+      - Restore testing and monitoring are still your job. The tool does not nag
     bestFor:
       - Proxmox and Linux estates
       - Air-gapped or residency-constrained environments
@@ -297,7 +297,7 @@ products:
               checkUrl: https://www.bareos.com/pricing/
               note: >-
                 Re-read the per-unit rate and the minimum unit count. Also
-                re-read how a unit is defined — it is the larger of source data
+                re-read how a unit is defined. It is the larger of source data
                 in TB or clients plus plugin jobs, and that definition moving
                 would change the bill without the rate moving at all.
             sources:
@@ -305,7 +305,7 @@ products:
                 asOf: '2026-09-12'
             notes: >-
               EUR 48 per unit per year, minimum 10 units, so EUR 480/year is the
-              floor — which is what the minimumUnits field encodes.
+              floor, which is what the minimumUnits field encodes.
 
               ⚠ A Bareos "unit" is the larger of source data in TB or the number
               of clients plus plugin jobs. This entry bills it against monitored
@@ -352,7 +352,7 @@ products:
       confidence: analyst_estimate
 
     strengths:
-      - Genuinely enterprise-scale — tape libraries, long retention and heterogeneous clients
+      - 'Genuinely enterprise-scale: tape libraries, long retention and heterogeneous clients'
       - No licence fee at all, and the subscription is optional rather than the real price
       - The configuration is text, so the whole backup policy is reviewable and version-controllable
     weaknesses:
@@ -412,7 +412,7 @@ products:
                 Deliberately manual rather than azure_retail_prices. The
                 automated refresh compares the feed's number to the catalog's
                 directly, and the feed quotes "1/Month" while this entry is per
-                year — an automated check would report permanent 1,100% drift.
+                year. An automated check would report permanent 1,100% drift.
                 Re-checking a meter whose unit does not match the pricing model
                 needs a human to do the arithmetic.
             sources:
@@ -422,7 +422,7 @@ products:
                 asOf: '2026-09-12'
             notes: >-
               USD 10.00 per protected instance per month for East US, so USD
-              120.00 per year, read from the Azure Retail Prices API — the same
+              120.00 per year, read from the Azure Retail Prices API. The same
               authoritative feed microsoft-sentinel is priced from.
 
               Two caveats, both of which move a real bill.
@@ -430,7 +430,7 @@ products:
               The cost engine charges infrastructure for self-hostable products
               only, and Azure Backup is not one, so storage is missing from this
               line entirely. For a data-heavy estate storage is the larger half
-              of the bill — quote it separately.
+              of the bill. Quote it separately.
               (2) Microsoft's published protected-instance pricing bands by
               instance size (under 50 GB, 50–500 GB, then per additional 500
               GB). The API meter is a single figure and this entry uses it, so
@@ -528,7 +528,7 @@ products:
               checkUrl: https://www.veeam.com/licensing-pricing.html
               note: >-
                 Check first whether Veeam has started publishing a rate on its
-                own site — if it has, this entry should be regraded to
+                own site. If it has, this entry should be regraded to
                 public_list immediately. Until then, re-derive from at least two
                 independent licensing specialists and note that Veeam raised
                 list prices in January of both 2025 and 2026, so this figure
@@ -553,9 +553,9 @@ products:
               flagged estimate does.
 
               Two further caveats. Licences are sold in packs of 5 or 10, so a
-              real order rounds up. And a VUL workload is not a server — one VM,
+              real order rounds up. And a VUL workload is not a server. One VM,
               one physical server, three workstations or one Microsoft 365 user
-              set each consume differently — so billing this against the server
+              set each consume differently, so billing this against the server
               count is an approximation that will be wrong for a
               workstation-heavy estate.
 
@@ -576,7 +576,7 @@ products:
             refresh:
               method: manual
               checkUrl: https://www.veeam.com/licensing-pricing.html
-              note: See the Foundation tier's note — the whole product is on estimated pricing.
+              note: See the Foundation tier's note. The whole product is on estimated pricing.
             sources:
               - url: https://www.veeam.com/licensing-pricing.html
                 asOf: '2026-09-12'
@@ -608,7 +608,7 @@ products:
             refresh:
               method: manual
               checkUrl: https://www.veeam.com/licensing-pricing.html
-              note: See the Foundation tier's note — the whole product is on estimated pricing.
+              note: See the Foundation tier's note. The whole product is on estimated pricing.
             sources:
               - url: https://www.veeam.com/licensing-pricing.html
                 asOf: '2026-09-12'
@@ -696,7 +696,7 @@ products:
     notes: >-
       Every tier of this product is on analyst-estimated pricing. It will show a
       pricing-confidence warning wherever it is costed, and that warning is
-      correct — do not quote these figures to a client without a Veeam quote
+      correct. Do not quote these figures to a client without a Veeam quote
       behind them.
 
   - id: backblaze-business-backup
@@ -727,7 +727,7 @@ products:
               checkUrl: https://www.backblaze.com/cloud-backup/pricing
               note: >-
                 Read the annual per-computer rate. The thing most likely to
-                change is not the price but the word "unlimited" — check the
+                change is not the price but the word "unlimited". Check the
                 storage claim as carefully as the number.
             sources:
               - url: https://www.backblaze.com/cloud-backup/pricing
@@ -750,7 +750,7 @@ products:
 
     controlsCovered:
       # Endpoints only. It does not back up servers, databases or SaaS, so the
-      # resilience and records-retention controls are deliberately absent — this
+      # resilience and records-retention controls are deliberately absent. This
       # product closes the laptop half of data recovery and says nothing about
       # the rest.
       - cis-v8:11
@@ -777,7 +777,7 @@ products:
       - Deploys to a fleet in days and needs almost no operational attention
       - Covers the roaming laptop, which most server-shaped backup tools quietly ignore
     weaknesses:
-      - Endpoints only — no servers, no VMs, no databases, no Microsoft 365
+      - Endpoints only. No servers, no VMs, no databases, no Microsoft 365
       - Not a compliance-grade retention tool; version history is limited by plan
       - SaaS-only, with no air-gapped option
     bestFor:

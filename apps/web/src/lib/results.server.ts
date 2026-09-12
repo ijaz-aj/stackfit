@@ -8,7 +8,7 @@ import { engineData, today } from './config.server';
  *
  * Server-only: it reads the committed data tree. Both the results dashboard and
  * the wizard's live estimate go through here, so there is no second assembly of
- * the same arguments — the mistake this repo has now corrected at three
+ * the same arguments. The mistake this repo has now corrected at three
  * different layers.
  */
 export function resultsFor(

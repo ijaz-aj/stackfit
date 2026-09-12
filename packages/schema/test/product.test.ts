@@ -47,7 +47,7 @@ function product(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe('Product — open-source honesty (hard rule 8)', () => {
+describe('Product: open-source honesty (hard rule 8)', () => {
   it('accepts a zero-licence product that owns up to its operational cost', () => {
     expect(Product.safeParse(product()).success).toBe(true);
   });
@@ -87,7 +87,7 @@ describe('Product — open-source honesty (hard rule 8)', () => {
   });
 });
 
-describe('Product — how well grounded the effort figures are', () => {
+describe('Product: how well grounded the effort figures are', () => {
   it('requires a confidence on the ops burden', () => {
     const noConfidence = product();
     delete (noConfidence['opsBurden'] as Record<string, unknown>)['confidence'];

@@ -7,8 +7,8 @@ import { renderCell } from './proposal.server';
  * §8's proposal as a PDF, the format PROJECT_SPEC §3 names alongside the DOCX.
  *
  * Third renderer over the same document model, through the same `renderCell`.
- * It decides nothing about content — if a section is missing here it is missing
- * from the model — which is the reason the model exists at all.
+ * It decides nothing about content, if a section is missing here it is missing
+ * from the model, which is the reason the model exists at all.
  *
  * react-pdf has its own component tree and its own flexbox-only layout, so this
  * cannot share JSX with the HTML preview. What it can share, and does, is every
@@ -172,7 +172,7 @@ function Section({ section }: { section: ProposalSection }) {
 export async function proposalToPdf(document: ProposalDocument): Promise<Buffer> {
   return renderToBuffer(
     <Document
-      title={`${document.title} — ${document.preparedFor}`}
+      title={`${document.title}: ${document.preparedFor}`}
       author="StackFit"
       subject={document.disclaimer}
     >

@@ -98,7 +98,7 @@ products:
     strengths:
       - Finds things nothing else will, including the hosts nobody remembers building
       - Free at any scale and runs anywhere, including fully air-gapped
-      - The output is the input to almost everything else — vulnerability scanning, inventory, segmentation review
+      - 'The output is the input to almost everything else: vulnerability scanning, inventory, segmentation review'
     weaknesses:
       - 'A scanner, not a system: no database, no history, no change detection unless somebody builds it'
       - Active scanning can disrupt fragile OT and legacy devices, and needs care before it is pointed anywhere sensitive
@@ -159,7 +159,7 @@ products:
               assets".
 
               The 100-asset cap is declared on the tier and enforced exactly,
-              against the monitored asset count — the same quantity runZero
+              against the monitored asset count. The same quantity runZero
               bills on, which makes this the cleanest cap in the catalog. It
               used to be approximated with scaleCeiling "small", which
               over-permitted everything between 100 and 250 assets.
@@ -215,7 +215,7 @@ products:
     weaknesses:
       - 'The free tier stops at 100 assets, which is smaller than almost every client in scope for this tool'
       - The paid platform has no published unit price, so the upgrade is a sales conversation
-      - Discovery only — it will not track ownership, cost or lifecycle
+      - Discovery only. It will not track ownership, cost or lifecycle
     bestFor:
       - Very small estates, or a time-boxed discovery exercise during scoping
       - Environments with OT or IoT that an agent or credentialled scan cannot reach
@@ -244,7 +244,7 @@ products:
         name: NetBox Community (self-hosted)
         capabilities:
           - IP address management for prefixes, ranges and addresses
-          - Data centre infrastructure modelling — racks, devices, cabling, power
+          - 'Data centre infrastructure modelling: racks, devices, cabling, power'
           - VLAN, circuit and virtualisation modelling
           - Full REST and GraphQL APIs for automation
           - Change logging on every object
@@ -280,7 +280,7 @@ products:
     controlsCovered:
       # The intended state of the estate, recorded and versioned. It does not
       # discover anything, so cis-v8:1's discovery half is Nmap's or runZero's
-      # job — this entry claims the inventory half.
+      # job. This entry claims the inventory half.
       - cis-v8:1
       - nist-csf-2.0:ID.AM
       - iso-27001-2022:A.5.9
@@ -305,13 +305,13 @@ products:
       - API-first, so the inventory can actually feed other tools instead of being a document
     weaknesses:
       - 'Records what you tell it: NetBox will confidently hold a wrong inventory forever'
-      - No discovery of its own — it needs Nmap, runZero or an automation pipeline to populate it
+      - No discovery of its own. It needs Nmap, runZero or an automation pipeline to populate it
       - The elapsed implementation time is data entry and modelling, not installation
     bestFor:
       - Network-heavy estates where segmentation and addressing must be documented
       - Clients building automation that needs a source of truth to read
     avoidWhen:
-      - Nobody will keep it current — a stale source of truth is worse than none
+      - Nobody will keep it current. A stale source of truth is worse than none
       - The client needs to find unknown assets rather than record known ones
 
     sources:
@@ -428,7 +428,7 @@ products:
       confidence: analyst_estimate
 
     strengths:
-      - Tracks the thing auditors actually ask about — who has which device, since when
+      - Tracks the thing auditors actually ask about, who has which device, since when
       - Genuinely free and unlimited self-hosted, with a supported hosted path if that changes
       - Operable by IT rather than by security, which is where asset records really live
     weaknesses:
@@ -437,7 +437,7 @@ products:
       - Software licence tracking is basic next to a dedicated SAM product
     bestFor:
       - Clients whose asset register is a spreadsheet and needs to stop being one
-      - Estates with an offboarding problem — devices that leave with people
+      - 'Estates with an offboarding problem: devices that leave with people'
     avoidWhen:
       - The problem is unknown assets rather than unrecorded ones
       - There is no process to keep the register current
@@ -448,7 +448,7 @@ products:
       - url: https://github.com/grokability/snipe-it
         asOf: '2026-09-12'
     notes: >-
-      Pairs with Nmap or runZero rather than competing with them — one finds,
+      Pairs with Nmap or runZero rather than competing with them. One finds,
       this one records. A client buying only this has an inventory they believe
       and no way to test it.
 
@@ -507,8 +507,8 @@ products:
     integrations: [ldap, saml, snmp, syslog]
 
     controlsCovered:
-      # The only entry here that both discovers and records — agent inventory
-      # plus SNMP discovery plus a register — which is why it claims both halves
+      # The only entry here that both discovers and records: agent inventory
+      # plus SNMP discovery plus a register, which is why it claims both halves
       # of CIS Control 1 and Control 2.
       - cis-v8:1
       - cis-v8:2
@@ -535,14 +535,14 @@ products:
       - The agent keeps the register current automatically, so accuracy is not purely a process problem
       - Service desk included, so it can replace two tools for a small IT team
     weaknesses:
-      - Broad rather than deep — each of its many modules is adequate rather than excellent
+      - Broad rather than deep. Each of its many modules is adequate rather than excellent
       - The interface shows its age and the learning curve is real
       - Agent deployment is a project of its own on an unmanaged estate
     bestFor:
       - Small and mid-sized IT teams wanting one system for assets and tickets
       - Clients who need the inventory to stay accurate without a manual process
     avoidWhen:
-      - A best-of-breed source of truth is needed for network automation — NetBox is the better answer
+      - 'A best-of-breed source of truth is needed for network automation: NetBox is the better answer'
       - Only discovery is wanted, with no appetite for a platform
 
     sources:

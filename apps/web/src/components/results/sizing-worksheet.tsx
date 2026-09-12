@@ -11,13 +11,13 @@ import { saveSizingOverrides } from '@/lib/actions';
 import { formatNumber } from '@/lib/format';
 
 /**
- * §8.6 — the sizing worksheet, with every assumption visible *and editable*.
+ * §8.6. The sizing worksheet, with every assumption visible *and editable*.
  *
  * Visible means the coefficient and the reason for it: each of the thirty asset
  * classes carries a mandatory `basis` in the committed config precisely so this
  * table can show what a number was derived from.
  *
- * Editable means editable here, for this client, on this call — the analyst who
+ * Editable means editable here, for this client, on this call. The analyst who
  * knows these firewalls are quieter than the default should be able to say so
  * and watch every downstream figure move, without editing the repo. The
  * defaults are never touched; the override is stored with the scenario, and
@@ -57,7 +57,7 @@ export function SizingWorksheet({
             setState('saved');
             setProblem(null);
             // The page is server-rendered off the engine, so the way to show
-            // new numbers is to ask the server for them again — not to
+            // new numbers is to ask the server for them again. Not to
             // recompute a second version of the truth in the browser.
             router.refresh();
           } else {
@@ -112,7 +112,7 @@ export function SizingWorksheet({
   return (
     <Card
       title="Sizing worksheet"
-      hint="Every downstream number starts here. The coefficients are analyst estimates — correct any of them for this client and the whole page re-derives."
+      hint="Every downstream number starts here. The coefficients are analyst estimates. Correct any of them for this client and the whole page re-derives."
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {overriddenCount > 0 ? (
@@ -122,7 +122,7 @@ export function SizingWorksheet({
         )}
         <span className="text-faint text-xs">
           {state === 'saving' ? 'saving…' : state === 'saved' ? 'saved' : ''}
-          {state === 'error' && <span className="text-bad">not saved — {problem}</span>}
+          {state === 'error' && <span className="text-bad">Not saved. {problem}</span>}
         </span>
         {overriddenCount > 0 && (
           <Button
@@ -195,7 +195,7 @@ export function SizingWorksheet({
         </label>
       </div>
       <p className="text-faint mt-1 text-xs leading-snug">
-        Blank means the committed default. Retention sets the floor only — a selected framework can
+        Blank means the committed default. Retention sets the floor only. A selected framework can
         still lengthen it, and never shortens it.
       </p>
 

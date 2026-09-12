@@ -1,13 +1,13 @@
 /**
- * `pnpm prices:refresh` — re-read every machine-refreshable price and report drift.
+ * `pnpm prices:refresh`: re-read every machine-refreshable price and report drift.
  *
  * Today that means the Azure Retail Prices API, which is unauthenticated,
  * machine-readable and keyed by a stable meter GUID. It is the only vendor feed
  * in the catalog that can be trusted to answer the same question twice.
  *
  * Reports by default; `--write` updates the YAML in place. Even with --write it
- * only ever touches the price and the source date — never the notes, never the
- * confidence — so a human still reviews what changed in the diff.
+ * only ever touches the price and the source date (never the notes, never the
+ * confidence) so a human still reviews what changed in the diff.
  */
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -51,12 +51,12 @@ async function fetchAzureMeter(refresh: Extract<PriceRefresh, { method: 'azure_r
   const item = body.Items?.[0];
   if (item === undefined) {
     throw new Error(
-      `meter ${refresh.meterId} no longer exists in region ${refresh.armRegionName} — the SKU was probably retired, which needs a human`,
+      `meter ${refresh.meterId} no longer exists in region ${refresh.armRegionName}: the SKU was probably retired, which needs a human`,
     );
   }
   if (item.unitOfMeasure !== refresh.expectedUnitOfMeasure) {
     throw new Error(
-      `meter ${refresh.meterId} changed unit of measure from "${refresh.expectedUnitOfMeasure}" to "${item.unitOfMeasure}" — the price is not comparable, this needs a human`,
+      `meter ${refresh.meterId} changed unit of measure from "${refresh.expectedUnitOfMeasure}" to "${item.unitOfMeasure}": the price is not comparable, this needs a human`,
     );
   }
   return item;
@@ -97,7 +97,7 @@ async function main(): Promise<void> {
     }
   }
 
-  console.log(`prices:refresh — checked ${checked} machine-refreshable price(s) as at ${TODAY}\n`);
+  console.log(`prices:refresh: checked ${checked} machine-refreshable price(s) as at ${TODAY}\n`);
 
   for (const failure of failures) console.error(`  FAILED  ${failure}`);
   if (failures.length > 0) console.error('');
@@ -123,7 +123,7 @@ async function main(): Promise<void> {
     // re-serialising would reflow every comment in the file, and the comments
     // are where the reasoning lives.
     // Read the directory rather than naming the files: a hard-coded list goes
-    // stale the moment a category is added, and the failure is silent — the
+    // stale the moment a category is added, and the failure is silent. The
     // drift is reported, --write says nothing, and the YAML keeps the old
     // price. Phase 7 adds ten catalog files, so it would have gone stale twice.
     const catalogDir = join(DATA_DIR, 'catalog');
@@ -143,7 +143,7 @@ async function main(): Promise<void> {
         }
       }
     }
-    console.log('\n  ⚠ Prices updated. Source asOf dates were NOT touched — review the diff and');
+    console.log('\n  ⚠ Prices updated. Source asOf dates were NOT touched: review the diff and');
     console.log('    update them by hand so the change is a deliberate, dated decision.');
   } else if (drifts.length > 0) {
     console.log('\n  Re-run with --write to apply these, then review the diff.');

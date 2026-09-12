@@ -5,7 +5,7 @@
     "lib": ["ES2022"],
     // `preserve` implies bundler-style resolution and leaves import specifiers
     // exactly as written. It is what every consumer of these packages actually
-    // uses — tsx, Vitest and Next's bundler — and it means a relative import
+    // uses, tsx, Vitest and Next's bundler, and it means a relative import
     // does not have to carry a `.js` extension that points at a file which does
     // not exist. Nothing ever executes the emitted dist/; it is typecheck output.
     "module": "preserve",

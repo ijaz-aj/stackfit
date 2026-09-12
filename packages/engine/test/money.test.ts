@@ -82,7 +82,7 @@ describe('currency conversion', () => {
 
   it('stays exact on amounts far beyond 2^53 when multiplied by a rate', () => {
     // INR 100,000,000.00 is 10^10 minor units. Multiplied by a rate in
-    // millionths that is ~10^16 — past the point where a JS number stops being
+    // millionths that is ~10^16. Past the point where a JS number stops being
     // exact. BigInt keeps it correct.
     const large = inr(10_000_000_000);
     const converted = convertMoney(large, 'USD', fx);
@@ -96,7 +96,7 @@ describe('currency conversion', () => {
     expect(() => convertMoney(usd(100), 'INR', incomplete)).toThrow(/no FX rate for INR/);
   });
 
-  it('is deterministic — the same conversion twice gives the same minor units', () => {
+  it('is deterministic: the same conversion twice gives the same minor units', () => {
     const first = convertMoney(inr(123_456_789), 'EUR', fx);
     const second = convertMoney(inr(123_456_789), 'EUR', fx);
     expect(second).toEqual(first);
@@ -106,7 +106,7 @@ describe('currency conversion', () => {
 describe('money in a rationale sentence', () => {
   // These strings land next to figures the interface rendered itself. When the
   // two disagree about notation, a reader has to work out whether "USD 2,604"
-  // and "$411,903" are the same money — in a document about budgets.
+  // and "$411,903" are the same money: in a document about budgets.
   it('writes money the way the interface does', () => {
     expect(moneyInWords({ amountMinor: 411_903_00, currency: 'USD' })).toBe('$411,903');
     // Lakh grouping, not Western. India is this tool's primary region, so

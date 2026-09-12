@@ -1,6 +1,6 @@
 # How bundles are assembled (PROJECT_SPEC §7.4).
 #
-# Procurement judgement, as opposed to risk judgement — how categories are
+# Procurement judgement, as opposed to risk judgement: how categories are
 # weighted lives in category-weights.yaml.
 
 notes: >-
@@ -13,7 +13,7 @@ notes: >-
 # Essential bundle even if no framework demands it.
 #
 # A weight floor rather than a fixed list, because the weight already accounts
-# for the client's infrastructure — so a SaaS-only company's essentials are
+# for the client's infrastructure, so a SaaS-only company's essentials are
 # genuinely different from a manufacturer's, instead of both getting the same
 # five boxes. On the current weights this selects roughly the top three or four
 # categories for a typical estate.
@@ -24,13 +24,13 @@ essentialWeightFloor: 85
 suiteDiscountRate: 0.1
 
 # Points added to fit score when a product integrates with something already in
-# the bundle. Used only to rank value density — never written back into the
+# the bundle. Used only to rank value density. Never written back into the
 # published fit score, which must keep meaning "fit for this client" rather than
 # "fit given what we happened to pick first".
 suiteIntegrationBonusPoints: 5
 
 # Value density divides by annualised TCO. A zero-cost product would divide by
-# zero, so the denominator is floored here — USD 1.00 in minor units. Any
+# zero, so the denominator is floored here: USD 1.00 in minor units. Any
 # product this cheap is dominated by its operational cost anyway, which is
 # already in the TCO.
 minimumAnnualisedCostMinor: 100
@@ -38,15 +38,15 @@ minimumAnnualisedCostMinor: 100
 # Ranking points for an open-source or open-core product when the client's
 # procurementBias is open_source_first.
 #
-# §7.3 has that bias raise the ops-fit weight, which is honest — the failure
-# mode of open source is operational — but on its own it *penalises* open
+# §7.3 has that bias raise the ops-fit weight, which is honest. The failure
+# mode of open source is operational, but on its own it *penalises* open
 # source, because operability is where it is weakest. The result was that a
 # buyer who asked for open source got commercial recommendations, and §12.3's
 # "OSS stack recommended" went unmet.
 #
 # Set at 8: enough to win a close call, not enough to overturn a product that is
 # materially better for this client. A stated preference should tilt a
-# recommendation, not dictate it — and the ops-fit weight is still raised, so an
+# recommendation, not dictate it, and the ops-fit weight is still raised, so an
 # open-source tool the client cannot operate still loses.
 openSourcePreferencePoints: 8
 
@@ -66,7 +66,7 @@ basis: >-
 # question is how much the client can actually absorb by when.
 #
 # Ordering within the roadmap is mandatory categories first, then by category
-# weight — the same priority the portfolio stage already used to spend the
+# weight. The same priority the portfolio stage already used to spend the
 # money, so the plan to deploy matches the plan to buy.
 roadmap:
   # The divisor on elapsed time, and the number most worth arguing with: a
@@ -87,7 +87,7 @@ roadmap:
       horizon: Months four to nine
       elapsedWeeks: 26
       basis: >-
-        Two quarters. The substantial platforms — the ones that need design,
+        Two quarters. The substantial platforms. The ones that need design,
         integration and tuning rather than an installer.
 
     - label: Extend
@@ -101,7 +101,7 @@ roadmap:
   basis: >-
     Analyst judgement. The phase lengths are conventional quarters rather than
     anything derived, and parallelWorkstreams is the assumption that actually
-    moves the plan — halve it and the roadmap roughly doubles in length. Both
+    moves the plan: halve it and the roadmap roughly doubles in length. Both
     are worth confirming against the client's real delivery capacity on the
     call, because a roadmap nobody can staff is a roadmap that slips.
 
@@ -109,7 +109,7 @@ roadmap:
 #
 # ⚠ Two things about the figure this constrains on, stated here because they
 # decide how much weight the bundle deserves:
-#   - every opsBurden in data/catalog is an analyst_estimate — 65 of 65, none
+#   - every opsBurden in data/catalog is an analyst_estimate: 65 of 65, none
 #     vendor-stated and none measured;
 #   - FTE is summed across products with no overlap, so a thirteen-tool stack
 #     overstates what one team actually carries. Modelling the overlap would
@@ -122,5 +122,5 @@ operableCapacity:
     The whole stated team, by default. An analyst who writes "two security
     staff" means two, and discounting that to 1.4 would be StackFit inventing a
     fact about the client's own staffing. Lower it for a team that also carries
-    incident response, audit and project work — which is most of them — and the
+    incident response, audit and project work, which is most of them, and the
     Operable bundle shrinks accordingly.

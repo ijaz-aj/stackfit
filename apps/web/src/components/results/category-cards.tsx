@@ -13,7 +13,7 @@ import { formatMoney, formatNumber } from '@/lib/format';
 import { ASSET_LABELS, CATEGORY_LABELS, DIMENSION_LABELS } from '@/components/wizard/labels';
 
 /**
- * §8.2 — one card per category: what was chosen, what came second, why, what it
+ * §8.2. One card per category: what was chosen, what came second, why, what it
  * costs, and what it covers *in their environment*.
  *
  * The last of those is the one that makes a recommendation concrete on a call.
@@ -25,7 +25,7 @@ import { ASSET_LABELS, CATEGORY_LABELS, DIMENSION_LABELS } from '@/components/wi
  *
  * §9: "if you cannot render a rationale for a number, do not render the
  * number." The badge above is a number, and every dimension behind it has had a
- * sentence attached since Phase 4 — this is the first thing that shows them.
+ * sentence attached since Phase 4. This is the first thing that shows them.
  * Folded away by default because the card is read on a call and seven rows of
  * reasoning is not the first thing anyone needs.
  *
@@ -70,7 +70,7 @@ function AlternativeRow({ alternative }: { alternative: AlternativeVerdict }) {
       <div className="flex flex-wrap items-baseline justify-between gap-x-2">
         <span className={ruledOut ? 'text-faint' : 'text-muted'}>
           {alternative.productName}
-          <span className="text-faint"> — {alternative.tierName}</span>
+          <span className="text-faint"> · {alternative.tierName}</span>
         </span>
         <span className="tabular text-faint shrink-0">
           {ruledOut ? (
@@ -154,7 +154,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
 
   return (
     // `lg`, not `xl`. Tailwind's breakpoints are CSS pixels and a scaled
-    // display reports fewer of them than its panel has — 1254 on a 1568px
+    // display reports fewer of them than its panel has: 1254 on a 1568px
     // screen at 125%. `xl:` (1280) therefore never fired on the machine this
     // was designed on, and these cards had only ever been seen one-up.
     <div className="grid gap-4 lg:grid-cols-2">
@@ -171,7 +171,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
               them the same kind of thing. They are not: the category is the
               question this card answers and the product is the answer. The
               category becomes a quiet eyebrow, and the product name gets the
-              weight — it is what an analyst says out loud.
+              weight, because it is what an analyst says out loud.
             */}
             <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
               <div className="min-w-0">
@@ -187,7 +187,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
               {/*
                 Three different kinds of fact used to share one treatment. The
                 fit score is a measurement, the mandate is a constraint, the
-                pricing grade is a caveat — so the score reads as a figure and
+                pricing grade is a caveat, so the score reads as a figure and
                 only the things that qualify it stay as badges.
               */}
               <div className="flex shrink-0 flex-col items-end gap-2">
@@ -209,7 +209,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
               The figures the card exists to show. They were the same size as
               their own labels, on a two-pixel row, which is not a hierarchy.
               Each now sits in its own cell with the label above it in the
-              quiet weight, and the TCO — the one people quote — is accented.
+              quiet weight, and the TCO (the one people quote) is accented.
             */}
             <dl className="border-line mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-(--radius-control) border sm:grid-cols-4">
               {[

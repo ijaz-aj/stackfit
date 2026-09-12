@@ -4,7 +4,7 @@
 // Two signals decide whether a control is covered, and they are deliberately
 // not the same signal:
 //
-//   - `Control.satisfiedBy` is StackFit's own category-level judgement — "a
+//   - `Control.satisfiedBy` is StackFit's own category-level judgement. "a
 //     SIEM materially satisfies this". It is conservative by design and says
 //     nothing about which SIEM.
 //   - `Product.controlsCovered` is one product's own claim, backed by that
@@ -15,7 +15,7 @@
 // `partial`, never as covered: it is the analyst's cue to check, not a
 // coverage claim to put in front of a client.
 //
-// Controls no purchase can satisfy (`satisfiedBy: []` — policy, training,
+// Controls no purchase can satisfy (`satisfiedBy: []`: policy, training,
 // physical custody, cryptography) are `not_addressable` and are kept out of the
 // denominator. Leaving them in would peg every stack at around half and make
 // the percentage meaningless; 115 of the library's 240 controls map to nothing
@@ -45,11 +45,11 @@ import type { Bundle } from './portfolio';
 import type { ProductScore } from './scoring';
 
 /**
- * `covered` — a selected product claims this control.
- * `partial` — the bundle has a product in a category that satisfies this
+ * `covered`. A selected product claims this control.
+ * `partial`. The bundle has a product in a category that satisfies this
  *   control, but that product does not claim the control itself.
- * `gap` — a purchase could satisfy this control and the bundle has nothing.
- * `not_addressable` — no product category satisfies it; it is not buyable.
+ * `gap`. A purchase could satisfy this control and the bundle has nothing.
+ * `not_addressable`. No product category satisfies it; it is not buyable.
  */
 export type ControlCoverageStatus = 'covered' | 'partial' | 'gap' | 'not_addressable';
 
@@ -128,7 +128,7 @@ export interface GapCloser {
   readonly upgradeFromTierName: string | null;
   /**
    * The product claims the control outright, so buying it moves the control to
-   * `covered`. False means it only moves it to `partial` — the right kind of
+   * `covered`. False means it only moves it to `partial`. The right kind of
    * tool, with no claim on this specific control.
    */
   readonly closesFully: boolean;
@@ -143,7 +143,7 @@ export interface GapCloser {
 }
 
 /**
- * What a coverage percentage is, and — more importantly — what it is not.
+ * What a coverage percentage is, and, more importantly, what it is not.
  *
  * Verbatim wherever coverage is shown, for the same reason the §6 rule 4
  * pricing disclaimer is: an export is where the reader stops seeing the
@@ -154,7 +154,7 @@ export interface GapCloser {
  * The framing follows the mapping bodies' own language. CIS publishes control
  * mappings with the caveat that they are a professional assessment of
  * control-objective alignment rather than regulatory guidance, and PCI's own
- * position is that an assessor applies the requirements directly — a mapping
+ * position is that an assessor applies the requirements directly. A mapping
  * shows which controls a tool *supports*, and the framework remains
  * authoritative. No product satisfies a control on its own: policy, process,
  * configuration, evidence and the assessor's judgement decide compliance, and
@@ -181,7 +181,7 @@ export interface CoverageGap {
    * Why this control is not covered.
    *
    * `gap` is nothing in the stack addressing it at all. `partial` is the right
-   * *kind* of tool in the stack with no claim on this specific control — which
+   * *kind* of tool in the stack with no claim on this specific control, which
    * is uncovered too, and was being left out of this list entirely: the client
    * was shown a coverage percentage and no route to the missing half of it,
    * because the only controls with a costed fix were the ones nothing
@@ -223,7 +223,7 @@ export interface RemediationOption {
   readonly opsFte: number;
   /** Control ids this purchase closes outright, worst first. */
   readonly closesControls: readonly string[];
-  /** Control ids it would move to `partial` only — right tool, no claim. */
+  /** Control ids it would move to `partial` only: right tool, no claim. */
   readonly partiallyClosesControls: readonly string[];
   readonly frameworks: readonly string[];
   readonly worstResidualRisk: ResidualRisk;
@@ -303,7 +303,7 @@ function worseRisk(a: ResidualRisk, b: ResidualRisk): ResidualRisk {
  *
  * A mandatory control in a framework the client actually selected is a stated
  * obligation going unmet, which is a different kind of finding from an
- * unmitigated risk — it is not argued down by the size of the estate.
+ * unmitigated risk. It is not argued down by the size of the estate.
  * Everything else is banded on the category weight computed for this client,
  * so a gap in a category their estate has nothing for does not shout.
  */
@@ -335,7 +335,7 @@ function residualRiskFor(
 
   return {
     risk: band.risk,
-    why: `the strongest category that would close it weighs ${round(weight, 1)} for this estate — ${band.label}`,
+    why: `the strongest category that would close it weighs ${round(weight, 1)} for this estate, which is ${band.label}`,
   };
 }
 
@@ -367,8 +367,8 @@ function coverOneControl(
     // side-by-side comparison would be meaningless.
     status = 'not_addressable';
     rationale.push(
-      `${framework.name} ${control.id} is not closed by a purchase — ${framework.id} maps it to no ` +
-        'product category — so it is left out of the coverage denominator rather than counted ' +
+      `${framework.name} ${control.id} is not closed by a purchase. ${framework.id} maps it to no ` +
+        'product category, so it is left out of the coverage denominator rather than counted ' +
         'against the stack.',
     );
     if (coveredBy.length > 0) {
@@ -522,7 +522,7 @@ export function computeFrameworkCoverage(inputs: CoverageInputs): readonly Frame
       rationale.push(
         `⚠ Nothing in this bundle claims a single ${framework.name} control, while ${partial.length} ` +
           'of them are the kind of control its products would address. That is a mapping this ' +
-          'catalog has not been given, not a stack that does nothing — the figure to act on is ' +
+          'catalog has not been given, not a stack that does nothing. The figure to act on is ' +
           `the ${partial.length} partial, and the fix is in the catalog entries.`,
       );
     }
@@ -570,7 +570,7 @@ export function computeFrameworkCoverage(inputs: CoverageInputs): readonly Frame
  * Ranked on procurement spend rather than TCO: "what would it cost to fix" is a
  * purchase-order question, and the FTE the fix needs travels alongside instead
  * of being priced into it. That is the same split the §7.4 knapsack makes, and
- * it is here for the same reason — charging a client's own salaried team to a
+ * it is here for the same reason: charging a client's own salaried team to a
  * purchase order prices open source out of every budget.
  */
 /**
@@ -578,7 +578,7 @@ export function computeFrameworkCoverage(inputs: CoverageInputs): readonly Frame
  *
  * Two shapes, because there are two real answers. A product the bundle does not
  * own is a purchase, quoted at the cheapest tier that actually claims the
- * control rather than at the cheapest tier outright — quoting a SKU that does
+ * control rather than at the cheapest tier outright: quoting a SKU that does
  * not close the gap is not quoting the fix. A product the bundle already owns
  * is an *upgrade*, priced as the difference, because telling an analyst to buy
  * a second tool when the licence they hold has the capability one tier up is
@@ -725,7 +725,7 @@ interface PlannedPurchase {
  *
  * Deliberately not "the cheapest fix for each gap, taken one gap at a time".
  * That buys a second tool to do a job something already on the list does, which
- * is what §7.4 step 4 refuses inside a bundle — and it makes the answer depend
+ * is what §7.4 step 4 refuses inside a bundle, and it makes the answer depend
  * on the order the gaps happen to be listed in.
  *
  * Products that claim a control outright are exhausted first, so a cheaper
@@ -946,7 +946,7 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
               (partly.length > 0 ? ` and partly addresses ${partly.length} more` : '') +
               ` across ${frameworkIds.join(', ')}. No new tool to deploy, run or renew: the ` +
               'client already owns this product at a lower tier.'
-            : `Adding ${closer.productName} — ${closer.tierName} (${closer.category}) closes ` +
+            : `Adding ${closer.productName} · ${closer.tierName} (${closer.category}) closes ` +
               `${fully.length} control(s) outright` +
               (partly.length > 0 ? ` and partly addresses ${partly.length} more` : '') +
               ` across ${frameworkIds.join(', ')}.`,
@@ -956,7 +956,7 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
               `${closer.tco.amountMinor / 100} ${currency} more over the horizon. ` +
               (closer.opsFte === 0
                 ? 'No extra people are shown because operational burden is recorded per product ' +
-                  'rather than per tier — a heavier SKU usually is more work to run, and this ' +
+                  'rather than per tier, because a heavier SKU usually is more work to run, and this ' +
                   'catalog cannot yet say how much.'
                 : `${round(closer.opsFte, 2)} more FTE to run.`)
             : `${closer.annualSpend.amountMinor / 100} ${currency}/yr of procurement spend, ` +
@@ -1048,7 +1048,7 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
   ];
   if (summary.partialControls > 0) {
     rationale.push(
-      `${summary.partialControls} control(s) are partial — the stack has the right kind of product ` +
+      `${summary.partialControls} control(s) are partial: the stack has the right kind of product ` +
         'but that product does not claim the control. Not counted as covered.',
     );
   }

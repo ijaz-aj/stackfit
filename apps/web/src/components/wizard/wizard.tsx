@@ -68,7 +68,7 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
    * Ingest, computed in the browser.
    *
    * The engine is pure TypeScript with no I/O, so it runs here as happily as on
-   * the server — which means the number that matters most while typing updates
+   * the server, which means the number that matters most while typing updates
    * with no round trip, and it is the same function the proposal will use.
    */
   const sizing: SizingResult | null = useMemo(() => {
@@ -198,7 +198,7 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
               ← Back
             </Button>
             <span className="text-faint hidden text-xs sm:block">
-              Every step is optional — skip what did not come up.
+              Every step is optional. Skip what did not come up.
             </span>
             <Button
               variant="primary"
@@ -223,7 +223,7 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
 
 function SaveIndicator({ state, problem }: { state: SaveState; problem: string | null }) {
   if (state === 'error') {
-    return <span className="text-bad text-xs">Not saved — {problem}</span>;
+    return <span className="text-bad text-xs">Not saved. {problem}</span>;
   }
   return (
     <span className="text-faint text-xs">

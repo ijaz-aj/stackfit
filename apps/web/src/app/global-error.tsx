@@ -7,7 +7,7 @@ import { useEffect } from 'react';
  *
  * `error.tsx` sits inside the layout, so it cannot catch the layout failing.
  * This one replaces the whole document, which is why it renders its own
- * `<html>` and `<body>` — and why it cannot use the app's stylesheet or
+ * `<html>` and `<body>`, and why it cannot use the app's stylesheet or
  * components, since the failure may be in whatever loads them. The styling is
  * inline and minimal on purpose.
  *

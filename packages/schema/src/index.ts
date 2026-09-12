@@ -1,4 +1,4 @@
-// @stackfit/schema — Zod schemas are the single source of truth for every input
+// @stackfit/schema: Zod schemas are the single source of truth for every input
 // boundary and every catalog record. Types are inferred from Zod, never
 // hand-written alongside a schema.
 

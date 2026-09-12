@@ -107,7 +107,7 @@ describe('estate shape', () => {
   });
 });
 
-describe('applicability — the eliminations that matter', () => {
+describe('applicability: the eliminations that matter', () => {
   it('never recommends network detection to a client with no network', () => {
     const relevance = computeCategoryRelevance(
       computeInfrastructureProfile(saasOnly, weights),
@@ -161,7 +161,7 @@ describe('the same inventory question, answered differently by estate', () => {
 
   it('ranks network detection above email for a plant, and the reverse for a SaaS company', () => {
     // The clearest statement of what this stage is for. Same catalog, same
-    // weights, opposite orderings — driven only by what the client owns.
+    // weights, opposite orderings: driven only by what the client owns.
     const weightOf = (estate: AssetInventory, category: string): number =>
       computeCategoryRelevance(computeInfrastructureProfile(estate, weights), weights).find(
         (entry) => entry.category === category,

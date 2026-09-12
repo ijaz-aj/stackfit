@@ -10,7 +10,7 @@ import {
 import { z } from 'zod';
 
 /**
- * Scenario shapes and defaults. Pure — no React, no database, no filesystem —
+ * Scenario shapes and defaults. Pure (no React, no database, no filesystem)
  * so the rules about what a valid intake looks like can be tested without
  * standing anything up.
  */
@@ -38,7 +38,7 @@ export const NEW_PROFILE: ClientProfile = {
   compliance: [],
   budget: { annualCap: null, oneTimeCap: null, currency: 'INR', horizonYears: 3 },
   environment: 'not_asked',
-    deploymentConstraint: 'none',
+  deploymentConstraint: 'none',
   procurementBias: 'no_preference',
   retainedTools: [],
   excludedProducts: [],
@@ -104,8 +104,8 @@ export interface ScenarioRow {
 /**
  * A stored row back into a scenario.
  *
- * Deliberately total: a row that no longer parses — written before a schema
- * change, say — is reported as unreadable rather than thrown, because one bad
+ * Deliberately total: a row that no longer parses (written before a schema
+ * change, say) is reported as unreadable rather than thrown, because one bad
  * row must not take out the list of every other scenario.
  */
 export function parseScenarioRow(row: ScenarioRow): ScenarioRecord | UnreadableScenario {
@@ -126,7 +126,10 @@ export function parseScenarioRow(row: ScenarioRow): ScenarioRecord | UnreadableS
   // change is migrated on read rather than reported as an unreadable row.
   const profile = StoredClientProfile.safeParse(rawProfile);
   if (!profile.success) {
-    return { ...base, problem: `profile does not match the current schema: ${issueOf(profile.error)}` };
+    return {
+      ...base,
+      problem: `profile does not match the current schema: ${issueOf(profile.error)}`,
+    };
   }
 
   const inventory = AssetInventory.safeParse(rawInventory);
@@ -175,7 +178,10 @@ export function profileFromPreset(preset: ScenarioPreset): ClientProfile {
  * silent conversion would change a figure the analyst typed, which is the one
  * thing the money rules are there to prevent.
  */
-export function withCurrency(profile: ClientProfile, currency: ClientProfile['budget']['currency']): ClientProfile {
+export function withCurrency(
+  profile: ClientProfile,
+  currency: ClientProfile['budget']['currency'],
+): ClientProfile {
   const { annualCap, oneTimeCap } = profile.budget;
   return {
     ...profile,
@@ -193,14 +199,14 @@ export function withCurrency(profile: ClientProfile, currency: ClientProfile['bu
  *
  * Two sessions created from the same preset were both called "Retail chain, 40
  * stores", and two clones of one session were both "… (copy)". The list shows a
- * name, an industry, a headcount and a currency — every one of which is
- * identical for same-preset sessions — so the only thing telling them apart was
+ * name, an industry, a headcount and a currency, every one of which is
+ * identical for same-preset sessions, so the only thing telling them apart was
  * a timestamp, and the row beside them is a Delete button.
  *
  * Numbered rather than dated or hashed: "(2)" is what a person would write, it
  * stays stable when the list is re-sorted, and it is short enough not to push
  * the name out of its column. The first one keeps the plain name, so nothing is
- * renamed retroactively and the common case — one session per client — never
+ * renamed retroactively and the common case, one session per client, never
  * sees a suffix at all.
  *
  * Pure, because it is the kind of thing that is easy to get subtly wrong at the
