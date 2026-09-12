@@ -1,0 +1,733 @@
+# NGFW — network security controls at the edge and between segments.
+#
+# Prices are in minor units (hard rule 1).
+#
+# ⚠ TWO COST LINES THIS CATEGORY NEEDS AND THE ENGINE DOES NOT HAVE.
+#
+# (1) Hardware capex. An on-premises firewall is an appliance before it is a
+#     subscription, and the cost model has no hardware line — §7.2 names one,
+#     the implementation is licence, support, infrastructure, ops FTE,
+#     implementation and training. For the appliance vendors below that means
+#     the first year is understated by whatever the box costs. Every affected
+#     entry says so.
+#
+# (2) Network throughput. The cloud firewalls bill per GB of traffic processed
+#     as well as per hour of deployment. The sizing stage derives log ingest in
+#     GB/day, which is a different and much smaller quantity, so billing
+#     traffic against it would be confidently wrong. The deployment fee is
+#     modelled and the data-processing fee is named in the notes instead.
+#
+# Neither is a rounding error, and an analyst should read both before quoting
+# anything from this file.
+
+category: ngfw
+
+products:
+  - id: opnsense
+    name: OPNsense
+    vendor: Deciso B.V.
+    category: ngfw
+    subcategory: open-source firewall and routing platform
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: community
+        name: Community Edition
+        capabilities:
+          - Stateful firewalling with aliases and rule groups
+          - Network segmentation with VLANs and multiple interfaces
+          - IPsec and WireGuard VPN
+          - Suricata intrusion detection and prevention
+          - Web proxy with category filtering
+          - Two-factor authentication for administration
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/opnsense/core
+              note: >-
+                The project commits to the 2-Clause BSD licence in its own
+                README, which makes a change unlikely. Worth re-checking only
+                that the community edition still receives the same features as
+                the business edition rather than lagging it.
+            sources:
+              - url: https://github.com/opnsense/core
+                asOf: '2026-09-12'
+            notes: >-
+              2-Clause BSD. OPNsense states it "is and will always be available
+              under the 2-Clause BSD license". No licence fee, no throughput
+              limit, no feature gate — the business edition below buys a
+              different update track and support, not capability.
+
+      - id: business
+        name: Business Edition
+        capabilities:
+          - Everything in the Community Edition
+          - The commercial update track, with longer-tested releases
+          - Vendor support
+          - Additional enterprise plugins
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: 500
+                flatPrice:
+                  amountMinor: 14900
+                  currency: EUR
+              - minUnits: 501
+                maxUnits: 2000
+                flatPrice:
+                  amountMinor: 29800
+                  currency: EUR
+              - minUnits: 2001
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 59600
+                  currency: EUR
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://shop.opnsense.com/product/opnsense-business-edition/
+              note: >-
+                Read the annual price from the OPNsense shop. Also re-check the
+                one-installation restriction, which is what makes the banding
+                below necessary, and whether VAT is stated — the shop does not
+                say, and for an EU client that is a 20%-ish difference.
+            sources:
+              - url: https://shop.opnsense.com/product/opnsense-business-edition/
+                asOf: '2026-09-12'
+            notes: >-
+              OPNsense's own shop publishes "€149,00 / year" and states "This
+              license is valid for only one installation".
+
+              ⚠ The bands are an analyst assumption over that published rate,
+              not an OPNsense price list. Because the licence is per
+              installation, the bands encode one firewall up to 500 monitored
+              assets, two to 2,000 and four above that. A real estate is
+              segmented by site and security zone, not by asset count, so check
+              the firewall count rather than trusting this. Deciso asks
+              multi-installation buyers to contact sales, so volume pricing
+              may apply and is not modelled.
+
+    supports:
+      os: [network_os]
+      deviceClasses: [firewall, network_device, server]
+      cloudPlatforms: [aws, azure]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [suricata, syslog, ldap, radius, wireguard, ipsec]
+
+    controlsCovered:
+      - cis-v8:12
+      - cis-v8:13
+      - nist-csf-2.0:PR.IR
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.8.20
+      - iso-27001-2022:A.8.21
+      - iso-27001-2022:A.8.22
+      - iso-27001-2022:A.8.23
+      - pci-dss-4.0:1
+      - soc-2:CC6
+      - gdpr:art-32
+      - rbi-csf:network-management
+      - rbi-csf:network-segmentation
+
+    opsBurden:
+      baseFte: 0.2
+      ftePerThousandAssets: 0.1
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 10
+      skillLevel: security_engineer
+      typicalWeeks: 5
+      confidence: analyst_estimate
+
+    strengths:
+      - No licence fee and no throughput licensing, so capacity is a hardware decision rather than a commercial one
+      - Genuinely BSD-licensed with a public commitment to stay that way
+      - Suricata IPS and web filtering included, which are separate line items at most commercial vendors
+    weaknesses:
+      - You own the hardware choice, the sizing and the failure modes
+      - No central management console across many sites without additional tooling
+      - Threat intelligence and application control are thinner than a commercial UTM bundle
+    bestFor:
+      - Cost-constrained clients with competent network staff
+      - Air-gapped or residency-constrained environments
+      - Segmentation projects where licensing per zone would be prohibitive
+    avoidWhen:
+      - There is nobody to own firewall rule changes and upgrades
+      - A single console across dozens of sites is a hard requirement
+
+    sources:
+      - url: https://github.com/opnsense/core
+        asOf: '2026-09-12'
+      - url: https://shop.opnsense.com/product/opnsense-business-edition/
+        asOf: '2026-09-12'
+    notes: >-
+      Hardware is not costed. OPNsense runs on commodity x86 or on Deciso
+      appliances, and neither appears in the TCO — see the file header. For a
+      multi-site estate that omission is larger than the entire licence line.
+
+  - id: pfsense
+    name: pfSense
+    vendor: Rubicon Communications, LLC (Netgate)
+    category: ngfw
+    subcategory: open-source firewall with a commercial edition
+    licenceModel: open_core
+    maturity: established
+
+    tiers:
+      - id: ce
+        name: Community Edition
+        capabilities:
+          - Stateful firewalling and NAT
+          - VLAN segmentation and multi-WAN
+          - IPsec, OpenVPN and WireGuard
+          - Snort or Suricata intrusion detection via packages
+          - Captive portal and traffic shaping
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/pfsense/pfsense
+              note: >-
+                Watch the gap between CE and Plus. Netgate has moved features
+                into Plus before, and the thing that would change this entry is
+                a capability leaving CE rather than the licence changing.
+            sources:
+              - url: https://github.com/pfsense/pfsense
+                asOf: '2026-09-12'
+            notes: >-
+              Apache 2.0. No licence fee. Netgate positions CE below pfSense
+              Plus, so this tier lags on features and on hardware support.
+
+      - id: plus-software
+        name: pfSense Plus (software on third-party hardware)
+        capabilities:
+          - Everything in the Community Edition
+          - The Plus feature set, including pfSense-specific enhancements
+          - Vendor support
+          - Faster release cadence and broader hardware support
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: 500
+                flatPrice:
+                  amountMinor: 12900
+                  currency: USD
+              - minUnits: 501
+                maxUnits: 2000
+                flatPrice:
+                  amountMinor: 25800
+                  currency: USD
+              - minUnits: 2001
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 51600
+                  currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.netgate.com/pfsense-plus-software
+              note: >-
+                Netgate quotes "Starting At $129/yr" — confirm whether that is
+                still the flat rate or has become the bottom of a range, because
+                "starting at" is doing work in that sentence.
+            sources:
+              - url: https://www.netgate.com/pfsense-plus-software
+                asOf: '2026-09-12'
+            notes: >-
+              Netgate publishes "Starting At $129/yr" for pfSense Plus software
+              on bare metal or a VM on non-Netgate hardware. Netgate appliances
+              start at USD 225 and cloud instances at USD 0.08/hr; neither is
+              modelled here.
+
+              ⚠ Same banding assumption as OPNsense — one firewall per 500
+              monitored assets — and the same caveat: a real estate is
+              segmented by site and zone, not by asset count.
+
+    supports:
+      os: [network_os]
+      deviceClasses: [firewall, network_device, server]
+      cloudPlatforms: [aws, azure]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [suricata, snort, syslog, ldap, radius, wireguard, ipsec]
+
+    controlsCovered:
+      - cis-v8:12
+      - cis-v8:13
+      - nist-csf-2.0:PR.IR
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.8.20
+      - iso-27001-2022:A.8.21
+      - iso-27001-2022:A.8.22
+      - pci-dss-4.0:1
+      - soc-2:CC6
+      - gdpr:art-32
+      - rbi-csf:network-management
+      - rbi-csf:network-segmentation
+
+    opsBurden:
+      baseFte: 0.2
+      ftePerThousandAssets: 0.1
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 10
+      skillLevel: security_engineer
+      typicalWeeks: 5
+      confidence: analyst_estimate
+
+    strengths:
+      - The most widely deployed open-source firewall, so hiring for it and finding answers is easy
+      - Netgate appliances give a supported hardware path that OPNsense leaves to the buyer
+      - Plus is cheap for what it is, at a published price
+    weaknesses:
+      - 'Open core in practice: the free edition is deliberately positioned below the paid one and the gap has widened over time'
+      - Web filtering is package-based and less integrated than OPNsense's
+      - No central multi-site management without separate tooling
+    bestFor:
+      - Clients who want an open-source firewall with a vendor behind it
+      - Sites where a supported appliance matters more than licence freedom
+    avoidWhen:
+      - Licence freedom is the reason open source was on the list
+      - A single console across dozens of sites is a hard requirement
+
+    sources:
+      - url: https://github.com/pfsense/pfsense
+        asOf: '2026-09-12'
+      - url: https://www.netgate.com/pfsense-plus-software
+        asOf: '2026-09-12'
+    notes: >-
+      licenceModel is open_core rather than open_source: the repository is
+      Apache 2.0, but Netgate's product strategy puts the current feature set in
+      Plus, and describing CE as simply "open source" would understate how much
+      a client gives up by not paying.
+
+  - id: azure-firewall
+    name: Azure Firewall
+    vendor: Microsoft
+    category: ngfw
+    subcategory: managed cloud network firewall
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: basic
+        name: Basic
+        capabilities:
+          - Stateful firewalling for virtual networks
+          - Application and network rule collections
+          - Built-in high availability
+          - Threat intelligence-based filtering in alert mode
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 346020
+                  currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://prices.azure.com/api/retail/prices?$filter=serviceName%20eq%20%27Azure%20Firewall%27%20and%20armRegionName%20eq%20%27eastus%27
+              note: >-
+                Re-read meter 70c60dc4-0568-5d4e-839f-3c3345f46d55 ("Basic
+                Deployment") and multiply the hourly rate by 8,760.
+
+                Deliberately manual rather than azure_retail_prices, for the
+                same reason as azure-backup: the feed quotes "1 Hour" and this
+                entry is an annualised figure, so the automated comparator
+                would report permanent drift.
+            sources:
+              - url: https://prices.azure.com/api/retail/prices?$filter=serviceName%20eq%20%27Azure%20Firewall%27%20and%20armRegionName%20eq%20%27eastus%27
+                asOf: '2026-09-12'
+            notes: >-
+              USD 0.395 per deployment hour for East US, read from the Azure
+              Retail Prices API, so USD 3,460.20 for a year of continuous
+              running.
+
+              Data processing is NOT included: Basic also bills USD 0.065 per
+              GB processed. The catalog has no network-throughput figure — the
+              sizing stage derives log ingest, which is a different and much
+              smaller quantity — so charging traffic against it would be
+              confidently wrong. Estimate the traffic volume separately.
+
+      - id: standard
+        name: Standard
+        capabilities:
+          - Everything in Basic
+          - Threat intelligence-based filtering in alert-and-deny mode
+          - Autoscaling
+          - FQDN and network filtering at scale
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 1095000
+                  currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://prices.azure.com/api/retail/prices?$filter=serviceName%20eq%20%27Azure%20Firewall%27%20and%20armRegionName%20eq%20%27eastus%27
+              note: >-
+                Re-read meter e90604a4-719b-454b-879d-b85523882c92 ("Standard
+                Deployment") and multiply the hourly rate by 8,760.
+            sources:
+              - url: https://prices.azure.com/api/retail/prices?$filter=serviceName%20eq%20%27Azure%20Firewall%27%20and%20armRegionName%20eq%20%27eastus%27
+                asOf: '2026-09-12'
+            notes: >-
+              USD 1.25 per deployment hour for East US, so USD 10,950 for a year
+              of continuous running. Data processed is billed separately at USD
+              0.016 per GB and is not modelled — see the Basic tier.
+
+      - id: premium
+        name: Premium
+        capabilities:
+          - Everything in Standard
+          - TLS inspection
+          - Signature-based intrusion detection and prevention
+          - URL filtering and web categories
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 1533000
+                  currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://prices.azure.com/api/retail/prices?$filter=serviceName%20eq%20%27Azure%20Firewall%27%20and%20armRegionName%20eq%20%27eastus%27
+              note: >-
+                Re-read meter 15bf80cd-28af-5664-9afd-fbf210165a80 ("Premium
+                Deployment") and multiply the hourly rate by 8,760.
+            sources:
+              - url: https://prices.azure.com/api/retail/prices?$filter=serviceName%20eq%20%27Azure%20Firewall%27%20and%20armRegionName%20eq%20%27eastus%27
+                asOf: '2026-09-12'
+            notes: >-
+              USD 1.75 per deployment hour for East US, so USD 15,330 for a year
+              of continuous running. Data processed is billed separately at USD
+              0.016 per GB and is not modelled — see the Basic tier.
+        controlsCovered:
+          - cis-v8:13
+          - iso-27001-2022:A.8.23
+          - pci-dss-4.0:11
+
+    supports:
+      os: [network_os]
+      deviceClasses: [firewall, cloud_workload, network_device]
+      cloudPlatforms: [azure]
+      deploymentModes: [cloud]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [microsoft-sentinel, syslog]
+
+    controlsCovered:
+      - cis-v8:12
+      - nist-csf-2.0:PR.IR
+      - iso-27001-2022:A.8.20
+      - iso-27001-2022:A.8.21
+      - iso-27001-2022:A.8.22
+      - pci-dss-4.0:1
+      - soc-2:CC6
+      - gdpr:art-32
+      - rbi-csf:network-management
+      - rbi-csf:network-segmentation
+
+    opsBurden:
+      baseFte: 0.1
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 5
+      skillLevel: security_engineer
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - No appliance to buy, size, patch or replace, and high availability is built in
+      - Policy is infrastructure-as-code and versions with the rest of the estate
+      - Logs land in Sentinel with no connector to build
+    weaknesses:
+      - 'Protects Azure virtual networks only: it does nothing for an office, a branch or a data centre'
+      - 'Expensive for what it is at small scale: a Standard deployment costs about USD 11,000 a year before a single GB flows'
+      - Hourly billing means it costs the same whether it is busy or idle
+    bestFor:
+      - Estates whose real perimeter is an Azure virtual network
+      - Clients already committed to Azure networking and Sentinel
+    avoidWhen:
+      - The perimeter is a physical office or data centre
+      - The environment is air-gapped
+
+    sources:
+      - url: https://learn.microsoft.com/en-us/azure/firewall/overview
+        asOf: '2026-09-12'
+    notes: >-
+      Costed on the deployment fee alone. For a high-traffic estate the
+      data-processing charge is a material second line and this entry will
+      understate — see the file header for why it is omitted rather than
+      guessed.
+
+  - id: aws-network-firewall
+    name: AWS Network Firewall
+    vendor: Amazon Web Services
+    category: ngfw
+    subcategory: managed cloud network firewall
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: standard
+        name: Standard endpoint
+        capabilities:
+          - Stateful and stateless rule groups for VPC traffic
+          - Suricata-compatible rule syntax
+          - Managed threat-intelligence rule groups
+          - Domain filtering
+          - Centralised policy across accounts via Firewall Manager
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 346020
+                  currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://aws.amazon.com/network-firewall/pricing/
+              note: >-
+                Read the per-endpoint-hour rate and multiply by 8,760. AWS
+                quotes per region, so re-read it for the client's own region;
+                also check whether the secondary-endpoint rate now applies,
+                because a multi-AZ deployment needs more than one endpoint.
+            sources:
+              - url: https://aws.amazon.com/network-firewall/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              AWS publishes "$0.395 for each hour your firewall endpoint is
+              provisioned" for US East (N. Virginia), so USD 3,460.20 for a year
+              of continuous running per endpoint.
+
+              Three things this rate does not capture.
+              (1) Data processing at USD 0.065 per GB, not modelled for the
+              reason in the file header.
+              (2) One endpoint per availability zone. A production VPC across
+              three AZs needs three, and secondary endpoints are cheaper at USD
+              0.158/hour — this entry models one.
+              (3) TLS inspection adds USD 0.489/hour and Advanced Threat
+              Protection adds USD 0.005/GB, neither included.
+
+    supports:
+      os: [network_os]
+      deviceClasses: [firewall, cloud_workload, network_device]
+      cloudPlatforms: [aws]
+      deploymentModes: [cloud]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [suricata, syslog, s3]
+
+    controlsCovered:
+      - cis-v8:12
+      - cis-v8:13
+      - nist-csf-2.0:PR.IR
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.8.20
+      - iso-27001-2022:A.8.21
+      - iso-27001-2022:A.8.22
+      - pci-dss-4.0:1
+      - soc-2:CC6
+      - gdpr:art-32
+      - rbi-csf:network-management
+      - rbi-csf:network-segmentation
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 6
+      skillLevel: security_engineer
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - Suricata-compatible rules, so detection content is portable rather than vendor-locked
+      - Central policy across every account through Firewall Manager
+      - Scales with the VPC rather than with an appliance refresh cycle
+    weaknesses:
+      - 'Protects VPC traffic only: nothing outside AWS is in scope'
+      - The per-endpoint-per-AZ model makes a resilient deployment cost two or three times the headline
+      - No GUI policy authoring worth the name — this is rules as code or nothing
+    bestFor:
+      - AWS-resident estates needing egress filtering and inspection between VPCs
+      - Clients already writing Suricata rules elsewhere
+    avoidWhen:
+      - The perimeter is physical
+      - The environment is air-gapped
+
+    sources:
+      - url: https://aws.amazon.com/network-firewall/pricing/
+        asOf: '2026-09-12'
+    notes: >-
+      Modelled as a single endpoint. Nearly every production deployment needs
+      one per availability zone, so multiply by the AZ count before quoting.
+
+  - id: fortinet-fortigate
+    name: Fortinet FortiGate (UTP bundle)
+    vendor: Fortinet
+    category: ngfw
+    subcategory: entry and mid-range UTM appliance
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: utp
+        name: Unified Threat Protection bundle
+        capabilities:
+          - Stateful firewalling with application control
+          - Intrusion prevention
+          - Antivirus and sandboxing via FortiGuard
+          - Web and DNS filtering
+          - SSL inspection
+          - IPsec and SSL VPN with central management via FortiManager
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: 250
+                flatPrice:
+                  amountMinor: 53600
+                  currency: USD
+              - minUnits: 251
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 226800
+                  currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.fortinet.com/products/next-generation-firewall
+              note: >-
+                Check first whether Fortinet has started publishing list pricing
+                on its own site; if it has, regrade to public_list. Otherwise
+                re-derive the UTP bundle renewal list price for the FG-60F and
+                FG-100F from at least two independent reseller listings, and
+                expect a spread.
+            sources:
+              - url: https://www.fortinet.com/products/next-generation-firewall
+                asOf: '2026-09-12'
+              - url: https://www.avfirewalls.com/fortigate-60f.asp
+                asOf: '2026-09-12'
+              - url: https://www.vendr.com/marketplace/fortinet
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED. Fortinet publishes no list price. These
+              are reseller-listed one-year Unified Threat Protection bundle
+              renewal prices — FortiGate 60F at USD 536 and FortiGate 100F at
+              USD 2,268 — mapped to estate size: the 60F band up to 250
+              monitored assets and the 100F band above it.
+
+              Three limitations, all of which understate.
+              (1) The appliance itself is not costed. These are subscription
+              renewals; the hardware is capex and the cost model has no line
+              for it (see the file header).
+              (2) Only two models are modelled. A client above about a thousand
+              assets needs a larger FortiGate whose price is not here, which is
+              why scaleCeiling is "mid" — above that band this entry is
+              hard-filtered out rather than quoted wrongly.
+              (3) One appliance per estate. A multi-site client buys one per
+              site, plus a high-availability pair at each that matters.
+
+              Catalogued despite all of that because an NGFW shortlist with no
+              commercial appliance vendor on it would misrepresent the market —
+              the same call made for Veeam in backup.yaml and Proofpoint in
+              email-security.yaml.
+
+    supports:
+      os: [network_os]
+      deviceClasses: [firewall, network_device]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: mid
+      airGapCapable: true
+
+    integrations: [syslog, ldap, radius, ipsec, microsoft-sentinel]
+
+    controlsCovered:
+      - cis-v8:12
+      - cis-v8:13
+      - nist-csf-2.0:PR.IR
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:RS.MI
+      - iso-27001-2022:A.8.20
+      - iso-27001-2022:A.8.21
+      - iso-27001-2022:A.8.22
+      - iso-27001-2022:A.8.23
+      - pci-dss-4.0:1
+      - soc-2:CC6
+      - gdpr:art-32
+      - rbi-csf:network-management
+      - rbi-csf:network-segmentation
+      - rbi-csf:anti-malware
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.08
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 8
+      skillLevel: security_engineer
+      typicalWeeks: 4
+      confidence: analyst_estimate
+
+    strengths:
+      - One appliance covering firewalling, IPS, antivirus, web filtering and VPN, which is what most mid-market clients actually want
+      - Central management across sites through FortiManager, which the open-source options lack
+      - Very widely deployed, so support and skills are easy to source
+    weaknesses:
+      - 'No published price: every figure here is reported rather than vendor-stated'
+      - Bundle renewals are a recurring cost that clients routinely forget to budget for
+      - 'Appliance-bound: capacity is a hardware refresh, not a setting'
+    bestFor:
+      - Mid-market clients wanting one supported box per site
+      - Estates that need central multi-site firewall management
+    avoidWhen:
+      - Budget certainty matters and a reseller quote cannot be obtained in time
+      - The estate is large enough to need models this entry does not price
+
+    sources:
+      - url: https://www.fortinet.com/products/next-generation-firewall
+        asOf: '2026-09-12'
+    notes: >-
+      This entry will show a pricing-confidence warning wherever it is costed,
+      and the warning is correct. Get a reseller quote before any of these
+      numbers reach a client.

@@ -47,8 +47,8 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
       ),
     ).toMatchInlineSnapshot(`
       [
-        "pci-dss-4.0 | in scope true | covered 7/8 of 12 | partial 0 | gaps 1 | 87.5%",
-        "nist-csf-2.0 | in scope false | covered 8/13 of 22 | partial 4 | gaps 1 | 61.5%",
+        "pci-dss-4.0 | in scope true | covered 8/8 of 12 | partial 0 | gaps 0 | 100%",
+        "nist-csf-2.0 | in scope false | covered 9/13 of 22 | partial 3 | gaps 1 | 69.2%",
       ]
     `);
   });
@@ -69,7 +69,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
       [
         "Govern 0/0 = null",
         "Identify 2/2 = 100",
-        "Protect 3/4 = 75",
+        "Protect 4/4 = 100",
         "Detect 2/2 = 100",
         "Respond 0/4 = 0",
         "Recover 1/1 = 100",
@@ -87,36 +87,40 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     expect(coverage.summary.totalControls).toBe(12);
   });
 
-  it('grades every unmet PCI mandate as critical, and names them', () => {
+  it('leaves no unmet PCI mandate at all, now the catalog can fill every category', () => {
+    // This assertion inverted during Phase 7 and that is the point of the
+    // phase. It used to name three critical gaps — requirements 1, 7 and 8 —
+    // because the catalog stocked no ngfw, iam or pam product to close them
+    // with. It now names none: every PCI control a purchase could satisfy is
+    // satisfied by the recommended bundle, at the same USD 25k/yr cap.
+    //
+    // The rationale sentence about "obligations, not preferences" is therefore
+    // absent, because nothing is unmet. That wording is still pinned, on a
+    // fixture with a real unmet mandate, in packages/engine/test/coverage.test.ts.
     const critical = coverage.gaps.filter((gap) => gap.residualRisk === 'critical');
-    expect(critical.map((gap) => gap.controlId)).toMatchInlineSnapshot(`
-      [
-        "pci-dss-4.0:1",
-      ]
-    `);
-    for (const gap of critical) {
-      expect(gap.mandatory).toBe(true);
-      expect(gap.inScope).toBe(true);
-    }
-    expect(coverage.rationale.join(' ')).toContain('obligations, not preferences');
+    expect(critical).toEqual([]);
+
+    const pci = coverage.frameworks.find((framework) => framework.frameworkId === 'pci-dss-4.0');
+    expect(pci?.coveredControls).toBe(pci?.addressableControls);
+    expect(pci?.coveragePercent).toBe(100);
   });
 
   it('says plainly which gaps the catalog cannot close yet, and closes the rest', () => {
-    // ⚠ CATALOG LIMITATION, shrinking fast. Was nine of eleven before Phase 7.
-    // iam, backup, email_security and pam have each closed some since. What is
-    // left needs ngfw, or is a control no product category satisfies at all.
-    // The honest output for those is "StackFit cannot fix this", not a silent
-    // empty fix list.
-    expect(coverage.unclosableGaps.length).toBe(3);
-    expect(coverage.gaps.length).toBe(6);
+    // ⚠ CATALOG LIMITATION, nearly gone for this scenario. Was nine of eleven
+    // before Phase 7. Everything still open is a NIST CSF Respond control, and
+    // CSF is a reference lens here rather than an obligation — the client
+    // selected PCI DSS, which is now fully covered. The two that cannot be
+    // closed at all need a soar or mdr product, neither of which the catalog
+    // stocks yet.
+    expect(coverage.unclosableGaps.length).toBe(2);
+    expect(coverage.gaps.length).toBe(4);
 
-    // The other three are partials — the stack has the right kind of tool and
+    // The other two are partials — the stack has the right kind of tool and
     // nothing in it claims the control — and those do have a route. Before
     // partials entered this list the client was shown a coverage percentage
     // with no way to improve it at all.
     const closable = coverage.gaps.filter((gap) => gap.cheapestCloser !== null);
     expect(closable.map((gap) => gap.controlId)).toEqual([
-      'nist-csf-2.0:PR.IR',
       'nist-csf-2.0:RS.MI',
       'nist-csf-2.0:RS.AN',
     ]);
@@ -126,9 +130,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     // the catalog is for. Before the phase it was an unclosable critical gap:
     // the client was failing a PCI mandate and StackFit had nothing to sell
     // them. After iam it became a closable one, fixable by upgrading a tier of
-    // a product already in the bundle. After pam it is simply covered — at this
-    // budget the stack now includes a credential vault. It should not appear in
-    // the gap list at all.
+    // a product already in the bundle. After pam it is simply covered.
     expect(coverage.gaps.map((gap) => gap.controlId)).not.toContain('pci-dss-4.0:7');
 
     // And every purchase on the list must actually achieve something. A
@@ -146,7 +148,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     const recommended = coverage.summary.coveragePercent ?? 0;
     const ideal = coverageOf(retail, retail.ideal).summary.coveragePercent ?? 0;
 
-    expect(`essential ${essential} → recommended ${recommended} → ideal ${ideal}`).toMatchInlineSnapshot(`"essential 75 → recommended 87.5 → ideal 87.5"`);
+    expect(`essential ${essential} → recommended ${recommended} → ideal ${ideal}`).toMatchInlineSnapshot(`"essential 87.5 → recommended 100 → ideal 100"`);
     expect(recommended).toBeGreaterThanOrEqual(essential);
     expect(ideal).toBeGreaterThanOrEqual(recommended);
   });
@@ -201,6 +203,7 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
         "crowdstrike-falcon-go (edr) | 11998 USD/yr | 0.12 FTE | closes 1",
         "azure-backup (backup) | 2640 USD/yr | 0.11 FTE | closes 4",
         "wazuh (siem) | 2450.04 USD/yr | 0.57 FTE | closes 3",
+        "opnsense (ngfw) | 2450.04 USD/yr | 0.22 FTE | closes 1",
         "proxmox-mail-gateway (email_security) | 2450.04 USD/yr | 0.26 FTE | closes 1",
       ]
     `);
