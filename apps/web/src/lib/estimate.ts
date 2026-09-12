@@ -102,10 +102,10 @@ function summariseBundle(result: PipelineResult, bundle: Bundle): BundleSummary 
 function warningsFrom(result: PipelineResult): string[] {
   const warnings: string[] = [];
 
-  const chosen = result.recommended.selections.map((selection) => selection.productId);
-  for (const productId of chosen) {
-    const cost = result.costs.get(productId);
-    if (cost === undefined) continue;
+  // The costing each selection was made on, tier included — never a second
+  // lookup by product id, which would read the wrong SKU's price.
+  for (const selection of result.recommended.selections) {
+    const { cost, productId } = selection;
     if (cost.hasPlaceholderPricing) {
       warnings.push(`${productId}: priced from a placeholder, not a real quote.`);
     } else if (cost.needsRecheck) {

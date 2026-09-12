@@ -70,7 +70,15 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
                         </span>
                       ) : (
                         <>
-                          <span className="text-ink block">{gap.cheapestCloser.productName}</span>
+                          <span className="text-ink block">
+                            {gap.cheapestCloser.productName}
+                            <span className="text-faint"> — {gap.cheapestCloser.tierName}</span>
+                          </span>
+                          {gap.cheapestCloser.upgradeFromTierName !== null && (
+                            <span className="text-good block text-[10px]">
+                              upgrade from {gap.cheapestCloser.upgradeFromTierName}, already owned
+                            </span>
+                          )}
                           {!gap.cheapestCloser.closesFully && (
                             <span className="text-warn block text-[10px]">
                               right category, does not claim the control
@@ -105,9 +113,18 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
         >
           <ul className="flex flex-col gap-2">
             {remediation.map((option) => (
-              <li key={option.productId} className="border-line rounded border px-3 py-2">
+              <li
+                key={`${option.productId}::${option.tierId}`}
+                className="border-line rounded border px-3 py-2"
+              >
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="text-ink text-[13px]">{option.productName}</span>
+                  <span className="text-ink text-[13px]">
+                    {option.productName}
+                    <span className="text-muted"> — {option.tierName}</span>
+                  </span>
+                  {option.upgradeFromTierName !== null && (
+                    <Badge tone="good">upgrade, not a new tool</Badge>
+                  )}
                   <Badge>{CATEGORY_LABELS[option.category] ?? option.category}</Badge>
                   <Badge tone={RISK_TONE[option.worstResidualRisk]}>
                     worst gap {option.worstResidualRisk}

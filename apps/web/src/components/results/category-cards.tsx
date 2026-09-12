@@ -54,12 +54,21 @@ function FitBreakdown({ score }: { score: ProductScore }) {
 }
 
 export function CategoryCards({ result, bundle }: { result: PipelineResult; bundle: Bundle }) {
-  const scoreById = new Map(result.scores.map((score) => [score.productId, score]));
+  // Keyed on the SKU: scoring produces one row per tier, and looking up by
+  // product id alone would show the entry tier's working under the tier the
+  // bundle actually chose.
+  const scoreBySku = new Map(
+    result.scores.map((score) => [`${score.productId}::${score.tierId}`, score]),
+  );
 
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       {bundle.selections.map((selection) => {
-        const score = scoreById.get(selection.productId);
+        const score = scoreBySku.get(`${selection.productId}::${selection.tierId}`);
+        // A different product, deliberately. "Why this tier and not the one next
+        // to it" is answered in the selection's own rationale; this slot
+        // answers "what else did you look at", and spending it on the same
+        // product's other SKU would stop it doing that.
         const runnerUp = result.candidates
           .filter(
             (candidate) =>
@@ -74,7 +83,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
           <Card
             key={selection.productId}
             title={`${CATEGORY_LABELS[selection.category] ?? selection.category} — ${selection.productName}`}
-            hint={`${selection.vendor} · ${selection.tierId} tier`}
+            hint={`${selection.vendor} · ${selection.tierName}`}
           >
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge tone="accent">fit {formatNumber(selection.fitScore, 1)}/100</Badge>
@@ -154,6 +163,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
                   <span className="text-muted">
                     {result.products.find((product) => product.id === runnerUp.productId)?.name ??
                       runnerUp.productId}
+                    <span className="text-faint"> — {runnerUp.tierName}</span>
                   </span>{' '}
                   — fit {formatNumber(runnerUp.fitScore, 1)}, {formatMoney(runnerUp.cost.procurementAnnual)}
                   /yr procurement, {formatNumber(runnerUp.cost.opsFte, 2)} FTE.
