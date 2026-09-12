@@ -148,6 +148,30 @@ export interface ProposalInputs {
   readonly asOf: string;
 }
 
+/**
+ * A count, grouped, for a sentence.
+ *
+ * The executive summary read "an estate of 3465 monitored asset(s) across 1400
+ * staff" directly above a table rendering the same quantity as "3,465". One
+ * document, one number, two formats — and the ungrouped one is the first line a
+ * client reads.
+ *
+ * Digit grouping only, no locale currency or unit handling: that belongs at the
+ * render boundary, and this is prose the engine has already committed to a
+ * string.
+ */
+const count = (value: number): string => value.toLocaleString('en-US');
+
+/**
+ * "1 control" / "13 controls".
+ *
+ * "control(s)" is what a template writes when nobody has decided whether the
+ * reader matters. This is a document that goes to a client under someone's
+ * name.
+ */
+const plural = (value: number, singular: string, pluralForm = `${singular}s`): string =>
+  `${count(value)} ${value === 1 ? singular : pluralForm}`;
+
 const text = (value: string): ProposalCell => ({ kind: 'text', value });
 const money = (value: Money): ProposalCell => ({ kind: 'money', value });
 const number = (value: number, decimals = 0): ProposalCell => ({ kind: 'number', value, decimals });
@@ -254,10 +278,11 @@ function executiveSummary(inputs: ProposalInputs): ProposalSection {
   blocks.push({
     kind: 'paragraph',
     text:
-      `${profile.orgName} operates an estate of ${sizing.monitoredAssetCount} monitored asset(s) ` +
-      `across ${profile.employeeCount} staff, with ${profile.securityStaffFte} dedicated security ` +
-      `FTE. This proposal recommends ${recommended.selections.length} security control(s), ` +
-      `costed over ${profile.budget.horizonYears} years.`,
+      `${profile.orgName} operates an estate of ${plural(sizing.monitoredAssetCount, 'monitored asset')} ` +
+      `across ${plural(profile.employeeCount, 'member')} of staff, with ` +
+      `${profile.securityStaffFte} dedicated security FTE. This proposal recommends ` +
+      `${plural(recommended.selections.length, 'security control')}, costed over ` +
+      `${plural(profile.budget.horizonYears, 'year')}.`,
   });
 
   const summary: string[] = [];
@@ -567,8 +592,9 @@ function roadmapSection(inputs: ProposalInputs, roadmap: readonly RoadmapEntry[]
         kind: 'paragraph',
         text:
           'Sequenced by compliance obligation first, then by risk reduction, and bounded by how ' +
-          `much delivery the client can absorb — ${assumptions.roadmap.parallelWorkstreams} ` +
-          'parallel workstream(s). Elapsed weeks are the vendor-typical deployment time for each ' +
+          `much delivery the client can absorb — ` +
+          `${plural(assumptions.roadmap.parallelWorkstreams, 'parallel workstream')}. Elapsed ` +
+          'weeks are the vendor-typical deployment time for each ' +
           'product, not effort days.',
       },
       {
@@ -631,7 +657,7 @@ function coverageSection(inputs: ProposalInputs): ProposalSection {
       kind: 'callout',
       tone: 'note',
       text:
-        `${coverage.unclosableGaps.length} control(s) in scope cannot be closed by any product ` +
+        `${plural(coverage.unclosableGaps.length, 'control')} in scope cannot be closed by any product ` +
         'in this catalog. They are listed here rather than omitted, because a gap the tool ' +
         'cannot fix is still a gap the client has.',
     });
@@ -670,7 +696,8 @@ function assumptionsSection(inputs: ProposalInputs): ProposalSection {
       kind: 'callout',
       tone: 'warning',
       text:
-        `${estimated.length} of ${recommended.selections.length} recommended product(s) are ` +
+        `${count(estimated.length)} of ${count(recommended.selections.length)} recommended ` +
+        `${estimated.length === 1 ? 'product is' : 'products are'} ` +
         'priced on an analyst estimate rather than a published vendor rate, because the vendor ' +
         'publishes none: ' +
         estimated.map((selection) => selection.productName).join(', ') +
