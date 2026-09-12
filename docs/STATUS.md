@@ -739,6 +739,21 @@ neither of them was about.
   SIEMs do not, so widening the category would be false. Defender drops
   `cis-v8:7` outright — Plan 2's TVM is real, but the control names
   `vulnerability_management` and an EDR is not one.
+- 2026-09-12 — **Defender's `cis-v8:7` restored on plan-2 only** (your call,
+  same day). Dropping it outright rested on Plan 1 having no vulnerability
+  management, which tier-level claims now express directly — so the claim sits
+  where it is true. Second deliberate exception in the catalog, alongside
+  Wazuh's `cis-v8:4`.
+- 2026-09-12 — **⚠ A plan-2-only claim cannot currently reach a bundle.**
+  `runPipeline` costs every product at its cheapest tier (`computeProductCosts`
+  returns them cheapest-first and the pipeline takes `[0]`), so Plan 2 is never
+  selected and the restored claim is dormant. Nothing in PROJECT_SPEC describes
+  tier selection at all — §7.4 ranks *products*, never tiers — so this is an
+  unspecified corner rather than a deviation. It matters more as the catalog
+  grows: most commercial products are tiered, and "would the next tier up close
+  a mandatory gap?" is a question an analyst asks on every call. **Worth a
+  decision in Phase 7**: leave tier choice on price alone, or let a tier that
+  closes a mandatory control be costed as an upgrade option.
 - 2026-09-12 — **A category mapping is a floor for what a *kind* of tool does,
   not a ceiling on what one product can claim.** That is the rule the five
   disagreements were really about, and it is now written down: a claim that
@@ -762,6 +777,12 @@ it was built for: partial is reported, never counted.
 
 **None blocking Phase 7.** Both of the questions this section carried were
 answered on 2026-09-12 — see the Phase 6 review section above.
+
+Opened 2026-09-12, not blocking:
+- **Tier selection is on price alone.** A claim, capability or price that
+  belongs to a higher tier can never reach a bundle, because the pipeline always
+  costs a product at its cheapest tier. Defender's plan-2 `cis-v8:7` claim is
+  the first entry this affects. See the Phase 6 review section above.
 
 Still unverified rather than unanswered:
 - **The dashboard has never been looked at in a browser.** Verified by rendering
