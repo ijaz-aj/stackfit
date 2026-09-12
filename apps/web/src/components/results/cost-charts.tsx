@@ -101,7 +101,10 @@ export function CostByCategoryChart({
   currency: CurrencyCode;
 }) {
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    // Taller than the cash-flow chart because the category axis is angled, and
+    // the angled labels need roughly 90px of their own before the plot area
+    // starts.
+    <ResponsiveContainer width="100%" height={352}>
       <BarChart data={[...data]} margin={{ top: 8, right: 8, bottom: 4, left: 8 }}>
         <CartesianGrid vertical={false} stroke={GRID} strokeWidth={1} />
         <XAxis
@@ -109,7 +112,18 @@ export function CostByCategoryChart({
           tick={{ fill: TEXT, fontSize: 11 }}
           tickLine={false}
           axisLine={{ stroke: GRID }}
+          // Every category, always: dropping one silently would be a category
+          // the analyst is paying for and cannot see.
           interval={0}
+          // A full bundle is now thirteen categories in a half-width card —
+          // about 44px per band — and the longest label ("Vulnerability
+          // management") is nearer 130px. Horizontal labels overlapped into
+          // mush the moment the catalog grew past four categories. Angled, the
+          // collision constraint is the label's height against the band width
+          // rather than its length, which 44px clears comfortably.
+          angle={-35}
+          textAnchor="end"
+          height={92}
         />
         <YAxis
           tick={{ fill: TEXT, fontSize: 11 }}

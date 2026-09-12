@@ -11,14 +11,33 @@ export function formatMoney(
 ): string {
   const exponent = CURRENCY_MINOR_UNIT_EXPONENT[money.currency];
   const major = money.amountMinor / 10 ** exponent;
-  const decimals = options.decimals ?? 0;
 
+  if (options.compact === true) {
+    // ⚠ Compact notation carries its own precision, and forcing
+    // maximumFractionDigits to 0 on top of it collapses every value inside a
+    // magnitude bucket onto one label. USD 1,500,000, 2,000,000 and 2,400,000
+    // all rendered as "$2M", which put the same label at three different
+    // heights on a chart axis and overstated a 1.5M headline figure by a third.
+    //
+    // One fractional digit is the smallest precision that keeps a nice-numbered
+    // tick set distinct. `format.test.ts` sweeps 900+ tick sets across four
+    // decades of magnitude asserting exactly that, rather than trusting the
+    // reasoning behind it.
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: money.currency,
+      notation: 'compact',
+      minimumFractionDigits: options.decimals ?? 0,
+      maximumFractionDigits: options.decimals ?? 1,
+    }).format(major);
+  }
+
+  const decimals = options.decimals ?? 0;
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: money.currency,
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-    ...(options.compact === true ? { notation: 'compact' as const } : {}),
   }).format(major);
 }
 
