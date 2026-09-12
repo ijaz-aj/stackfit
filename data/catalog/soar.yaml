@@ -226,6 +226,15 @@ products:
           - Cortex analyser and responder integration
           - MISP synchronisation
           - Alert triage into cases
+        limits:
+          caps:
+            - unit: users
+              maxUnits: 2
+              note: >-
+                StrangeBee publishes the Community Edition as "Free for: 2
+                users, 1 organization".
+          allowances:
+            - One organisation only. A client running separate tenants or business units needs Gold.
         pricing:
           - model: zero_licence
             pricingConfidence: public_list
@@ -244,12 +253,13 @@ products:
               StrangeBee publishes the Community Edition as "Free for: 2 users,
               1 organization".
 
-              ⚠ TWO USERS IS A HARD VENDOR LIMIT AND THE SCHEMA CANNOT EXPRESS
-              IT. scaleCeiling is set to "small" as the closest available
-              approximation, which hard-filters this entry out of estates above
-              250 monitored assets — but a 200-asset client with three analysts
-              is already over the limit and this entry will not know. Check the
-              analyst headcount by hand before shortlisting it.
+              The two-user cap is declared on the tier and enforced against
+              headcount, so the 200-asset client with three analysts that the
+              old scaleCeiling approximation could not see is now correctly
+              ruled out. ⚠ It is enforced against *employee* count, which is
+              the closest figure the sizing stage produces and is not the same
+              thing as analyst count — so it is strict rather than exact, and
+              errs toward ruling the tier out.
 
               Gold and Platinum start at five users and one organisation and are
               quote-only; StrangeBee publishes no rate for either, so neither is
@@ -261,7 +271,7 @@ products:
       cloudPlatforms: [aws, azure, gcp]
       deploymentModes: [on_prem, hybrid, cloud, air_gapped]
       scaleFloor: small
-      scaleCeiling: small
+      scaleCeiling: enterprise
       airGapCapable: true
 
     integrations: [cortex, misp, shuffle, wazuh, graylog-open, microsoft-sentinel]
@@ -332,6 +342,10 @@ products:
           - Three live workflows
           - No-code story builder
           - A one-time USD 50 AI allowance
+        limits:
+          allowances:
+            - Three live workflows. Unlimited users, spaces and connectors.
+            - A one-time USD 50 AI allowance.
         pricing:
           - model: zero_licence
             pricingConfidence: public_list
@@ -350,13 +364,11 @@ products:
               connectors with three live workflows and a one-time USD 50 AI
               allowance.
 
-              ⚠ THREE LIVE WORKFLOWS IS A HARD VENDOR LIMIT AND THE SCHEMA
-              CANNOT EXPRESS IT. It is not a headcount or an asset count, so
-              scaleCeiling cannot enforce it directly. It is set to "small", the
-              same approximation used for TheHive Community and for Sublime
-              Platform in email-security.yaml: three live workflows is a
-              small-team allowance, and any larger estate exceeds it almost
-              immediately.
+              ⚠ THREE LIVE WORKFLOWS IS THE ONE LIMIT IN THIS CATALOG THAT
+              STILL CANNOT BE ENFORCED. A workflow is not a quantity the sizing
+              stage produces, so it is declared as an allowance — carried into
+              the tier's scoring rationale where an analyst will see it — and
+              scaleCeiling stays at "small" as the enforcement stand-in.
 
               That ceiling is doing real work. Catalogued at "mid" this tier was
               selected as the automation answer for an explicitly
@@ -493,7 +505,9 @@ products:
               ⚠ Execution metering is the real price and the cost model cannot
               see it. A busy security automation burns executions far faster
               than a business workflow does, and the overage is what decides the
-              bill. Estimate the execution volume before quoting this.
+              bill. It is declared as a tier allowance so it reaches the
+              analyst, but nothing enforces it — estimate the execution volume
+              before quoting this.
 
       - id: cloud-pro
         name: Cloud Pro

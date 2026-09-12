@@ -103,6 +103,7 @@ describe('Costing the real catalog for a 60-staff PCI DSS retailer (US, USD)', (
   it('produces an indicative 3-year TCO for every catalogued tier', () => {
     expect(costs.map(summarise)).toMatchInlineSnapshot(`
       [
+        "cisco-duo/free | licence/yr 0 | ops FTE 0.05 | year1 18,157 | 3yr TCO 36,071 | USD",
         "cisco-duo/essentials | licence/yr 2,160 | ops FTE 0.05 | year1 20,317 | 3yr TCO 42,880 | USD",
         "backblaze-business-backup/business | licence/yr 4,455 | ops FTE 0.06 | year1 18,350 | 3yr TCO 46,529 | USD",
         "cisco-duo/advantage | licence/yr 4,320 | ops FTE 0.05 | year1 22,477 | 3yr TCO 49,690 | USD",
@@ -123,6 +124,7 @@ describe('Costing the real catalog for a 60-staff PCI DSS retailer (US, USD)', (
         "sophos-mdr/essentials | licence/yr 8,100 | ops FTE 0.10 | year1 37,007 | 3yr TCO 89,256 | USD",
         "tines/free | licence/yr 0 | ops FTE 0.15 | year1 37,695 | 3yr TCO 90,085 | USD",
         "nmap/open | licence/yr 0 | ops FTE 0.16 | year1 36,659 | 3yr TCO 96,177 | USD",
+        "microsoft-entra-id/free | licence/yr 0 | ops FTE 0.15 | year1 44,595 | 3yr TCO 96,985 | USD",
         "azure-firewall/standard | licence/yr 10,950 | ops FTE 0.11 | year1 40,195 | 3yr TCO 99,255 | USD",
         "passbolt/community | licence/yr 0 | ops FTE 0.15 | year1 42,714 | 3yr TCO 100,542 | USD",
         "passbolt/pro | licence/yr 588 | ops FTE 0.15 | year1 43,302 | 3yr TCO 102,396 | USD",
@@ -223,8 +225,10 @@ describe('The same retailer priced in India (INR)', () => {
   it('produces the same shortlist at Indian labour rates', () => {
     expect(costs.map(summarise)).toMatchInlineSnapshot(`
       [
+        "cisco-duo/free | licence/yr 0 | ops FTE 0.05 | year1 232,285 | 3yr TCO 374,855 | INR",
         "tines/free | licence/yr 0 | ops FTE 0.15 | year1 409,725 | 3yr TCO 826,675 | INR",
         "azure-backup/protected-instance | licence/yr 79,668 | ops FTE 0.11 | year1 422,143 | 3yr TCO 876,079 | INR",
+        "microsoft-entra-id/free | licence/yr 0 | ops FTE 0.15 | year1 530,475 | 3yr TCO 947,425 | INR",
         "cisco-duo/essentials | licence/yr 204,861 | ops FTE 0.05 | year1 437,146 | 3yr TCO 1,020,680 | INR",
         "microsoft-defender-for-office-365/plan-1 | licence/yr 136,574 | ops FTE 0.11 | year1 479,049 | 3yr TCO 1,055,475 | INR",
         "runzero/community | licence/yr 0 | ops FTE 0.11 | year1 519,850 | 3yr TCO 1,318,049 | INR",

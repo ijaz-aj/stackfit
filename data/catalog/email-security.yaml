@@ -447,6 +447,14 @@ products:
           - BEC, credential phishing and malware detection
           - Community detection-rule feed
           - Message triage and hunting over mail
+        limits:
+          caps:
+            - unit: mailboxes
+              maxUnits: 100
+              note: >-
+                Sublime documents the Docker deployment as "intended for
+                small-medium size deployments and for testing purposes ONLY
+                (limited to 100 active mailboxes)".
         pricing:
           - model: zero_licence
             pricingConfidence: public_list
@@ -457,7 +465,8 @@ products:
                 Confirm the licence is still MIT and — more importantly —
                 re-read the mailbox limit on the self-hosted deployment. That
                 limit, not the licence, is what decides whether this product is
-                viable for a given client.
+                viable for a given client, and it is now declared on the tier
+                rather than described in prose.
             sources:
               - url: https://github.com/sublime-security/sublime-platform
                 asOf: '2026-09-12'
@@ -471,7 +480,7 @@ products:
       cloudPlatforms: [m365, google_workspace]
       deploymentModes: [on_prem, hybrid]
       scaleFloor: small
-      scaleCeiling: small
+      scaleCeiling: mid
       airGapCapable: false
 
     integrations: [m365, google-workspace, syslog]
@@ -513,15 +522,15 @@ products:
       - url: https://github.com/sublime-security/sublime-platform
         asOf: '2026-09-12'
     notes: >-
-      ⚠ SCALE CEILING IS DOING REAL WORK HERE. Sublime documents the free
-      self-hosted Docker deployment as "limited to 100 active mailboxes".
-      The catalog has no field for a licence-level headcount cap, so the cap is
-      expressed as scaleCeiling "small", which hard-filters this product out of
-      any estate above the small band and says why. That band tops out at 250
-      monitored assets, so between 100 and 250 this entry over-permits — the
-      only place in the catalog where a stated vendor limit is knowingly
-      approximated rather than enforced. Check the mailbox count by hand before
-      shortlisting it.
+      The 100-mailbox limit on the free self-hosted deployment is declared as a
+      tier cap and enforced exactly, against the mailbox count the sizing stage
+      derives. It used to be approximated with scaleCeiling "small", which
+      over-permitted between 100 and 250 assets and needed checking by hand;
+      scaleCeiling is now back to describing the product rather than the
+      licence.
+
+      Sublime's own cloud and managed offerings carry no such limit and are
+      quote-only. If the client is over the cap, that is the conversation.
 
   - id: proofpoint-essentials
     name: Proofpoint Essentials

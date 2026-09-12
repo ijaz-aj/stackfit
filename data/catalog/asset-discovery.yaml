@@ -135,6 +135,11 @@ products:
           - Identification of unmanaged, OT and IoT devices
           - Service and operating-system fingerprinting without credentials
           - Asset change tracking over time
+        limits:
+          caps:
+            - unit: monitored_assets
+              maxUnits: 100
+              note: runZero publishes the Community Edition as free for "100 or fewer assets".
         pricing:
           - model: zero_licence
             pricingConfidence: public_list
@@ -153,12 +158,11 @@ products:
               runZero publishes the Community Edition as free for "100 or fewer
               assets".
 
-              ⚠ THE ASSET LIMIT IS A HARD VENDOR CAP AND THE SCHEMA CANNOT
-              EXPRESS IT. scaleCeiling is set to "small" as the closest
-              approximation, which hard-filters this entry above 250 monitored
-              assets — so between 100 and 250 it over-permits. This is the same
-              approximation used for Sublime Platform, TheHive Community and
-              Tines Free.
+              The 100-asset cap is declared on the tier and enforced exactly,
+              against the monitored asset count — the same quantity runZero
+              bills on, which makes this the cleanest cap in the catalog. It
+              used to be approximated with scaleCeiling "small", which
+              over-permitted everything between 100 and 250 assets.
 
               The paid runZero Platform is published only as "Starts at $5,000"
               with no unit, no term and no upper bound, which is not a price.
@@ -179,7 +183,7 @@ products:
       cloudPlatforms: [aws, azure, gcp]
       deploymentModes: [on_prem, hybrid, cloud, air_gapped]
       scaleFloor: small
-      scaleCeiling: small
+      scaleCeiling: enterprise
       airGapCapable: true
 
     integrations: [netbox, syslog, tenable-nessus-professional, crowdstrike-falcon-go]

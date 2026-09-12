@@ -10,6 +10,13 @@
 # Two products here (Okta Essentials, Entra ID P2) do sell a privileged-access
 # capability inside the identity licence; where they do, the claim is made on
 # that tier only.
+#
+# Two free tiers carry a condition rather than a price. Duo Free is capped at
+# ten users; Entra ID Free needs an Azure or Microsoft 365 subscription the
+# client must already hold. Both are declared as tier limits and enforced — a
+# zero-cost tier whose condition the engine cannot see beats every priced
+# option by construction, which both of these did before the limits block
+# existed.
 
 category: iam
 
@@ -128,6 +135,38 @@ products:
     maturity: established
 
     tiers:
+      - id: free
+        name: Entra ID Free
+        capabilities:
+          - Single sign-on to Microsoft 365 and pre-integrated SaaS applications
+          - Security defaults, which enforce MFA for all users
+          - Cloud user and group management
+          - Self-service password change for cloud accounts
+        limits:
+          prerequisites:
+            - description: an Azure or Microsoft 365 subscription
+              satisfiedByRetainedTool: [microsoft-365, azure-subscription, microsoft-entra-id]
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing
+              note: >-
+                Watch for capabilities moving out of Free into P1 — that is how
+                this tier's price actually changes.
+            sources:
+              - url: https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing
+                asOf: '2026-09-12'
+            notes: >-
+              No separate charge, but not standalone: Microsoft includes it with
+              an Azure or Microsoft 365 subscription. A client with neither
+              cannot buy this tier and a client with either already has it, so
+              costing it at zero is correct for the second case and only for
+              that case. The prerequisite above encodes exactly that — the tier
+              is unavailable unless the analyst records the subscription in
+              retainedTools.
+
       - id: p1
         name: Entra ID P1
         capabilities:
@@ -271,17 +310,18 @@ products:
       E5. Business Premium and E3 include P1; E5 includes P2. Establish that
       before putting a per-user figure in a proposal.
 
-      Entra ID Free is deliberately not catalogued as a tier, for the same
-      reason Duo Free is not. Microsoft charges nothing for it, but it is not
-      standalone — it exists only inside an Azure or Microsoft 365 subscription
-      the client has to already hold. The catalog has no way to express that
-      prerequisite, so a zero-cost tier here is offered to every client
-      including those with no Microsoft estate, and it then beats every
-      open-source option on cost by construction. It was catalogued briefly and
+      Entra ID Free is catalogued as a tier again, with its prerequisite
+      declared. It was removed once for good reason: Microsoft charges nothing
+      for it, but it is not standalone, and with the prerequisite unmodelled it
       was selected as the identity answer for an explicitly open-source-first
-      client, over Keycloak, under the rationale line "No licence fee: Entra ID
-      Free is commercial". A client who genuinely already holds it should list
-      it in retainedTools, which is the field that models "already owned".
+      client over Keycloak, under the rationale line "No licence fee: Entra ID
+      Free is commercial". A zero-cost tier whose condition the engine cannot
+      see beats every priced option by construction.
+
+      The prerequisite is unmet by default, which is the conservative and
+      correct default — most clients in scope for this tool do hold Microsoft
+      365, but the tool should not assume it. Record it in retainedTools and the
+      tier becomes available; leave it out and the P1 rate is quoted instead.
 
   - id: okta-workforce-identity
     name: Okta Workforce Identity Cloud
@@ -630,6 +670,35 @@ products:
     maturity: established
 
     tiers:
+      - id: free
+        name: Duo Free
+        capabilities:
+          - Multi-factor authentication with push, passcode and hardware tokens
+          - Single sign-on for a small number of applications
+          - Basic access policies
+        limits:
+          caps:
+            - unit: users
+              maxUnits: 10
+              note: Cisco publishes Duo Free as "$0" per user per month with "Add up to 10 users".
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://duo.com/pricing
+              note: >-
+                Re-read the user limit, which is the only thing about this tier
+                that matters. The price is zero and will stay zero.
+            sources:
+              - url: https://duo.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              No charge for up to 10 users. Genuinely free and genuinely
+              capped — for a ten-person company this is the right answer and
+              costs nothing, which is exactly why the cap has to be enforced
+              rather than described.
+
       - id: essentials
         name: Duo Essentials
         capabilities:
@@ -773,8 +842,9 @@ products:
       - url: https://duo.com/pricing
         asOf: '2026-09-12'
     notes: >-
-      Duo Free exists at no charge for up to 10 users. It is deliberately not
-      catalogued as a tier: the schema has no way to express a headcount cap, so
-      a free tier here would be offered to a 500-person client at zero cost,
-      which is worse than not offering it at all. Raise it by hand for genuinely
-      tiny scopes.
+      Duo Free is catalogued as a tier again. It was left out while the schema
+      had no way to express a headcount cap — a free tier with an unmodelled
+      cap is offered to a 500-person client at zero cost, which is worse than
+      not offering it at all. The cap is now declared and enforced, so the tier
+      is available to the ten-person client it is meant for and invisible to
+      everyone else.
