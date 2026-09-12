@@ -17,7 +17,7 @@
 | 4 `scoring.ts` + `portfolio.ts` + tests | in review | Both stages plus all seven §7.4 steps. `scoring-weights.yaml`, `portfolio-assumptions.yaml`. **Reviewed; 7 defects found and fixed**, each pinned by a regression. 244 tests green. |
 | 4b `coverage.ts` (**inserted**) | in review | The §7.5 stage: coverage matrix per framework, CSF Function roll-up, risk-graded gap list, costed fix plan. `coverage-assumptions.yaml`. The engine pipeline is now complete end to end. 299 tests green. |
 | 5 Intake wizard UI | in review | Next 16 + React 19 + Tailwind v4 + Prisma 7/SQLite. Six steps, presets, continuous save, live readout. `runPipeline` + `@stackfit/data` extracted so the app and the tests share one path. 325 tests green; `pnpm audit` clean. |
-| 6 Results dashboard | in review | All seven parts of §8, server-rendered off one pipeline run. Recharts cost + cash-flow charts on a validated palette. Sizing assumptions are editable per scenario. **Reviewed; three defects found and fixed** — deployment fit read "no preference" as a demand, the fit score was rendered with no working shown, and a control was credited to a tier that does not sell it. Both pre-Phase-7 open questions closed. 356 tests green. |
+| 6 Results dashboard | in review | All seven parts of §8, server-rendered off one pipeline run. Recharts cost + cash-flow charts on a validated palette. Sizing assumptions are editable per scenario. **Reviewed; six defects found and fixed** — deployment fit read "no preference" as a demand, the fit score was rendered with no working shown, a control was credited to a tier that does not sell it, Ideal optimised for value rather than fit, a partial control had no route to being closed, and the fix list offered purchases that closed nothing. Both pre-Phase-7 open questions closed; the SKU is now part of the recommendation. 368 tests green. |
 | 7 Catalog expansion (≥5 per category) | not started | |
 | 8 Export (DOCX/PDF/XLSX) | not started | |
 | 9 Scenario save / clone / compare | not started | |
@@ -773,16 +773,89 @@ The retailer worked example moves RS.MA from gap to partial and its coverage
 percentage does not move at all, which is the two-signal rule doing exactly what
 it was built for: partial is reported, never counted.
 
+### Phase 6 review — the SKU becomes part of the recommendation
+
+The tier-selection limitation recorded earlier the same day turned out to be
+load-bearing, so it was fixed properly rather than deferred to Phase 7. A
+candidate is now a product *at a tier*, which is what a client buys.
+
+- 2026-09-12 — **The pipeline costed only the cheapest tier, so every stage
+  after costing was blind to the rest.** A SKU that closed a compliance control
+  could not be scored, selected, recommended or quoted as an upgrade, because
+  nothing had ever priced it. `costCatalog` prices every tier; `CostsByProduct`
+  keeps a product's tiers together, which is also the shape the upgrade question
+  needs.
+- 2026-09-12 — **Scoring is per SKU, and only compliance fit differs.** That is
+  the one dimension the catalog has evidence for — a tier's own control claims.
+  Asset coverage, operability, deployment, scale and maturity score identically
+  across tiers rather than being invented, which is hard rule 2 applied where it
+  would be easy to fudge. An eliminated product still yields exactly one score:
+  every §7.3 filter tests the product, not what you pay for it.
+- 2026-09-12 — **⚠ Ideal was optimising for value, which cannot quantify a gap.**
+  §7.4 step 5 defines Ideal as "ignores the budget cap; exists to quantify the
+  gap", and it sorted on value density with the cap switched off — an objective
+  whose best answer is by construction the *cheap* one. Latent while a product
+  was one candidate; fatal once it was three, because density picks the entry
+  tier every time and Ideal would have quoted exactly what Recommended quoted.
+  `SelectionOptions.objective` now names the three objectives the three bundles
+  actually have: `cheapest`, `value_density`, `best_fit`.
+- 2026-09-12 — **A tier is a decision the client pays for, so hard rule 5 applies
+  to it.** Every selection carries the tier's own name and a sentence saying why
+  this SKU and not the one beside it, with the price difference in it.
+- 2026-09-12 — **⚠ A partial control had no route to being closed.** Found while
+  proving the upgrade path. The gap list held only `gap` controls, so a control
+  the stack half-addressed was excluded from the coverage percentage *and* from
+  the fix list: the client was shown a number with no way to improve it.
+  Partials are now gaps of kind `partial`.
+- 2026-09-12 — **A closer that claims nothing cannot close a partial.** The
+  shopping list was offering Wazuh to close a control it does not claim, on a
+  stack that already had a SIEM — a purchase that would have changed the status
+  not at all. A partial now requires a closer that claims the control outright.
+- 2026-09-12 — **An upgrade is priced as the difference and says so.** One-time
+  cost is floored at nothing, because the product is already deployed and
+  re-charging the whole rollout would overstate it. The FTE line says explicitly
+  that no extra people are shown *because ops burden is recorded per product
+  rather than per tier* — a heavier SKU usually is more work to run, and this
+  catalog cannot yet say how much.
+
+**Worth eyeballing.** A 300-seat Windows estate on CIS v8, same catalog:
+
+| Bundle | Defender SKU | Annual spend |
+|---|---|---|
+| Essential | Plan 1 | USD 13,033 |
+| Recommended | Plan 1 | USD 26,367 |
+| Ideal | **Plan 2** | USD 34,287 |
+
+Three bundles that differ in depth, not only in breadth. And with the scanner
+out of reach, the gap list now answers CIS 7 with **"upgrade Defender from Plan
+1 to Plan 2, +USD 7,920/yr, no new tool to deploy, run or renew"** rather than
+sending the analyst to quote a second product.
+
+The §12.1 retailer moves from "9 gaps, all unclosable, empty fix list" to 11
+uncovered controls, 9 genuinely unclosable, and one purchase that closes two.
+
+**Known limits, stated rather than papered over:**
+
+- **A dearer SKU only wins where the catalog has evidence.** Compliance fit is
+  the sole per-tier dimension, so on a scenario where no product claims the
+  client's framework at all, Ideal picks the cheaper tier — correctly, because
+  nothing says the dearer one is better. It is a limit of the data, not of the
+  model, and it will lift as Phase 7 fills in tier-level claims.
+- **`opsBurden` and `supports` are still product-level.** A top tier usually is
+  more work to run and sometimes scales further. Both are inventable, neither is
+  sourced, so neither was invented. Worth a schema decision in Phase 7 alongside
+  the tier-level claims the catalog will need anyway.
+
 ## Open questions
 
 **None blocking Phase 7.** Both of the questions this section carried were
 answered on 2026-09-12 — see the Phase 6 review section above.
 
-Opened 2026-09-12, not blocking:
-- **Tier selection is on price alone.** A claim, capability or price that
-  belongs to a higher tier can never reach a bundle, because the pipeline always
-  costs a product at its cheapest tier. Defender's plan-2 `cis-v8:7` claim is
-  the first entry this affects. See the Phase 6 review section above.
+Opened and closed 2026-09-12:
+- ~~**Tier selection is on price alone.**~~ Fixed the same day rather than
+  deferred: a candidate is now a product at a tier, all the way through
+  scoring, selection, coverage and the gap list. See the Phase 6 review
+  section above.
 
 Still unverified rather than unanswered:
 - **The dashboard has never been looked at in a browser.** Verified by rendering
