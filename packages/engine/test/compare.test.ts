@@ -239,3 +239,56 @@ describe('determinism', () => {
     );
   });
 });
+
+describe('the budget caps', () => {
+  // Both caps bind, and they bind independently. Only the annual one was
+  // compared, so the demo pair built to show the point — one client, one
+  // larger implementation budget — reported "no differences" in its inputs
+  // while every output moved.
+  it('spots a one-time cap that moved', () => {
+    const comparison = compareScenarios(
+      sideOf('Before', {
+        profile: {
+          budget: {
+            annualCap: usd(50_000_00),
+            oneTimeCap: usd(20_000_00),
+            currency: 'USD',
+            horizonYears: 3,
+          },
+        },
+      }),
+      sideOf('After', {
+        profile: {
+          budget: {
+            annualCap: usd(50_000_00),
+            oneTimeCap: usd(30_000_00),
+            currency: 'USD',
+            horizonYears: 3,
+          },
+        },
+      }),
+    );
+
+    const change = comparison.inputs.find((entry) => entry.label === 'One-time budget cap');
+    expect(change?.kind).toBe('changed');
+    expect(change?.delta).toEqual({ kind: 'money', value: usd(10_000_00) });
+  });
+
+  it('still reports the annual cap, and only the cap that moved', () => {
+    const comparison = compareScenarios(
+      sideOf('Before'),
+      sideOf('After', {
+        profile: {
+          budget: {
+            annualCap: usd(90_000_00),
+            oneTimeCap: null,
+            currency: 'USD',
+            horizonYears: 3,
+          },
+        },
+      }),
+    );
+
+    expect(comparison.inputs.map((entry) => entry.label)).toEqual(['Annual budget cap']);
+  });
+});

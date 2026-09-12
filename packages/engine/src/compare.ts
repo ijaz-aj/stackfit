@@ -151,11 +151,14 @@ function profileChanges(left: ClientProfile, right: ClientProfile, comparable: b
     numberChange('Budget horizon (years)', left.budget.horizonYears, right.budget.horizonYears),
   ];
 
-  const leftCap = left.budget.annualCap;
-  const rightCap = right.budget.annualCap;
-  if (leftCap !== null || rightCap !== null) {
+  // Both caps, because both bind and they bind independently. Comparing only
+  // the annual one left the headline demo — the same client with a larger
+  // implementation budget — reporting "no differences" in its inputs panel
+  // beside a completely different recommended stack.
+  const capChange = (label: string, leftCap: Money | null, rightCap: Money | null): void => {
+    if (leftCap === null && rightCap === null) return;
     changes.push({
-      label: 'Annual budget cap',
+      label,
       left: leftCap === null ? text('none') : money(leftCap),
       right: rightCap === null ? text('none') : money(rightCap),
       delta:
@@ -169,7 +172,10 @@ function profileChanges(left: ClientProfile, right: ClientProfile, comparable: b
             ? 'same'
             : 'changed',
     });
-  }
+  };
+
+  capChange('Annual budget cap', left.budget.annualCap, right.budget.annualCap);
+  capChange('One-time budget cap', left.budget.oneTimeCap, right.budget.oneTimeCap);
 
   return changes.filter((change) => change.kind !== 'same');
 }
