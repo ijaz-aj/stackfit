@@ -9,11 +9,12 @@ import { CostBreakdown } from '@/components/results/cost-breakdown';
 import { CoverageMatrix } from '@/components/results/coverage-matrix';
 import { GapAnalysis } from '@/components/results/gap-analysis';
 import { SizingWorksheet } from '@/components/results/sizing-worksheet';
+import { frameworkLabel, INDUSTRY_SHORT } from '@/components/wizard/labels';
 import { Badge } from '@/components/ui';
 import { engineData, today } from '@/lib/config.server';
 import { prisma } from '@/lib/db';
 import { requireAnalyst } from '@/lib/session.server';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, formatNumber } from '@/lib/format';
 import { resultsFor } from '@/lib/results.server';
 import { isUnreadable, parseScenarioRow } from '@/lib/scenario';
 
@@ -81,10 +82,11 @@ export default async function ResultsPage({
             {scenario.profile.orgName}
           </h1>
           <span className="text-faint text-xs">
-            {scenario.profile.industry} · {scenario.profile.employeeCount} staff ·{' '}
+            {INDUSTRY_SHORT[scenario.profile.industry] ?? scenario.profile.industry} ·{' '}
+            {formatNumber(scenario.profile.employeeCount)} staff ·{' '}
             {scenario.profile.budget.currency}
             {scenario.profile.compliance.length > 0 &&
-              ` · ${scenario.profile.compliance.join(', ')}`}
+              ` · ${scenario.profile.compliance.map(frameworkLabel).join(', ')}`}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">

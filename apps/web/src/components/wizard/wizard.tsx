@@ -1,7 +1,7 @@
 'use client';
 
 import { computeSizing, type SizingResult } from '@stackfit/engine';
-import type { AssetInventory, ClientProfile, SizingAssumptions } from '@stackfit/schema';
+import type { AssetInventory, ClientProfile, FxConfig, SizingAssumptions } from '@stackfit/schema';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -46,6 +46,7 @@ export interface WizardProps {
   readonly frameworks: readonly FrameworkOption[];
   readonly products: readonly ProductOption[];
   readonly sizingAssumptions: SizingAssumptions;
+  readonly fx: FxConfig;
 }
 
 export function Wizard(props: WizardProps) {
@@ -56,7 +57,7 @@ export function Wizard(props: WizardProps) {
   );
 }
 
-function WizardBody({ scenario, frameworks, products, sizingAssumptions }: WizardProps) {
+function WizardBody({ scenario, frameworks, products, sizingAssumptions, fx }: WizardProps) {
   const scenarioId = scenario.id;
   const api = useWizardApi();
   const step = useWizard((state) => state.step);
@@ -255,7 +256,7 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
           {step === 0 && <StepOrganisation />}
           {step === 1 && <StepEstate />}
           {step === 2 && <StepCompliance frameworks={frameworks} />}
-          {step === 3 && <StepBudget />}
+          {step === 3 && <StepBudget fx={fx} />}
           {step === 4 && <StepPreferences products={products} />}
           {step === 5 && <StepReview sizing={sizing} estimate={estimate} />}
 

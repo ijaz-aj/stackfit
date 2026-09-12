@@ -21,7 +21,7 @@ import {
   profileFromPreset,
   withCurrency,
 } from '../src/lib/scenario';
-import { runPipeline } from '@stackfit/engine';
+import { convertMoney, runPipeline } from '@stackfit/engine';
 
 const data = engineData();
 
@@ -156,6 +156,61 @@ describe('the money boundary', () => {
     expect(inUsd.budget.annualCap?.currency).toBe('USD');
     expect(inUsd.budget.annualCap?.amountMinor).toBe(2_500_000);
     expect(ClientProfile.safeParse(inUsd).success).toBe(true);
+  });
+
+  it('re-labelling a preset cap changes what it is worth by two orders of magnitude', () => {
+    // The reported bug, as arithmetic. The manufacturer preset arrives with a
+    // real EUR 250,000 budget. Re-labelling it INR leaves the digits alone and
+    // turns it into about EUR 2,750, which moves the recommendation and
+    // reports a shortfall that is an artifact of the relabelling.
+    //
+    // This is not asserting that re-labelling is wrong. It is asserting that
+    // the two readings are far enough apart that the interface cannot pick one
+    // silently, which is what `StepBudget` now refuses to do.
+    const preset = data.presets.find((entry) => entry.id === 'manufacturer-two-plants');
+    if (preset === undefined) throw new Error('expected the manufacturer preset');
+
+    // A preset profile has no orgName until profileFromPreset adds it.
+    const profile = profileFromPreset(preset);
+    const stated = profile.budget.annualCap;
+    expect(stated).not.toBeNull();
+    expect(stated?.currency).toBe('EUR');
+
+    const relabelled = withCurrency(profile, 'INR').budget.annualCap;
+    const converted = convertMoney(stated!, 'INR', data.fx);
+
+    // Same digits, different money.
+    expect(relabelled?.amountMinor).toBe(stated?.amountMinor);
+    expect(relabelled?.currency).toBe('INR');
+    expect(converted.currency).toBe('INR');
+    expect(converted.amountMinor).toBeGreaterThan(relabelled!.amountMinor * 50);
+  });
+
+  it('converts both caps together, and leaves an unset one unset', () => {
+    // The manufacturer states an annual cap and no one-time cap. Converting
+    // must not invent the second one.
+    const profile: ClientProfile = {
+      ...NEW_PROFILE,
+      budget: {
+        annualCap: { amountMinor: 25_000_000, currency: 'EUR' },
+        oneTimeCap: null,
+        currency: 'EUR',
+        horizonYears: 3,
+      },
+    };
+    const annual = convertMoney(profile.budget.annualCap!, 'INR', data.fx);
+    expect(annual.currency).toBe('INR');
+    expect(annual.amountMinor).toBeGreaterThan(0);
+    expect(profile.budget.oneTimeCap).toBeNull();
+  });
+
+  it('round-trips a conversion back to within a rounding unit', () => {
+    // EUR to INR and back has to land on the figure it started from, or an
+    // analyst toggling the currency twice watches the budget drift.
+    const start = { amountMinor: 25_000_000, currency: 'EUR' as const };
+    const there = convertMoney(start, 'INR', data.fx);
+    const back = convertMoney(there, 'EUR', data.fx);
+    expect(Math.abs(back.amountMinor - start.amountMinor)).toBeLessThanOrEqual(1);
   });
 });
 

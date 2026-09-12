@@ -59,6 +59,9 @@ export default async function ScenarioPage({ params }: { params: Promise<{ id: s
       // so the ingest readout can update on the keystroke instead of waiting for
       // a round trip.
       sizingAssumptions={data.sizingAssumptions}
+      // Three rates and a date. The budget step needs them to offer a
+      // conversion when the analyst changes the scenario currency.
+      fx={data.fx}
     />
   );
 }
