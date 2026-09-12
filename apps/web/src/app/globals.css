@@ -1,76 +1,66 @@
-@import 'tailwindcss';
-
-/*
- * Dark, dense, professional (PROJECT_SPEC §9). There is no light theme: this is
- * a working tool used in a call, not a landing page, and a second palette is a
- * second thing to keep consistent for no benefit anyone asked for.
- *
- * Tailwind v4 is configured in CSS, so these tokens *are* the config — every
- * name below becomes a utility (`bg-panel`, `text-muted`, `border-line`).
- *
- * Contrast is measured, not judged by eye. Every foreground token below clears
- * WCAG AA (4.5:1) against all three surfaces, and every border a user has to
- * *aim at* clears 1.4.11's 3:1 for non-text UI. The ratios are in the comments
- * so the next person to adjust a colour can tell whether they broke it.
- */
 @theme {
-  /* Surfaces, darkest to lightest. */
-  --color-ground: #0a0e13;
-  --color-panel: #111820;
-  --color-panel-raised: #17202b;
+  /*
+   * Neutral near-black, not blue-slate.
+   *
+   * The previous surfaces (#0a0e13 / #111820) carried a strong blue cast, which
+   * reads as "terminal" — the default dark theme every tool had in 2015. These
+   * are near-neutral with a trace of cool, so the accent and the status colours
+   * are the only saturated things on screen and the eye goes to the numbers
+   * rather than to the background.
+   *
+   * Three steps, and each one does a job: `ground` is the page, `panel` is a
+   * card sitting on it, `raised` is something interactive on the card. Small
+   * steps, because large ones make a dense layout look like stacked boxes.
+   */
+  --color-ground: #08090a;
+  --color-panel: #0e1012;
+  --color-panel-raised: #16191d;
 
   /*
-   * Two border weights, and the distinction is not decorative.
-   *
-   * `line` separates things — card edges, table rules. WCAG exempts purely
-   * decorative boundaries, so it stays quiet at 1.33:1 and the interface keeps
-   * its density.
-   *
-   * `line-control` outlines something you click or type into. That is a UI
-   * component under 1.4.11 and needs 3:1, which the old #33475c missed at
-   * 1.87:1 — inputs and selects were, measurably, edges you had to already know
-   * were there. 3.50:1 on ground, 3.23:1 on panel.
+   * Three border weights. `line` separates, `line-strong` groups, and
+   * `line-control` outlines something you aim at — the only one WCAG 1.4.11
+   * requires 3:1 of, which it clears at 3.35:1 on panel and 3.50:1 on ground.
+   * Keeping the decorative ones quiet is what stops a dense table reading as a
+   * spreadsheet.
    */
-  --color-line: #22303f;
-  --color-line-strong: #33475c;
-  --color-line-control: #4d6b8c;
+  --color-line: #1e2228;
+  --color-line-strong: #2b313a;
+  --color-line-control: #5a6878;
 
-  /* Text. Ratios are the worst case, against panel-raised. */
-  --color-ink: #e7eef6; /* 14.05:1 */
-  --color-muted: #93a4b8; /* 6.45:1 */
-  --color-faint: #7b8a9e; /* 4.67:1 — was #64748b at 3.45:1, which failed AA
-                             at the 10 and 11px sizes it is used at. */
-
-  --color-accent: #58a6ff; /* 6.51:1 */
-  --color-accent-dim: #1f4d80;
-  --color-good: #3fb950; /* 6.47:1 */
-  --color-warn: #d29922; /* 6.51:1 */
-  --color-bad: #f85149; /* 4.90:1 */
+  /* Text. Worst-case ratios, against panel-raised, all clearing AA. */
+  --color-ink: #f2f4f7; /* 16.00:1 */
+  --color-muted: #a8b0bb; /* 8.05:1 */
+  --color-faint: #868e9c; /* 5.34:1 */
 
   /*
-   * The type scale, named.
-   *
-   * These were arbitrary values — `text-[10px]`, `text-[11px]`, `text-[13px]` —
-   * scattered across thirty files, which is five sizes with no relationship to
-   * each other and nowhere to change them. Same rendered sizes, now a scale:
-   * one place to tune, and a name that says what a size is *for*.
-   *
-   * Line heights travel with each size. Dense tabular data wants tighter
-   * leading than a paragraph of rationale, and pairing them here stops every
-   * call site guessing.
+   * Indigo rather than the stock #58a6ff link-blue. Still unmistakably "this is
+   * the interactive one", but it does not read as an unvisited hyperlink from
+   * 1998, and it sits far enough from the good/warn/bad trio that a coloured
+   * figure is never ambiguous.
    */
-  --text-2xs: 10px; /* micro labels: badges, stat captions, axis ticks */
-  --text-2xs--line-height: 1.4;
-  --text-xs: 11px; /* hints, secondary detail, table sub-text */
-  --text-xs--line-height: 1.45;
-  --text-sm: 12px; /* table body, rationale — the workhorse */
-  --text-sm--line-height: 1.5;
-  --text-base: 13px; /* controls, buttons, primary body */
-  --text-base--line-height: 1.5;
-  --text-lg: 15px; /* card and page headings, headline figures */
-  --text-lg--line-height: 1.3;
-  --text-xl: 19px; /* the one number a card exists to show */
-  --text-xl--line-height: 1.2;
+  --color-accent: #7c8cff; /* 5.92:1 */
+  --color-accent-dim: #2b3170;
+  --color-good: #3ecf8e; /* 8.83:1 */
+  --color-warn: #f5c451; /* 10.83:1 */
+  --color-bad: #ff6b6b; /* 6.35:1 */
+
+  /*
+   * Elevation. A border alone makes everything look equally important; a
+   * shadow plus a one-pixel top highlight is how a surface reads as being *in
+   * front of* the page rather than drawn on it. Kept subtle — this is a working
+   * tool, and a card that floats too far is a card that distracts.
+   */
+  --shadow-panel: 0 1px 2px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.02);
+  --shadow-raised:
+    0 4px 12px -2px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.04);
+
+  /*
+   * Radii. 4px everywhere read as "a form from 2014". 8px on a card and 6px on
+   * a control is the current register — soft enough to feel considered, tight
+   * enough that a dense grid still looks like a grid.
+   */
+  --radius-control: 6px;
+  --radius-card: 10px;
 
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -84,6 +74,7 @@
   --ease-out-quick: cubic-bezier(0.2, 0, 0, 1);
   --duration-instant: 90ms;
   --duration-quick: 140ms;
+  --duration-settle: 220ms;
 }
 
 html {
@@ -97,6 +88,49 @@ body {
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Cuts the slight gap between 'f' and 'i' in a dense label without turning
+     numerals into ligatures, which would ruin a tabular column. */
+  font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+/*
+ * One faint wash behind the page.
+ *
+ * A flat #08090a across 1400px reads as a sheet of paper in the dark. A single
+ * very low-opacity ellipse behind the top of the content gives the page a light
+ * source, so surfaces in front of it look lit rather than drawn. Fixed, so it
+ * does not travel as the page scrolls, and `pointer-events: none` so it can
+ * never intercept a click.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(60rem 30rem at 50% -10rem, rgb(124 140 255 / 0.05), transparent 70%),
+    radial-gradient(40rem 24rem at 100% 0%, rgb(62 207 142 / 0.02), transparent 70%);
+}
+
+/* Everything real sits above the wash. */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/*
+ * A card. The one-pixel inset highlight along the top edge is what makes a
+ * surface read as catching light from above rather than being a rectangle with
+ * a border — the cheapest trick in dark UI and the one most often missed.
+ */
+.surface {
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.03),
+    var(--shadow-panel);
 }
 
 /* Numbers in a table have to line up, everywhere, without thinking about it. */
@@ -119,7 +153,7 @@ body {
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-control);
 }
 
 /* A pointer-only affordance is not an affordance. Anything clickable says so. */
@@ -143,8 +177,9 @@ body {
   background: var(--color-panel-raised);
   color: var(--color-ink);
   border: 1px solid var(--color-line-control);
-  border-radius: 4px;
+  border-radius: var(--radius-control);
   padding: 0.5rem 0.75rem;
+  box-shadow: var(--shadow-raised);
   font-size: var(--text-base);
 }
 .skip-link:focus {
@@ -215,7 +250,7 @@ body {
   );
   background-size: 200% 100%;
   animation: skeleton-sweep 1.6s var(--ease-out-quick) infinite;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 /*

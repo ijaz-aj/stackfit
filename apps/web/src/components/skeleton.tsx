@@ -33,7 +33,7 @@ export function SkeletonCard({
   className?: string;
 }) {
   return (
-    <section aria-hidden className={cn('border-line bg-panel rounded border', className)}>
+    <section aria-hidden className={cn('surface', className)}>
       <header className="border-line border-b px-4 py-2.5">
         <SkeletonLine className="h-3.5 w-40" />
         <SkeletonLine className="mt-1.5 h-2.5 w-64 max-w-full" />
