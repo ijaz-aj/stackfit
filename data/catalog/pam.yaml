@@ -1,0 +1,677 @@
+# PAM — privileged access, credential vaulting and session control.
+#
+# Prices are in minor units (hard rule 1).
+#
+# Scope note. Workforce identity — who the staff are and how they prove it —
+# is data/catalog/iam.yaml. This file is what happens after someone has
+# authenticated and needs to act as an administrator: where the credential is
+# kept, who can borrow it, for how long, and whether anyone watched.
+#
+# ⚠ EVERY MARKET LEADER IN THIS CATEGORY IS QUOTE-ONLY. CyberArk, BeyondTrust,
+# Delinea, One Identity, Wallix, StrongDM, Segura and KeeperPAM were all
+# checked on 2026-09-12 and none publishes a rate. What is catalogued below is
+# therefore not the top of the market — it is the part of the market that will
+# tell you what it costs. Say that out loud rather than letting a shortlist
+# imply the enterprise options were considered and rejected.
+#
+# ⚠ A BILLING-UNIT LIMITATION RUNS THROUGH THIS FILE. Three of the five
+# products bill per privileged user, which `per_privileged_user_year` models
+# exactly. ManageEngine bills in bands of administrators, and `flat_tiered` can
+# only band on monitored assets — so that entry carries an explicit assumption
+# converting one to the other. It is the crudest number in the catalog and it
+# is labelled as such on the entry.
+
+category: pam
+
+products:
+  - id: apache-guacamole
+    name: Apache Guacamole
+    vendor: Apache Software Foundation
+    category: pam
+    subcategory: clientless remote access gateway with session recording
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: Apache Guacamole (self-hosted)
+        capabilities:
+          - Clientless browser access to RDP, VNC and SSH
+          - Session recording and playback
+          - Per-connection access control by user and group
+          - LDAP, SAML and TOTP authentication back-ends
+          - A single audited entry point to internal systems
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://guacamole.apache.org/
+              note: >-
+                Apache Software Foundation projects do not change licence, so
+                this is close to a permanent fact. Worth re-checking only that
+                the project is still actively released.
+            sources:
+              - url: https://guacamole.apache.org/
+                asOf: '2026-09-12'
+            notes: >-
+              Apache License 2.0. The project states it "is and will always be
+              free and open source software". No licence fee at any user count;
+              the cost is the gateway it runs on and the engineer who owns it.
+
+    supports:
+      os: [linux, windows]
+      deviceClasses: [server, workstation, identity, network_device]
+      cloudPlatforms: []
+      deploymentModes: [on_prem, hybrid, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [ldap, saml, rdp, ssh, vnc]
+
+    controlsCovered:
+      # A gateway, not a vault. It controls and records *access*; it does not
+      # store, rotate or broker a credential, so the account-management controls
+      # are deliberately absent.
+      - cis-v8:6
+      - nist-csf-2.0:PR.AA
+      - iso-27001-2022:A.8.2
+      - iso-27001-2022:A.8.3
+      - iso-27001-2022:A.8.15
+      - pci-dss-4.0:7
+      - hipaa:164.312.a.1
+      - soc-2:CC6
+      - rbi-csf:privileged-access
+      - nis2:21.2.i
+
+    opsBurden:
+      baseFte: 0.2
+      ftePerThousandAssets: 0.1
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 8
+      skillLevel: security_engineer
+      typicalWeeks: 4
+      confidence: analyst_estimate
+
+    strengths:
+      - Removes direct RDP and SSH exposure for the price of a VM, which is the single cheapest real win in this category
+      - Session recording out of the box, which auditors ask for and most cheap tools do not have
+      - Browser-based, so contractors and third parties need nothing installed
+    weaknesses:
+      - 'No credential vault: it controls who connects, not what the password is or when it last changed'
+      - No just-in-time elevation, no approval workflow, no credential rotation
+      - The gateway becomes a critical single point of failure and needs designing as one
+    bestFor:
+      - Clients whose immediate problem is unmanaged RDP and SSH access
+      - Third-party and contractor access that must be watched
+      - Air-gapped environments
+    avoidWhen:
+      - The obligation is credential rotation or vaulting, which this does not do
+      - There is no engineer to own a new piece of access infrastructure
+
+    sources:
+      - url: https://guacamole.apache.org/
+        asOf: '2026-09-12'
+      - url: https://guacamole.apache.org/doc/gug/recording-playback.html
+        asOf: '2026-09-12'
+    notes: >-
+      Catalogued as the floor of this category rather than a competitor to the
+      rest of it. It closes the access-control and session-audit half of PAM and
+      none of the credential half, and the control claims say so.
+
+  - id: teleport-community
+    name: Teleport Community Edition
+    vendor: Gravitational (Teleport)
+    category: pam
+    subcategory: identity-aware infrastructure access proxy
+    licenceModel: open_core
+    maturity: established
+
+    tiers:
+      - id: community
+        name: Community Edition (self-hosted)
+        capabilities:
+          - Certificate-based access to SSH, Kubernetes, databases, Windows desktops and internal web apps
+          - Short-lived certificates that expire, replacing long-lived keys and passwords
+          - Session recording and audit across every protocol
+          - Role-based and attribute-based access control
+          - Just-in-time access requests for elevated privileges
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/gravitational/teleport
+              note: >-
+                Re-read the licence statement on the repository. Teleport
+                describes Community Edition builds as being under a *modified*
+                Apache 2.0 licence, and the word "modified" is the thing to
+                re-check — a tightening there changes whether this entry can be
+                offered at all.
+            sources:
+              - url: https://github.com/gravitational/teleport
+                asOf: '2026-09-12'
+            notes: >-
+              Teleport states that Community Edition builds distributed on
+              goteleport.com are available under a modified Apache 2.0 licence.
+              No licence fee. Enterprise and Cloud are quote-only — Teleport's
+              pricing page requires a form — and are not catalogued.
+
+    supports:
+      os: [linux, windows, macos]
+      deviceClasses:
+        - server
+        - workstation
+        - database
+        - container_node
+        - cloud_workload
+        - identity
+        - web_app
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [ssh, kubernetes, saml, oidc, ldap, rdp, postgres, mysql]
+
+    controlsCovered:
+      - cis-v8:5
+      - cis-v8:6
+      - nist-csf-2.0:PR.AA
+      - iso-27001-2022:A.5.15
+      - iso-27001-2022:A.5.17
+      - iso-27001-2022:A.8.2
+      - iso-27001-2022:A.8.3
+      - iso-27001-2022:A.8.15
+      - iso-27001-2022:A.8.18
+      - pci-dss-4.0:7
+      - pci-dss-4.0:8
+      - hipaa:164.312.a.1
+      - hipaa:164.308.a.4
+      - soc-2:CC6
+      - rbi-csf:privileged-access
+      - rbi-csf:user-access-control
+      - nis2:21.2.i
+
+    opsBurden:
+      baseFte: 0.35
+      ftePerThousandAssets: 0.15
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 15
+      skillLevel: security_engineer
+      typicalWeeks: 6
+      confidence: analyst_estimate
+
+    strengths:
+      - Kills long-lived SSH keys outright, which is a class of risk rather than an instance of one
+      - One audited access path to servers, Kubernetes, databases and desktops
+      - Just-in-time elevation and session recording without a commercial licence
+    weaknesses:
+      - 'Engineer-shaped, not admin-shaped: this is infrastructure to run, not an appliance to configure'
+      - The "modified" Apache licence is not plain Apache 2.0 and should be read before it is relied on
+      - Windows and legacy estates are served less naturally than Linux and cloud-native ones
+    bestFor:
+      - Cloud-native and Kubernetes estates
+      - Engineering-led organisations that will treat access as code
+      - Clients who need session audit across more than just RDP
+    avoidWhen:
+      - The estate is Windows-first with no platform engineering capability
+      - The requirement is a password vault for a helpdesk rather than access for engineers
+
+    sources:
+      - url: https://github.com/gravitational/teleport
+        asOf: '2026-09-12'
+    notes: >-
+      licenceModel is open_core rather than open_source deliberately. Teleport's
+      own wording is "modified Apache 2.0", the paid editions gate real
+      capability, and calling it plain open source would overstate what the
+      client is free to do.
+
+  - id: passbolt
+    name: Passbolt
+    vendor: Passbolt SA
+    category: pam
+    subcategory: self-hosted team credential vault
+    licenceModel: open_core
+    maturity: established
+
+    tiers:
+      - id: community
+        name: Community Edition
+        capabilities:
+          - End-to-end encrypted shared credential vault
+          - Per-user and per-group sharing with granular permissions
+          - Browser extension and command-line access
+          - Self-hosted, with the database under the client's control
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.passbolt.com/pricing
+              note: >-
+                Confirm the Community Edition is still AGPLv3 and still
+                advertised with unlimited users — the user limit is the thing
+                most likely to appear.
+            sources:
+              - url: https://www.passbolt.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              Passbolt publishes the Community Edition as "Free" with "unlimited
+              users", "open source under AGPLV3 license". Self-hosted only.
+
+      - id: pro
+        name: Pro Edition
+        capabilities:
+          - Everything in Community
+          - LDAP and Active Directory user provisioning
+          - SSO
+          - Audit log of every credential access
+          - Folders and password expiry policies
+          - Vendor support
+        pricing:
+          - model: per_privileged_user_year
+            unitPrice:
+              amountMinor: 5880
+              currency: USD
+            minimumUnits: 10
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.passbolt.com/pricing
+              note: >-
+                Read the per-user-per-month figure and multiply by 12, and
+                re-check the 10-user minimum, which is what decides the price
+                for a small team rather than the rate.
+            sources:
+              - url: https://www.passbolt.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 4.90 per user per month billed annually, so USD 58.80 per user
+              per year, minimum 10 users. Billed here against privileged
+              accounts rather than headcount, because a credential vault is
+              bought for the people who hold shared secrets, not for everyone.
+              If the client intends to roll it out company-wide, cost it as a
+              per-employee line instead.
+        controlsCovered:
+          - iso-27001-2022:A.8.15
+          - iso-27001-2022:A.5.18
+          - hipaa:164.312.b
+          - soc-2:CC4
+
+    supports:
+      os: [linux, windows, macos]
+      deviceClasses: [identity, server, workstation]
+      cloudPlatforms: []
+      deploymentModes: [on_prem, hybrid, air_gapped]
+      scaleFloor: small
+      scaleCeiling: mid
+      airGapCapable: true
+
+    integrations: [ldap, saml, oidc]
+
+    controlsCovered:
+      # A vault, not a gateway — the mirror image of Guacamole. It manages and
+      # protects the credential and has no view of the session it is used in,
+      # so the monitoring and session-audit controls are absent.
+      - cis-v8:5
+      - cis-v8:6
+      - nist-csf-2.0:PR.AA
+      - iso-27001-2022:A.5.17
+      - iso-27001-2022:A.8.2
+      - iso-27001-2022:A.8.3
+      - pci-dss-4.0:7
+      - pci-dss-4.0:8
+      - hipaa:164.312.a.1
+      - soc-2:CC6
+      - rbi-csf:privileged-access
+      - nis2:21.2.i
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 6
+      skillLevel: security_engineer
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - Self-hosted end-to-end encryption, so the vendor never holds the client's secrets
+      - Genuinely free at unlimited users in the Community Edition
+      - Small enough to deploy and adopt in weeks rather than quarters
+    weaknesses:
+      - 'Vaulting only: no credential rotation, no session recording, no just-in-time elevation'
+      - The audit log that an auditor will ask for is a Pro feature
+      - Aimed at teams rather than enterprises; governance features are thin
+    bestFor:
+      - Clients whose privileged credentials currently live in a spreadsheet
+      - Small teams that need shared secrets under control quickly and cheaply
+      - Environments where secrets must not leave the premises
+    avoidWhen:
+      - The obligation is session recording or credential rotation
+      - The estate has hundreds of privileged accounts needing lifecycle governance
+
+    sources:
+      - url: https://www.passbolt.com/pricing
+        asOf: '2026-09-12'
+    notes: >-
+      The Enterprise Edition is quote-only ("Custom") and is not catalogued.
+
+  - id: devolutions-pam
+    name: Devolutions Privileged Access Management
+    vendor: Devolutions
+    category: pam
+    subcategory: mid-market PAM with remote access management
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: remote-access-management
+        name: Remote Access Management
+        capabilities:
+          - Centralised, brokered remote connections
+          - Shared connection and credential repository
+          - Access control by user and role
+          - Session logging
+        pricing:
+          - model: per_privileged_user_year
+            unitPrice:
+              amountMinor: 24000
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://devolutions.net/pricing/
+              note: >-
+                Read the per-user-per-month figure for each package and multiply
+                by 12. Devolutions repackages more often than it reprices, so
+                check the package names as carefully as the numbers.
+            sources:
+              - url: https://devolutions.net/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              USD 20 per user per month billed annually, so USD 240 per user per
+              year. Billed against privileged accounts, which is what a
+              Devolutions seat is bought for.
+
+      - id: rdm-it-operations
+        name: Remote Desktop Management & IT Operations
+        capabilities:
+          - Everything in Remote Access Management
+          - Remote Desktop Manager across every common protocol
+          - Inventory and IT operations tooling
+        pricing:
+          - model: per_privileged_user_year
+            unitPrice:
+              amountMinor: 36000
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://devolutions.net/pricing/
+              note: Read the per-user-per-month figure and multiply by 12.
+            sources:
+              - url: https://devolutions.net/pricing/
+                asOf: '2026-09-12'
+            notes: USD 30 per user per month billed annually, so USD 360 per user per year.
+
+      - id: pam
+        name: Privileged Access Management
+        capabilities:
+          - Everything in the lower packages
+          - Credential vaulting with automatic rotation
+          - Just-in-time privileged account checkout with approval workflow
+          - Session recording
+          - Privileged account discovery
+        pricing:
+          - model: per_privileged_user_year
+            unitPrice:
+              amountMinor: 60000
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://devolutions.net/pricing/
+              note: Read the per-user-per-month figure and multiply by 12.
+            sources:
+              - url: https://devolutions.net/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              USD 50 per user per month billed annually, so USD 600 per user per
+              year. Devolutions directs organisations above 100 users to a
+              custom quote, so this rate is a mid-market rate and should not be
+              extrapolated to a large estate.
+        controlsCovered:
+          - cis-v8:5
+          - iso-27001-2022:A.5.18
+          - iso-27001-2022:A.8.15
+          - iso-27001-2022:A.8.18
+          - hipaa:164.312.b
+          - hipaa:164.308.a.3
+          - soc-2:CC4
+
+    supports:
+      os: [windows, linux, macos]
+      deviceClasses: [server, workstation, identity, database, network_device]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud]
+      scaleFloor: small
+      scaleCeiling: mid
+      airGapCapable: false
+
+    integrations: [ldap, saml, oidc, rdp, ssh, vnc]
+
+    controlsCovered:
+      - cis-v8:6
+      - nist-csf-2.0:PR.AA
+      - iso-27001-2022:A.5.15
+      - iso-27001-2022:A.5.17
+      - iso-27001-2022:A.8.2
+      - iso-27001-2022:A.8.3
+      - pci-dss-4.0:7
+      - pci-dss-4.0:8
+      - hipaa:164.312.a.1
+      - soc-2:CC6
+      - rbi-csf:privileged-access
+      - nis2:21.2.i
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.08
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 10
+      skillLevel: security_engineer
+      typicalWeeks: 5
+      confidence: analyst_estimate
+
+    strengths:
+      - Publishes a price, which almost nothing else in this category does
+      - Vaulting, rotation, checkout and session recording in one product at a mid-market price
+      - The lower packages give a genuine upgrade path from "shared spreadsheet" to full PAM
+    weaknesses:
+      - Above 100 users Devolutions moves to a custom quote, so the published rate stops applying where it matters most
+      - Windows-centric heritage; Linux and cloud-native estates are served less naturally
+      - Not an enterprise PAM — no air-gapped deployment and thinner governance than the quote-only leaders
+    bestFor:
+      - Mid-market clients with a real privileged-access obligation and no appetite for a CyberArk conversation
+      - Windows-heavy estates with a helpdesk that shares admin credentials today
+    avoidWhen:
+      - There are more than about a hundred privileged users
+      - The environment is air-gapped
+
+    sources:
+      - url: https://devolutions.net/pricing/
+        asOf: '2026-09-12'
+    notes: >-
+      The three tiers are catalogued as a genuine ladder: Remote Access
+      Management controls the connection, IT Operations adds the tooling around
+      it, and only the PAM package vaults, rotates and records. The control
+      claims are split accordingly, so selecting the cheap tier does not credit
+      the client with rotation they have not bought.
+
+  - id: manageengine-pam360
+    name: ManageEngine PAM360
+    vendor: Zoho Corporation (ManageEngine)
+    category: pam
+    subcategory: banded-licence enterprise PAM
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: subscription
+        name: Subscription (English edition)
+        capabilities:
+          - Credential vaulting with automated rotation
+          - Privileged session recording and shadowing
+          - SSH key and SSL certificate lifecycle management
+          - Just-in-time privilege elevation with approval workflow
+          - Privileged account discovery and audit reporting
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: 400
+                flatPrice:
+                  amountMinor: 799500
+                  currency: USD
+              - minUnits: 401
+                maxUnits: 800
+                flatPrice:
+                  amountMinor: 1299500
+                  currency: USD
+              - minUnits: 801
+                maxUnits: 1000
+                flatPrice:
+                  amountMinor: 1499500
+                  currency: USD
+              - minUnits: 1001
+                maxUnits: 2000
+                flatPrice:
+                  amountMinor: 2499500
+                  currency: USD
+              - minUnits: 2001
+                maxUnits: 4000
+                flatPrice:
+                  amountMinor: 3699500
+                  currency: USD
+              - minUnits: 4001
+                maxUnits: 6000
+                flatPrice:
+                  amountMinor: 4499500
+                  currency: USD
+              - minUnits: 6001
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 4999500
+                  currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.manageengine.com/privileged-access-management/pricing.html
+              note: >-
+                ManageEngine publishes a full banded price list — read the
+                English-edition subscription column. The Multilingual edition is
+                roughly 20% dearer and is not catalogued. Re-check the
+                administrator counts attached to each band as well as the
+                prices, because the bands move.
+            sources:
+              - url: https://www.manageengine.com/privileged-access-management/pricing.html
+                asOf: '2026-09-12'
+            notes: >-
+              ManageEngine's published English-edition subscription list, billed
+              annually with maintenance and support included:
+              10 administrators USD 7,995; 20 USD 12,995; 25 USD 14,995;
+              50 USD 24,995; 100 USD 36,995; 150 USD 44,995; 200 USD 49,995.
+
+              ⚠ THE CRUDEST NUMBER IN THE CATALOG. ManageEngine bands on
+              *administrators*; `flat_tiered` can only band on monitored assets,
+              and the sizing stage's privilegedAccountCount cannot reach this
+              rule. The bands above therefore encode an assumption of roughly
+              one administrator per 40 monitored assets, floored at the
+              10-administrator band — so 400 assets buys the 10-admin band,
+              2,000 assets the 50-admin band, and so on.
+
+              That ratio is an analyst estimate and nothing more. Where the
+              client has actually captured a privileged-account count, read the
+              published band for that number off the vendor page and ignore this
+              line. The prices are the vendor's; the mapping from estate size to
+              band is not.
+
+    supports:
+      os: [windows, linux]
+      deviceClasses: [server, workstation, identity, database, network_device, cloud_workload]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud]
+      scaleFloor: mid
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [ldap, saml, oidc, ssh, rdp, syslog, microsoft-sentinel]
+
+    controlsCovered:
+      - cis-v8:5
+      - cis-v8:6
+      - nist-csf-2.0:PR.AA
+      - iso-27001-2022:A.5.15
+      - iso-27001-2022:A.5.17
+      - iso-27001-2022:A.5.18
+      - iso-27001-2022:A.8.2
+      - iso-27001-2022:A.8.3
+      - iso-27001-2022:A.8.15
+      - iso-27001-2022:A.8.18
+      - pci-dss-4.0:7
+      - pci-dss-4.0:8
+      - hipaa:164.312.a.1
+      - hipaa:164.312.b
+      - hipaa:164.308.a.3
+      - hipaa:164.308.a.4
+      - soc-2:CC4
+      - soc-2:CC6
+      - rbi-csf:privileged-access
+      - rbi-csf:user-access-control
+      - nis2:21.2.i
+
+    opsBurden:
+      baseFte: 0.3
+      ftePerThousandAssets: 0.1
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 20
+      skillLevel: specialist
+      typicalWeeks: 10
+      confidence: analyst_estimate
+
+    strengths:
+      - A published, banded price list for full PAM, which is close to unique in this category
+      - Covers vaulting, rotation, session recording, SSH keys and certificates in one product
+      - Perpetual licensing is offered as an alternative for clients who prefer capex
+    weaknesses:
+      - Banding on administrator count makes the cost a step function — one more admin can cost thousands
+      - Deployment is a project, not a configuration; ten weeks elapsed is realistic
+      - No air-gapped deployment
+    bestFor:
+      - Mid-market and larger clients with a compliance-driven PAM obligation
+      - Clients who want a defensible price in the proposal without a three-week quote cycle
+    avoidWhen:
+      - The estate is small — the 10-administrator band is the floor and it is not cheap
+      - The environment is air-gapped
+
+    sources:
+      - url: https://www.manageengine.com/privileged-access-management/pricing.html
+        asOf: '2026-09-12'
+    notes: >-
+      Implementation is graded `specialist` and twenty days deliberately.
+      ManageEngine sells onsite services for this product at USD 4,999–9,999 for
+      two to five days, which is a vendor signal that it is not a self-install.
