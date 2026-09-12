@@ -173,6 +173,44 @@ describe('the document model', () => {
     ]);
   });
 
+  it('lists contenders only, and still says how many were ruled out', () => {
+    // A product eliminated before scoring gets a row on the dashboard but not
+    // in the client document: eighteen rows of "not applicable" trebled the
+    // length of this section to say nothing a reader can act on. The count
+    // stays in the prose, so nothing is concealed by the trim.
+    const document = buildProposal(
+      proposalInputs({
+        products: [
+          product('quick-edr', 'edr', 1_000_00, 2),
+          product('slow-siem', 'siem', 2_000_00, 20),
+          product('dearer-siem', 'siem', 9_000_00, 20),
+          product('mid-iam', 'iam', 500_00, 8),
+        ],
+        profile: { excludedProducts: ['dearer-siem'] },
+      }),
+    );
+    const section = document.sections.find((entry) => entry.heading === 'Why these products');
+    const rows = (section?.blocks ?? []).flatMap((block) =>
+      block.kind === 'table' ? block.rows : [],
+    );
+
+    const named = rows
+      .map((row) => (row[0]?.kind === 'text' ? row[0].value : ''))
+      .join(' | ');
+    expect(named).not.toContain('dearer-siem');
+
+    // The prose still accounts for it.
+    const prose = (section?.blocks ?? [])
+      .map((block) => (block.kind === 'paragraph' ? block.text : ''))
+      .join(' ');
+    expect(prose).toContain('ruled out before scoring');
+
+    // And no surviving row is one that was never costed.
+    for (const row of rows) {
+      expect(row[2]?.kind === 'text' ? row[2].value : '').not.toBe('not costed');
+    }
+  });
+
   it('names what else was considered, and why each one lost', () => {
     // The default fixture has one product per category, so there is genuinely
     // nothing to compare. Give the SIEM category a rival and the section fills.

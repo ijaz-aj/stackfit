@@ -156,7 +156,7 @@ describe('justifying a selection', () => {
     // Compared on total annual cost, not licence price. Procurement alone is
     // how a self-hosted tool reads as "80 times cheaper" than a commercial one
     // it is actually level with once the people to run it are counted.
-    expect(alternative?.verdict).toContain('once the people to run each are counted');
+    expect(alternative?.verdict).toContain('all-in');
     // The one thing it must never say about a product that scored higher.
     expect(alternative?.verdict).not.toContain('Scores 93 against');
   });

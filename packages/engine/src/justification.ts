@@ -8,8 +8,14 @@
 // Every SKU that was considered appears here, ranked, each with the one thing
 // that actually decided it. Nothing is asserted that the pipeline did not
 // compute: a loser on fit is told which dimension lost it and by how much, a
-// loser on price is shown both prices, and a product that never reached scoring
-// carries the hard filter's own words.
+// loser on price is compared on total cost, and a product that never reached
+// scoring carries the hard filter's own words.
+//
+// Each verdict states its own specific fact and nothing else. The reasoning
+// they share — that costs are compared all-in rather than on licence, and that
+// only one product per category is funded — belongs once, where the reader
+// meets the table, not appended to all sixty-six rows. It was appended to all
+// sixty-six rows, and that alone was most of a fourteen-page proposal.
 //
 // Pure: no fs, no clock, no randomness.
 
@@ -139,12 +145,11 @@ function verdictFor(
     const where =
       deciding === null
         ? ''
-        : ` The gap is widest on ${dimensionName(deciding.dimension)}, worth ` +
-          `${round(deciding.gap, 1)} of those points.`;
+        : ` — widest gap on ${dimensionName(deciding.dimension)}, ${round(deciding.gap, 1)} points`;
     return {
       kind: 'lower_fit',
       decidingDimension: deciding === null ? null : deciding.dimension,
-      verdict: `Scores ${round(loser.score, 1)} against ${round(winner.score, 1)}.${where}`,
+      verdict: `Scores ${round(loser.score, 1)} against ${round(winner.score, 1)}${where}.`,
     };
   }
 
@@ -167,9 +172,7 @@ function verdictFor(
       decidingDimension: null,
       verdict:
         `Scores ${round(loser.score, 1)}, level with or above the selection, but costs ` +
-        `${round(ratio, 1)} times as much a year once the people to run each are counted. ` +
-        'Licence price alone would overstate that gap: most of what a self-hosted tool costs ' +
-        'is the people who run it.',
+        `${round(ratio, 1)} times as much a year all-in.`,
     };
   }
 
@@ -194,18 +197,15 @@ function verdictFor(
       kind: 'costs_more',
       decidingDimension: null,
       verdict:
-        `Scores ${round(loser.score, 1)} and costs about the same to own, but ${howMuchDearer}. ` +
-        'This bundle was built to stretch the licence budget across every category the client ' +
-        'has to cover, so the cheaper licence won. It is the upgrade to quote if the budget moves.',
+        `Scores ${round(loser.score, 1)}, the same cost to own but ${howMuchDearer}. ` +
+        'The upgrade to quote if the budget moves.',
     };
   }
 
   return {
     kind: 'not_preferred',
     decidingDimension: null,
-    verdict:
-      `Scores ${round(loser.score, 1)} and costs much the same either way. Only one product per ` +
-      `category is funded, and ${loserName} did not win the ranking.`,
+    verdict: `Scores ${round(loser.score, 1)} at much the same cost; ${loserName} lost the ranking.`,
   };
 }
 

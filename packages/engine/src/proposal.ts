@@ -392,12 +392,35 @@ function whyTheseProducts(inputs: ProposalInputs): ProposalSection {
         'considered and why it was not selected, so the choice can be checked rather than taken ' +
         'on trust.',
     },
+    {
+      kind: 'paragraph',
+      text:
+        'Only products that competed are listed. Where one was ruled out before scoring — too ' +
+        'large or too small for this estate, no support for a device class it would have to ' +
+        'cover, or excluded for this client — the count appears beside its category and the ' +
+        'reason is on the scoping dashboard.',
+    },
+    {
+      kind: 'paragraph',
+      text:
+        'Two things hold for every row below, so they are stated once here rather than repeated ' +
+        'in each. Costs are compared on total annual cost, people included, because a comparison ' +
+        'on licence alone systematically flatters self-hosted options — most of what they cost ' +
+        'is the people who run them. And only one product per category is funded, so a strong ' +
+        'product can appear here having lost on nothing but price.',
+    },
   ];
 
   for (const justification of inputs.justifications) {
     blocks.push({ kind: 'paragraph', text: `${justification.categoryLabel}. ${justification.headline}` });
 
-    if (justification.alternatives.length === 0) continue;
+    // Contenders only. The headline above already states how many were ruled
+    // out before scoring, so nothing is concealed by leaving them out of the
+    // table — only the per-product reason moves to the dashboard.
+    const contenders = justification.alternatives.filter(
+      (alternative) => alternative.kind !== 'eliminated',
+    );
+    if (contenders.length === 0) continue;
 
     blocks.push({
       kind: 'table',
@@ -407,10 +430,11 @@ function whyTheseProducts(inputs: ProposalInputs): ProposalSection {
         { heading: 'Annual spend', align: 'right' },
         { heading: 'Why not selected', align: 'left' },
       ],
-      rows: justification.alternatives.map((alternative) => [
+      rows: contenders.map((alternative) => [
         text(`${alternative.productName} — ${alternative.tierName}`),
         number(alternative.fitScore, 1),
-        // A ruled-out product was never costed, so a price here would be invented.
+        // Every contender was costed; only a ruled-out product is not, and
+        // those do not reach this table.
         alternative.annualSpend === null ? text('not costed') : money(alternative.annualSpend),
         text(alternative.verdict),
       ]),
