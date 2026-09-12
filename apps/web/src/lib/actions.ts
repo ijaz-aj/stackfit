@@ -98,6 +98,40 @@ export async function saveScenario(input: unknown): Promise<SaveResult> {
   return { ok: true, savedAt: new Date().toISOString() };
 }
 
+/**
+ * Clone a scenario (§11 phase 9).
+ *
+ * The whole point of cloning is to change one thing and see what it does, so
+ * the copy carries everything — profile, inventory and the sizing overrides.
+ * An override the analyst corrected on the call is part of what makes the two
+ * runs comparable; dropping it would silently change a second variable.
+ *
+ * The copy is a new row rather than a version of the original: two scenarios
+ * that can be opened, edited and compared independently is what phase 9 asks
+ * for, and versioning is a different feature with a different UI.
+ */
+export async function cloneScenario(formData: FormData): Promise<void> {
+  const parsed = ScenarioId.safeParse({ id: formData.get('id')?.toString() });
+  if (!parsed.success) throw new Error('invalid scenario id');
+
+  const source = await prisma.scenario.findUnique({ where: { id: parsed.data.id } });
+  if (source === null) throw new Error('scenario not found');
+
+  const created = await prisma.scenario.create({
+    data: {
+      name: `${source.name} (copy)`,
+      profile: source.profile,
+      inventory: source.inventory,
+      overrides: source.overrides,
+      ownerId: source.ownerId,
+      createdBy: source.createdBy,
+    },
+  });
+
+  revalidatePath('/');
+  redirect(`/scenarios/${created.id}`);
+}
+
 export async function deleteScenario(formData: FormData): Promise<void> {
   const parsed = ScenarioId.safeParse({ id: formData.get('id')?.toString() });
   if (!parsed.success) throw new Error('invalid scenario id');

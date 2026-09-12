@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import { Badge, Button, Card } from '@/components/ui';
-import { createScenario, deleteScenario } from '@/lib/actions';
+import { cloneScenario, createScenario, deleteScenario } from '@/lib/actions';
 import { engineData } from '@/lib/config.server';
 import { prisma } from '@/lib/db';
 import { formatNumber } from '@/lib/format';
@@ -62,7 +62,17 @@ export default async function ScenariosPage() {
         </form>
       </Card>
 
-      <Card title="Saved sessions" hint={`${scenarios.length} of the most recent.`}>
+      <Card
+        title="Saved sessions"
+        hint={`${scenarios.length} of the most recent.`}
+        action={
+          scenarios.filter((scenario) => !isUnreadable(scenario)).length >= 2 ? (
+            <Link href="/compare" className="text-accent text-[12px]">
+              Compare two →
+            </Link>
+          ) : undefined
+        }
+      >
         {scenarios.length === 0 ? (
           <p className="text-faint text-[12px]">Nothing saved yet.</p>
         ) : (
@@ -90,6 +100,12 @@ export default async function ScenariosPage() {
                 <time className="text-faint tabular shrink-0 text-[11px]">
                   {scenario.updatedAt.slice(0, 16).replace('T', ' ')}
                 </time>
+                <form action={cloneScenario}>
+                  <input type="hidden" name="id" value={scenario.id} />
+                  <Button type="submit" variant="secondary">
+                    Clone
+                  </Button>
+                </form>
                 <form action={deleteScenario}>
                   <input type="hidden" name="id" value={scenario.id} />
                   <Button type="submit" variant="danger">

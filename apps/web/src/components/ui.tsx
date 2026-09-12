@@ -39,18 +39,24 @@ export function Card({
   hint,
   children,
   className,
+  action,
 }: {
   title?: string;
   hint?: string;
   children: ReactNode;
   className?: string;
+  /** Sits opposite the title — a link or control that belongs to the card. */
+  action?: ReactNode;
 }) {
   return (
     <section className={cn('border-line bg-panel rounded border', className)}>
       {title !== undefined && (
-        <header className="border-line border-b px-4 py-2.5">
-          <h2 className="text-ink text-[13px] font-semibold tracking-tight">{title}</h2>
-          {hint !== undefined && <p className="text-faint mt-0.5 text-[11px]">{hint}</p>}
+        <header className="border-line flex items-start justify-between gap-3 border-b px-4 py-2.5">
+          <div className="min-w-0">
+            <h2 className="text-ink text-[13px] font-semibold tracking-tight">{title}</h2>
+            {hint !== undefined && <p className="text-faint mt-0.5 text-[11px]">{hint}</p>}
+          </div>
+          {action !== undefined && <div className="shrink-0">{action}</div>}
         </header>
       )}
       <div className="p-4">{children}</div>

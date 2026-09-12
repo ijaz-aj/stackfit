@@ -155,7 +155,7 @@ const SERVICE_LEVEL_LABELS: Readonly<Record<string, string>> = {
   managed_security: 'Fully managed security',
 };
 
-const CATEGORY_LABELS: Readonly<Record<ProductCategory, string>> = {
+export const CATEGORY_LABELS: Readonly<Record<ProductCategory, string>> = {
   siem: 'SIEM',
   edr: 'EDR',
   ndr: 'Network detection',
