@@ -706,7 +706,7 @@ function select(
         const fitGap = round(sibling.candidate.fitScore - picked.candidate.fitScore, 1);
         if (fitGap > 0) {
           rationale.push(
-            `${sibling.candidate.tierName} scores ${fitGap} point(s) higher and costs ` +
+            `${sibling.candidate.tierName} scores ${plural(fitGap, 'point')} higher and costs ` +
               `${formatMinor(sibling.spendCost, picked.spendCost)} more a year in procurement. ` +
               'Not worth it at this budget; it is the upgrade to quote if the coverage gaps matter.',
           );
@@ -1325,13 +1325,13 @@ function buildRecommended(
       ? undefined
       : winner.score.mandatory > runnerUp.score.mandatory
         ? `Chosen over the alternative stack because it meets more of the client's mandatory ` +
-          `obligations: ${winner.score.mandatory} mandated control(s) against ` +
+          `obligations: ${plural(winner.score.mandatory, 'mandated control')} against ` +
           `${runnerUp.score.mandatory}. A funded category the selected frameworks do not ` +
           `require never outranks a control they do.`
         : winner.score.weight === runnerUp.score.weight && winner.score.total > runnerUp.score.total
           ? `Both strategies meet the same mandates and fund the same categories, so the one ` +
             `satisfying more of the selected frameworks won: ${winner.score.total} in-scope ` +
-            `control(s) against ${runnerUp.score.total}. Spending more must not cover less.`
+            `against ${runnerUp.score.total}. Spending more must not cover less.`
           : undefined;
 
   const added = [

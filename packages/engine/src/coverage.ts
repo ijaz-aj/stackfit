@@ -39,7 +39,7 @@ import type {
 import { controlsClaimedBy, tiersClaiming } from './claims';
 import { cheapestTierCost, costOfTier, type CostsByProduct, type ProductCost } from './cost';
 import type { CategoryRelevance } from './infrastructure';
-import { PRICING_CONFIDENCE_LABELS } from './labels';
+import { PRICING_CONFIDENCE_LABELS, plural } from './labels';
 import { subtractMoney, sumMoney } from './money';
 import type { Bundle } from './portfolio';
 import type { ProductScore } from './scoring';
@@ -510,7 +510,7 @@ export function computeFrameworkCoverage(inputs: CoverageInputs): readonly Frame
     ];
     if (partial.length > 0) {
       rationale.push(
-        `${partial.length} control(s) have the right kind of product in the stack without that ` +
+        `${plural(partial.length, 'control')} have the right kind of product in the stack without that ` +
           'product claiming the control. They are counted as uncovered, deliberately: a coverage ' +
           'figure should be the one you can defend, not the one you would like.',
       );
@@ -942,12 +942,12 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
         rationale: [
           upgrade
             ? `Upgrading ${closer.productName} from ${closer.upgradeFromTierName} to ` +
-              `${closer.tierName} closes ${fully.length} control(s) outright` +
+              `${closer.tierName} closes ${plural(fully.length, 'control')} outright` +
               (partly.length > 0 ? ` and partly addresses ${partly.length} more` : '') +
               ` across ${frameworkIds.join(', ')}. No new tool to deploy, run or renew: the ` +
               'client already owns this product at a lower tier.'
             : `Adding ${closer.productName} · ${closer.tierName} (${closer.category}) closes ` +
-              `${fully.length} control(s) outright` +
+              `${plural(fully.length, 'control')} outright` +
               (partly.length > 0 ? ` and partly addresses ${partly.length} more` : '') +
               ` across ${frameworkIds.join(', ')}.`,
           upgrade
@@ -1037,10 +1037,10 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
     `The ${bundle.kind} bundle covers ${summary.coveredControls} of ${summary.addressableControls} ` +
       'controls a purchase could satisfy' +
       (inScopeCoverage.length > 0
-        ? `, across the ${inScopeCoverage.length} framework(s) the client selected.`
+        ? `, across the ${plural(inScopeCoverage.length, 'framework')} the client selected.`
         : '. The client selected no framework, so this is measured against the reference ' +
           'frameworks supplied instead.'),
-    `${summary.gapControls} gap(s) remain. Closing the ones this catalog can close costs ` +
+    `${plural(summary.gapControls, 'gap')} remain. Closing the ones this catalog can close costs ` +
       `${remediationAnnualSpend.amountMinor / 100} ${currency}/yr plus ` +
       `${remediationOneTime.amountMinor / 100} ${currency} one-time, and needs ` +
       `${remediationOpsFte} more FTE. Money and people are reported separately: a stated security ` +
@@ -1048,20 +1048,20 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
   ];
   if (summary.partialControls > 0) {
     rationale.push(
-      `${summary.partialControls} control(s) are partial: the stack has the right kind of product ` +
+      `${plural(summary.partialControls, 'control')} are partial: the stack has the right kind of product ` +
         'but that product does not claim the control. Not counted as covered.',
     );
   }
   if (unclosable.length > 0) {
     rationale.push(
-      `${unclosable.length} gap(s) cannot be closed from this catalog at all: ` +
+      `${plural(unclosable.length, 'gap')} cannot be closed from this catalog at all: ` +
         `${unclosable.join(', ')}. That is a gap in StackFit, not in the client.`,
     );
   }
   const mandatoryGaps = reportedGaps.filter((gap) => gap.mandatory && gap.inScope);
   if (mandatoryGaps.length > 0) {
     rationale.push(
-      `⚠ ${mandatoryGaps.length} gap(s) are controls a selected framework marks mandatory: ` +
+      `⚠ ${plural(mandatoryGaps.length, 'gap')} are controls a selected framework marks mandatory: ` +
         `${mandatoryGaps.map((gap) => gap.controlId).join(', ')}. Those are obligations, not ` +
         'preferences.',
     );

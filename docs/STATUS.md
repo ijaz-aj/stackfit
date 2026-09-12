@@ -1447,7 +1447,23 @@ What follows is the honest scorecard, including where the sources are weak.
   FTE and the recommended stack's requirement moves from 6.40 to 7.24, because
   ops-fit scoring changes which products are reachable. The gap the bundle
   exists to show is still wide, which is the point.
-- ⚠ **`hasSoc` is captured, stored, diffed and never read by the engine.**
+- ~~⚠ **`hasSoc` is captured, stored, diffed and never read by the engine.**~~
+  **Closed 2026-09-12.** It now shifts the `ops_fit` weight through the same
+  mechanism `procurementBias` uses, summed with it rather than overriding, and
+  renormalised back to 100. Sizes are in `data/config/scoring-weights.yaml`
+  with a basis each: none +12 (the largest adjustment in the file, because
+  nobody is rostered to look at what the stack produces), business_hours +5,
+  24x7 -3, outsourced -5. It moves a weight rather than eliminating products,
+  because a client with no SOC can legitimately buy a SIEM; they should not buy
+  the one that needs a team.
+  Verified against the committed catalog, not just fixtures: `test/soc-posture.test.ts`
+  drives every posture through every real preset and fails if any of them stops
+  discriminating. Reverting the one line that reads the field turns it red.
+  Known reach: where the budget cannot buy the mandatory set, `portfolio.ts`
+  ranks on cheapest-acceptable and never consults the fit score, so the posture
+  moves the weights and decides nothing. That is pinned by the second test so
+  the first is not read as a broader claim than it is.
+  The original entry, for the record:
   Found while checking the staffing figures. `SocPosture` is on `ClientProfile`
   and appears in `compare.ts` as a text diff; no stage of the pipeline consults
   it. A client who states a 24/7 SOC and one who states none get the same

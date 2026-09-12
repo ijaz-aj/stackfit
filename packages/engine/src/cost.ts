@@ -26,6 +26,7 @@ import type {
 import { assessTierFreshness, needsRecheck, type PriceFreshness } from './freshness';
 import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money';
 import type { SizingResult } from './sizing';
+import { plural } from './labels';
 
 const DAYS_PER_YEAR = 365;
 const MONTHS_PER_YEAR = 12;
@@ -313,7 +314,7 @@ function infraAnnualFor(
     footprint?.vcpuBasis === 'log_ingest'
       ? `to carry ${sizing.gbPerDay} GB/day of ingest`
       : footprint !== undefined && footprint.vcpuPerThousandAssets > 0
-        ? `for ${sizing.monitoredAssetCount} monitored asset(s)`
+        ? `for ${plural(sizing.monitoredAssetCount, 'monitored asset')}`
         : `as a flat ${product.category} footprint, which does not scale with the estate`;
 
   const storageNote =
@@ -432,7 +433,7 @@ export function computeProductCost(
   const trainingOneTime = scaleMoney(dayRate, trainingDays);
 
   rationale.push(
-    `Implementation: ${product.implementation.effortDays} day(s) at the ${profile.region} ${product.implementation.skillLevel} day rate, over about ${product.implementation.typicalWeeks} week(s).`,
+    `Implementation: ${plural(product.implementation.effortDays, 'day')} at the ${profile.region} ${product.implementation.skillLevel} day rate, over about ${plural(product.implementation.typicalWeeks, 'week')}.`,
   );
 
   // ---- Roll-up.

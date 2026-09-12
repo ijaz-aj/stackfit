@@ -8,6 +8,7 @@
 import type {
   AssetInventory,
   ClientEnvironment,
+  ClientProfile,
   DeploymentMode,
   EstateShape,
   Framework,
@@ -911,5 +912,101 @@ describe('regressions', () => {
 
     expect(scoreOf(noPreference)).toBe(100);
     expect(scoreOf(stated)).toBe(30);
+  });
+});
+
+describe('SOC posture: the input that used to reach nothing', () => {
+  // `hasSoc` was captured at intake, stored, diffed on the compare page and
+  // read by no stage of the pipeline. A client with a 24/7 rota and a client
+  // with nobody watching received byte-identical recommendations.
+  //
+  // These assert the property rather than the constants: that the answer
+  // changes the weighting, in the right direction, by the right relative
+  // amounts. The numbers themselves live in `data/config/scoring-weights.yaml`
+  // and are an analyst judgement that should be tunable without breaking a test.
+
+  const weightsFor = (soc: ClientProfile['hasSoc']) =>
+    effectiveWeights(buildScoringWeights(), buildClientProfile({ hasSoc: soc }));
+
+  it('reaches the weights at all', () => {
+    // The regression itself. If this passes with the engine ignoring hasSoc,
+    // it is not testing anything.
+    expect(weightsFor('none').get('ops_fit')).not.toBe(weightsFor('24x7').get('ops_fit'));
+  });
+
+  it('orders the four postures by how much cover they actually provide', () => {
+    const ops = (soc: ClientProfile['hasSoc']) => weightsFor(soc).get('ops_fit') ?? 0;
+
+    // Nobody watching weights operability hardest; a provider carrying the
+    // load weights it least. Business hours sits between none and 24/7.
+    expect(ops('none')).toBeGreaterThan(ops('business_hours'));
+    expect(ops('business_hours')).toBeGreaterThan(ops('24x7'));
+    expect(ops('24x7')).toBeGreaterThan(ops('outsourced'));
+  });
+
+  it('keeps the dimensions summing to 100 for every posture', () => {
+    // §7.4 step 2 divides by this total. A posture that broke the
+    // renormalisation would silently rescale every value-density comparison.
+    for (const soc of ['none', 'business_hours', '24x7', 'outsourced'] as const) {
+      const total = [...weightsFor(soc).values()].reduce((sum, value) => sum + value, 0);
+      expect(total, `${soc} does not renormalise`).toBeCloseTo(100, 6);
+    }
+  });
+
+  it('sums with the procurement bias rather than overriding it', () => {
+    // Open-source-first with no SOC is the shape that most needs operability to
+    // dominate. Taking only the larger of the two adjustments would discard
+    // half of what the analyst said.
+    const both = effectiveWeights(
+      buildScoringWeights(),
+      buildClientProfile({ hasSoc: 'none', procurementBias: 'open_source_first' }),
+    );
+    const socOnly = effectiveWeights(
+      buildScoringWeights(),
+      buildClientProfile({ hasSoc: 'none', procurementBias: 'no_preference' }),
+    );
+    const biasOnly = effectiveWeights(
+      buildScoringWeights(),
+      buildClientProfile({ hasSoc: '24x7', procurementBias: 'open_source_first' }),
+    );
+
+    expect(both.get('ops_fit')).toBeGreaterThan(socOnly.get('ops_fit') ?? 0);
+    expect(both.get('ops_fit')).toBeGreaterThan(biasOnly.get('ops_fit') ?? 0);
+  });
+
+  it('changes which product wins when two differ only in how much running they need', () => {
+    // The whole point, end to end through scoreProducts rather than through the
+    // weights alone: a light managed tool and a heavy self-hosted one, scored
+    // for the same client twice.
+    const light = buildProduct({
+      id: 'light',
+      opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+    });
+    const heavy = buildProduct({
+      id: 'heavy',
+      opsBurden: { baseFte: 1.4, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+    });
+
+    const scoreFor = (soc: ClientProfile['hasSoc'], product: Product) => {
+      const profile = buildClientProfile({ hasSoc: soc, securityStaffFte: 2 });
+      const inventory = { windowsServers: { count: 200 }, networkVendors: [] } as never;
+      const sizing = computeSizing(inventory, profile, buildSizingAssumptions());
+      const scores = scoreProducts([product], {
+        profile,
+        inventory,
+        sizing,
+        frameworks: [],
+        weights: buildScoringWeights(),
+        categoryWeights: buildCategoryWeightsFixture(),
+      });
+      return scores[0]!.score;
+    };
+
+    // With nobody watching, the gap between them must widen: that is the
+    // adjustment doing its job rather than shifting both equally.
+    const gapWithNoSoc = scoreFor('none', light) - scoreFor('none', heavy);
+    const gapWithRota = scoreFor('24x7', light) - scoreFor('24x7', heavy);
+
+    expect(gapWithNoSoc).toBeGreaterThan(gapWithRota);
   });
 });

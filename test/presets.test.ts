@@ -97,10 +97,7 @@ describe('the committed intake presets', () => {
     // Anything it cannot fund must be a category the catalog does not stock.
     // Never a silent empty bundle.
     for (const preset of presets) {
-      const result = runScenario(
-        { ...preset.profile, orgName: preset.name },
-        preset.inventory,
-      );
+      const result = runScenario({ ...preset.profile, orgName: preset.name }, preset.inventory);
       expect(result.recommended.selections.length, preset.id).toBeGreaterThan(0);
       expect(result.recommended.rationale.length, preset.id).toBeGreaterThan(0);
     }

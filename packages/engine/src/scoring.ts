@@ -32,7 +32,7 @@ import {
 
 import { controlsClaimedBy } from './claims';
 import { operationalFteFor } from './cost';
-import { formatCount, skuName } from './labels';
+import { CATEGORY_LABELS, formatCount, plural, skuName } from './labels';
 import type { SizingResult } from './sizing';
 
 export interface ScoringInputs {
@@ -123,10 +123,18 @@ function countOf(inventory: AssetInventory, assetClass: AssetClass): number {
 }
 
 /**
- * Weights after `procurementBias` shifts them, renormalised back to 100.
+ * Weights after the client's procurement bias and monitoring capability shift
+ * them, renormalised back to 100.
  *
  * Renormalising rather than letting the total drift keeps "out of 100" true,
  * which matters because §7.4 step 2 divides by this number.
+ *
+ * The two adjustments sum rather than override. They answer different
+ * questions, how this client likes to buy and whether anyone is watching the
+ * tools once bought, and a client can reasonably be at an extreme of both:
+ * open-source-first with no SOC is the shape that most needs ops fit to
+ * dominate, and taking only the larger of the two would quietly discard half
+ * of what the analyst said.
  */
 export function effectiveWeights(
   weights: ScoringWeights,
@@ -135,7 +143,12 @@ export function effectiveWeights(
   const adjustment = weights.biasAdjustments.find(
     (entry) => entry.bias === profile.procurementBias,
   );
-  const deltas = new Map(adjustment?.deltas.map((delta) => [delta.dimension, delta.delta]) ?? []);
+  const soc = weights.socAdjustments.find((entry) => entry.soc === profile.hasSoc);
+
+  const deltas = new Map<ScoringDimension, number>();
+  for (const delta of [...(adjustment?.deltas ?? []), ...(soc?.deltas ?? [])]) {
+    deltas.set(delta.dimension, (deltas.get(delta.dimension) ?? 0) + delta.delta);
+  }
 
   const adjusted = new Map<ScoringDimension, number>();
   let total = 0;
@@ -408,8 +421,8 @@ function integrationFit(product: Product, profile: ClientProfile): { score: numb
     score,
     note:
       matched.length === 0
-        ? `Declares no integration with any of the ${profile.retainedTools.length} tool(s) the client is keeping.`
-        : `Integrates with ${matched.length} of ${profile.retainedTools.length} retained tool(s): ${matched.join(', ')}.`,
+        ? `Declares no integration with any of the ${plural(profile.retainedTools.length, 'tool')} the client is keeping.`
+        : `Integrates with ${matched.length} of ${plural(profile.retainedTools.length, 'retained tool')}: ${matched.join(', ')}.`,
   };
 }
 
@@ -547,7 +560,7 @@ export function hardFilter(product: Product, inputs: ScoringInputs): string[] {
   const coverage = assetCoverage(product, inventory, weights, categoryWeights);
   if (coverage.inRemit > 0 && coverage.covered === 0) {
     reasons.push(
-      `Supports none of the ${coverage.inRemit} asset(s) a ${product.category} product would be ` +
+      `Supports none of the ${plural(coverage.inRemit, 'asset')} a ${CATEGORY_LABELS[product.category]} product would be ` +
         `bought to cover in this environment (it handles ${product.supports.deviceClasses.join(', ')}).`,
     );
   }
@@ -669,7 +682,7 @@ export function scoreProduct(
   const coverageNote =
     coverage.inRemit === 0
       ? `No assets in this category's remit were captured, so coverage is not a differentiator here and is scored neutral.`
-      : `Reaches ${round(coverage.covered, 1)} of ${round(coverage.inRemit, 1)} weighted asset unit(s) in a ${product.category}'s remit` +
+      : `Reaches ${round(coverage.covered, 1)} of ${plural(round(coverage.inRemit, 1), 'weighted asset unit')} in a ${CATEGORY_LABELS[product.category]}'s remit` +
         (coverage.missedClasses.length > 0
           ? `; misses ${coverage.missedClasses.join(', ')}.`
           : '.');
@@ -682,7 +695,7 @@ export function scoreProduct(
       ? 'No compliance frameworks were selected, so this dimension is neutral for every product.'
       : compliance.required === 0
         ? `The selected frameworks ask nothing of a ${product.category}, so this dimension is neutral.`
-        : `Covers ${compliance.covered} of the ${compliance.required} control(s) the selected frameworks ask of a ${product.category}.`;
+        : `Covers ${compliance.covered} of the ${plural(compliance.required, 'control')} the selected frameworks ask of a ${CATEGORY_LABELS[product.category]}.`;
 
   const ops = opsFit(opsFte, profile, weights);
   const deployment = deploymentFit(

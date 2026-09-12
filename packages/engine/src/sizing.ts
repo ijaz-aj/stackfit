@@ -18,6 +18,7 @@ import type {
   SizingOverrides,
 } from '@stackfit/schema';
 import { AssetClass as AssetClassEnum } from '@stackfit/schema';
+import { plural } from './labels';
 
 const SECONDS_PER_DAY = 86_400;
 const BYTES_PER_GB = 1e9;
@@ -230,7 +231,7 @@ export function computeSizing(
     retentionDrivenBy === undefined
       ? `Retention of ${retentionDays} days is the configured default; no selected framework requires longer.`
       : `Retention of ${retentionDays} days is required by ${retentionDrivenBy}, longer than the ${assumptions.retention.defaultDays}-day default.`,
-    `${monitoredAssetCount} monitored asset(s) puts this environment in the ${scaleClass} scale class.`,
+    `${plural(monitoredAssetCount, 'monitored asset')} puts this environment in the ${scaleClass} scale class.`,
     privilegedAccountCountEstimated
       ? `Privileged accounts not captured; estimated ${privilegedAccountCount} from ${profile.itStaffCount} IT staff × ${assumptions.privilegedAccountsPerItStaff}. Confirm before sizing PAM.`
       : `${privilegedAccountCount} privileged account(s) taken from the inventory as captured.`,

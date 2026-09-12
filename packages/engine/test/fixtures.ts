@@ -382,6 +382,15 @@ export function buildScoringWeights(overrides: Partial<ScoringWeights> = {}): Sc
       { bias: 'commercial', deltas: [] },
       { bias: 'no_preference', deltas: [] },
     ],
+    // Deliberately the same shape as the committed config, so a test that
+    // asserts a SOC posture changes the ranking is asserting the mechanism and
+    // not a number invented for the fixture.
+    socAdjustments: [
+      { soc: 'none', deltas: [{ dimension: 'ops_fit', delta: 12, basis }] },
+      { soc: 'business_hours', deltas: [{ dimension: 'ops_fit', delta: 5, basis }] },
+      { soc: '24x7', deltas: [{ dimension: 'ops_fit', delta: -3, basis }] },
+      { soc: 'outsourced', deltas: [{ dimension: 'ops_fit', delta: -5, basis }] },
+    ],
     opsFit: {
       comfortableShareOfFte: 0.35,
       unusableShareOfFte: 1.2,

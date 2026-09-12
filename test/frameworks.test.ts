@@ -25,7 +25,9 @@ describe('framework coverage of PROJECT_SPEC §5.4', () => {
     // If FrameworkId offers it in the wizard, data/frameworks must define it.
     // Otherwise ticking it would silently contribute nothing to the coverage
     // matrix rather than failing loudly.
-    expect(frameworks.map((framework) => framework.id).sort()).toEqual([...FrameworkId.options].sort());
+    expect(frameworks.map((framework) => framework.id).sort()).toEqual(
+      [...FrameworkId.options].sort(),
+    );
   });
 
   it('gives every framework at least one source', () => {
@@ -59,7 +61,10 @@ describe('framework coverage of PROJECT_SPEC §5.4', () => {
     // will see it.
     for (const framework of frameworks) {
       if (framework.sourceQuality === 'publisher_verified') continue;
-      expect(framework.notes, `${framework.id} has no note explaining its sourceQuality`).toBeDefined();
+      expect(
+        framework.notes,
+        `${framework.id} has no note explaining its sourceQuality`,
+      ).toBeDefined();
       expect(framework.notes).toContain('sourceQuality');
     }
   });

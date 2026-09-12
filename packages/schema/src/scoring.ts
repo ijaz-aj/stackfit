@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 import { AssetClass } from './asset-inventory';
 import { EstateShape } from './infrastructure';
-import { DeploymentMode, DeviceClass, ProcurementBias, ProductCategory } from './enums';
+import { DeploymentMode, DeviceClass, ProcurementBias, ProductCategory, SocPosture } from './enums';
 
 export const ScoringDimension = z.enum([
   /** Share of the assets this category is meant to cover that this product does. */
@@ -54,6 +54,32 @@ export const BiasAdjustment = z
   })
   .strict();
 export type BiasAdjustment = z.infer<typeof BiasAdjustment>;
+
+/**
+ * How the client's monitoring capability shifts the weights.
+ *
+ * Same mechanism as `biasAdjustments`, for a question that turned out to
+ * matter more. `hasSoc` was captured at intake, stored, shown in the compare
+ * diff and read by nothing: a client with a 24/7 SOC and a client with nobody
+ * watching received byte-identical recommendations.
+ *
+ * That is the oldest failure in security procurement. A SIEM is a machine for
+ * producing alerts, and alerts nobody is rostered to triage are shelfware with
+ * a licence fee. Practitioner guidance on SIEM selection says to start from how
+ * many analysts are available to write detections, triage and hunt; ours did
+ * not ask the engine to care.
+ *
+ * It moves `ops_fit` rather than eliminating anything, because a client with no
+ * SOC can still legitimately buy a SIEM, they just should not buy the one that
+ * needs a team. Elimination would be this tool deciding for them.
+ */
+export const SocAdjustment = z
+  .object({
+    soc: SocPosture,
+    deltas: z.array(BiasDelta).default([]),
+  })
+  .strict();
+export type SocAdjustment = z.infer<typeof SocAdjustment>;
 
 /**
  * What a category is *supposed* to cover.
@@ -189,6 +215,7 @@ export const ScoringWeights = z
     notes: z.string().min(1).optional(),
     dimensions: z.array(DimensionWeight).min(1),
     biasAdjustments: z.array(BiasAdjustment).default([]),
+    socAdjustments: z.array(SocAdjustment).default([]),
     opsFit: OpsFitPolicy,
     deploymentFit: DeploymentFitPolicy,
     /** Score by maturity band, 0–100. */
@@ -264,6 +291,18 @@ export const ScoringWeights = z
         });
       }
     }
+
+    const seenSoc = new Set<string>();
+    config.socAdjustments.forEach((adjustment, index) => {
+      if (seenSoc.has(adjustment.soc)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['socAdjustments', index, 'soc'],
+          message: `duplicate adjustment for ${adjustment.soc}`,
+        });
+      }
+      seenSoc.add(adjustment.soc);
+    });
 
     const seenBias = new Set<string>();
     config.biasAdjustments.forEach((adjustment, index) => {

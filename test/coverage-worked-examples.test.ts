@@ -57,9 +57,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     // The reason §7.5 asks for this view: a SIEM, an EDR and a scanner can see
     // and find, and cannot respond or recover. That reads off the Functions in
     // one line and off a list of controls not at all.
-    const csf = coverage.frameworks.find(
-      (framework) => framework.frameworkId === 'nist-csf-2.0',
-    );
+    const csf = coverage.frameworks.find((framework) => framework.frameworkId === 'nist-csf-2.0');
     expect(
       csf?.groups.map(
         (group) =>
@@ -143,7 +141,9 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     const recommended = coverage.summary.coveragePercent ?? 0;
     const ideal = coverageOf(retail, retail.ideal).summary.coveragePercent ?? 0;
 
-    expect(`essential ${essential} → recommended ${recommended} → ideal ${ideal}`).toMatchInlineSnapshot(`"essential 87.5 → recommended 100 → ideal 100"`);
+    expect(
+      `essential ${essential} → recommended ${recommended} → ideal ${ideal}`,
+    ).toMatchInlineSnapshot(`"essential 87.5 → recommended 100 → ideal 100"`);
     expect(recommended).toBeGreaterThanOrEqual(essential);
     expect(ideal).toBeGreaterThanOrEqual(recommended);
   });
@@ -216,9 +216,10 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
     let previous = -1;
     for (const cap of caps) {
       const covered = at(cap).coverage.summary.coveredControls;
-      expect(covered, `cap ${cap} covers fewer controls than the cap below it`).toBeGreaterThanOrEqual(
-        previous,
-      );
+      expect(
+        covered,
+        `cap ${cap} covers fewer controls than the cap below it`,
+      ).toBeGreaterThanOrEqual(previous);
       previous = covered;
     }
   });

@@ -14,12 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  loadCatalog,
-  loadFreshnessPolicy,
-  loadFxConfig,
-  loadMsspRateCard,
-} from '@stackfit/data';
+import { loadCatalog, loadFreshnessPolicy, loadFxConfig, loadMsspRateCard } from '@stackfit/data';
 import { assessCatalogStaleness, assessConfigStaleness } from '../scripts/lib/staleness';
 
 const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data');
