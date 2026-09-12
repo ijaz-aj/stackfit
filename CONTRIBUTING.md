@@ -294,3 +294,20 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   access check that reads as "no". Do not "fix" it to fail open for local
   convenience — local convenience is already handled, because an install with no
   auth configured at all runs in single-user mode and only production refuses.
+- **A plain function exported from a `'use client'` module is a client
+  reference, and calling it on the server throws.** `cost-breakdown.tsx` is a
+  server component; it imported `categoryChartHeight` from `cost-charts.tsx` and
+  called it, and the whole results page fell through to the error boundary with
+  "Attempted to call categoryChartHeight() from the server". Nothing caught it:
+  `tsc` types a client reference as the function it stands for, eslint has no
+  rule for it, and the charts' own tests import that module directly, which is
+  legal — typecheck, lint and 533 tests were all green against a page that would
+  not render. Shared helpers go in a module with no directive
+  (`chart-geometry.ts` is the pattern), and `apps/web/test/client-boundary.test.ts`
+  now sweeps every server module for the violation by name.
+- **Tailwind breakpoints are CSS pixels, and a 1080p-plus laptop usually is
+  not.** This machine reports 1254 CSS pixels on a 1568-pixel panel because
+  Windows scales the display at 125%, so every `xl:` rule (1280px) on the
+  results page was written, shipped and never once rendered — the layout that
+  was being tuned was the stacked fallback. Check `innerWidth` in the browser
+  before reaching past `lg:`, and treat `xl:` as a rule for external monitors.
