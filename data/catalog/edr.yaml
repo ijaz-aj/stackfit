@@ -328,3 +328,139 @@ products:
       Both tier prices are analyst_estimate, not vendor-published. The number
       that actually matters on most deals is whether the client is on E3 or E5,
       not the standalone rate — see the Plan 2 pricing note.
+
+  - id: sentinelone-singularity
+    name: SentinelOne Singularity
+    vendor: SentinelOne
+    category: edr
+    subcategory: autonomous endpoint protection and EDR
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: complete
+        name: Singularity Complete
+        capabilities:
+          - Endpoint protection and endpoint detection and response in one agent
+          - Automated threat response on the endpoint
+          - Managed threat hunting available as an add-on
+          - Managed detection and response available as an add-on
+        pricing:
+          - model: per_endpoint_year
+            unitPrice:
+              amountMinor: 17999
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.sentinelone.com/pricing/
+              note: >-
+                SentinelOne publishes an annual per-endpoint figure directly,
+                which is unusual above the SMB tier — read it as quoted rather
+                than converting from a monthly rate. Also re-check which
+                managed services are included versus add-on at each tier, since
+                that is what separates Complete from Commercial.
+            sources:
+              - url: https://www.sentinelone.com/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              USD 179.99 per endpoint per year, published as an annual figure.
+              Managed threat hunting and MDR are both add-ons at this tier and
+              are not included in the rate.
+
+      - id: commercial
+        name: Singularity Commercial
+        capabilities:
+          - Everything in Complete
+          - Managed threat hunting included rather than an add-on
+          - Managed detection and response still available as an add-on
+        pricing:
+          - model: per_endpoint_year
+            unitPrice:
+              amountMinor: 22999
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.sentinelone.com/pricing/
+              note: Read the annual per-endpoint figure as quoted.
+            sources:
+              - url: https://www.sentinelone.com/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              USD 229.99 per endpoint per year. The USD 50 premium over Complete
+              buys managed threat hunting; MDR remains an add-on.
+        controlsCovered:
+          - iso-27001-2022:A.5.7
+          - nist-csf-2.0:DE.AE
+
+    supports:
+      os: [windows, linux, macos]
+      deviceClasses: [workstation, server, cloud_workload, container_node]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [cloud]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [syslog, microsoft-sentinel, microsoft-entra-id]
+
+    controlsCovered:
+      # Deliberately the same conservative core Falcon Go claims, plus response.
+      # The capability detail on this entry is thinner than the rest of the
+      # catalog (see notes), so the claims are held to what any full EDR with
+      # automated response demonstrably does rather than to a feature list that
+      # was not re-read from the vendor.
+      - cis-v8:2
+      - cis-v8:10
+      - nist-csf-2.0:PR.PS
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:RS.MI
+      - iso-27001-2022:A.8.1
+      - iso-27001-2022:A.8.7
+      - pci-dss-4.0:5
+      - soc-2:CC7
+      - rbi-csf:anti-malware
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.12
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 5
+      skillLevel: security_engineer
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - Publishes an annual per-endpoint price, which almost nothing at this tier of the market does
+      - One agent covering endpoints, servers and cloud workloads
+      - A visible upgrade path to managed hunting and MDR without changing product
+    weaknesses:
+      - Materially dearer than the SMB bundles, and the managed services that make it compelling are extra
+      - SaaS-only management plane, so air-gapped scopes eliminate it
+      - Enterprise tier is quote-only, so the top of the range has no visible price
+    bestFor:
+      - Mid-market and larger estates wanting a full EDR with a defensible budget figure up front
+      - Mixed Windows, Linux and macOS fleets under one agent
+    avoidWhen:
+      - The environment is air-gapped
+      - The budget only stretches to an entry endpoint bundle
+
+    sources:
+      - url: https://www.sentinelone.com/pricing/
+        asOf: '2026-09-12'
+    notes: >-
+      ⚠ THE PRICES ARE SOLID AND THE CAPABILITY DETAIL IS THINNER THAN THE REST
+      OF THIS CATALOG. Both rates are read verbatim from SentinelOne's own
+      pricing page, as is the managed-services matrix that distinguishes the
+      tiers. The wider feature list was not re-read from the vendor's product
+      pages, so the capabilities and control claims above are held deliberately
+      conservative — no more than any full EDR with automated response does.
+      Widen them only after reading SentinelOne's own feature documentation.
+
+      Singularity Enterprise is quote-only and is not catalogued. Singularity
+      Core and Control appear in the comparison table without their own
+      published prices and are likewise absent.
