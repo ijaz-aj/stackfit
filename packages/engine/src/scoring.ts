@@ -382,11 +382,27 @@ function opsFit(
   const policy = weights.opsFit;
 
   if (profile.securityStaffFte === 0) {
+    // No security staff is not "every tool is equally bad" — it is the case
+    // where how much running a tool costs matters most. A managed service
+    // needing almost no client-side effort is the right answer here, and a
+    // self-hosted platform needing half an engineer is not, so the score has to
+    // separate them. It used to return a flat constant for both.
+    const share = opsFte / policy.unusableFteWithNoSecurityStaff;
+    const score =
+      share >= 1
+        ? policy.scoreWithNoSecurityStaff
+        : Math.max(policy.scoreWithNoSecurityStaff, (1 - share) * 100);
+
     return {
-      score: policy.scoreWithNoSecurityStaff,
+      score,
       note:
-        `The client has no security staff, so every self-run tool is a poor operational fit. ` +
-        `This one needs ${round(opsFte, 2)} FTE. A managed alternative is the honest answer here.`,
+        share >= 1
+          ? `⚠ The client has no security staff and this needs ${round(opsFte, 2)} FTE to run, ` +
+            `at or beyond the ${policy.unusableFteWithNoSecurityStaff} FTE that makes a tool ` +
+            `unusable without a security team. A managed alternative is the honest answer here.`
+          : `The client has no security staff, so operational effort is what decides this. ` +
+            `It needs ${round(opsFte, 2)} FTE, against the ${policy.unusableFteWithNoSecurityStaff} ` +
+            `FTE at which a tool becomes unrunnable without a security team.`,
     };
   }
 

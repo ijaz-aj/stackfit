@@ -87,11 +87,25 @@ export const OpsFitPolicy = z
      */
     unusableShareOfFte: z.number().min(0),
     /**
-     * Score given when the client has no security staff at all. Zero FTE is a
-     * valid and very common answer (§5.1), and every self-run tool is then a
-     * bad operational fit — but it must not divide by zero.
+     * Floor score when the client has no security staff at all and the product
+     * needs at least `unusableFteWithNoSecurityStaff`. Zero FTE is a valid and
+     * very common answer (§5.1); a tool the client cannot operate scores badly,
+     * but not zero, because they could still buy it and hire.
      */
     scoreWithNoSecurityStaff: z.number().min(0).max(100),
+    /**
+     * Operational FTE at which a product becomes unusable for a client with no
+     * security staff of their own. Below it the score falls linearly from 100;
+     * at or above it the score is `scoreWithNoSecurityStaff`.
+     *
+     * This exists because the zero-staff branch used to return a flat constant
+     * for every product. It avoided dividing by zero and, in doing so,
+     * flattened the one dimension that should discriminate hardest in exactly
+     * the case it was written for: a 0.1-FTE managed service and a 0.6-FTE
+     * self-hosted SIEM scored identically for a client with nobody to run
+     * either. PROJECT_SPEC §12.2 requires the opposite.
+     */
+    unusableFteWithNoSecurityStaff: z.number().gt(0),
     basis: z.string().min(1),
   })
   .strict();

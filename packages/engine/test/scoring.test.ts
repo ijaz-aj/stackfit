@@ -290,8 +290,35 @@ describe('ops fit — the dimension that stops "free" winning by default', () =>
     const fit = scoreAtFirstTier(coveringProduct(), inputs).dimensions.find(
       (d) => d.dimension === 'ops_fit',
     );
-    expect(fit?.score).toBe(15);
     expect(Number.isNaN(fit?.score ?? NaN)).toBe(false);
+    expect(fit?.score).toBeGreaterThan(0);
+  });
+
+  it('still separates a managed service from a self-hosted platform at zero staff', () => {
+    // Was: the zero-staff branch returned a flat constant for every product, so
+    // a service needing almost no client-side effort and a platform needing
+    // most of an engineer scored identically — for the client who cares about
+    // the difference more than anyone. PROJECT_SPEC §12.2 requires the
+    // opposite, and the flat score made it unassertable.
+    const inputs = buildInputs({ profile: buildClientProfile({ securityStaffFte: 0 }) });
+
+    const opsFitOf = (baseFte: number) =>
+      scoreAtFirstTier(
+        {
+          ...coveringProduct(),
+          opsBurden: { baseFte, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
+        },
+        inputs,
+      ).dimensions.find((d) => d.dimension === 'ops_fit')?.score ?? -1;
+
+    const managed = opsFitOf(0.1);
+    const selfHosted = opsFitOf(0.6);
+
+    expect(managed).toBeGreaterThan(selfHosted);
+    // Past the unusable threshold everything sits on the floor together, which
+    // is correct: at that point the client cannot run any of them.
+    expect(selfHosted).toBe(15);
+    expect(opsFitOf(2)).toBe(15);
   });
 
   it('degrades between comfortable and unusable rather than falling off a cliff', () => {

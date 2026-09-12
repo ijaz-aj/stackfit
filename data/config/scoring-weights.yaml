@@ -78,6 +78,7 @@ opsFit:
   comfortableShareOfFte: 0.35
   unusableShareOfFte: 1.2
   scoreWithNoSecurityStaff: 15
+  unusableFteWithNoSecurityStaff: 0.5
   basis: >-
     One product may take about a third of the security team before its score
     starts to fall, and is scored zero once it would need more than the whole
@@ -85,6 +86,15 @@ opsFit:
     zero-staff score is low but not zero: a client with no security staff can
     still buy something, it just cannot be something they operate, and the MDR
     alternative in §7.4 step 6 is the honest answer for them.
+
+    unusableFteWithNoSecurityStaff is the half-FTE mark. A client with no
+    security team still has IT staff, and they can absorb a tool that needs a
+    few hours a week; they cannot absorb one that needs half a person. Below
+    that figure the score falls linearly from 100, so a managed service needing
+    0.1 FTE scores around 80 and a self-hosted SIEM needing 0.6 sits on the
+    floor. Tune this first if managed options look too strong or too weak for
+    the zero-staff case — it is the single number that decides PROJECT_SPEC
+    §12.2.
 
 maturityScores:
   established: 100

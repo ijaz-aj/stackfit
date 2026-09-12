@@ -354,6 +354,7 @@ export function buildScoringWeights(overrides: Partial<ScoringWeights> = {}): Sc
       comfortableShareOfFte: 0.35,
       unusableShareOfFte: 1.2,
       scoreWithNoSecurityStaff: 15,
+      unusableFteWithNoSecurityStaff: 0.5,
       basis,
     },
     deploymentFit: {
