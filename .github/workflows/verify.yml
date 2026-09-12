@@ -42,16 +42,23 @@ jobs:
       # supply-chain question, not a convenience to be resolved silently.
       - run: pnpm install --frozen-lockfile
 
+      # First, and before anything that compiles the web app. The Prisma client
+      # is generated into apps/web/src/generated and gitignored, so on a clean
+      # checkout it does not exist — and without it every Prisma type widens to
+      # `any`, which `noImplicitAny` then rejects across the app. No database is
+      # needed to generate it.
+      #
+      # This step used to sit after Typecheck. It passed on a developer machine
+      # where the client was already on disk and failed on the first clean run,
+      # which is the whole argument for having CI.
+      - name: Generate the Prisma client
+        run: pnpm db:generate
+
       - name: Lint
         run: pnpm lint
 
       - name: Typecheck
         run: pnpm typecheck
-
-      # The Prisma client is generated and gitignored, so the web app cannot be
-      # typechecked or built without this. No database is needed to generate it.
-      - name: Generate the Prisma client
-        run: pnpm db:generate
 
       - name: Catalog validates
         run: pnpm catalog:validate
