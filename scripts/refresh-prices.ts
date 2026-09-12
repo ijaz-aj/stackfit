@@ -9,7 +9,7 @@
  * only ever touches the price and the source date — never the notes, never the
  * confidence — so a human still reviews what changed in the diff.
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import type { PriceRefresh } from '@stackfit/schema';
@@ -122,9 +122,16 @@ async function main(): Promise<void> {
     // Deliberately a targeted text substitution rather than a YAML round-trip:
     // re-serialising would reflow every comment in the file, and the comments
     // are where the reasoning lives.
+    // Read the directory rather than naming the files: a hard-coded list goes
+    // stale the moment a category is added, and the failure is silent — the
+    // drift is reported, --write says nothing, and the YAML keeps the old
+    // price. Phase 7 adds ten catalog files, so it would have gone stale twice.
+    const catalogDir = join(DATA_DIR, 'catalog');
+    const catalogFileNames = readdirSync(catalogDir).filter((name) => name.endsWith('.yaml'));
+
     for (const drift of drifts) {
-      for (const name of ['siem.yaml', 'edr.yaml', 'vulnerability-management.yaml']) {
-        const path = join(DATA_DIR, 'catalog', name);
+      for (const name of catalogFileNames) {
+        const path = join(catalogDir, name);
         const before = readFileSync(path, 'utf8');
         const after = before.replace(
           new RegExp(`(amountMinor:\\s*)${drift.committedMinor}\\b`),
