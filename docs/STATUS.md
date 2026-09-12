@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 7 — catalog expansion (in review)
+**Current phase:** 8 — export (in review)
 **Last updated:** 2026-09-12
 
 ## Phase log
@@ -19,7 +19,7 @@
 | 5 Intake wizard UI | in review | Next 16 + React 19 + Tailwind v4 + Prisma 7/SQLite. Six steps, presets, continuous save, live readout. `runPipeline` + `@stackfit/data` extracted so the app and the tests share one path. 325 tests green; `pnpm audit` clean. |
 | 6 Results dashboard | in review | All seven parts of §8, server-rendered off one pipeline run. Recharts cost + cash-flow charts on a validated palette. Sizing assumptions are editable per scenario. **Reviewed; six defects found and fixed** — deployment fit read "no preference" as a demand, the fit score was rendered with no working shown, a control was credited to a tier that does not sell it, Ideal optimised for value rather than fit, a partial control had no route to being closed, and the fix list offered purchases that closed nothing. Both pre-Phase-7 open questions closed; the SKU is now part of the recommendation. 368 tests green. |
 | 7 Catalog expansion (≥5 per category) | in review | **65 products across all 13 categories**, up from 8 across 3. Every category holds at least five. 106 catalog prices, all fresh, no placeholders. **Three engine defects found and fixed**, each pinned by a regression: a bigger budget could buy less compliance, a mandated control was outranked by one more funded category, and ops fit returned a flat score for every product when the client had no security staff. **`ProductTier.limits` added**, closing the design question the phase raised — five vendor limits now enforced exactly, two previously undeliverable free tiers back in the catalog. Both §12.1 and §12.2 acceptance assertions tightened to what the spec actually asks for. 377 tests green. |
-| 8 Export (DOCX/PDF/XLSX) | not started | |
+| 8 Export (DOCX/PDF/XLSX) | in review | All four outputs off one document model: HTML preview, DOCX, PDF and an XLSX cost model. Roadmap phasing added to the engine. The §6 rule 4 disclaimer is verbatim in every one of them and pinned by a test. Three new dependencies, audit clean. 415 tests green. |
 | 9 Scenario save / clone / compare | not started | |
 | 10 Polish + demo scenarios + README | not started | Pick + document the free hosting target (Vercel Hobby + Neon/Supabase free Postgres). |
 
@@ -1064,6 +1064,76 @@ Still unverified rather than unanswered:
   in Chrome extension reports as not connected. Until someone opens
   `http://localhost:3000` by hand, the two Recharts figures in §8 are the only
   part of this application that has never been observed working.
+
+### Phase 8
+
+The proposal, as four outputs of one document model.
+
+**Decisions.**
+
+- 2026-09-12 — **The exports share a document model, not a template.** Three
+  renderers are required — HTML, DOCX, PDF — and writing the content decisions
+  three times is how three exports come to disagree about the same number.
+  `packages/engine/src/proposal.ts` builds typed sections and blocks with money
+  left as `Money`; each renderer formats through one shared `renderCell` at the
+  web layer. A test asserts every paragraph, bullet and callout appears in both
+  the PDF and the DOCX, so a client reading one is not reading a different
+  proposal from a client reading the other.
+
+- 2026-09-12 — **`asOf` is passed into the proposal, never read from a clock.**
+  The disclaimer then names the day the figures were priced rather than the day
+  the file was generated, which is the honest date for a budgetary estimate, and
+  the same scenario exports the same content twice.
+
+- 2026-09-12 — **The XLSX writes money as numbers, the DOCX and PDF as strings.**
+  The client gets prose; the analyst gets cells that sort, sum and pivot. A
+  spreadsheet full of currency strings is not a spreadsheet, and the distinction
+  is asserted rather than assumed.
+
+- 2026-09-12 — **Roadmap phasing is bounded by delivery capacity, not product
+  count.** Nobody deploys thirteen tools at once, and the catalog already records
+  how long each takes to stand up. Ordering is mandatory categories first then by
+  weight — the same priority the portfolio stage spent the money in, so the plan
+  to deploy matches the plan to buy. `parallelWorkstreams` in
+  `portfolio-assumptions.yaml` is the assumption that actually moves the plan:
+  halve it and the roadmap roughly doubles.
+
+**Dependencies added**, each with the justification hard rule 7 asks for:
+
+| Package | Why | Note |
+|---|---|---|
+| `docx` | PROJECT_SPEC §3 names it; generating OOXML by hand is not reasonable | |
+| `write-excel-file` | XLSX writer, one transitive dep (fflate) | ⚠ `exceljs` was tried first and removed — it pins `uuid@8.3.2`, which carries GHSA-w5hq-g745-h8pq. Forcing uuid 11 into a library that has not adapted to its API change would trade a clean audit for a runtime failure nobody would see until a client opened the file. |
+| `@react-pdf/renderer` | PROJECT_SPEC §3 names it | |
+| `jszip`, `fast-xml-parser` | devDependencies, used only to take generated files apart in tests | |
+
+`pnpm audit` stays clean.
+
+**Library limits found, and worked around honestly rather than papered over.**
+
+- **A DOCX cannot be made byte-identical.** JSZip dates every zip entry, and
+  docx 9.7.1 hard-codes `new Date()` in its timestamp element — `created` and
+  `modified` are not in `IPropertiesOptions` at all, so passing them is a type
+  error rather than future-proofing. `docProps/core.xml` therefore carries the
+  generation time. It affects only Word's File → Info panel; the date that
+  matters is on page one and in the disclaimer. The determinism test excludes
+  that one part and says why, rather than asserting a determinism the library
+  will not give.
+
+- **Verifying a PDF is not obvious.** react-pdf emits glyphs as hex strings
+  inside TJ arrays, so the natural "find the parenthesised strings" extractor
+  returns nothing and would let the tests pass while proving nothing. And the
+  bytes are WinAnsi rather than Latin-1 — an em-dash is 0x97, a bullet 0x95 —
+  so decoding wrongly made the harness report paragraphs as missing from a file
+  that contained them. Both are explained in the test that depends on them.
+
+**What is tested.** Word does not degrade gracefully: one malformed part and the
+whole file reports as corrupt. So the export tests unzip the real output, assert
+every required OOXML part is present and every XML part parses, then read the
+text back out — all seven sections present, money formatted rather than raw
+minor units, and the §6 rule 4 disclaimer verbatim. An export is exactly where a
+client stops seeing the dashboard's badges, which is why that last one has a test
+of its own in all three formats.
 
 ## Open defects
 

@@ -207,3 +207,19 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   entirely. Four sessions of "verified over HTTP" said nothing whatsoever about
   either. Anything visual in those two places needs a real browser or a unit
   test on the pure function behind it.
+- **The exports share one document model.** `packages/engine/src/proposal.ts`
+  builds typed sections and blocks with money left as `Money`; the HTML preview,
+  DOCX, PDF and XLSX all render from it through `renderCell` in
+  `apps/web/src/lib/proposal.server.ts`. Add content to the model, never to a
+  renderer — a renderer that decides content is a renderer that disagrees with
+  the other three. The XLSX is the exception that proves it: it writes money as
+  numbers rather than strings, because an analyst pivots it.
+- **Every export carries the §6 rule 4 disclaimer, verbatim**, and each format
+  has a test asserting it. An export is where a client stops seeing the
+  dashboard's confidence badges.
+- **Verifying a generated file: unzip it, do not trust the library.** DOCX and
+  XLSX are zips of XML, and Word reports the whole file corrupt if one part is
+  malformed. PDFs are harder — react-pdf writes glyphs as hex strings inside TJ
+  arrays and encodes them as WinAnsi, so a naive extractor returns nothing or
+  silently mangles punctuation. `apps/web/test/export.test.ts` has a working
+  extractor for each.
