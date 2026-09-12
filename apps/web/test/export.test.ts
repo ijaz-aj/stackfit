@@ -9,7 +9,7 @@
 // requires every export to carry the disclaimer, and an export is exactly where
 // a client stops seeing the badges the dashboard shows them.
 
-import { buildProposal, justifyBundle, runPipeline } from '@stackfit/engine';
+import { buildProposal, coverageDisclaimer, justifyBundle, runPipeline } from '@stackfit/engine';
 import type { ClientProfile } from '@stackfit/schema';
 import { XMLParser } from 'fast-xml-parser';
 import JSZip from 'jszip';
@@ -127,6 +127,18 @@ describe('the DOCX export', () => {
         'Not a quote. Actual pricing subject to vendor negotiation, channel discount, and bundling.',
     );
     expect(body).toContain(document.disclaimer);
+  });
+
+  it('carries the coverage disclaimer, verbatim', async () => {
+    // The other sentence that has to survive the export. A coverage percentage
+    // is the number most likely to be misread — "PCI DSS 100% covered" invites
+    // a reader to conclude the audit is handled — and no product satisfies a
+    // control on its own.
+    const document = documentFor();
+    const body = await docxText(await proposalToDocx(document));
+
+    expect(body).toContain(coverageDisclaimer());
+    expect(body).toContain('not a compliance assessment');
   });
 
   it('writes every section of the document model into the file', async () => {
@@ -251,6 +263,9 @@ describe('the XLSX cost model', () => {
     const strings = await sharedStrings(zip);
 
     expect(strings).toContain(document.disclaimer);
+    // And the coverage one. This is the sheet an analyst pastes into their own
+    // model, so a percentage leaving here needs the caveat travelling with it.
+    expect(strings).toContain(coverageDisclaimer());
   });
 
   it('carries every cost line separately, so a figure can be argued with', async () => {
@@ -341,6 +356,12 @@ describe('the PDF export', () => {
     // comparison is on the words rather than the spacing between them.
     const flat = body.replace(/\s+/g, ' ');
     expect(flat).toContain(document.disclaimer.replace(/\s+/g, ' '));
+  });
+
+  it('carries the coverage disclaimer, verbatim', async () => {
+    const body = pdfText(await proposalToPdf(documentFor()));
+    const flat = body.replace(/\s+/g, ' ');
+    expect(flat).toContain(coverageDisclaimer().replace(/\s+/g, ' '));
   });
 
   it('writes every section of the document model into the file', async () => {

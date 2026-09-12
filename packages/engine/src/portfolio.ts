@@ -969,6 +969,13 @@ function buildBundle(
           'vendor-stated, and effort is summed across products with no overlap — one engineer ' +
           'genuinely does run several tools, so the total overstates a real team’s load.',
       );
+      rationale.push(
+        '⚠ Effort here means administering the tools — deploying, tuning, maintaining them. It ' +
+          'excludes staffing continuous monitoring, which published benchmarks put at several ' +
+          'analysts across shifts for in-house 24/7 operation. A team that clears this bar can ' +
+          'keep the stack running; whether anyone is watching it out of hours is a separate ' +
+          'question, and this tool does not answer it.',
+      );
       break;
   }
 

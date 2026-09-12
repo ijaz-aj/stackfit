@@ -20,7 +20,7 @@ import type {
   ProductCategory,
 } from '@stackfit/schema';
 
-import type { CoverageResult } from './coverage';
+import { coverageDisclaimer, type CoverageResult } from './coverage';
 import type { CategoryJustification } from './justification';
 import type { Bundle, BundleSelection } from './portfolio';
 import type { SizingResult } from './sizing';
@@ -575,6 +575,11 @@ function coverageSection(inputs: ProposalInputs): ProposalSection {
   ]);
 
   const blocks: ProposalBlock[] = [
+    {
+      kind: 'callout',
+      tone: 'warning',
+      text: coverageDisclaimer(),
+    },
     {
       kind: 'paragraph',
       text:

@@ -222,6 +222,19 @@ export type ProductSupport = z.infer<typeof ProductSupport>;
  * Operational cost in people. Mandatory: a TCO that omits it is a bug, not a
  * simplification (CONTRIBUTING.md hard rule 8). This is the field that stops "Wazuh
  * is free" from being the answer to every question.
+ *
+ * ⚠ **This is the effort to administer the tool, not to staff a SOC with it.**
+ * Deployment, tuning, rule and content maintenance, upgrades, integrations,
+ * troubleshooting. It deliberately excludes continuous monitoring: published
+ * benchmarks put in-house 24/7 SIEM operation at several analysts across
+ * shifts, which is a different and much larger quantity driven by the hours a
+ * client wants covered rather than by the product they bought.
+ *
+ * The distinction matters because the two are easily conflated and the answers
+ * differ by an order of magnitude. A client who reads a 0.6 FTE SIEM figure as
+ * "what it takes to get value from a SIEM" has been misled; a client who reads
+ * it as "what it takes to keep the SIEM running" has not. Every surface that
+ * shows an FTE figure says which one it is.
  */
 export const OpsBurden = z
   .object({

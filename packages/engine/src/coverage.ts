@@ -141,6 +141,34 @@ export interface GapCloser {
   readonly needsRecheck: boolean;
 }
 
+/**
+ * What a coverage percentage is, and — more importantly — what it is not.
+ *
+ * Verbatim wherever coverage is shown, for the same reason the §6 rule 4
+ * pricing disclaimer is: an export is where the reader stops seeing the
+ * dashboard's qualifications, and this is the number most likely to be
+ * misread. "PCI DSS 100% covered" invites a CFO to conclude the audit is
+ * handled.
+ *
+ * The framing follows the mapping bodies' own language. CIS publishes control
+ * mappings with the caveat that they are a professional assessment of
+ * control-objective alignment rather than regulatory guidance, and PCI's own
+ * position is that an assessor applies the requirements directly — a mapping
+ * shows which controls a tool *supports*, and the framework remains
+ * authoritative. No product satisfies a control on its own: policy, process,
+ * configuration, evidence and the assessor's judgement decide compliance, and
+ * none of those are things StackFit can see.
+ */
+export function coverageDisclaimer(): string {
+  return (
+    'Coverage shows which controls the selected products claim to SUPPORT. It is not a ' +
+    'compliance assessment and not an audit result. No security product satisfies a control on ' +
+    'its own: policy, process, configuration, evidence and an assessor’s judgement decide ' +
+    'compliance, and none of those are visible to this tool. Treat these percentages as a ' +
+    'procurement gap analysis, never as a statement of compliance.'
+  );
+}
+
 export interface CoverageGap {
   readonly controlId: string;
   readonly frameworkId: string;

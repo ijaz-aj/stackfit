@@ -8,7 +8,7 @@ import type { CoverageAssumptions, Framework, Money, Product, ProductCategory } 
 import { describe, expect, it } from 'vitest';
 
 import { costCatalog } from '../src/cost';
-import { computeCoverage, type CoverageInputs } from '../src/coverage';
+import { computeCoverage, coverageDisclaimer, type CoverageInputs } from '../src/coverage';
 import { computeCategoryRelevance, computeInfrastructureProfile } from '../src/infrastructure';
 import type { Bundle, BundleSelection } from '../src/portfolio';
 import { scoreProducts } from '../src/scoring';
@@ -814,5 +814,28 @@ describe('determinism', () => {
     const first = JSON.stringify(computeCoverage(buildInputs(scenario)));
     const second = JSON.stringify(computeCoverage(buildInputs(scenario)));
     expect(first).toBe(second);
+  });
+});
+
+describe('the coverage disclaimer', () => {
+  // A coverage percentage is the number in this tool most likely to be
+  // misread. "PCI DSS 100% covered" invites a reader to conclude the audit is
+  // handled, when no product satisfies a control on its own — policy, process,
+  // configuration, evidence and an assessor's judgement decide compliance, and
+  // none of them are visible here. The mapping bodies say as much about their
+  // own mappings; this says it about ours.
+  it('says what a coverage figure is not, in as many words', () => {
+    const text = coverageDisclaimer();
+
+    expect(text).toContain('SUPPORT');
+    expect(text).toContain('not a compliance assessment');
+    expect(text).toContain('not an audit result');
+    expect(text).toContain('never as a statement of compliance');
+  });
+
+  it('is a constant, so every surface shows the same sentence', () => {
+    // Verbatim everywhere is the point: the dashboard, the DOCX, the PDF and
+    // the analyst's spreadsheet must not each qualify this differently.
+    expect(coverageDisclaimer()).toBe(coverageDisclaimer());
   });
 });

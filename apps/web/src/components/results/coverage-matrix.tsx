@@ -1,4 +1,9 @@
-import type { ControlCoverage, CoverageResult, FrameworkCoverage } from '@stackfit/engine';
+import {
+  coverageDisclaimer,
+  type ControlCoverage,
+  type CoverageResult,
+  type FrameworkCoverage,
+} from '@stackfit/engine';
 
 import { Badge, Card } from '@/components/ui';
 import { cn } from '@/lib/cn';
@@ -112,6 +117,11 @@ export function CoverageMatrix({ coverage }: { coverage: CoverageResult }) {
       title="Coverage matrix"
       hint="Covered means a selected product claims the control. Partial means the right kind of tool with no such claim — checked, not assumed."
     >
+      {/* Verbatim, and first. This is the number most likely to be misread,
+          and an export is where the reader stops seeing the qualifications. */}
+      <p className="border-warn/40 bg-warn/10 text-warn mb-3 rounded border px-2.5 py-2 text-[11px] leading-snug">
+        {coverageDisclaimer()}
+      </p>
       <div className="mb-3 flex flex-wrap gap-2">
         {Object.entries(CELL).map(([status, cell]) => (
           <span

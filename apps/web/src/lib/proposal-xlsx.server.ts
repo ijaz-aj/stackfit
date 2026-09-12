@@ -1,4 +1,9 @@
-import type { CostModelRow, ProposalDocument, RoadmapEntry } from '@stackfit/engine';
+import {
+  coverageDisclaimer,
+  type CostModelRow,
+  type ProposalDocument,
+  type RoadmapEntry,
+} from '@stackfit/engine';
 import { CURRENCY_MINOR_UNIT_EXPONENT, type CurrencyCode, type Money } from '@stackfit/schema';
 import writeXlsxFile, { type Row, type SheetData } from 'write-excel-file/node';
 
@@ -127,6 +132,10 @@ function assumptionsSheet(document: ProposalDocument): SheetData {
   return [
     headerRow(['Assumptions and disclaimers']),
     [{ type: String, value: document.disclaimer }] as Row,
+    // Verbatim here too: this sheet is where an analyst pastes figures into
+    // their own model, and a coverage percentage travels further than the page
+    // that qualified it.
+    [{ type: String, value: coverageDisclaimer() }] as Row,
     [] as Row,
     [{ type: String, value: `Prepared for: ${document.preparedFor}` }] as Row,
     [{ type: String, value: `Figures priced as of: ${document.asOf}` }] as Row,
@@ -138,7 +147,8 @@ function assumptionsSheet(document: ProposalDocument): SheetData {
         value:
           'Operational FTE is an analyst estimate throughout, not a vendor figure. It is the ' +
           'cost most often left out of a comparison and the one that most changes the answer ' +
-          'between commercial and open-source options.',
+          'between commercial and open-source options. It covers administering each tool and ' +
+          'excludes staffing continuous monitoring, which is a larger and separate question.',
       },
     ] as Row,
     [

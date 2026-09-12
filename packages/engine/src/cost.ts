@@ -409,7 +409,7 @@ export function computeProductCost(
   const opsFteAnnual = scaleMoney(convertMoney(regionRate.loadedAnnualCost, currency, fx), opsFte);
 
   rationale.push(
-    `Operational effort: ${opsFte.toFixed(2)} FTE = ${product.opsBurden.baseFte} base + ${product.opsBurden.ftePerThousandAssets} per 1,000 assets × ${sizing.monitoredAssetCount} assets, at ${product.opsBurden.confidence.replace(/_/g, ' ')} confidence.`,
+    `Operational effort: ${opsFte.toFixed(2)} FTE = ${product.opsBurden.baseFte} base + ${product.opsBurden.ftePerThousandAssets} per 1,000 assets × ${sizing.monitoredAssetCount} assets, at ${product.opsBurden.confidence.replace(/_/g, ' ')} confidence. This is the effort to administer the tool — deploy, tune, maintain — and excludes staffing continuous monitoring with it, which is a separate and larger question this tool does not size.`,
   );
 
   if (product.opsBurden.confidence === 'placeholder') {
