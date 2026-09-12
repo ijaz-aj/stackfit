@@ -11,10 +11,8 @@ import { cn } from '@/lib/cn';
  */
 
 const BUTTON_VARIANTS = {
-  primary:
-    'bg-accent text-ground font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_1px_2px_rgb(0_0_0/0.4)] hover:bg-accent/90',
-  secondary:
-    'bg-panel-raised text-ink border border-line-strong shadow-[inset_0_1px_0_rgb(255_255_255/0.03)] hover:border-line-control hover:bg-panel-raised/80',
+  primary: 'bg-accent text-ground hover:bg-accent/90 font-medium',
+  secondary: 'bg-panel-raised text-ink border border-line hover:border-line-strong',
   ghost: 'text-muted hover:text-ink hover:bg-panel-raised',
   danger: 'text-bad border border-line hover:border-bad/60 hover:bg-bad/10',
 } as const;
@@ -27,7 +25,7 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-(--radius-control) px-3 py-1.5 text-base transition-[color,background-color,border-color,box-shadow,transform] duration-(--duration-instant) active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:active:translate-y-0',
+        'inline-flex items-center justify-center gap-1.5 rounded px-3 py-1.5 text-base transition-colors duration-(--duration-instant) active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:active:translate-y-0',
         BUTTON_VARIANTS[variant],
         className,
       )}
@@ -51,12 +49,12 @@ export function Card({
   action?: ReactNode;
 }) {
   return (
-    <section className={cn('surface', className)}>
+    <section className={cn('border-line bg-panel rounded border', className)}>
       {title !== undefined && (
-        <header className="border-line flex items-start justify-between gap-3 border-b px-4 py-3">
+        <header className="border-line flex items-start justify-between gap-3 border-b px-4 py-2.5">
           <div className="min-w-0">
-            <h2 className="text-ink text-base font-semibold tracking-[-0.01em]">{title}</h2>
-            {hint !== undefined && <p className="text-faint mt-1 text-xs">{hint}</p>}
+            <h2 className="text-ink text-base font-semibold tracking-tight">{title}</h2>
+            {hint !== undefined && <p className="text-faint mt-0.5 text-xs">{hint}</p>}
           </div>
           {action !== undefined && <div className="shrink-0">{action}</div>}
         </header>
@@ -96,7 +94,7 @@ export function Field({
  * and was, measurably, an edge you had to already know was there.
  */
 const CONTROL_CLASSES =
-  'bg-ground border-line-control text-ink placeholder:text-faint w-full rounded-(--radius-control) border px-2.5 py-2 text-base transition-[color,background-color,border-color,box-shadow] duration-(--duration-quick) hover:border-accent/60 focus:border-accent focus:bg-panel-raised';
+  'bg-ground border-line-control text-ink placeholder:text-faint w-full rounded border px-2 py-1.5 text-base transition-colors duration-(--duration-quick) hover:border-accent/60 focus:border-accent';
 
 export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(CONTROL_CLASSES, className)} {...props} />;
@@ -159,8 +157,8 @@ export function Checkbox({
   return (
     <label
       className={cn(
-        'border-line-strong hover:border-accent/60 hover:bg-panel-raised/60 flex cursor-pointer items-start gap-2.5 rounded-(--radius-control) border px-3 py-2.5 transition-colors duration-(--duration-quick)',
-        checked && 'border-accent/70 bg-accent/10 shadow-[inset_0_1px_0_rgb(255_255_255/0.04)]',
+        'border-line-control hover:border-accent/60 flex cursor-pointer items-start gap-2.5 rounded border px-3 py-2 transition-colors duration-(--duration-quick)',
+        checked && 'border-accent/60 bg-accent/5',
         className,
       )}
     >
@@ -198,7 +196,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-medium tracking-wide uppercase',
+        'inline-flex items-center rounded border px-1.5 py-0.5 text-2xs tracking-wide uppercase',
         BADGE_TONES[tone],
         className,
       )}

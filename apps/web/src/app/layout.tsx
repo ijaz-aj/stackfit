@@ -38,14 +38,14 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           Skip to content
         </a>
 
-        <header className="border-line bg-ground/70 sticky top-0 z-20 border-b backdrop-blur-xl">
+        <header className="border-line bg-panel/90 sticky top-0 z-20 border-b backdrop-blur-sm">
           <div className="flex items-center gap-4 px-5 py-2.5">
             <Link
               href="/"
               className="flex items-baseline gap-2 rounded"
               aria-label="StackFit — back to sessions"
             >
-              <span className="text-ink text-lg font-semibold tracking-[-0.02em]">StackFit</span>
+              <span className="text-ink text-lg font-semibold tracking-tight">StackFit</span>
               <span className="text-faint hidden text-xs sm:inline">security solution advisor</span>
             </Link>
 
@@ -55,7 +55,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 indicative figures being read as a quote, so it stays visible at
                 every width rather than being the thing that drops on mobile.
               */}
-              <span className="border-line bg-panel text-faint rounded-full border px-2.5 py-1 text-xs">
+              <span className="border-line text-faint rounded border px-2 py-0.5 text-xs">
                 figures are indicative — not a quote
               </span>
               {analyst !== null && analyst.email !== null && <AnalystMenu email={analyst.email} />}
