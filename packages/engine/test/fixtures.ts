@@ -176,8 +176,11 @@ interface ProductOverrides {
   readonly licenceModel?: Product['licenceModel'];
   readonly pricing?: readonly Partial<PricingRule>[];
   readonly deploymentModes?: readonly DeploymentMode[];
-  readonly opsBurden?: OpsBurden;
-  readonly implementation?: Implementation;
+  /** Partial: a test that does not care about confidence should not state one. */
+  readonly opsBurden?: Partial<OpsBurden>;
+  readonly implementation?: Partial<Implementation>;
+  /** Needed by any test that grades an effort figure `placeholder`. */
+  readonly notes?: string;
 }
 
 /**
@@ -217,17 +220,25 @@ function buildProductShape(overrides: ProductOverrides = {}): unknown {
     },
     integrations: [],
     controlsCovered: [],
-    opsBurden: overrides.opsBurden ?? { baseFte: 0.1, ftePerThousandAssets: 0.1 },
-    implementation: overrides.implementation ?? {
+    opsBurden: {
+      baseFte: 0.1,
+      ftePerThousandAssets: 0.1,
+      confidence: 'analyst_estimate',
+      ...overrides.opsBurden,
+    },
+    implementation: {
       effortDays: 5,
       skillLevel: 'generalist',
       typicalWeeks: 2,
+      confidence: 'analyst_estimate',
+      ...overrides.implementation,
     },
     strengths: [],
     weaknesses: [],
     bestFor: [],
     avoidWhen: [],
     sources: [{ url: 'https://example.com/docs', asOf: '2026-01-01' }],
+    ...(overrides.notes === undefined ? {} : { notes: overrides.notes }),
   };
 }
 

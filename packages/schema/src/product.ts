@@ -7,6 +7,7 @@ import {
   CloudPlatform,
   DeploymentMode,
   DeviceClass,
+  EstimateConfidence,
   FrameworkId,
   LicenceModel,
   Maturity,
@@ -101,6 +102,12 @@ export const OpsBurden = z
     baseFte: z.number().nonnegative().max(20),
     /** Additional FTE per 1,000 monitored assets. */
     ftePerThousandAssets: z.number().nonnegative().max(10),
+    /**
+     * How well grounded these two numbers are. Mandatory for the same reason
+     * `pricingConfidence` is: this figure decides whether a free tool is cheap
+     * or expensive, and a guess and a measurement must not look alike.
+     */
+    confidence: EstimateConfidence,
   })
   .strict();
 export type OpsBurden = z.infer<typeof OpsBurden>;
@@ -112,6 +119,12 @@ export const Implementation = z
     skillLevel: SkillLevel,
     /** Elapsed calendar weeks, which is not effortDays/5 — it includes waiting. */
     typicalWeeks: z.number().nonnegative().max(104),
+    /**
+     * Graded separately from `opsBurden.confidence`: a vendor that publishes a
+     * professional-services day count often says nothing about who runs the
+     * thing afterwards, and the two claims fail independently.
+     */
+    confidence: EstimateConfidence,
   })
   .strict();
 export type Implementation = z.infer<typeof Implementation>;
@@ -174,6 +187,20 @@ export const Product = z
         message:
           'a zero-licence product with zero opsBurden and zero implementation effort is not free, it is unpriced',
       });
+    }
+
+    // Same convention as a placeholder price: an ungrounded effort figure has
+    // to be findable by grepping for TODO, or it is indistinguishable from a
+    // researched one at a glance.
+    const notes = product.notes ?? '';
+    for (const field of ['opsBurden', 'implementation'] as const) {
+      if (product[field].confidence === 'placeholder' && !notes.includes('TODO')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field, 'confidence'],
+          message: `${field}.confidence is placeholder, so notes must carry a TODO saying what is still unknown`,
+        });
+      }
     }
   });
 export type Product = z.infer<typeof Product>;

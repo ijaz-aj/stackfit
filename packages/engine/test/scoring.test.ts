@@ -257,7 +257,7 @@ describe('compliance fit', () => {
 
 describe('ops fit — the dimension that stops "free" winning by default', () => {
   it('scores full marks for a tool the team can absorb', () => {
-    const light = { ...coveringProduct(), opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0 } };
+    const light = { ...coveringProduct(), opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } };
     const inputs = buildInputs({ profile: buildClientProfile({ securityStaffFte: 2 }) });
     expect(scoreProduct(light, inputs).dimensions.find((d) => d.dimension === 'ops_fit')?.score).toBe(
       100,
@@ -265,7 +265,7 @@ describe('ops fit — the dimension that stops "free" winning by default', () =>
   });
 
   it('scores zero for a tool that would need more than the whole team', () => {
-    const heavy = { ...coveringProduct(), opsBurden: { baseFte: 3, ftePerThousandAssets: 0 } };
+    const heavy = { ...coveringProduct(), opsBurden: { baseFte: 3, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } };
     const inputs = buildInputs({ profile: buildClientProfile({ securityStaffFte: 2 }) });
     const fit = scoreProduct(heavy, inputs).dimensions.find((d) => d.dimension === 'ops_fit');
     expect(fit?.score).toBe(0);
@@ -285,7 +285,7 @@ describe('ops fit — the dimension that stops "free" winning by default', () =>
   it('degrades between comfortable and unusable rather than falling off a cliff', () => {
     const midweight = {
       ...coveringProduct(),
-      opsBurden: { baseFte: 1.55, ftePerThousandAssets: 0 },
+      opsBurden: { baseFte: 1.55, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
     };
     // 1.55 of 2.0 FTE = 77.5% share, between 35% and 120%.
     const inputs = buildInputs({ profile: buildClientProfile({ securityStaffFte: 2 }) });
@@ -399,7 +399,7 @@ describe('procurement bias shifts the weights', () => {
   });
 
   it('penalises an operationally heavy tool harder for an open-source-first buyer', () => {
-    const heavy = { ...coveringProduct(), opsBurden: { baseFte: 3, ftePerThousandAssets: 0 } };
+    const heavy = { ...coveringProduct(), opsBurden: { baseFte: 3, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } };
     const profile = { securityStaffFte: 2 };
     const neutral = scoreProduct(heavy, buildInputs({ profile: buildClientProfile(profile) })).score;
     const oss = scoreProduct(

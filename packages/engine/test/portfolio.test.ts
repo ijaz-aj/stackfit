@@ -202,7 +202,7 @@ function product(
     category,
     vendor,
     supports: { ...base.supports, deviceClasses: ['server', 'workstation'] },
-    opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0 },
+    opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
   };
 }
 
@@ -362,8 +362,8 @@ describe('step 5 — the three bundles', () => {
 
   it('warns when a bundle needs more people than the client has', () => {
     const heavy = [
-      { ...product('siem-a', 'siem', 100_000), opsBurden: { baseFte: 2, ftePerThousandAssets: 0 } },
-      { ...product('edr-a', 'edr', 100_000), opsBurden: { baseFte: 2, ftePerThousandAssets: 0 } },
+      { ...product('siem-a', 'siem', 100_000), opsBurden: { baseFte: 2, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } },
+      { ...product('edr-a', 'edr', 100_000), opsBurden: { baseFte: 2, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } },
     ];
     const { ideal } = buildPortfolio(buildInputs({ products: heavy, securityStaffFte: 1 }));
     expect(ideal.rationale.join(' ')).toContain('more people than the client has');

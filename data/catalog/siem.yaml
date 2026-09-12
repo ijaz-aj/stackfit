@@ -73,10 +73,12 @@ products:
     opsBurden:
       baseFte: 0.5
       ftePerThousandAssets: 0.3
+      confidence: analyst_estimate
     implementation:
       effortDays: 20
       skillLevel: security_engineer
       typicalWeeks: 8
+      confidence: analyst_estimate
 
     strengths:
       - Genuinely no licence ceiling, so ingest growth does not create a budget cliff
@@ -156,10 +158,12 @@ products:
     opsBurden:
       baseFte: 0.4
       ftePerThousandAssets: 0.25
+      confidence: analyst_estimate
     implementation:
       effortDays: 12
       skillLevel: security_engineer
       typicalWeeks: 5
+      confidence: analyst_estimate
 
     strengths:
       - Strong log parsing and search ergonomics for the price
@@ -261,10 +265,12 @@ products:
     opsBurden:
       baseFte: 0.3
       ftePerThousandAssets: 0.2
+      confidence: analyst_estimate
     implementation:
       effortDays: 15
       skillLevel: security_engineer
       typicalWeeks: 6
+      confidence: analyst_estimate
 
     strengths:
       - No platform to run; ingest scales without a capacity project

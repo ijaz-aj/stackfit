@@ -32,4 +32,14 @@ if (result.issues.length > 0) {
       console.log(`    ${entry.productId} / ${entry.tierId}  (data/${entry.file})`);
     }
   }
+
+  if (result.effortPlaceholders.length > 0) {
+    console.log(
+      `\n  ${result.effortPlaceholders.length} effort figure(s) nobody has researched — ` +
+        'these decide whether a free tool is cheap or expensive (hard rule 8):',
+    );
+    for (const entry of result.effortPlaceholders) {
+      console.log(`    ${entry.productId} / ${entry.field}  (data/${entry.file})`);
+    }
+  }
 }

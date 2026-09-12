@@ -60,7 +60,7 @@ function product(
     category,
     controlsCovered: [...controlsCovered],
     supports: { ...base.supports, deviceClasses: ['server', 'workstation'] },
-    opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0 },
+    opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
   };
 }
 
@@ -84,6 +84,8 @@ function bundleOf(selections: readonly { id: string; category: ProductCategory }
     infraAnnual: zero,
     opsFteAnnual: zero,
     opsFte: 0,
+    opsBurdenConfidence: 'analyst_estimate' as const,
+    implementationConfidence: 'analyst_estimate' as const,
     implementationOneTime: zero,
     trainingOneTime: zero,
     year1: zero,

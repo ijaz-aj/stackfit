@@ -58,10 +58,12 @@ products:
     opsBurden:
       baseFte: 0.1
       ftePerThousandAssets: 0.1
+      confidence: analyst_estimate
     implementation:
       effortDays: 3
       skillLevel: generalist
       typicalWeeks: 2
+      confidence: analyst_estimate
 
     strengths:
       - Deploys in days with almost no tuning
@@ -130,10 +132,12 @@ products:
     opsBurden:
       baseFte: 0.4
       ftePerThousandAssets: 0.2
+      confidence: analyst_estimate
     implementation:
       effortDays: 8
       skillLevel: specialist
       typicalWeeks: 4
+      confidence: analyst_estimate
 
     strengths:
       - Exceptional incident-response and hunting reach for zero licence cost
@@ -271,10 +275,12 @@ products:
     opsBurden:
       baseFte: 0.25
       ftePerThousandAssets: 0.15
+      confidence: analyst_estimate
     implementation:
       effortDays: 10
       skillLevel: security_engineer
       typicalWeeks: 4
+      confidence: analyst_estimate
 
     strengths:
       - Often already licensed via Microsoft 365 E5, making the marginal cost near zero

@@ -35,8 +35,13 @@ function product(overrides: Record<string, unknown> = {}) {
     maturity: 'established',
     tiers: [freeTier],
     supports: support,
-    opsBurden: { baseFte: 0.5, ftePerThousandAssets: 0.2 },
-    implementation: { effortDays: 10, skillLevel: 'security_engineer', typicalWeeks: 4 },
+    opsBurden: { baseFte: 0.5, ftePerThousandAssets: 0.2, confidence: 'analyst_estimate' },
+    implementation: {
+      effortDays: 10,
+      skillLevel: 'security_engineer',
+      typicalWeeks: 4,
+      confidence: 'analyst_estimate',
+    },
     sources,
     ...overrides,
   };
@@ -50,8 +55,13 @@ describe('Product — open-source honesty (hard rule 8)', () => {
   it('rejects a zero-licence product claiming no ops burden and no implementation effort', () => {
     const result = Product.safeParse(
       product({
-        opsBurden: { baseFte: 0, ftePerThousandAssets: 0 },
-        implementation: { effortDays: 0, skillLevel: 'generalist', typicalWeeks: 0 },
+        opsBurden: { baseFte: 0, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+        implementation: {
+          effortDays: 0,
+          skillLevel: 'generalist',
+          typicalWeeks: 0,
+          confidence: 'analyst_estimate',
+        },
       }),
     );
     expect(result.success).toBe(false);
@@ -74,6 +84,57 @@ describe('Product — open-source honesty (hard rule 8)', () => {
   it('rejects duplicate tier ids within one product', () => {
     const result = Product.safeParse(product({ tiers: [freeTier, { ...freeTier }] }));
     expect(result.success).toBe(false);
+  });
+});
+
+describe('Product — how well grounded the effort figures are', () => {
+  it('requires a confidence on the ops burden', () => {
+    const noConfidence = product();
+    delete (noConfidence['opsBurden'] as Record<string, unknown>)['confidence'];
+    expect(Product.safeParse(noConfidence).success).toBe(false);
+  });
+
+  it('requires a confidence on the implementation effort', () => {
+    const noConfidence = product();
+    delete (noConfidence['implementation'] as Record<string, unknown>)['confidence'];
+    expect(Product.safeParse(noConfidence).success).toBe(false);
+  });
+
+  it('grades the two figures independently', () => {
+    // A vendor that publishes a professional-services day count usually says
+    // nothing about who runs the thing afterwards.
+    const split = product({
+      opsBurden: { baseFte: 0.5, ftePerThousandAssets: 0.2, confidence: 'analyst_estimate' },
+      implementation: {
+        effortDays: 10,
+        skillLevel: 'security_engineer',
+        typicalWeeks: 4,
+        confidence: 'vendor_documented',
+      },
+    });
+    expect(Product.safeParse(split).success).toBe(true);
+  });
+
+  it('rejects a placeholder effort figure with no TODO in the notes', () => {
+    // Same convention as a placeholder price: an ungrounded figure has to be
+    // findable by grepping for TODO.
+    const result = Product.safeParse(
+      product({
+        opsBurden: { baseFte: 0.5, ftePerThousandAssets: 0.2, confidence: 'placeholder' },
+        notes: 'Nothing here says the staffing figure is a guess.',
+      }),
+    );
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts a placeholder effort figure that says so in the notes', () => {
+    const result = Product.safeParse(
+      product({
+        opsBurden: { baseFte: 0.5, ftePerThousandAssets: 0.2, confidence: 'placeholder' },
+        notes: 'TODO: nobody has checked what it takes to run this.',
+      }),
+    );
+    expect(result.success).toBe(true);
   });
 });
 

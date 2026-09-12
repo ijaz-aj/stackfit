@@ -11,6 +11,7 @@ import type {
   ClientProfile,
   CostAssumptions,
   CurrencyCode,
+  EstimateConfidence,
   FreshnessPolicy,
   FxConfig,
   IsoDate,
@@ -64,6 +65,17 @@ export interface ProductCost {
   readonly opsFteAnnual: Money;
   /** FTE this product consumes, from opsBurden and the monitored asset count. */
   readonly opsFte: number;
+  /**
+   * How well grounded the staffing figure is.
+   *
+   * Travels with the number for the same reason `pricingConfidence` and
+   * `freshness` do: the FTE line is what decides whether a zero-licence tool is
+   * cheap or expensive, and a figure nobody has checked must say so wherever it
+   * is read, not only in the file it came from.
+   */
+  readonly opsBurdenConfidence: EstimateConfidence;
+  /** How well grounded the professional-services day count is. */
+  readonly implementationConfidence: EstimateConfidence;
 
   readonly implementationOneTime: Money;
   readonly trainingOneTime: Money;
@@ -361,8 +373,14 @@ export function computeProductCost(
   const opsFteAnnual = scaleMoney(convertMoney(regionRate.loadedAnnualCost, currency, fx), opsFte);
 
   rationale.push(
-    `Operational effort: ${opsFte.toFixed(2)} FTE = ${product.opsBurden.baseFte} base + ${product.opsBurden.ftePerThousandAssets} per 1,000 assets × ${sizing.monitoredAssetCount} assets.`,
+    `Operational effort: ${opsFte.toFixed(2)} FTE = ${product.opsBurden.baseFte} base + ${product.opsBurden.ftePerThousandAssets} per 1,000 assets × ${sizing.monitoredAssetCount} assets, at ${product.opsBurden.confidence.replace(/_/g, ' ')} confidence.`,
   );
+
+  if (product.opsBurden.confidence === 'placeholder') {
+    rationale.push(
+      '⚠ Nobody has researched what it takes to run this product. The FTE line above is a placeholder, and so is every total that includes it.',
+    );
+  }
 
   if (profile.securityStaffFte > 0 && opsFte > profile.securityStaffFte) {
     rationale.push(
@@ -466,6 +484,8 @@ export function computeProductCost(
     infraAnnual,
     opsFteAnnual,
     opsFte,
+    opsBurdenConfidence: product.opsBurden.confidence,
+    implementationConfidence: product.implementation.confidence,
     implementationOneTime,
     trainingOneTime,
     year1,

@@ -167,5 +167,26 @@ export const PricingConfidence = z.enum([
 ]);
 export type PricingConfidence = z.infer<typeof PricingConfidence>;
 
+/**
+ * How well an effort figure is grounded — the ops-burden and implementation
+ * analogue of `PricingConfidence`.
+ *
+ * A staffing estimate decides whether open source looks cheap or expensive
+ * (hard rule 8), which makes it one of the most load-bearing numbers in the
+ * catalog, and until this existed the schema could not tell a figure somebody
+ * measured from one somebody guessed.
+ */
+export const EstimateConfidence = z.enum([
+  /** The vendor publishes a sizing, staffing or services-effort guide. */
+  'vendor_documented',
+  /** Observed in a real deployment, and the notes say which. */
+  'field_measured',
+  /** StackFit's own reasoning from comparable tools. Most of the catalog. */
+  'analyst_estimate',
+  /** Nobody has looked yet. Requires a TODO in the product's notes. */
+  'placeholder',
+]);
+export type EstimateConfidence = z.infer<typeof EstimateConfidence>;
+
 export const AssetCriticality = z.enum(['low', 'medium', 'high', 'crown_jewel']);
 export type AssetCriticality = z.infer<typeof AssetCriticality>;

@@ -1,6 +1,7 @@
 import type { Bundle, PipelineResult } from '@stackfit/engine';
 
 import { Badge, Card } from '@/components/ui';
+import { formatNumber } from '@/lib/format';
 
 /**
  * §8.7 — the assumptions and disclaimers panel. "Always present, always
@@ -11,6 +12,18 @@ import { Badge, Card } from '@/components/ui';
  * grade, a labour rate that is an estimate and an FX rate with a date, and none
  * of that is visible in a total.
  */
+/**
+ * A vendor-documented or field-measured effort figure is evidence; an analyst
+ * estimate is reasoning; a placeholder is nothing at all. Graded on screen the
+ * same way a price is, because it moves the total the same way.
+ */
+const EFFORT_TONE = {
+  vendor_documented: 'good',
+  field_measured: 'good',
+  analyst_estimate: 'warn',
+  placeholder: 'bad',
+} as const;
+
 export function AssumptionsPanel({
   result,
   bundle,
@@ -63,6 +76,37 @@ export function AssumptionsPanel({
                 {selection.cost.needsRecheck && (
                   <span className="text-warn text-[11px]">re-check before quoting</span>
                 )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mt-4 flex flex-col gap-1">
+        <h3 className="text-muted text-[11px] font-semibold tracking-wide uppercase">
+          Where each effort figure came from
+        </h3>
+        <p className="text-faint text-[11px]">
+          Staffing and implementation effort decide whether a zero-licence tool is cheap or
+          expensive, which makes them the most load-bearing numbers here after the prices. They
+          are graded the same way, and on this catalog they are almost all analyst estimates.
+        </p>
+        {bundle.selections.length === 0 ? (
+          <p className="text-faint text-[12px]">Nothing costed in this bundle.</p>
+        ) : (
+          <ul className="mt-1 flex flex-col gap-1">
+            {bundle.selections.map((selection) => (
+              <li
+                key={selection.productId}
+                className="flex flex-wrap items-baseline gap-2 text-[12px]"
+              >
+                <span className="text-ink">{selection.productName}</span>
+                <Badge tone={EFFORT_TONE[selection.cost.opsBurdenConfidence]}>
+                  {selection.cost.opsBurdenConfidence.replace(/_/g, ' ')} — {formatNumber(selection.cost.opsFte, 2)} FTE
+                </Badge>
+                <Badge tone={EFFORT_TONE[selection.cost.implementationConfidence]}>
+                  {selection.cost.implementationConfidence.replace(/_/g, ' ')} — implementation
+                </Badge>
               </li>
             ))}
           </ul>

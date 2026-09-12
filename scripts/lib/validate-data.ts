@@ -39,10 +39,25 @@ export interface PlaceholderEntry {
   readonly file: string;
 }
 
+/** A product whose ops-burden or implementation effort nobody has researched. */
+export interface EffortPlaceholderEntry {
+  readonly productId: string;
+  /** Which of the two figures is ungrounded. */
+  readonly field: 'opsBurden' | 'implementation';
+  readonly file: string;
+}
+
 export interface DataValidationResult {
   readonly issues: readonly ValidationIssue[];
   /** Tiers priced with `pricingConfidence: 'placeholder'`, for the STATUS.md list. */
   readonly placeholders: readonly PlaceholderEntry[];
+  /**
+   * Effort figures graded `placeholder`. Counted separately from prices
+   * because they rot the same way and hard rule 8 makes them just as
+   * load-bearing: an unresearched FTE figure is what makes a free tool look
+   * cheap.
+   */
+  readonly effortPlaceholders: readonly EffortPlaceholderEntry[];
   readonly productCount: number;
   readonly catalogFileCount: number;
   readonly frameworkCount: number;
@@ -75,6 +90,7 @@ function yamlFilesIn(dir: string): string[] {
 export function validateDataTree(dataDir: string): DataValidationResult {
   const issues: ValidationIssue[] = [];
   const placeholders: PlaceholderEntry[] = [];
+  const effortPlaceholders: EffortPlaceholderEntry[] = [];
 
   const relativeToData = (file: string): string =>
     file
@@ -109,6 +125,7 @@ export function validateDataTree(dataDir: string): DataValidationResult {
     return {
       issues: [{ file: '.', path: '(root)', message: `data directory not found: ${dataDir}` }],
       placeholders: [],
+      effortPlaceholders: [],
       productCount: 0,
       catalogFileCount: 0,
       frameworkCount: 0,
@@ -168,6 +185,12 @@ export function validateDataTree(dataDir: string): DataValidationResult {
             `${product.id}.controlsCovered`,
             `"${controlId}" does not exist in data/frameworks — a mapping cannot be claimed against a control that is not defined`,
           );
+        }
+      }
+
+      for (const field of ['opsBurden', 'implementation'] as const) {
+        if (product[field].confidence === 'placeholder') {
+          effortPlaceholders.push({ productId: product.id, field, file: relativeToData(file) });
         }
       }
 
@@ -243,6 +266,7 @@ export function validateDataTree(dataDir: string): DataValidationResult {
   return {
     issues,
     placeholders,
+    effortPlaceholders,
     productCount,
     catalogFileCount: catalogFiles.length,
     frameworkCount: frameworkFiles.length,
