@@ -399,7 +399,7 @@ interface SelectionOptions {
    * product every time, so Ideal would have quoted the same SKUs as
    * Recommended and quantified a gap of zero.
    */
-  readonly objective: 'value_density' | 'cheapest' | 'best_fit';
+  readonly objective: 'value_density' | 'cheapest' | 'best_fit' | 'lowest_tco';
   /**
    * What order the *categories* are filled in. `objective` decides which
    * candidate wins inside a category; this decides which categories get a
@@ -561,8 +561,27 @@ function select(
       scored.sort((a, b) => {
         switch (options.objective) {
           case 'cheapest':
+            // Cheapest to *buy*. This objective exists to stretch a tight
+            // procurement cap over every mandatory category (§7.4 step 3), so
+            // it ranks on the figure the cap is judged against. Ranking it on
+            // total cost instead starves the bundle at low budgets and broke
+            // the monotonicity guarantee outright.
             return (
               a.spendCost.amountMinor - b.spendCost.amountMinor ||
+              b.candidate.fitScore - a.candidate.fitScore
+            );
+          case 'lowest_tco':
+            // Cheapest to *own*. The counterweight to `cheapest`: ranking on
+            // procurement alone is hard rule 8 inverted — it makes a
+            // self-hosted tool look free and picks it over a commercial one
+            // that is both better and cheaper once the people are counted.
+            //
+            // On the hospital scenario `cheapest` chose Velociraptor at $1,080
+            // of licence over Defender for Endpoint P1 at $42,840, when P1
+            // scores 95.7 against 89.8 and costs $172,928 a year all-in
+            // against $185,797. Worse, dearer, and selected.
+            return (
+              annualisedMinor(a.cost, assumptions) - annualisedMinor(b.cost, assumptions) ||
               b.candidate.fitScore - a.candidate.fitScore
             );
           case 'best_fit':
@@ -1065,6 +1084,18 @@ function buildRecommended(
     categoryOrder: 'weight_per_cost',
   });
 
+  // Cheapest to own rather than cheapest to buy. `cheapest` has to rank on
+  // procurement to do its job, and the price of that is a stack of free tools
+  // nobody has the people to run — 8.58 FTE against 2 available on the hospital
+  // scenario. This fills the same categories choosing the lowest total cost in
+  // each, and wins whenever it covers as much, which at a comfortable budget it
+  // does. The comparison below decides; neither objective is trusted on its own.
+  const byTco = buildBundle('recommended', inputs, rankings, candidates, {
+    ignoreBudget: false,
+    eligible,
+    objective: 'lowest_tco',
+  });
+
   const coveredWeight = (bundle: Bundle): number =>
     bundle.selections.reduce((sum, selection) => sum + selection.categoryWeight, 0);
 
@@ -1120,8 +1151,15 @@ function buildRecommended(
   // Density leads the list, so it wins every tie and keeps the better-product
   // bias it has always had. An unregulated client with one affordable stack
   // therefore sees exactly what they saw before any of this existed.
+  const TCO_RATIONALE =
+    'Built from the lowest total cost of ownership in each category rather than the lowest ' +
+    'licence price. Ranking on procurement alone makes a self-hosted tool look free and buys a ' +
+    'stack this team has no capacity to operate; the figures below count the people who run ' +
+    'each product, which is where most of an open-source stack’s cost actually is.';
+
   const strategies: readonly { readonly bundle: Bundle; readonly note: string | undefined }[] = [
     { bundle: byDensity, note: undefined },
+    { bundle: byTco, note: TCO_RATIONALE },
     { bundle: byCheapest, note: CHEAPEST_RATIONALE },
     { bundle: byWeightPerCost, note: WEIGHT_PER_COST_RATIONALE },
   ];

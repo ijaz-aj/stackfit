@@ -242,6 +242,63 @@ describe('step 1 — category ranking', () => {
   });
 });
 
+describe('cheapest to buy is not cheapest to own', () => {
+  // Found on the hospital demo. `cheapest` ranks on procurement, which is right
+  // for its job — stretching a tight purchase-order budget over every mandatory
+  // category. The price of that is hard rule 8 inverted: a self-hosted tool
+  // with no licence fee looks free and wins even where a commercial product is
+  // better *and* cheaper once the people to run it are counted.
+  //
+  // The real numbers were Velociraptor at $1,080 of licence against Defender
+  // for Endpoint P1 at $42,840 — P1 scoring 95.7 to 89.8 and costing $172,928 a
+  // year all-in against $185,797. The bundle took the worse, dearer one, and
+  // asked a two-person team for 8.58 FTE.
+  function withOps(id: string, annualMinor: number, baseFte: number): Product {
+    return {
+      ...product(id, 'siem', annualMinor),
+      opsBurden: { baseFte, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+    };
+  }
+
+  it('does not buy a free tool nobody can run over a cheaper one overall', () => {
+    // Free to licence, two full engineers to operate, against a licensed
+    // product at a tenth of an engineer.
+    const freeButHeavy = withOps('siem-free', 0, 2);
+    const paidButLight = withOps('siem-paid', 20_000_00, 0.1);
+
+    const { recommended } = buildPortfolio(
+      buildInputs({
+        products: [freeButHeavy, paidButLight],
+        frameworks: [pciMandatingSiem],
+        annualCap: 500_000_00,
+      }),
+    );
+
+    const siem = recommended.selections.find((entry) => entry.category === 'siem');
+    expect(siem?.productId).toBe('siem-paid');
+  });
+
+  it('still stretches a tight budget with the cheapest licence', () => {
+    // The counterweight. When procurement is the binding constraint, the
+    // licence price is the right ranking and the free tool is the only one that
+    // fits — picking on total cost here would fund nothing at all.
+    const freeButHeavy = withOps('siem-free', 0, 2);
+    const paidButLight = withOps('siem-paid', 20_000_00, 0.1);
+
+    const { recommended } = buildPortfolio(
+      buildInputs({
+        products: [freeButHeavy, paidButLight],
+        frameworks: [pciMandatingSiem],
+        annualCap: 1_000_00,
+      }),
+    );
+
+    const siem = recommended.selections.find((entry) => entry.category === 'siem');
+    expect(siem?.productId).toBe('siem-free');
+    expect(recommended.unfundedMandatory).toEqual([]);
+  });
+});
+
 describe('step 7 — the budget that cannot buy compliance', () => {
   it('reports a shortfall rather than silently dropping a mandatory category', () => {
     // A SIEM costing 500 against a cap of 100. The bundle must not pretend.
