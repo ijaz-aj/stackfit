@@ -58,6 +58,12 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
             Download DOCX
           </a>
           <a
+            href={`/scenarios/${id}/proposal/pdf`}
+            className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-[12px]"
+          >
+            Download PDF
+          </a>
+          <a
             href={`/scenarios/${id}/proposal/xlsx`}
             className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-[12px]"
           >

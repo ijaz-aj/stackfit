@@ -13,10 +13,12 @@ import { buildProposal, runPipeline } from '@stackfit/engine';
 import type { ClientProfile } from '@stackfit/schema';
 import { XMLParser } from 'fast-xml-parser';
 import JSZip from 'jszip';
+import { inflateSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 
 import { engineData, today } from '../src/lib/config.server';
 import { proposalToDocx } from '../src/lib/proposal-docx.server';
+import { proposalToPdf } from '../src/lib/proposal-pdf.server';
 import { proposalToXlsx } from '../src/lib/proposal-xlsx.server';
 import { proposalFilename } from '../src/lib/proposal.server';
 import { NEW_INVENTORY, NEW_PROFILE } from '../src/lib/scenario';
@@ -277,6 +279,101 @@ describe('the XLSX cost model', () => {
       expect(lines, `${row.productName}: spend does not equal its own cost lines`).toBe(
         row.annualSpend.amountMinor,
       );
+    }
+  });
+});
+
+/**
+ * Text out of a PDF, without a parser dependency.
+ *
+ * react-pdf writes its glyphs as hex strings inside TJ arrays — a line reads
+ * `[<53> 0 <656375...> 20 ...] TJ` rather than `(Security...) Tj` — so the
+ * naive "find the parenthesised strings" approach finds nothing at all and
+ * would make these tests pass while proving nothing.
+ *
+ * The bytes are WinAnsi, not Latin-1, and the difference is only visible on
+ * punctuation: an em-dash is 0x97 and a bullet 0x95, both of which Latin-1
+ * decodes to control characters. Decoding wrongly made this harness report the
+ * PDF as missing whole paragraphs that were in fact present.
+ */
+function pdfText(buffer: Buffer): string {
+  const winAnsi = new TextDecoder('windows-1252');
+  const parts: string[] = [];
+
+  for (const match of buffer.toString('latin1').matchAll(/stream\r?\n([\s\S]*?)endstream/g)) {
+    let raw: Buffer;
+    try {
+      raw = inflateSync(Buffer.from(match[1]!, 'latin1'));
+    } catch {
+      continue;
+    }
+    for (const array of raw.toString('latin1').matchAll(/\[([\s\S]*?)\]\s*TJ/g)) {
+      const chunk = [...array[1]!.matchAll(/<([0-9A-Fa-f]*)>/g)]
+        .map((hex) => winAnsi.decode(Buffer.from(hex[1]!, 'hex')))
+        .join('');
+      if (chunk.length > 0) parts.push(chunk);
+    }
+  }
+
+  return parts.join('\n');
+}
+
+describe('the PDF export', () => {
+  it('is a structurally valid PDF', async () => {
+    const buffer = await proposalToPdf(documentFor());
+    expect(buffer.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+    expect(buffer.subarray(-6).toString('latin1')).toContain('%%EOF');
+    expect(buffer.byteLength).toBeGreaterThan(4_000);
+  });
+
+  it('carries the §6 rule 4 disclaimer, verbatim', async () => {
+    const document = documentFor();
+    const body = pdfText(await proposalToPdf(document));
+
+    // Whitespace in a PDF is a layout instruction, not content, so the
+    // comparison is on the words rather than the spacing between them.
+    const flat = body.replace(/\s+/g, ' ');
+    expect(flat).toContain(document.disclaimer.replace(/\s+/g, ' '));
+  });
+
+  it('writes every section of the document model into the file', async () => {
+    const document = documentFor();
+    const flat = pdfText(await proposalToPdf(document)).replace(/\s+/g, ' ');
+
+    for (const section of document.sections) {
+      expect(flat, `section "${section.heading}" did not reach the PDF`).toContain(
+        section.heading,
+      );
+    }
+    expect(flat).toContain(document.title);
+  });
+
+  it('says the same thing as the DOCX', async () => {
+    // The reason the document model exists. Two renderers, one set of content
+    // decisions — so a client reading the PDF and a client reading the Word
+    // file must not be reading different proposals.
+    const document = documentFor();
+    const [pdf, docx] = await Promise.all([
+      proposalToPdf(document),
+      proposalToDocx(document),
+    ]);
+
+    const inPdf = pdfText(pdf).replace(/\s+/g, ' ');
+    const inDocx = (await docxText(docx)).replace(/\s+/g, ' ');
+
+    // Every paragraph and bullet of the model, in both.
+    const prose = document.sections
+      .flatMap((section) => section.blocks)
+      .flatMap((block) => {
+        if (block.kind === 'paragraph' || block.kind === 'callout') return [block.text];
+        if (block.kind === 'bullets') return [...block.items];
+        return [];
+      })
+      .map((line) => line.replace(/\s+/g, ' '));
+
+    for (const line of prose) {
+      expect(inPdf, `PDF is missing: ${line.slice(0, 60)}…`).toContain(line);
+      expect(inDocx, `DOCX is missing: ${line.slice(0, 60)}…`).toContain(line);
     }
   });
 });
