@@ -137,6 +137,12 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
     if (cheapest !== undefined) costs.set(product.id, cheapest);
   }
 
+  // Infrastructure first: scoring needs the estate's shape, because a client
+  // who states no deployment preference is telling the tool to work it out from
+  // what they run.
+  const infrastructure = computeInfrastructureProfile(inventory, categoryWeights);
+  const relevance = computeCategoryRelevance(infrastructure, categoryWeights);
+
   const scores = scoreProducts(products, {
     profile,
     inventory,
@@ -144,10 +150,8 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
     frameworks: inScope,
     weights: scoringWeights,
     categoryWeights,
+    estateShape: infrastructure.shape,
   });
-
-  const infrastructure = computeInfrastructureProfile(inventory, categoryWeights);
-  const relevance = computeCategoryRelevance(infrastructure, categoryWeights);
 
   const portfolio = buildPortfolio({
     profile,

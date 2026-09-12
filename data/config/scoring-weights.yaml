@@ -186,3 +186,73 @@ categoryRemits:
       Follows the telemetry the provider is given, so its remit is close to a
       SIEM's. OT is included but most providers cover it thinly — see the
       category-weights.yaml affinity.
+
+# How deployment fit is scored (§7.3).
+#
+# `deploymentPreference: hybrid` is how this tool spells "no strong preference"
+# — it is the wording the wizard uses — so it is not scored as a demand for a
+# hybrid product. It is scored against the estate the client actually runs.
+#
+# Before this block existed, a client with no preference scored every cloud-only
+# and every on-prem-only product 30 out of 100, as though they had insisted on
+# hybrid. That penalised exactly the products that suited their estate best.
+deploymentFit:
+  # A stated preference is a requirement the analyst heard from the client.
+  statedMatch: 100
+  statedHybridFallback: 70
+  statedMismatch: 30
+
+  # An inferred preference is StackFit's own reading of the asset counts. It is
+  # a weaker claim, so it tilts the ranking rather than deciding it: the gap
+  # between a match and a mismatch is 45 points here against 70 above.
+  inferredMatch: 100
+  inferredHybridFallback: 85
+  inferredMismatch: 55
+
+  # Nothing stated, nothing inferable. Every product scores alike rather than
+  # being marked down for a question nobody asked.
+  noSignal: 85
+
+  byEstateShape:
+    - shape: on_prem_centric
+      prefers: [on_prem]
+      basis: >-
+        Servers, network and endpoints the client operates themselves. A tool
+        that cannot be run inside their own estate means new egress, new
+        accounts and a new trust boundary for data they currently hold.
+    - shape: ot_heavy
+      prefers: [on_prem, air_gapped]
+      basis: >-
+        Plant networks are segmented from the internet more often than not, and
+        the sensible default for anything watching them is that it stays inside
+        the segment. Air-gap capability is an advantage here, not an oddity.
+    - shape: saas_centric
+      prefers: [cloud]
+      basis: >-
+        Work happens in someone else's SaaS and there is no server room to put
+        an appliance in. Recommending a self-hosted tool to this client means
+        recommending they build the infrastructure to host it first.
+    - shape: cloud_native
+      prefers: [cloud]
+      basis: >-
+        Owned workloads, but in public cloud. A SaaS or cloud-delivered tool
+        sits where the workloads already are; an on-prem appliance means
+        back-hauling telemetry out of the accounts that generate it.
+    - shape: hybrid
+      prefers: [hybrid, cloud, on_prem]
+      basis: >-
+        Material weight in both owned infrastructure and cloud. Anything
+        deployable either way genuinely fits, which is the one case where a
+        hybrid-capable product is the right answer rather than a compromise.
+    - shape: unknown
+      prefers: []
+      basis: >-
+        No inventory captured, so nothing can be inferred. Scored neutral for
+        every product: an absent answer is not evidence against anything.
+
+  basis: >-
+    The stated bands are unchanged from the original §7.3 implementation. The
+    inferred bands are deliberately compressed around neutral — 55 to 100
+    against 30 to 100 — because the tool is reading asset counts rather than
+    repeating something the client said, and a guess should move a ranking
+    without overturning it.

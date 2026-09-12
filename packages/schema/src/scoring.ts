@@ -8,7 +8,8 @@
 import { z } from 'zod';
 
 import { AssetClass } from './asset-inventory';
-import { DeviceClass, ProcurementBias, ProductCategory } from './enums';
+import { EstateShape } from './infrastructure';
+import { DeploymentMode, DeviceClass, ProcurementBias, ProductCategory } from './enums';
 
 export const ScoringDimension = z.enum([
   /** Share of the assets this category is meant to cover that this product does. */
@@ -96,12 +97,74 @@ export const OpsFitPolicy = z
   .strict();
 export type OpsFitPolicy = z.infer<typeof OpsFitPolicy>;
 
+/** Deployment modes that suit an estate of a given shape. */
+export const EstateDeploymentAffinity = z
+  .object({
+    shape: EstateShape,
+    /** Empty means "nothing can be inferred from this shape" — scored neutral. */
+    prefers: z.array(DeploymentMode).default([]),
+    basis: z.string().min(1),
+  })
+  .strict();
+export type EstateDeploymentAffinity = z.infer<typeof EstateDeploymentAffinity>;
+
+/**
+ * How deployment fit is scored (§7.3).
+ *
+ * Two different questions wear one field. When the analyst states a preference
+ * — `on_prem`, `cloud`, `air_gapped` — a product that does not offer it is
+ * genuinely not what the client asked for. When they state `hybrid`, which is
+ * how this tool spells "no strong preference", there is nothing to miss: the
+ * question becomes what the estate they actually run implies, and a weaker
+ * signal deserves a gentler penalty than a stated one.
+ *
+ * Before this existed, "no preference" scored every cloud-only and every
+ * on-prem-only product 30 out of 100, as though the client had demanded hybrid.
+ */
+export const DeploymentFitPolicy = z
+  .object({
+    /** The product offers exactly what the analyst asked for. */
+    statedMatch: z.number().min(0).max(100),
+    /** No native mode, but hybrid can usually be shaped to fit. */
+    statedHybridFallback: z.number().min(0).max(100),
+    /** Workable, but not what they asked for. */
+    statedMismatch: z.number().min(0).max(100),
+    /** The product suits the estate the client actually runs. */
+    inferredMatch: z.number().min(0).max(100),
+    inferredHybridFallback: z.number().min(0).max(100),
+    /** Softer than `statedMismatch`: an inferred preference is a weaker signal. */
+    inferredMismatch: z.number().min(0).max(100),
+    /**
+     * No preference stated and nothing inferable from the estate. Every product
+     * scores the same: silence is not evidence, and this repo does not penalise
+     * on silence anywhere else either.
+     */
+    noSignal: z.number().min(0).max(100),
+    byEstateShape: z.array(EstateDeploymentAffinity).min(1),
+    basis: z.string().min(1),
+  })
+  .strict()
+  .superRefine((policy, ctx) => {
+    const seen = new Set(policy.byEstateShape.map((entry) => entry.shape));
+    for (const shape of EstateShape.options) {
+      if (!seen.has(shape)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['byEstateShape'],
+          message: `no deployment affinity declared for estate shape ${shape}`,
+        });
+      }
+    }
+  });
+export type DeploymentFitPolicy = z.infer<typeof DeploymentFitPolicy>;
+
 export const ScoringWeights = z
   .object({
     notes: z.string().min(1).optional(),
     dimensions: z.array(DimensionWeight).min(1),
     biasAdjustments: z.array(BiasAdjustment).default([]),
     opsFit: OpsFitPolicy,
+    deploymentFit: DeploymentFitPolicy,
     /** Score by maturity band, 0–100. */
     maturityScores: z.object({
       emerging: z.number().min(0).max(100),

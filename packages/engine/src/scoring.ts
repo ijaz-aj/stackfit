@@ -12,7 +12,9 @@ import type {
   AssetInventory,
   CategoryWeights,
   ClientProfile,
+  DeploymentFitPolicy,
   DeviceClass,
+  EstateShape,
   Framework,
   Product,
   ProductCategory,
@@ -45,6 +47,14 @@ export interface ScoringInputs {
    * mailbox-heavy estate, on the heaviest-weighted dimension there is.
    */
   readonly categoryWeights: CategoryWeights;
+  /**
+   * The estate's shape, from the infrastructure stage.
+   *
+   * Used when the client states no deployment preference: what they run is then
+   * the only evidence there is about what they should buy. Defaults to
+   * `unknown`, which scores every product alike.
+   */
+  readonly estateShape?: EstateShape | undefined;
 }
 
 export interface DimensionScore {
@@ -200,22 +210,76 @@ function complianceCoverage(
   return { covered, required };
 }
 
-function deploymentFit(product: Product, profile: ClientProfile): { score: number; note: string } {
+/**
+ * Deployment fit (§7.3), from what the client asked for — or, when they asked
+ * for nothing, from what they actually run.
+ *
+ * `hybrid` is how this tool spells "no strong preference"; it is the wording on
+ * the wizard's own dropdown. Treating it as a *demand* for a hybrid product
+ * scored every cloud-only and every on-prem-only tool 30 out of 100 for a
+ * client who had expressed no opinion at all — marking down precisely the
+ * products that suited their estate best. When nothing is stated, the estate
+ * decides, and the note says which of the two happened so nobody mistakes
+ * StackFit's reading of the asset counts for something the client said.
+ */
+function deploymentFit(
+  product: Product,
+  profile: ClientProfile,
+  estateShape: EstateShape,
+  policy: DeploymentFitPolicy,
+): { score: number; note: string } {
   const modes = product.supports.deploymentModes;
-  const preference = profile.deploymentPreference;
+  const stated = profile.deploymentPreference;
+  const deploysAs = modes.join('/');
 
-  if (modes.includes(preference)) {
-    return { score: 100, note: `Supports the client's preferred ${preference} deployment directly.` };
+  if (stated !== 'hybrid') {
+    if (modes.includes(stated)) {
+      return {
+        score: policy.statedMatch,
+        note: `Supports the client's preferred ${stated} deployment directly.`,
+      };
+    }
+    if (modes.includes('hybrid')) {
+      return {
+        score: policy.statedHybridFallback,
+        note: `No native ${stated} mode, but a hybrid deployment can usually be shaped to fit.`,
+      };
+    }
+    return {
+      score: policy.statedMismatch,
+      note: `Deploys as ${deploysAs}, against a stated preference for ${stated}. Workable, but not what they asked for.`,
+    };
+  }
+
+  const affinity = policy.byEstateShape.find((entry) => entry.shape === estateShape);
+  const prefers = affinity?.prefers ?? [];
+
+  if (prefers.length === 0) {
+    return {
+      score: policy.noSignal,
+      note:
+        estateShape === 'unknown'
+          ? 'No deployment preference stated and no inventory captured, so this dimension is neutral for every product. An absent answer is not evidence against anything.'
+          : `No deployment preference stated, and a ${estateShape.replace(/_/g, ' ')} estate does not imply one. Scored neutral.`,
+    };
+  }
+
+  const matched = prefers.find((mode) => modes.includes(mode));
+  if (matched !== undefined) {
+    return {
+      score: policy.inferredMatch,
+      note: `No preference was stated, so the estate decides: this is a ${estateShape.replace(/_/g, ' ')} environment, and ${matched.replace(/_/g, '-')} deployment suits it. ${affinity?.basis ?? ''}`.trim(),
+    };
   }
   if (modes.includes('hybrid')) {
     return {
-      score: 70,
-      note: `No native ${preference} mode, but a hybrid deployment can usually be shaped to fit.`,
+      score: policy.inferredHybridFallback,
+      note: `No preference was stated. This deploys hybrid, which fits a ${estateShape.replace(/_/g, ' ')} estate well enough without being the obvious shape for it.`,
     };
   }
   return {
-    score: 30,
-    note: `Deploys as ${modes.join('/')}, against a stated preference for ${preference}. Workable, but not what they asked for.`,
+    score: policy.inferredMismatch,
+    note: `No preference was stated, and a ${estateShape.replace(/_/g, ' ')} estate points at ${prefers.join(' or ').replace(/_/g, '-')} rather than ${deploysAs}. Marked down, not ruled out — this is StackFit reading the asset counts, not something the client said.`,
   };
 }
 
@@ -404,7 +468,12 @@ export function scoreProduct(product: Product, inputs: ScoringInputs): ProductSc
         : `Covers ${compliance.covered} of the ${compliance.required} control(s) the selected frameworks ask of a ${product.category}.`;
 
   const ops = opsFit(opsFte, profile, weights);
-  const deployment = deploymentFit(product, profile);
+  const deployment = deploymentFit(
+    product,
+    profile,
+    inputs.estateShape ?? 'unknown',
+    weights.deploymentFit,
+  );
   const integration = integrationFit(product, profile);
   const scale = scaleFit(product, sizing);
   const maturityScore = weights.maturityScores[product.maturity];

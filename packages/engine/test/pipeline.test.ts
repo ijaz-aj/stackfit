@@ -139,6 +139,41 @@ describe('runPipeline', () => {
     );
   });
 
+  it('lets the estate decide deployment fit when the client states no preference', () => {
+    // The wiring the infrastructure stage exists to feed: `scoring` runs after
+    // `infrastructure` so that a client with no stated preference is scored
+    // against what they actually run. Two estates, one catalog, one profile.
+    const cloudOnly = product('cloud-siem', 'siem', 500_000, []);
+    const onPremOnly = {
+      ...cloudOnly,
+      id: 'on-prem-siem',
+      supports: { ...cloudOnly.supports, deploymentModes: ['on_prem' as const] },
+    };
+
+    const saasEstate = {
+      m365Seats: { count: 400 },
+      macosEndpoints: { count: 200 },
+      otherCriticalSaasApps: { count: 20 },
+      networkVendors: [],
+    } as AssetInventory;
+
+    const onPrem = runPipeline(inputs({ products: [cloudOnly, onPremOnly] }));
+    const saas = runPipeline(
+      inputs({ products: [cloudOnly, onPremOnly], inventory: saasEstate }),
+    );
+
+    expect(onPrem.infrastructure.shape).toBe('on_prem_centric');
+    expect(saas.infrastructure.shape).toBe('saas_centric');
+
+    const fit = (result: typeof onPrem, productId: string) =>
+      result.scores
+        .find((score) => score.productId === productId)
+        ?.dimensions.find((dimension) => dimension.dimension === 'deployment_fit')?.score;
+
+    expect(fit(onPrem, 'on-prem-siem')).toBeGreaterThan(fit(onPrem, 'cloud-siem') ?? 0);
+    expect(fit(saas, 'cloud-siem')).toBeGreaterThan(fit(saas, 'on-prem-siem') ?? 0);
+  });
+
   it('measures every bundle against the same denominator', () => {
     // §8.1 puts the three bundles side by side, which only means anything if
     // they are scored out of the same total.

@@ -5,7 +5,13 @@
 // examples in the repo-root `data` project, so a tuning change does not break
 // a unit test that was meant to assert the formula.
 
-import type { AssetInventory, Framework, Product } from '@stackfit/schema';
+import type {
+  AssetInventory,
+  DeploymentMode,
+  EstateShape,
+  Framework,
+  Product,
+} from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
 import { computeSizing } from '../src/sizing';
@@ -291,6 +297,91 @@ describe('ops fit — the dimension that stops "free" winning by default', () =>
   });
 });
 
+describe('deployment fit — what they asked for, or what they run', () => {
+  function deployment(
+    modes: DeploymentMode[],
+    overrides: { preference?: DeploymentMode; estateShape?: EstateShape } = {},
+  ) {
+    const base = buildProduct({ deploymentModes: modes });
+    const product: Product = {
+      ...base,
+      supports: { ...base.supports, deviceClasses: ['server', 'workstation'] },
+    };
+    const inputs = buildInputs({
+      profile: buildClientProfile({
+        securityStaffFte: 2,
+        deploymentPreference: overrides.preference ?? 'hybrid',
+      }),
+      ...(overrides.estateShape === undefined ? {} : { estateShape: overrides.estateShape }),
+    });
+    return scoreProduct(product, inputs).dimensions.find((d) => d.dimension === 'deployment_fit');
+  }
+
+  describe('a stated preference is a requirement the analyst heard', () => {
+    it('gives full marks to a product that offers it natively', () => {
+      expect(deployment(['on_prem'], { preference: 'on_prem' })?.score).toBe(100);
+    });
+
+    it('falls back to hybrid, which can usually be shaped to fit', () => {
+      expect(deployment(['cloud', 'hybrid'], { preference: 'on_prem' })?.score).toBe(70);
+    });
+
+    it('marks down a product that offers neither', () => {
+      const fit = deployment(['cloud'], { preference: 'on_prem' });
+      expect(fit?.score).toBe(30);
+      expect(fit?.rationale).toContain('stated preference');
+    });
+
+    it('ignores the estate: what the client said outranks what StackFit inferred', () => {
+      // A cloud-only product in a cloud-native estate, for a client who asked
+      // for on-prem. The estate agrees with the product and the client does not.
+      expect(
+        deployment(['cloud'], { preference: 'on_prem', estateShape: 'cloud_native' })?.score,
+      ).toBe(30);
+    });
+  });
+
+  describe('`hybrid` means no strong preference, so the estate decides', () => {
+    it('gives full marks to a cloud product for a SaaS-centric estate', () => {
+      const fit = deployment(['cloud'], { estateShape: 'saas_centric' });
+      expect(fit?.score).toBe(100);
+      expect(fit?.rationale).toContain('No preference was stated');
+    });
+
+    it('gives full marks to an on-prem product for an on-prem estate', () => {
+      expect(deployment(['on_prem'], { estateShape: 'on_prem_centric' })?.score).toBe(100);
+    });
+
+    it('counts air-gap capability as a match for an OT estate', () => {
+      expect(deployment(['air_gapped'], { estateShape: 'ot_heavy' })?.score).toBe(100);
+    });
+
+    it('scores a hybrid-capable product just below a native match', () => {
+      expect(deployment(['cloud', 'hybrid'], { estateShape: 'on_prem_centric' })?.score).toBe(85);
+    });
+
+    it('marks a mismatch down more gently than a stated one, and says whose reading it is', () => {
+      const fit = deployment(['cloud'], { estateShape: 'on_prem_centric' });
+      expect(fit?.score).toBe(55);
+      expect(fit?.rationale).toContain('StackFit reading the asset counts');
+    });
+  });
+
+  describe('silence is not evidence', () => {
+    it('scores every product alike when nothing was stated and no estate was captured', () => {
+      const cloudOnly = deployment(['cloud'], { estateShape: 'unknown' });
+      const onPremOnly = deployment(['on_prem'], { estateShape: 'unknown' });
+      expect(cloudOnly?.score).toBe(85);
+      expect(onPremOnly?.score).toBe(85);
+      expect(cloudOnly?.rationale).toContain('not evidence against anything');
+    });
+
+    it('defaults to the same neutral result when the caller passes no estate shape', () => {
+      expect(deployment(['cloud'])?.score).toBe(85);
+    });
+  });
+});
+
 describe('procurement bias shifts the weights', () => {
   it('raises the ops-fit weight for an open-source-first buyer', () => {
     const weights = buildScoringWeights();
@@ -400,5 +491,33 @@ describe('regressions', () => {
     expect(coverage?.score).toBeCloseTo(18.5, 0);
     // The raw-count answer was 26/5026. Anything near that is the bug returning.
     expect(coverage?.score).toBeGreaterThan(5);
+  });
+
+  it('does not treat "no preference" as a demand for a hybrid product', () => {
+    // Was: `deploymentPreference: 'hybrid'` is the wizard's wording for "no
+    // strong preference", but scoring read it as a requirement — so a client
+    // who had expressed no opinion scored every cloud-only and every
+    // on-prem-only product 30 out of 100, marking down precisely the products
+    // that suited their estate best. A stated preference still scores 30.
+    const base = buildProduct({ deploymentModes: ['cloud'] });
+    const cloudOnly: Product = {
+      ...base,
+      supports: { ...base.supports, deviceClasses: ['server', 'workstation'] },
+    };
+    const noPreference = buildInputs({
+      profile: buildClientProfile({ securityStaffFte: 2, deploymentPreference: 'hybrid' }),
+      estateShape: 'saas_centric',
+    });
+    const stated = buildInputs({
+      profile: buildClientProfile({ securityStaffFte: 2, deploymentPreference: 'on_prem' }),
+      estateShape: 'saas_centric',
+    });
+
+    const scoreOf = (inputs: ScoringInputs) =>
+      scoreProduct(cloudOnly, inputs).dimensions.find((d) => d.dimension === 'deployment_fit')
+        ?.score;
+
+    expect(scoreOf(noPreference)).toBe(100);
+    expect(scoreOf(stated)).toBe(30);
   });
 });
