@@ -83,9 +83,9 @@ export function BundleComparison({
       hint="Four ways to answer the same brief. Click a tier to read its detail below. Operable against Recommended is the staffing gap."
     >
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] border-collapse text-[12px]">
+        <table className="w-full min-w-[720px] border-collapse text-sm">
           <thead>
-            <tr className="text-faint text-left text-[10px] tracking-wide uppercase">
+            <tr className="text-faint text-left text-2xs tracking-wide uppercase">
               <th className="py-1.5 pr-3 font-medium">Tier</th>
               <th className="py-1.5 pr-3 text-right font-medium">Year 1</th>
               <th className="py-1.5 pr-3 text-right font-medium">Procurement / yr</th>
@@ -112,14 +112,14 @@ export function BundleComparison({
                   <Link
                     href={`/scenarios/${scenarioId}/results?bundle=${bundle.kind}`}
                     className={cn(
-                      'text-[13px] font-medium',
+                      'text-base font-medium',
                       bundle.kind === selectedKind ? 'text-accent' : 'text-ink hover:text-accent',
                     )}
                   >
                     {label[bundle.kind]}
                   </Link>
-                  <p className="text-faint text-[11px] leading-snug">{hint[bundle.kind]}</p>
-                  <p className="text-faint text-[11px]">
+                  <p className="text-faint text-xs leading-snug">{hint[bundle.kind]}</p>
+                  <p className="text-faint text-xs">
                     {bundle.selections.length} product
                     {bundle.selections.length === 1 ? '' : 's'}
                   </p>
@@ -130,38 +130,38 @@ export function BundleComparison({
                 <td className="tabular py-2 pr-3 text-right align-top">
                   {formatMoney(bundle.annualSpend)}
                   {!bundle.withinAnnualCap && (
-                    <span className="text-bad block text-[10px]">over cap</span>
+                    <span className="text-bad block text-2xs">over cap</span>
                   )}
                 </td>
                 <td className="tabular py-2 pr-3 text-right align-top">
                   {formatMoney(bundle.annualRecurring)}
-                  <span className="text-faint block text-[10px]">incl. people</span>
+                  <span className="text-faint block text-2xs">incl. people</span>
                 </td>
                 <td className="tabular py-2 pr-3 text-right align-top">{formatMoney(bundle.tco)}</td>
                 <td className="tabular py-2 pr-3 text-right align-top">
                   {formatNumber(bundle.totalOpsFte, 2)}
-                  <span className="text-faint block text-[10px]">FTE</span>
+                  <span className="text-faint block text-2xs">FTE</span>
                 </td>
                 <td className="tabular py-2 pr-3 text-right align-top">
                   {coverage.coveragePercent === null ? '—' : `${coverage.coveragePercent}%`}
                   {/* A percentage that excludes the partials has to name them, or
                       "0%" reads as "this stack does nothing for you". */}
                   {coverage.partialControls > 0 && (
-                    <span className="text-warn block text-[10px]">
+                    <span className="text-warn block text-2xs">
                       +{coverage.partialControls} partial
                     </span>
                   )}
                 </td>
                 <td className="tabular py-2 pr-3 text-right align-top">
                   {formatMoney(bundle.mssp.totalAnnual)}
-                  <span className="text-faint block text-[10px]">{bundle.mssp.serviceLevel}</span>
+                  <span className="text-faint block text-2xs">{bundle.mssp.serviceLevel}</span>
                 </td>
                 <td className="py-2 align-top">
                   <Badge tone={CONFIDENCE_TONE[worstConfidence]}>
                     {worstConfidence.replace(/_/g, ' ')}
                   </Badge>
                   {needsRecheck && (
-                    <span className="text-warn mt-0.5 block text-[10px]">due a re-check</span>
+                    <span className="text-warn mt-0.5 block text-2xs">due a re-check</span>
                   )}
                 </td>
               </tr>
@@ -170,7 +170,7 @@ export function BundleComparison({
         </table>
       </div>
 
-      <ul className="text-faint mt-3 flex flex-col gap-1 text-[11px] leading-snug">
+      <ul className="text-faint mt-3 flex flex-col gap-1 text-xs leading-snug">
         <li>
           — Procurement is licence, support and infrastructure. All-in adds the operational FTE,
           and so does the TCO: hard rule 8, and the reason an open-source stack is never free

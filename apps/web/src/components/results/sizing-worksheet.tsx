@@ -120,7 +120,7 @@ export function SizingWorksheet({
         ) : (
           <Badge>committed defaults</Badge>
         )}
-        <span className="text-faint text-[11px]">
+        <span className="text-faint text-xs">
           {state === 'saving' ? 'saving…' : state === 'saved' ? 'saved' : ''}
           {state === 'error' && <span className="text-bad">not saved — {problem}</span>}
         </span>
@@ -155,7 +155,7 @@ export function SizingWorksheet({
 
       <div className="border-line mt-4 grid gap-3 border-t pt-3 sm:grid-cols-4">
         <label className="flex flex-col gap-1">
-          <span className="text-muted text-[11px] tracking-wide uppercase">Bytes per event</span>
+          <span className="text-muted text-xs tracking-wide uppercase">Bytes per event</span>
           <NumberInput
             min={1}
             value={draft.averageEventBytes ?? ''}
@@ -164,7 +164,7 @@ export function SizingWorksheet({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-muted text-[11px] tracking-wide uppercase">Peak factor</span>
+          <span className="text-muted text-xs tracking-wide uppercase">Peak factor</span>
           <NumberInput
             min={1}
             step={0.1}
@@ -174,7 +174,7 @@ export function SizingWorksheet({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-muted text-[11px] tracking-wide uppercase">Compression</span>
+          <span className="text-muted text-xs tracking-wide uppercase">Compression</span>
           <NumberInput
             min={0}
             max={0.95}
@@ -185,7 +185,7 @@ export function SizingWorksheet({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-muted text-[11px] tracking-wide uppercase">Retention (days)</span>
+          <span className="text-muted text-xs tracking-wide uppercase">Retention (days)</span>
           <NumberInput
             min={1}
             value={draft.retentionDays ?? ''}
@@ -194,16 +194,16 @@ export function SizingWorksheet({
           />
         </label>
       </div>
-      <p className="text-faint mt-1 text-[11px] leading-snug">
+      <p className="text-faint mt-1 text-xs leading-snug">
         Blank means the committed default. Retention sets the floor only — a selected framework can
         still lengthen it, and never shortens it.
       </p>
 
       {sizing.perAssetClass.length > 0 && (
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-[12px]">
+          <table className="w-full min-w-[720px] border-collapse text-sm">
             <thead>
-              <tr className="text-faint text-left text-[10px] tracking-wide uppercase">
+              <tr className="text-faint text-left text-2xs tracking-wide uppercase">
                 <th className="py-1.5 pr-3 font-medium">Asset class</th>
                 <th className="py-1.5 pr-3 text-right font-medium">Count</th>
                 <th className="py-1.5 pr-3 text-right font-medium">EPS each</th>
@@ -236,7 +236,7 @@ export function SizingWorksheet({
                     <td className="tabular py-1.5 pr-3 text-right">
                       {formatNumber(share(row.eventsPerSecond), 1)}%
                     </td>
-                    <td className="text-faint py-1.5 text-[11px] leading-snug">
+                    <td className="text-faint py-1.5 text-xs leading-snug">
                       {assumptions.assetClasses[row.assetClass].basis}
                     </td>
                   </tr>
@@ -247,7 +247,7 @@ export function SizingWorksheet({
         </div>
       )}
 
-      <ul className="text-faint mt-3 flex flex-col gap-1 text-[11px] leading-snug">
+      <ul className="text-faint mt-3 flex flex-col gap-1 text-xs leading-snug">
         {sizing.rationale.map((line) => (
           <li key={line}>— {line}</li>
         ))}

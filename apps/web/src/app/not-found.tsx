@@ -11,12 +11,12 @@ import Link from 'next/link';
 export default function NotFound() {
   return (
     <main className="mx-auto w-full max-w-[700px] px-5 py-10">
-      <h1 className="text-ink text-[15px] font-semibold tracking-tight">Not found</h1>
-      <p className="text-muted mt-2 text-[12px] leading-snug">
+      <h1 className="text-ink text-lg font-semibold tracking-tight">Not found</h1>
+      <p className="text-muted mt-2 text-sm leading-snug">
         There is no page here. If you followed a link to a scoping session, it has probably been
         deleted since the link was made.
       </p>
-      <Link href="/" className="text-accent mt-4 inline-block text-[12px]">
+      <Link href="/" className="text-accent mt-4 inline-block text-sm">
         ← back to sessions
       </Link>
     </main>

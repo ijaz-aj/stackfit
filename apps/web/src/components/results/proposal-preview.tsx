@@ -20,11 +20,11 @@ import { renderCell } from '@/lib/proposal.server';
 function Block({ block }: { block: ProposalBlock }) {
   switch (block.kind) {
     case 'paragraph':
-      return <p className="mt-2 text-[12px] leading-relaxed text-neutral-700">{block.text}</p>;
+      return <p className="mt-2 text-sm leading-relaxed text-neutral-700">{block.text}</p>;
 
     case 'bullets':
       return (
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-[12px] leading-relaxed text-neutral-700">
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-neutral-700">
           {block.items.map((item) => (
             <li key={item}>{item}</li>
           ))}
@@ -34,7 +34,7 @@ function Block({ block }: { block: ProposalBlock }) {
     case 'callout':
       return (
         <p
-          className={`mt-3 rounded border-l-2 px-3 py-2 text-[11px] leading-relaxed ${
+          className={`mt-3 rounded border-l-2 px-3 py-2 text-xs leading-relaxed ${
             block.tone === 'warning'
               ? 'border-amber-600 bg-amber-50 text-amber-900'
               : 'border-neutral-400 bg-neutral-50 text-neutral-700'
@@ -47,9 +47,9 @@ function Block({ block }: { block: ProposalBlock }) {
     case 'table':
       return (
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[520px] border-collapse text-[11px]">
+          <table className="w-full min-w-[520px] border-collapse text-xs">
             <thead>
-              <tr className="border-b border-neutral-300 text-left text-[10px] tracking-wide text-neutral-500 uppercase">
+              <tr className="border-b border-neutral-300 text-left text-2xs tracking-wide text-neutral-500 uppercase">
                 {block.columns.map((column) => (
                   <th
                     key={column.heading}
@@ -101,7 +101,7 @@ export function ProposalPreview({ document }: { document: ProposalDocument }) {
     <article className="mx-auto w-full max-w-[820px] bg-white px-10 py-9 text-neutral-900 shadow-sm print:shadow-none">
       <header className="border-b border-neutral-300 pb-4">
         <h1 className="text-[20px] font-semibold tracking-tight">{document.title}</h1>
-        <p className="mt-1 text-[13px] text-neutral-600">
+        <p className="mt-1 text-base text-neutral-600">
           Prepared for {document.preparedFor} · {document.asOf}
         </p>
       </header>

@@ -13,11 +13,11 @@ function BundleColumn({ bundle, label, hint }: { bundle: BundleSummary; label: s
   return (
     <div className="border-line flex flex-col gap-2 rounded border p-3">
       <header>
-        <h3 className="text-ink text-[13px] font-semibold">{label}</h3>
-        <p className="text-faint text-[11px] leading-snug">{hint}</p>
+        <h3 className="text-ink text-base font-semibold">{label}</h3>
+        <p className="text-faint text-xs leading-snug">{hint}</p>
       </header>
 
-      <dl className="flex flex-col gap-1 text-[12px]">
+      <dl className="flex flex-col gap-1 text-sm">
         <div className="flex justify-between gap-2">
           <dt className="text-muted">Procurement / yr</dt>
           <dd className="tabular text-ink">{formatMoney(bundle.annualSpend)}</dd>
@@ -42,7 +42,7 @@ function BundleColumn({ bundle, label, hint }: { bundle: BundleSummary; label: s
 
       <ul className="flex flex-col gap-1">
         {bundle.selections.map((selection) => (
-          <li key={selection.productId} className="text-muted flex items-baseline gap-1.5 text-[11px]">
+          <li key={selection.productId} className="text-muted flex items-baseline gap-1.5 text-xs">
             <span className="text-faint w-24 shrink-0 truncate">
               {CATEGORY_LABELS[selection.category] ?? selection.category}
             </span>
@@ -51,7 +51,7 @@ function BundleColumn({ bundle, label, hint }: { bundle: BundleSummary; label: s
           </li>
         ))}
         {bundle.selections.length === 0 && (
-          <li className="text-faint text-[11px]">Nothing selected.</li>
+          <li className="text-faint text-xs">Nothing selected.</li>
         )}
       </ul>
 
@@ -87,23 +87,23 @@ export function StepReview({
     <div className="flex flex-col gap-4">
       <Card title="Sizing worksheet" hint="Every downstream number starts here.">
         {sizing === null ? (
-          <p className="text-faint text-[12px]">Nothing captured yet.</p>
+          <p className="text-faint text-sm">Nothing captured yet.</p>
         ) : (
           <>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="text-[12px]">
+              <div className="text-sm">
                 <span className="text-muted">Ingest</span>
                 <p className="tabular text-ink">
                   {formatNumber(sizing.epsTotal)} EPS · {formatNumber(sizing.gbPerDay, 1)} GB/day
                 </p>
               </div>
-              <div className="text-[12px]">
+              <div className="text-sm">
                 <span className="text-muted">Storage</span>
                 <p className="tabular text-ink">
                   {formatNumber(sizing.storageTb, 2)} TB at {sizing.retentionDays}d
                 </p>
               </div>
-              <div className="text-[12px]">
+              <div className="text-sm">
                 <span className="text-muted">Scale</span>
                 <p className="tabular text-ink">
                   {sizing.scaleClass} · {formatNumber(sizing.monitoredAssetCount)} monitored
@@ -111,7 +111,7 @@ export function StepReview({
               </div>
             </div>
 
-            <ul className="text-faint mt-3 flex flex-col gap-1 text-[11px] leading-snug">
+            <ul className="text-faint mt-3 flex flex-col gap-1 text-xs leading-snug">
               {sizing.rationale.map((line) => (
                 <li key={line}>— {line}</li>
               ))}
@@ -148,7 +148,7 @@ export function StepReview({
           {(estimate.scopeQuestions.length > 0 || estimate.ruledOutCategories.length > 0) && (
             <Card title="Scope questions">
               {estimate.scopeQuestions.length > 0 && (
-                <p className="text-warn mb-2 text-[12px] leading-snug">
+                <p className="text-warn mb-2 text-sm leading-snug">
                   {profile.compliance.join(', ')} expects{' '}
                   {estimate.scopeQuestions
                     .map((category) => CATEGORY_LABELS[category] ?? category)
@@ -158,7 +158,7 @@ export function StepReview({
                 </p>
               )}
               {estimate.ruledOutCategories.length > 0 && (
-                <p className="text-faint text-[11px] leading-snug">
+                <p className="text-faint text-xs leading-snug">
                   Ruled out for this estate:{' '}
                   {estimate.ruledOutCategories
                     .map((category) => CATEGORY_LABELS[category] ?? category)
@@ -172,7 +172,7 @@ export function StepReview({
       )}
 
       <Card title="Next">
-        <p className="text-muted text-[12px] leading-snug">
+        <p className="text-muted text-sm leading-snug">
           The intake is saved as you type. <strong>Results</strong> opens the full dashboard —
           per-category cards, cost breakdown, coverage matrix, gap analysis, the sizing worksheet
           and the assumptions panel — off the same engine run as the figures above.

@@ -24,7 +24,7 @@ function AssetRow({ assetClass }: { assetClass: AssetClass }) {
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_110px] items-center gap-2">
-      <label htmlFor={assetClass} className="text-ink text-[13px]">
+      <label htmlFor={assetClass} className="text-ink text-base">
         {ASSET_LABELS[assetClass]}
       </label>
       <NumberInput
@@ -42,7 +42,7 @@ function AssetRow({ assetClass }: { assetClass: AssetClass }) {
         <div className="col-span-2 -mt-1 flex flex-wrap items-center gap-2 pl-3">
           <Select
             aria-label={`${ASSET_LABELS[assetClass]} criticality`}
-            className="h-6 w-auto py-0 text-[11px]"
+            className="h-6 w-auto py-0 text-xs"
             value={line.criticality ?? ''}
             options={[
               { value: '', label: 'criticality —' },
@@ -57,7 +57,7 @@ function AssetRow({ assetClass }: { assetClass: AssetClass }) {
               })
             }
           />
-          <label className="text-faint flex items-center gap-1.5 text-[11px]">
+          <label className="text-faint flex items-center gap-1.5 text-xs">
             <input
               type="checkbox"
               className="accent-accent h-3 w-3"
@@ -92,7 +92,7 @@ export function StepEstate() {
       >
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Badge tone={lineCount === 0 ? 'warn' : 'accent'}>{lineCount} classes captured</Badge>
-          <span className="text-faint text-[11px]">
+          <span className="text-faint text-xs">
             Criticality and internet-facing are captured for the proposal. Today&apos;s engine sizes
             on counts alone, so they change the write-up rather than the recommendation.
           </span>
@@ -102,11 +102,11 @@ export function StepEstate() {
           {ASSET_GROUPS.map((group) => (
             <section key={group.title} className="flex flex-col gap-2">
               <header>
-                <h3 className="text-muted text-[11px] font-semibold tracking-wide uppercase">
+                <h3 className="text-muted text-xs font-semibold tracking-wide uppercase">
                   {group.title}
                 </h3>
                 {group.hint !== '' && (
-                  <p className="text-faint mt-0.5 text-[11px] leading-snug">{group.hint}</p>
+                  <p className="text-faint mt-0.5 text-xs leading-snug">{group.hint}</p>
                 )}
               </header>
               <div className="flex flex-col gap-1.5">

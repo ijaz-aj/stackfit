@@ -68,7 +68,7 @@ function MoneyTooltip({
   const total = payload.reduce((sum, entry) => sum + (entry.value ?? 0), 0);
 
   return (
-    <div className="border-line bg-panel-raised rounded border px-2.5 py-2 text-[11px] shadow-lg">
+    <div className="border-line bg-panel-raised rounded border px-2.5 py-2 text-xs shadow-lg">
       <p className="text-ink mb-1 font-medium">{label}</p>
       {payload.map((entry) => (
         <p key={entry.name} className="text-muted flex items-center gap-1.5">

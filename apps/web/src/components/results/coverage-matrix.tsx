@@ -38,7 +38,7 @@ function ControlCell({ control }: { control: ControlCoverage }) {
   return (
     <li
       className={cn(
-        'flex items-center gap-1.5 rounded border px-1.5 py-1 text-[11px]',
+        'flex items-center gap-1.5 rounded border px-1.5 py-1 text-xs',
         cell.tone,
       )}
       title={`${control.localId} ${control.title}: ${cell.label}${covered}`}
@@ -68,7 +68,7 @@ function FrameworkBlock({ framework }: { framework: FrameworkCoverage }) {
   return (
     <section className="flex flex-col gap-2">
       <header className="flex flex-wrap items-baseline gap-2">
-        <h3 className="text-ink text-[13px] font-semibold">
+        <h3 className="text-ink text-base font-semibold">
           {framework.name} <span className="text-faint font-normal">{framework.version}</span>
         </h3>
         {framework.inScope ? (
@@ -79,7 +79,7 @@ function FrameworkBlock({ framework }: { framework: FrameworkCoverage }) {
         <Badge tone={framework.sourceQuality === 'publisher_verified' ? 'good' : 'warn'}>
           {framework.sourceQuality.replace(/_/g, ' ')}
         </Badge>
-        <span className="tabular text-muted text-[12px]">
+        <span className="tabular text-muted text-sm">
           {framework.coveredControls}/{framework.addressableControls} buyable controls covered
           {framework.coveragePercent === null ? '' : ` · ${framework.coveragePercent}%`}
         </span>
@@ -88,7 +88,7 @@ function FrameworkBlock({ framework }: { framework: FrameworkCoverage }) {
       {groups.map((group) => (
         <div key={group.key} className="flex flex-col gap-1">
           {group.title !== '' && (
-            <h4 className="text-faint text-[10px] tracking-wide uppercase">{group.title}</h4>
+            <h4 className="text-faint text-2xs tracking-wide uppercase">{group.title}</h4>
           )}
           <ul className="grid gap-1 md:grid-cols-2 xl:grid-cols-3">
             {group.controls.map((control) => (
@@ -98,7 +98,7 @@ function FrameworkBlock({ framework }: { framework: FrameworkCoverage }) {
         </div>
       ))}
 
-      <ul className="text-faint flex flex-col gap-1 text-[11px] leading-snug">
+      <ul className="text-faint flex flex-col gap-1 text-xs leading-snug">
         {framework.rationale.map((line) => (
           <li key={line}>— {line}</li>
         ))}
@@ -119,19 +119,19 @@ export function CoverageMatrix({ coverage }: { coverage: CoverageResult }) {
     >
       {/* Verbatim, and first. This is the number most likely to be misread,
           and an export is where the reader stops seeing the qualifications. */}
-      <p className="border-warn/40 bg-warn/10 text-warn mb-3 rounded border px-2.5 py-2 text-[11px] leading-snug">
+      <p className="border-warn/40 bg-warn/10 text-warn mb-3 rounded border px-2.5 py-2 text-xs leading-snug">
         {coverageDisclaimer()}
       </p>
       <div className="mb-3 flex flex-wrap gap-2">
         {Object.entries(CELL).map(([status, cell]) => (
           <span
             key={status}
-            className={cn('rounded border px-1.5 py-0.5 text-[10px]', cell.tone)}
+            className={cn('rounded border px-1.5 py-0.5 text-2xs', cell.tone)}
           >
             {cell.mark} {cell.label}
           </span>
         ))}
-        <span className="text-faint px-1 py-0.5 text-[10px]">! mandatory</span>
+        <span className="text-faint px-1 py-0.5 text-2xs">! mandatory</span>
       </div>
 
       <div className="flex flex-col gap-5">

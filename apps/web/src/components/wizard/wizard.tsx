@@ -140,10 +140,10 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
     <main className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-5 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex items-baseline gap-3">
-          <Link href="/" className="text-faint hover:text-ink text-[12px]">
+          <Link href="/" className="text-faint hover:text-ink text-sm">
             ← scenarios
           </Link>
-          <h1 className="text-ink text-[15px] font-semibold tracking-tight">
+          <h1 className="text-ink text-lg font-semibold tracking-tight">
             {profile.orgName === '' ? 'Untitled' : profile.orgName}
           </h1>
         </div>
@@ -151,7 +151,7 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
           <SaveIndicator state={saveState} problem={saveProblem} />
           <Link
             href={`/scenarios/${scenarioId}/results`}
-            className="border-accent/60 bg-accent/10 text-accent hover:bg-accent/20 rounded border px-3 py-1.5 text-[13px] transition-colors"
+            className="border-accent/60 bg-accent/10 text-accent hover:bg-accent/20 rounded border px-3 py-1.5 text-base transition-colors"
           >
             Results →
           </Link>
@@ -172,11 +172,11 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
                   : 'border-line text-muted hover:border-line-strong hover:text-ink',
               )}
             >
-              <span className="block text-[12px] font-medium">
+              <span className="block text-sm font-medium">
                 <span className="text-faint tabular mr-1.5">{index + 1}</span>
                 {entry.title}
               </span>
-              <span className="text-faint hidden text-[10px] lg:block">{entry.hint}</span>
+              <span className="text-faint hidden text-2xs lg:block">{entry.hint}</span>
             </button>
           ))}
         </nav>
@@ -193,7 +193,7 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
             <Button variant="ghost" disabled={step === 0} onClick={() => setStep(Math.max(0, step - 1))}>
               ← Back
             </Button>
-            <span className="text-faint hidden text-[11px] sm:block">
+            <span className="text-faint hidden text-xs sm:block">
               Every step is optional — skip what did not come up.
             </span>
             <Button
@@ -209,7 +209,7 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
         <div className="lg:sticky lg:top-16 lg:self-start">
           <LiveReadout sizing={sizing} estimate={estimate} estimating={estimating} />
           {estimateProblem !== null && (
-            <p className="text-bad mt-2 text-[11px] leading-snug">
+            <p className="text-bad mt-2 text-xs leading-snug">
               Estimate failed: {estimateProblem}
             </p>
           )}
@@ -221,10 +221,10 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
 
 function SaveIndicator({ state, problem }: { state: SaveState; problem: string | null }) {
   if (state === 'error') {
-    return <span className="text-bad text-[11px]">Not saved — {problem}</span>;
+    return <span className="text-bad text-xs">Not saved — {problem}</span>;
   }
   return (
-    <span className="text-faint text-[11px]">
+    <span className="text-faint text-xs">
       {state === 'saving' ? 'Saving…' : state === 'saved' ? 'Saved' : 'Saves automatically'}
     </span>
   );

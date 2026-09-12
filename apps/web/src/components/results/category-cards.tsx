@@ -35,12 +35,12 @@ import { ASSET_LABELS, CATEGORY_LABELS, DIMENSION_LABELS } from '@/components/wi
 function FitBreakdown({ score }: { score: ProductScore }) {
   return (
     <details className="border-line mt-3 border-t pt-2">
-      <summary className="text-faint cursor-pointer text-[11px] select-none">
+      <summary className="text-faint cursor-pointer text-xs select-none">
         Why this scored {formatNumber(score.score, 1)}
       </summary>
       <ul className="mt-2 flex flex-col gap-1.5">
         {score.dimensions.map((dimension) => (
-          <li key={dimension.dimension} className="text-[11px] leading-snug">
+          <li key={dimension.dimension} className="text-xs leading-snug">
             <div className="flex items-baseline gap-2">
               <span className="text-muted w-32 shrink-0">
                 {DIMENSION_LABELS[dimension.dimension] ?? dimension.dimension}
@@ -65,7 +65,7 @@ function AlternativeRow({ alternative }: { alternative: AlternativeVerdict }) {
   const ruledOut = alternative.kind === 'eliminated';
 
   return (
-    <li className="border-line border-t pt-1.5 text-[11px] leading-snug">
+    <li className="border-line border-t pt-1.5 text-xs leading-snug">
       <div className="flex flex-wrap items-baseline justify-between gap-x-2">
         <span className={ruledOut ? 'text-faint' : 'text-muted'}>
           {alternative.productName}
@@ -102,7 +102,7 @@ function AlternativeRow({ alternative }: { alternative: AlternativeVerdict }) {
 function WhyNotTheOthers({ justification }: { justification: CategoryJustification }) {
   if (justification.alternatives.length === 0) {
     return (
-      <p className="border-line text-faint mt-3 border-t pt-2 text-[11px] leading-snug">
+      <p className="border-line text-faint mt-3 border-t pt-2 text-xs leading-snug">
         {justification.headline}
       </p>
     );
@@ -110,10 +110,10 @@ function WhyNotTheOthers({ justification }: { justification: CategoryJustificati
 
   return (
     <details open className="border-line mt-3 border-t pt-2">
-      <summary className="text-faint cursor-pointer text-[11px] select-none">
+      <summary className="text-faint cursor-pointer text-xs select-none">
         Why not the other {justification.alternatives.length}
       </summary>
-      <p className="text-faint mt-1.5 text-[11px] leading-snug">{justification.headline}</p>
+      <p className="text-faint mt-1.5 text-xs leading-snug">{justification.headline}</p>
       <ul className="mt-1.5 flex flex-col gap-1.5">
         {justification.alternatives.map((alternative) => (
           <AlternativeRow
@@ -172,26 +172,26 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
               </Badge>
             </div>
 
-            <dl className="border-line mt-3 grid grid-cols-2 gap-x-4 gap-y-1 border-y py-2 text-[12px] sm:grid-cols-4">
+            <dl className="border-line mt-3 grid grid-cols-2 gap-x-4 gap-y-1 border-y py-2 text-sm sm:grid-cols-4">
               <div>
-                <dt className="text-faint text-[10px] tracking-wide uppercase">Licence / yr</dt>
+                <dt className="text-faint text-2xs tracking-wide uppercase">Licence / yr</dt>
                 <dd className="tabular text-ink">{formatMoney(cost.licenceAnnual)}</dd>
               </div>
               <div>
-                <dt className="text-faint text-[10px] tracking-wide uppercase">Infra / yr</dt>
+                <dt className="text-faint text-2xs tracking-wide uppercase">Infra / yr</dt>
                 <dd className="tabular text-ink">{formatMoney(cost.infraAnnual)}</dd>
               </div>
               <div>
-                <dt className="text-faint text-[10px] tracking-wide uppercase">People / yr</dt>
+                <dt className="text-faint text-2xs tracking-wide uppercase">People / yr</dt>
                 <dd className="tabular text-ink">
                   {formatMoney(cost.opsFteAnnual)}
-                  <span className="text-faint ml-1 text-[10px]">
+                  <span className="text-faint ml-1 text-2xs">
                     {formatNumber(cost.opsFte, 2)} FTE
                   </span>
                 </dd>
               </div>
               <div>
-                <dt className="text-faint text-[10px] tracking-wide uppercase">
+                <dt className="text-faint text-2xs tracking-wide uppercase">
                   {cost.horizonYears}-yr TCO
                 </dt>
                 <dd className="tabular text-ink">{formatMoney(cost.tco)}</dd>
@@ -199,7 +199,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
             </dl>
 
             {score !== undefined && score.coveredAssets.length > 0 && (
-              <p className="text-muted mt-2 text-[12px] leading-snug">
+              <p className="text-muted mt-2 text-sm leading-snug">
                 Covers{' '}
                 {score.coveredAssets
                   .map(
@@ -224,7 +224,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
               </p>
             )}
 
-            <ul className="text-faint mt-2 flex flex-col gap-1 text-[11px] leading-snug">
+            <ul className="text-faint mt-2 flex flex-col gap-1 text-xs leading-snug">
               {selection.rationale.map((line) => (
                 <li key={line}>— {line}</li>
               ))}
@@ -239,7 +239,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
 
       {bundle.selections.length === 0 && (
         <Card title="Nothing selected">
-          <p className="text-muted text-[12px]">
+          <p className="text-muted text-sm">
             This bundle funds no products. The shortfall and the categories that went unfunded are
             in the gap analysis below.
           </p>

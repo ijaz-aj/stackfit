@@ -38,14 +38,14 @@ export default function RouteError({
 
   return (
     <main className="mx-auto w-full max-w-[700px] px-5 py-10">
-      <h1 className="text-ink text-[15px] font-semibold tracking-tight">Something broke</h1>
-      <p className="text-muted mt-2 text-[12px] leading-snug">
+      <h1 className="text-ink text-lg font-semibold tracking-tight">Something broke</h1>
+      <p className="text-muted mt-2 text-sm leading-snug">
         This page could not be built. Nothing was saved or changed by the attempt — the scoping
         session is intact and the intake it was derived from is untouched.
       </p>
 
       {error.digest !== undefined && (
-        <p className="text-faint mt-3 text-[11px] leading-snug">
+        <p className="text-faint mt-3 text-xs leading-snug">
           Reference <code className="text-muted">{error.digest}</code>. Quote it when reporting
           this; the same string is in the server log against the failure.
         </p>
@@ -55,11 +55,11 @@ export default function RouteError({
         <button
           type="button"
           onClick={reset}
-          className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-[12px]"
+          className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-sm"
         >
           Try again
         </button>
-        <Link href="/" className="text-accent text-[12px]">
+        <Link href="/" className="text-accent text-sm">
           ← back to sessions
         </Link>
       </div>

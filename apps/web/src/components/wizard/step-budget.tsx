@@ -93,7 +93,7 @@ export function StepBudget() {
         </Field>
       </div>
 
-      <p className="text-faint mt-4 text-[11px] leading-snug">
+      <p className="text-faint mt-4 text-xs leading-snug">
         If the budget cannot cover what compliance makes mandatory, the tool says so and reports the
         shortfall. It never quietly recommends a stack that fails the obligation.
       </p>

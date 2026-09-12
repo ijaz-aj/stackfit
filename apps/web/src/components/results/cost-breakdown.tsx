@@ -37,7 +37,7 @@ export function CostBreakdown({ bundle }: { bundle: Bundle }) {
   if (bundle.selections.length === 0) {
     return (
       <Card title="Cost breakdown">
-        <p className="text-muted text-[12px]">Nothing is funded in this bundle, so there is nothing to break down.</p>
+        <p className="text-muted text-sm">Nothing is funded in this bundle, so there is nothing to break down.</p>
       </Card>
     );
   }
@@ -60,9 +60,9 @@ export function CostBreakdown({ bundle }: { bundle: Bundle }) {
 
       <Card title="The same figures, as a table" className="xl:col-span-2">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] border-collapse text-[12px]">
+          <table className="w-full min-w-[560px] border-collapse text-sm">
             <thead>
-              <tr className="text-faint text-left text-[10px] tracking-wide uppercase">
+              <tr className="text-faint text-left text-2xs tracking-wide uppercase">
                 <th className="py-1.5 pr-3 font-medium">Category</th>
                 <th className="py-1.5 pr-3 text-right font-medium">Licence</th>
                 <th className="py-1.5 pr-3 text-right font-medium">Support</th>

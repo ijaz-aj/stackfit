@@ -48,7 +48,7 @@ export function StepCompliance({ frameworks }: { frameworks: readonly FrameworkO
       hint="Tick what the client is actually on the hook for. Each one can make a product category mandatory and can lengthen log retention."
     >
       {suggested.length > 0 && (
-        <p className="text-faint mb-3 text-[11px]">
+        <p className="text-faint mb-3 text-xs">
           Common in {profile.region.toUpperCase()}:{' '}
           {suggested.map((framework) => framework.name).join(', ')}. Suggestions only — the region is
           a hint, never a constraint.
@@ -81,7 +81,7 @@ export function StepCompliance({ frameworks }: { frameworks: readonly FrameworkO
         ))}
       </div>
 
-      <p className="text-faint mt-4 text-[11px] leading-snug">
+      <p className="text-faint mt-4 text-xs leading-snug">
         A framework graded below <em>publisher verified</em> is usable for shortlisting. Reconcile it
         against the published standard before any coverage figure reaches the client.
       </p>

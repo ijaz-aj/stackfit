@@ -7,27 +7,83 @@
  *
  * Tailwind v4 is configured in CSS, so these tokens *are* the config — every
  * name below becomes a utility (`bg-panel`, `text-muted`, `border-line`).
+ *
+ * Contrast is measured, not judged by eye. Every foreground token below clears
+ * WCAG AA (4.5:1) against all three surfaces, and every border a user has to
+ * *aim at* clears 1.4.11's 3:1 for non-text UI. The ratios are in the comments
+ * so the next person to adjust a colour can tell whether they broke it.
  */
 @theme {
+  /* Surfaces, darkest to lightest. */
   --color-ground: #0a0e13;
   --color-panel: #111820;
   --color-panel-raised: #17202b;
+
+  /*
+   * Two border weights, and the distinction is not decorative.
+   *
+   * `line` separates things — card edges, table rules. WCAG exempts purely
+   * decorative boundaries, so it stays quiet at 1.33:1 and the interface keeps
+   * its density.
+   *
+   * `line-control` outlines something you click or type into. That is a UI
+   * component under 1.4.11 and needs 3:1, which the old #33475c missed at
+   * 1.87:1 — inputs and selects were, measurably, edges you had to already know
+   * were there. 3.50:1 on ground, 3.23:1 on panel.
+   */
   --color-line: #22303f;
   --color-line-strong: #33475c;
+  --color-line-control: #4d6b8c;
 
-  --color-ink: #e7eef6;
-  --color-muted: #93a4b8;
-  --color-faint: #64748b;
+  /* Text. Ratios are the worst case, against panel-raised. */
+  --color-ink: #e7eef6; /* 14.05:1 */
+  --color-muted: #93a4b8; /* 6.45:1 */
+  --color-faint: #7b8a9e; /* 4.67:1 — was #64748b at 3.45:1, which failed AA
+                             at the 10 and 11px sizes it is used at. */
 
-  --color-accent: #58a6ff;
+  --color-accent: #58a6ff; /* 6.51:1 */
   --color-accent-dim: #1f4d80;
-  --color-good: #3fb950;
-  --color-warn: #d29922;
-  --color-bad: #f85149;
+  --color-good: #3fb950; /* 6.47:1 */
+  --color-warn: #d29922; /* 6.51:1 */
+  --color-bad: #f85149; /* 4.90:1 */
+
+  /*
+   * The type scale, named.
+   *
+   * These were arbitrary values — `text-[10px]`, `text-[11px]`, `text-[13px]` —
+   * scattered across thirty files, which is five sizes with no relationship to
+   * each other and nowhere to change them. Same rendered sizes, now a scale:
+   * one place to tune, and a name that says what a size is *for*.
+   *
+   * Line heights travel with each size. Dense tabular data wants tighter
+   * leading than a paragraph of rationale, and pairing them here stops every
+   * call site guessing.
+   */
+  --text-2xs: 10px; /* micro labels: badges, stat captions, axis ticks */
+  --text-2xs--line-height: 1.4;
+  --text-xs: 11px; /* hints, secondary detail, table sub-text */
+  --text-xs--line-height: 1.45;
+  --text-sm: 12px; /* table body, rationale — the workhorse */
+  --text-sm--line-height: 1.5;
+  --text-base: 13px; /* controls, buttons, primary body */
+  --text-base--line-height: 1.5;
+  --text-lg: 15px; /* card and page headings, headline figures */
+  --text-lg--line-height: 1.3;
+  --text-xl: 19px; /* the one number a card exists to show */
+  --text-xl--line-height: 1.2;
 
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, Consolas, monospace;
+
+  /*
+   * One motion vocabulary. Durations short enough to feel like response rather
+   * than animation — past about 200ms a hover state stops feeling attached to
+   * the pointer.
+   */
+  --ease-out-quick: cubic-bezier(0.2, 0, 0, 1);
+  --duration-instant: 90ms;
+  --duration-quick: 140ms;
 }
 
 html {
@@ -40,19 +96,77 @@ body {
   font-family: var(--font-sans);
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 /* Numbers in a table have to line up, everywhere, without thinking about it. */
 .tabular {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  /* Stops a column of figures reflowing by a pixel as digits change during
+     an autosave or a live re-estimate. */
+  font-feature-settings: 'tnum' 1;
 }
 
-/* One focus ring for the whole app, visible against the dark ground. */
-:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+/*
+ * One focus ring for the whole app.
+ *
+ * `outline-offset` is positive so the ring sits outside the element rather than
+ * on its border, which keeps it visible on a control that also changes border
+ * colour on focus. The radius matches the 4px the components actually use —
+ * the old 2px left a visibly squarer ring around a rounder control.
+ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--color-accent);
-  outline-offset: 1px;
-  border-radius: 2px;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* A pointer-only affordance is not an affordance. Anything clickable says so. */
+:where(button, summary, [role='button']):not(:disabled) {
+  cursor: pointer;
+}
+
+/*
+ * Skip link: the first thing in the tab order, invisible until focused.
+ *
+ * The results page is thirty-odd interactive elements deep. Without this a
+ * keyboard user tabs through the entire header and every card on every
+ * navigation to reach the content they came for.
+ */
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  background: var(--color-panel-raised);
+  color: var(--color-ink);
+  border: 1px solid var(--color-line-control);
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  font-size: var(--text-base);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+/*
+ * Respect the OS setting. Someone who gets motion sickness from a transition
+ * has told their computer so, and a working tool is the last place to argue.
+ *
+ * Not `animation: none` — that can strand a component mid-animation. Reducing
+ * to ~0 lets every animation still complete and fire its end events.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 ::-webkit-scrollbar {
@@ -63,14 +177,63 @@ body {
   background: var(--color-ground);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-line);
+  background: var(--color-line-strong);
   border-radius: 5px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-line-strong);
+  background: var(--color-line-control);
 }
 
 /* Firefox has no ::-webkit-scrollbar; this is the standard property. */
 * {
-  scrollbar-color: var(--color-line) var(--color-ground);
+  scrollbar-color: var(--color-line-strong) var(--color-ground);
+}
+
+/*
+ * Skeletons for the loading states.
+ *
+ * A sweep rather than a pulse: a pulse reads as "broken/retrying", a sweep in
+ * the reading direction reads as "arriving". Slow enough not to draw the eye
+ * away from content that has already landed.
+ */
+@keyframes skeleton-sweep {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-panel) 0%,
+    var(--color-panel-raised) 40%,
+    var(--color-panel-raised) 60%,
+    var(--color-panel) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.6s var(--ease-out-quick) infinite;
+  border-radius: 3px;
+}
+
+/*
+ * The select chevron.
+ *
+ * `appearance-none` strips the native arrow so the control can take this app's
+ * border and background; without something drawn back, a dropdown is visually
+ * identical to a text input and nothing says it opens.
+ *
+ * Here rather than as a Tailwind arbitrary value for two concrete reasons: a
+ * data URL contains spaces, which split a class attribute into fragments, and
+ * tailwind-merge treats `bg-[url(...)]` as conflicting with `bg-ground` and
+ * drops the background colour. Both happened.
+ */
+.select-chevron {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%2393a4b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 12px 12px;
+  padding-right: 2rem;
 }

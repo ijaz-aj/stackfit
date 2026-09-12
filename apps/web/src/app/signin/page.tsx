@@ -22,15 +22,15 @@ export default async function SignInPage({
 
   return (
     <main className="mx-auto w-full max-w-[420px] px-5 py-16">
-      <h1 className="text-ink text-[15px] font-semibold tracking-tight">Sign in</h1>
-      <p className="text-muted mt-2 text-[12px] leading-snug">
+      <h1 className="text-ink text-lg font-semibold tracking-tight">Sign in</h1>
+      <p className="text-muted mt-2 text-sm leading-snug">
         StackFit holds prospective clients&rsquo; asset inventories, so access is limited to named
         analysts.
       </p>
 
       {error !== undefined && (
         <div className="border-bad/40 bg-bad/10 mt-4 rounded border px-3 py-2">
-          <p className="text-bad text-[12px] leading-snug">
+          <p className="text-bad text-sm leading-snug">
             {error === 'AccessDenied'
               ? 'That account signed in successfully but is not on the access list. Ask whoever ' +
                 'administers this instance to add your address.'

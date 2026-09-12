@@ -38,14 +38,14 @@ export function LiveReadout({
   return (
     <aside className="border-line bg-panel flex flex-col gap-4 rounded border p-4">
       <header className="flex items-center justify-between">
-        <h2 className="text-ink text-[13px] font-semibold tracking-tight">Live estimate</h2>
-        {estimating && <span className="text-faint text-[10px]">updating…</span>}
+        <h2 className="text-ink text-base font-semibold tracking-tight">Live estimate</h2>
+        {estimating && <span className="text-faint text-2xs">updating…</span>}
       </header>
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-faint text-[10px] tracking-wide uppercase">Ingest</h3>
+        <h3 className="text-faint text-2xs tracking-wide uppercase">Ingest</h3>
         {sizing === null ? (
-          <p className="text-faint text-[11px]">Enter an estate to size it.</p>
+          <p className="text-faint text-xs">Enter an estate to size it.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             <Stat label="Events/sec" value={formatNumber(sizing.epsTotal)} tone="accent" />
@@ -68,17 +68,17 @@ export function LiveReadout({
       </section>
 
       <section className="border-line flex flex-col gap-3 border-t pt-4">
-        <h3 className="text-faint text-[10px] tracking-wide uppercase">
+        <h3 className="text-faint text-2xs tracking-wide uppercase">
           Indicative spend — recommended
         </h3>
         {sizing !== null && sizing.monitoredAssetCount === 0 && (
-          <p className="text-warn text-[11px] leading-snug">
+          <p className="text-warn text-xs leading-snug">
             No estate captured yet. Nothing is licensed, so the figures below are the floor cost of
             owning these tools — minimum infrastructure and the people to run them — not a quote.
           </p>
         )}
         {estimate === null ? (
-          <p className="text-faint text-[11px]">
+          <p className="text-faint text-xs">
             {estimating ? 'Running the engine…' : 'No estimate yet.'}
           </p>
         ) : (
@@ -111,7 +111,7 @@ export function LiveReadout({
                 {estimate.recommended.selections.map((selection) => (
                   <li
                     key={selection.productId}
-                    className="text-muted flex items-baseline justify-between gap-2 text-[11px]"
+                    className="text-muted flex items-baseline justify-between gap-2 text-xs"
                   >
                     <span className="truncate">{selection.productName}</span>
                     <span className="tabular text-faint shrink-0">
@@ -126,7 +126,7 @@ export function LiveReadout({
                 bundle *underspends* because it could not buy compliance, so the
                 cap is comfortably met and the warning never appeared. */}
             {estimate.recommended.annualShortfall !== null && (
-              <p className="text-warn text-[11px] leading-snug">
+              <p className="text-warn text-xs leading-snug">
                 Shortfall of {formatMoney(estimate.recommended.annualShortfall)}/yr against the cap.
                 {estimate.recommended.minimumViableAnnual !== null && (
                   <> Minimum viable: {formatMoney(estimate.recommended.minimumViableAnnual)}/yr.</>
@@ -135,14 +135,14 @@ export function LiveReadout({
             )}
 
             {estimate.recommended.oneTimeShortfall !== null && (
-              <p className="text-warn text-[11px] leading-snug">
+              <p className="text-warn text-xs leading-snug">
                 Setup shortfall of {formatMoney(estimate.recommended.oneTimeShortfall)} against the
                 one-time cap. Implementation is a separate budget.
               </p>
             )}
 
             {estimate.recommended.unfundedMandatory.length > 0 && (
-              <p className="text-bad text-[11px] leading-snug">
+              <p className="text-bad text-xs leading-snug">
                 Unfunded mandatory: {estimate.recommended.unfundedMandatory.join(', ')}
                 {blockedByOneTimeCap(estimate.recommended.unfundedReasons) && (
                   <> — stopped by the one-time budget, not the annual one.</>
@@ -165,8 +165,8 @@ export function LiveReadout({
 
       {estimate !== null && estimate.warnings.length > 0 && (
         <section className="border-line flex flex-col gap-1.5 border-t pt-4">
-          <h3 className="text-warn text-[10px] tracking-wide uppercase">Before this ships</h3>
-          <ul className="text-muted flex flex-col gap-1 text-[11px] leading-snug">
+          <h3 className="text-warn text-2xs tracking-wide uppercase">Before this ships</h3>
+          <ul className="text-muted flex flex-col gap-1 text-xs leading-snug">
             {estimate.warnings.map((warning) => (
               <li key={warning}>— {warning}</li>
             ))}

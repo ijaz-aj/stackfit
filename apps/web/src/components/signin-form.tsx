@@ -16,14 +16,14 @@ export function SignInForm() {
       <button
         type="button"
         onClick={() => void signIn('google', { callbackUrl: '/' })}
-        className="border-line text-ink hover:bg-panel-raised rounded border px-3 py-2 text-[12px]"
+        className="border-line text-ink hover:bg-panel-raised rounded border px-3 py-2 text-sm"
       >
         Continue with Google
       </button>
       <button
         type="button"
         onClick={() => void signIn('github', { callbackUrl: '/' })}
-        className="border-line text-ink hover:bg-panel-raised rounded border px-3 py-2 text-[12px]"
+        className="border-line text-ink hover:bg-panel-raised rounded border px-3 py-2 text-sm"
       >
         Continue with GitHub
       </button>

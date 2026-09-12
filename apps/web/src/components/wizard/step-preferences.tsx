@@ -125,7 +125,7 @@ export function StepPreferences({ products }: { products: readonly ProductOption
         hint="What they already own and will keep, and what they have already ruled out."
       >
         {products.length === 0 ? (
-          <p className="text-faint text-[12px]">The catalog is empty.</p>
+          <p className="text-faint text-sm">The catalog is empty.</p>
         ) : (
           <div className="grid gap-2 sm:grid-cols-2">
             {products.map((product) => {
@@ -134,11 +134,11 @@ export function StepPreferences({ products }: { products: readonly ProductOption
               return (
                 <div key={product.id} className="border-line rounded border px-3 py-2">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-ink text-[13px]">{product.name}</span>
+                    <span className="text-ink text-base">{product.name}</span>
                     <Badge>{CATEGORY_LABELS[product.category] ?? product.category}</Badge>
                   </div>
                   <div className="mt-1.5 flex gap-4">
-                    <label className="text-muted flex items-center gap-1.5 text-[11px]">
+                    <label className="text-muted flex items-center gap-1.5 text-xs">
                       <input
                         type="checkbox"
                         className="accent-accent h-3 w-3"
@@ -158,7 +158,7 @@ export function StepPreferences({ products }: { products: readonly ProductOption
                       />
                       keeps it
                     </label>
-                    <label className="text-muted flex items-center gap-1.5 text-[11px]">
+                    <label className="text-muted flex items-center gap-1.5 text-xs">
                       <input
                         type="checkbox"
                         className="accent-bad h-3 w-3"
@@ -188,7 +188,7 @@ export function StepPreferences({ products }: { products: readonly ProductOption
             })}
           </div>
         )}
-        <p className="text-faint mt-3 text-[11px] leading-snug">
+        <p className="text-faint mt-3 text-xs leading-snug">
           Ruling a product out is a judgement about this client — a failed proof of concept, a vendor
           the board will not approve. It does not remove the product from the catalog for anyone
           else.

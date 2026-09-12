@@ -20,7 +20,7 @@ export default async function ScenariosPage() {
     <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-4 px-5 py-6">
       <section className="flex flex-col gap-1">
         <h1 className="text-ink text-[17px] font-semibold tracking-tight">Scoping sessions</h1>
-        <p className="text-muted text-[12px]">
+        <p className="text-muted text-sm">
           Start from a preset and edit it on the call, or start blank. Everything saves as you type.
         </p>
       </section>
@@ -37,8 +37,8 @@ export default async function ScenariosPage() {
                 type="submit"
                 className="border-line hover:border-accent/60 hover:bg-accent/5 flex h-full w-full flex-col gap-1 rounded border p-3 text-left transition-colors"
               >
-                <span className="text-ink text-[13px] font-medium">{preset.name}</span>
-                <span className="text-faint text-[11px] leading-snug">{preset.description}</span>
+                <span className="text-ink text-base font-medium">{preset.name}</span>
+                <span className="text-faint text-xs leading-snug">{preset.description}</span>
                 <span className="mt-1 flex flex-wrap gap-1">
                   <Badge>{preset.profile.industry}</Badge>
                   <Badge>{formatNumber(preset.profile.employeeCount)} staff</Badge>
@@ -69,14 +69,14 @@ export default async function ScenariosPage() {
         hint={`${scenarios.length} of the most recent.`}
         action={
           scenarios.filter((scenario) => !isUnreadable(scenario)).length >= 2 ? (
-            <Link href="/compare" className="text-accent text-[12px]">
+            <Link href="/compare" className="text-accent text-sm">
               Compare two →
             </Link>
           ) : undefined
         }
       >
         {scenarios.length === 0 ? (
-          <p className="text-faint text-[12px]">Nothing saved yet.</p>
+          <p className="text-faint text-sm">Nothing saved yet.</p>
         ) : (
           <ul className="flex flex-col divide-y divide-[color:var(--color-line)]">
             {scenarios.map((scenario) => (
@@ -84,14 +84,14 @@ export default async function ScenariosPage() {
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/scenarios/${scenario.id}`}
-                    className="text-ink hover:text-accent block truncate text-[13px]"
+                    className="text-ink hover:text-accent block truncate text-base"
                   >
                     {scenario.name}
                   </Link>
                   {isUnreadable(scenario) ? (
-                    <p className="text-bad text-[11px]">Cannot be opened — {scenario.problem}</p>
+                    <p className="text-bad text-xs">Cannot be opened — {scenario.problem}</p>
                   ) : (
-                    <p className="text-faint text-[11px]">
+                    <p className="text-faint text-xs">
                       {scenario.profile.industry} · {formatNumber(scenario.profile.employeeCount)}{' '}
                       staff · {scenario.profile.budget.currency}
                       {scenario.profile.compliance.length > 0 &&
@@ -99,7 +99,7 @@ export default async function ScenariosPage() {
                     </p>
                   )}
                 </div>
-                <time className="text-faint tabular shrink-0 text-[11px]">
+                <time className="text-faint tabular shrink-0 text-xs">
                   {scenario.updatedAt.slice(0, 16).replace('T', ' ')}
                 </time>
                 <form action={cloneScenario}>

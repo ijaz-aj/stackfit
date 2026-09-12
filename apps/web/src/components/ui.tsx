@@ -25,7 +25,7 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded px-3 py-1.5 text-[13px] transition-colors disabled:cursor-not-allowed disabled:opacity-40',
+        'inline-flex items-center justify-center gap-1.5 rounded px-3 py-1.5 text-base transition-colors duration-(--duration-instant) active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:active:translate-y-0',
         BUTTON_VARIANTS[variant],
         className,
       )}
@@ -53,8 +53,8 @@ export function Card({
       {title !== undefined && (
         <header className="border-line flex items-start justify-between gap-3 border-b px-4 py-2.5">
           <div className="min-w-0">
-            <h2 className="text-ink text-[13px] font-semibold tracking-tight">{title}</h2>
-            {hint !== undefined && <p className="text-faint mt-0.5 text-[11px]">{hint}</p>}
+            <h2 className="text-ink text-base font-semibold tracking-tight">{title}</h2>
+            {hint !== undefined && <p className="text-faint mt-0.5 text-xs">{hint}</p>}
           </div>
           {action !== undefined && <div className="shrink-0">{action}</div>}
         </header>
@@ -79,17 +79,22 @@ export function Field({
 }) {
   return (
     <div className={cn('flex flex-col gap-1', className)}>
-      <label htmlFor={htmlFor} className="text-muted text-[11px] font-medium tracking-wide uppercase">
+      <label htmlFor={htmlFor} className="text-muted text-xs font-medium tracking-wide uppercase">
         {label}
       </label>
       {children}
-      {hint !== undefined && <p className="text-faint text-[11px] leading-snug">{hint}</p>}
+      {hint !== undefined && <p className="text-faint text-xs leading-snug">{hint}</p>}
     </div>
   );
 }
 
+/*
+ * `border-line-control`, not `border-line`. An input's outline is a UI component
+ * boundary under WCAG 1.4.11 and needs 3:1; the shared divider colour is 1.33:1
+ * and was, measurably, an edge you had to already know was there.
+ */
 const CONTROL_CLASSES =
-  'bg-ground border-line text-ink placeholder:text-faint w-full rounded border px-2 py-1.5 text-[13px] transition-colors hover:border-line-strong focus:border-accent';
+  'bg-ground border-line-control text-ink placeholder:text-faint w-full rounded border px-2 py-1.5 text-base transition-colors duration-(--duration-quick) hover:border-accent/60 focus:border-accent';
 
 export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(CONTROL_CLASSES, className)} {...props} />;
@@ -106,6 +111,18 @@ export function NumberInput({ className, ...props }: InputHTMLAttributes<HTMLInp
   );
 }
 
+/**
+ * A select that looks like one.
+ *
+ * `appearance-none` strips the native chevron, and nothing replaced it — so
+ * every dropdown in the intake was visually identical to a text input, with no
+ * affordance that it opened at all. `.select-chevron` (globals.css) draws it
+ * back as a background image: it cannot be tabbed to, cannot intercept a click,
+ * and needs no wrapper element.
+ *
+ * `appearance-none` stays, because the native control renders differently on
+ * every platform and ignores the border and background set above.
+ */
 export function Select({
   options,
   className,
@@ -114,7 +131,7 @@ export function Select({
   options: readonly { readonly value: string; readonly label: string }[];
 }) {
   return (
-    <select className={cn(CONTROL_CLASSES, 'appearance-none', className)} {...props}>
+    <select className={cn(CONTROL_CLASSES, 'appearance-none select-chevron', className)} {...props}>
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
@@ -140,7 +157,7 @@ export function Checkbox({
   return (
     <label
       className={cn(
-        'border-line hover:border-line-strong flex cursor-pointer items-start gap-2.5 rounded border px-3 py-2 transition-colors',
+        'border-line-control hover:border-accent/60 flex cursor-pointer items-start gap-2.5 rounded border px-3 py-2 transition-colors duration-(--duration-quick)',
         checked && 'border-accent/60 bg-accent/5',
         className,
       )}
@@ -152,8 +169,8 @@ export function Checkbox({
         className="accent-accent mt-0.5 h-3.5 w-3.5"
       />
       <span className="flex-1">
-        <span className="text-ink block text-[13px] leading-tight">{label}</span>
-        {hint !== undefined && <span className="text-faint block text-[11px] leading-snug">{hint}</span>}
+        <span className="text-ink block text-base leading-tight">{label}</span>
+        {hint !== undefined && <span className="text-faint block text-xs leading-snug">{hint}</span>}
       </span>
     </label>
   );
@@ -179,7 +196,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] tracking-wide uppercase',
+        'inline-flex items-center rounded border px-1.5 py-0.5 text-2xs tracking-wide uppercase',
         BADGE_TONES[tone],
         className,
       )}
@@ -205,18 +222,18 @@ export function Stat({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-faint text-[10px] tracking-wide uppercase">{label}</span>
+      <span className="text-faint text-2xs tracking-wide uppercase">{label}</span>
       <span
         className={cn(
-          'tabular text-ink text-[15px] leading-none',
+          'tabular text-ink text-lg leading-none',
           tone === 'accent' && 'text-accent',
           tone === 'warn' && 'text-warn',
         )}
       >
         {value}
-        {unit !== undefined && <span className="text-faint ml-1 text-[11px]">{unit}</span>}
+        {unit !== undefined && <span className="text-faint ml-1 text-xs">{unit}</span>}
       </span>
-      {hint !== undefined && <span className="text-faint text-[10px] leading-snug">{hint}</span>}
+      {hint !== undefined && <span className="text-faint text-2xs leading-snug">{hint}</span>}
     </div>
   );
 }

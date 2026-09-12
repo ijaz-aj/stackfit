@@ -55,9 +55,9 @@ export default async function ResultsPage({
   if (isUnreadable(scenario)) {
     return (
       <main className="mx-auto w-full max-w-[700px] px-5 py-10">
-        <h1 className="text-ink text-[15px] font-semibold">This session cannot be opened</h1>
-        <p className="text-muted mt-2 text-[12px]">{scenario.problem}</p>
-        <Link href="/" className="text-accent mt-4 inline-block text-[12px]">
+        <h1 className="text-ink text-lg font-semibold">This session cannot be opened</h1>
+        <p className="text-muted mt-2 text-sm">{scenario.problem}</p>
+        <Link href="/" className="text-accent mt-4 inline-block text-sm">
           ← back to sessions
         </Link>
       </main>
@@ -74,13 +74,13 @@ export default async function ResultsPage({
     <main className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 px-5 py-4">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex flex-wrap items-baseline gap-3">
-          <Link href={`/scenarios/${id}`} className="text-faint hover:text-ink text-[12px]">
+          <Link href={`/scenarios/${id}`} className="text-faint hover:text-ink text-sm">
             ← intake
           </Link>
-          <h1 className="text-ink text-[15px] font-semibold tracking-tight">
+          <h1 className="text-ink text-lg font-semibold tracking-tight">
             {scenario.profile.orgName}
           </h1>
-          <span className="text-faint text-[11px]">
+          <span className="text-faint text-xs">
             {scenario.profile.industry} · {scenario.profile.employeeCount} staff ·{' '}
             {scenario.profile.budget.currency}
             {scenario.profile.compliance.length > 0 &&
@@ -112,7 +112,7 @@ export default async function ResultsPage({
           implementation budget was what had run out. */}
       {(bundle.annualShortfall !== null || bundle.oneTimeShortfall !== null) && (
         <div className="border-bad/40 bg-bad/10 rounded border px-3 py-2">
-          <p className="text-bad text-[12px] leading-snug">
+          <p className="text-bad text-sm leading-snug">
             The stated budget does not cover what compliance makes mandatory.
             {bundle.annualShortfall !== null && (
               <>

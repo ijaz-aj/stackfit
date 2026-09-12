@@ -29,9 +29,9 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
   if (isUnreadable(scenario)) {
     return (
       <main className="mx-auto w-full max-w-[700px] px-5 py-10">
-        <h1 className="text-ink text-[15px] font-semibold">This session cannot be opened</h1>
-        <p className="text-muted mt-2 text-[12px]">{scenario.problem}</p>
-        <Link href="/" className="text-accent mt-4 inline-block text-[12px]">
+        <h1 className="text-ink text-lg font-semibold">This session cannot be opened</h1>
+        <p className="text-muted mt-2 text-sm">{scenario.problem}</p>
+        <Link href="/" className="text-accent mt-4 inline-block text-sm">
           ← back to sessions
         </Link>
       </main>
@@ -45,36 +45,36 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
     <main className="mx-auto flex w-full max-w-[900px] flex-col gap-3 px-5 py-4">
       <header className="flex flex-wrap items-center justify-between gap-2 print:hidden">
         <div className="flex flex-wrap items-baseline gap-3">
-          <Link href={`/scenarios/${id}/results`} className="text-faint hover:text-ink text-[12px]">
+          <Link href={`/scenarios/${id}/results`} className="text-faint hover:text-ink text-sm">
             ← results
           </Link>
-          <h1 className="text-ink text-[15px] font-semibold tracking-tight">Proposal</h1>
-          <span className="text-faint text-[11px]">{scenario.profile.orgName}</span>
+          <h1 className="text-ink text-lg font-semibold tracking-tight">Proposal</h1>
+          <span className="text-faint text-xs">{scenario.profile.orgName}</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <a
             href={`/scenarios/${id}/proposal/docx`}
-            className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-[12px]"
+            className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-sm"
           >
             Download DOCX
           </a>
           <a
             href={`/scenarios/${id}/proposal/pdf`}
-            className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-[12px]"
+            className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-sm"
           >
             Download PDF
           </a>
           <a
             href={`/scenarios/${id}/proposal/xlsx`}
-            className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-[12px]"
+            className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-sm"
           >
             Cost model (XLSX)
           </a>
         </div>
       </header>
 
-      <p className="text-faint text-[11px] print:hidden">
+      <p className="text-faint text-xs print:hidden">
         This is what the client receives. The DOCX is rendered from the same document, so what you
         read here is what they get — not a separate approximation of it.
       </p>

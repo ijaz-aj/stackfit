@@ -50,15 +50,15 @@ export function AssumptionsPanel({
       hint="Read this before any of the above reaches a client."
     >
       <section className="flex flex-col gap-1">
-        <h3 className="text-muted text-[11px] font-semibold tracking-wide uppercase">
+        <h3 className="text-muted text-xs font-semibold tracking-wide uppercase">
           Where each price came from
         </h3>
         {bundle.selections.length === 0 ? (
-          <p className="text-faint text-[12px]">Nothing priced in this bundle.</p>
+          <p className="text-faint text-sm">Nothing priced in this bundle.</p>
         ) : (
           <ul className="flex flex-col gap-1">
             {bundle.selections.map((selection) => (
-              <li key={selection.productId} className="flex flex-wrap items-baseline gap-2 text-[12px]">
+              <li key={selection.productId} className="flex flex-wrap items-baseline gap-2 text-sm">
                 <span className="text-ink">{selection.productName}</span>
                 <Badge
                   tone={
@@ -72,9 +72,9 @@ export function AssumptionsPanel({
                 >
                   {selection.cost.pricingConfidence.replace(/_/g, ' ')}
                 </Badge>
-                <span className="text-faint text-[11px]">{selection.cost.freshness.explanation}</span>
+                <span className="text-faint text-xs">{selection.cost.freshness.explanation}</span>
                 {selection.cost.needsRecheck && (
-                  <span className="text-warn text-[11px]">re-check before quoting</span>
+                  <span className="text-warn text-xs">re-check before quoting</span>
                 )}
               </li>
             ))}
@@ -83,22 +83,22 @@ export function AssumptionsPanel({
       </section>
 
       <section className="mt-4 flex flex-col gap-1">
-        <h3 className="text-muted text-[11px] font-semibold tracking-wide uppercase">
+        <h3 className="text-muted text-xs font-semibold tracking-wide uppercase">
           Where each effort figure came from
         </h3>
-        <p className="text-faint text-[11px]">
+        <p className="text-faint text-xs">
           Staffing and implementation effort decide whether a zero-licence tool is cheap or
           expensive, which makes them the most load-bearing numbers here after the prices. They
           are graded the same way, and on this catalog they are almost all analyst estimates.
         </p>
         {bundle.selections.length === 0 ? (
-          <p className="text-faint text-[12px]">Nothing costed in this bundle.</p>
+          <p className="text-faint text-sm">Nothing costed in this bundle.</p>
         ) : (
           <ul className="mt-1 flex flex-col gap-1">
             {bundle.selections.map((selection) => (
               <li
                 key={selection.productId}
-                className="flex flex-wrap items-baseline gap-2 text-[12px]"
+                className="flex flex-wrap items-baseline gap-2 text-sm"
               >
                 <span className="text-ink">{selection.productName}</span>
                 <Badge tone={EFFORT_TONE[selection.cost.opsBurdenConfidence]}>
@@ -114,10 +114,10 @@ export function AssumptionsPanel({
       </section>
 
       <section className="mt-4 flex flex-col gap-1">
-        <h3 className="text-muted text-[11px] font-semibold tracking-wide uppercase">
+        <h3 className="text-muted text-xs font-semibold tracking-wide uppercase">
           How the stack was assembled
         </h3>
-        <ul className="text-faint flex flex-col gap-1 text-[11px] leading-snug">
+        <ul className="text-faint flex flex-col gap-1 text-xs leading-snug">
           {bundle.rationale.map((line) => (
             <li key={line}>— {line}</li>
           ))}
@@ -125,10 +125,10 @@ export function AssumptionsPanel({
       </section>
 
       <section className="mt-4 flex flex-col gap-1">
-        <h3 className="text-muted text-[11px] font-semibold tracking-wide uppercase">
+        <h3 className="text-muted text-xs font-semibold tracking-wide uppercase">
           Build versus buy
         </h3>
-        <ul className="text-faint flex flex-col gap-1 text-[11px] leading-snug">
+        <ul className="text-faint flex flex-col gap-1 text-xs leading-snug">
           {bundle.mssp.rationale.map((line) => (
             <li key={line}>— {line}</li>
           ))}
@@ -141,10 +141,10 @@ export function AssumptionsPanel({
       </section>
 
       <section className="mt-4 flex flex-col gap-1">
-        <h3 className="text-muted text-[11px] font-semibold tracking-wide uppercase">
+        <h3 className="text-muted text-xs font-semibold tracking-wide uppercase">
           Standing disclaimers
         </h3>
-        <ul className="text-faint flex flex-col gap-1 text-[11px] leading-snug">
+        <ul className="text-faint flex flex-col gap-1 text-xs leading-snug">
           <li>
             — Every figure here is indicative. Nothing on this page is a quotation, and no vendor
             has been approached.
@@ -176,13 +176,13 @@ export function AssumptionsPanel({
       </section>
 
       <section className="mt-4 flex flex-col gap-1">
-        <h3 className="text-muted text-[11px] font-semibold tracking-wide uppercase">
+        <h3 className="text-muted text-xs font-semibold tracking-wide uppercase">
           Products ruled out for this client
         </h3>
         {result.scores.filter((score) => score.eliminated).length === 0 ? (
-          <p className="text-faint text-[11px]">Nothing in the catalog was hard-filtered.</p>
+          <p className="text-faint text-xs">Nothing in the catalog was hard-filtered.</p>
         ) : (
-          <ul className="text-faint flex flex-col gap-1 text-[11px] leading-snug">
+          <ul className="text-faint flex flex-col gap-1 text-xs leading-snug">
             {result.scores
               .filter((score) => score.eliminated)
               .map((score) => (
