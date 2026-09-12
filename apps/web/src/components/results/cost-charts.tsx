@@ -101,43 +101,54 @@ export function CostByCategoryChart({
   currency: CurrencyCode;
 }) {
   return (
-    // Taller than the cash-flow chart because the category axis is angled, and
-    // the angled labels need roughly 90px of their own before the plot area
-    // starts.
-    <ResponsiveContainer width="100%" height={352}>
-      <BarChart data={[...data]} margin={{ top: 8, right: 8, bottom: 4, left: 8 }}>
-        <CartesianGrid vertical={false} stroke={GRID} strokeWidth={1} />
+    // Horizontal bars, one row per category.
+    //
+    // This axis was angled at -35°, on the reasoning that the collision
+    // constraint becomes the label's *height* against the band width. Looking
+    // at it in a browser, that reasoning was wrong: a 130px label rotated 35°
+    // still projects about 106px along the axis, against a band of roughly
+    // 44px, so "Vulnerability management", "Asset discovery", "Firewall / NGFW"
+    // and "Email security" all ran into each other.
+    //
+    // Turning the chart on its side removes the constraint rather than
+    // negotiating with it. Every category gets a full row, the labels are
+    // horizontal and left-aligned so they are read rather than deciphered, and
+    // the bars all start from a common baseline on the left, which is the
+    // comparison the card exists to support. 26px per row keeps thirteen
+    // categories inside roughly the height the angled version needed.
+    <ResponsiveContainer width="100%" height={Math.max(220, data.length * 26 + 64)}>
+      <BarChart
+        data={[...data]}
+        layout="vertical"
+        margin={{ top: 4, right: 12, bottom: 4, left: 4 }}
+      >
+        <CartesianGrid horizontal={false} stroke={GRID} strokeWidth={1} />
         <XAxis
-          dataKey="label"
+          type="number"
           tick={{ fill: TEXT, fontSize: 11 }}
           tickLine={false}
           axisLine={{ stroke: GRID }}
-          // Every category, always: dropping one silently would be a category
-          // the analyst is paying for and cannot see.
-          interval={0}
-          // A full bundle is now thirteen categories in a half-width card —
-          // about 44px per band — and the longest label ("Vulnerability
-          // management") is nearer 130px. Horizontal labels overlapped into
-          // mush the moment the catalog grew past four categories. Angled, the
-          // collision constraint is the label's height against the band width
-          // rather than its length, which 44px clears comfortably.
-          angle={-35}
-          textAnchor="end"
-          height={92}
-        />
-        <YAxis
-          tick={{ fill: TEXT, fontSize: 11 }}
-          tickLine={false}
-          axisLine={false}
-          width={62}
           tickFormatter={(value: number) =>
             formatMoney({ amountMinor: value, currency }, { compact: true })
           }
         />
+        <YAxis
+          type="category"
+          dataKey="label"
+          tick={{ fill: TEXT, fontSize: 11 }}
+          tickLine={false}
+          axisLine={false}
+          // Every category, always: dropping one silently would be a category
+          // the analyst is paying for and cannot see.
+          interval={0}
+          // Fits "Vulnerability management", the longest label in the catalog,
+          // without truncation.
+          width={132}
+        />
         <Tooltip
           cursor={{ fill: '#ffffff08' }}
           content={<MoneyTooltip currency={currency} />}
-          // The hit area is the whole column band, not the 24px mark.
+          // The hit area is the whole row band, not the 14px mark.
           shared
         />
         <Legend
@@ -152,12 +163,14 @@ export function CostByCategoryChart({
             name={series.label}
             stackId="cost"
             fill={series.colour}
-            maxBarSize={24}
+            maxBarSize={14}
             // The 2px separation between segments is the surface colour showing
             // through, not a border drawn around the mark.
             stroke={SURFACE}
             strokeWidth={2}
-            {...(index === SERIES.length - 1 ? { radius: [4, 4, 0, 0] as [number, number, number, number] } : {})}
+            {...(index === SERIES.length - 1
+              ? { radius: [0, 3, 3, 0] as [number, number, number, number] }
+              : {})}
           />
         ))}
       </BarChart>

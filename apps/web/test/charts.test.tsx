@@ -9,11 +9,15 @@
 // back out.
 //
 // What it does and does not prove. It proves the charts render without
-// throwing, and that the y-axis labels are the ones intended and are distinct,
-// which is the defect that was reported from the browser and fixed blind. It
-// does not prove anything about layout: jsdom does no text measurement, so
-// whether thirteen angled category labels overlap is still a question only a
-// pair of eyes can answer.
+// throwing, that the money axis labels are the ones intended and are distinct,
+// and — since the category chart became horizontal — that every category sits
+// on its own row far enough from its neighbours to be unable to overlap.
+//
+// That last one used to be outside reach. jsdom measures no text, so whether
+// thirteen *angled* labels collided was unanswerable here, and they did
+// collide; it took opening the page to find out. Rows removed the question
+// rather than answering it: with horizontal labels the only collision
+// constraint is row spacing, which is a number, and a number is testable.
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -124,9 +128,35 @@ describe('the cost-by-category chart', () => {
     expect(new Set(money).size, `duplicate axis labels: ${money.join(' ')}`).toBe(money.length);
   });
 
-  it('angles the category labels, because thirteen will not fit flat', () => {
+  it('lays the category labels out flat, one per row, with no rotation', () => {
+    // This asserted `rotate(-35)` and passed for weeks. Opening the page in a
+    // browser showed the angled labels overlapping anyway: a 130px label turned
+    // 35° still projects about 106px along an axis whose bands are roughly
+    // 44px, so "Vulnerability management", "Asset discovery", "Firewall / NGFW"
+    // and "Email security" ran into each other. The test pinned the workaround
+    // rather than the property the workaround was for.
     const markup = render(<CostByCategoryChart data={byCategory} currency="USD" />);
-    expect(markup).toMatch(/rotate\(\s*-35/);
+    expect(markup).not.toMatch(/rotate\(/);
+  });
+
+  it('gives every category its own row, far enough apart not to collide', () => {
+    // The property the rotation was reaching for, and now checkable without a
+    // browser: horizontal rows mean a label's *height* is the only collision
+    // constraint, and height is a number jsdom reports even though it measures
+    // no text. Thirteen distinct y positions, each at least a line-height
+    // apart, cannot overlap however long the words are.
+    const markup = render(<CostByCategoryChart data={byCategory} currency="USD" />);
+
+    const ys = [...markup.matchAll(/<text[^>]*\sy="([\d.]+)"[^>]*text-anchor="end"/g)].map(
+      (match) => Number(match[1]),
+    );
+    const rows = [...new Set(ys)].sort((a, b) => a - b);
+
+    expect(rows).toHaveLength(CATEGORIES.length);
+    for (let index = 1; index < rows.length; index += 1) {
+      const gap = rows[index]! - rows[index - 1]!;
+      expect(gap, `rows ${index - 1} and ${index} are ${gap}px apart`).toBeGreaterThanOrEqual(14);
+    }
   });
 });
 
