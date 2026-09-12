@@ -19,6 +19,7 @@ import type {
   Framework,
   Product,
   ProductCategory,
+  ProductTier,
   ScoringDimension,
   ScoringWeights,
 } from '@stackfit/schema';
@@ -28,6 +29,7 @@ import {
   ScoringDimension as DimensionEnum,
 } from '@stackfit/schema';
 
+import { controlsClaimedBy } from './claims';
 import { operationalFteFor } from './cost';
 import type { SizingResult } from './sizing';
 
@@ -77,6 +79,18 @@ export interface AssetCount {
 
 export interface ProductScore {
   readonly productId: string;
+  /**
+   * The tier this score is for. A product is not one candidate, it is one per
+   * SKU: Defender Plan 1 and Plan 2 cover different controls at different
+   * prices, and recommending "Defender" without saying which is not a
+   * recommendation a technical review survives.
+   *
+   * An eliminated product yields exactly one score, at its first tier, because
+   * every hard filter in §7.3 is a property of the product rather than of what
+   * you pay for it.
+   */
+  readonly tierId: string;
+  readonly tierName: string;
   readonly category: ProductCategory;
   readonly eliminated: boolean;
   /** Set when eliminated. The UI shows this as "why this was ruled out". */
@@ -191,12 +205,21 @@ function assetCoverage(
   return { covered, inRemit, missedClasses, coveredAssets, missedAssets };
 }
 
-/** Controls the client's frameworks ask of this category, and how many this product covers. */
+/**
+ * Controls the client's frameworks ask of this category, and how many this
+ * product covers *at this tier*.
+ *
+ * The tier matters: a lower SKU of the same product covers fewer controls, and
+ * compliance fit is where that difference has to show up, because it is the
+ * only dimension the catalog has evidence for. Everything else scores the same
+ * for both tiers rather than being guessed at.
+ */
 function complianceCoverage(
   product: Product,
+  tier: ProductTier,
   frameworks: readonly Framework[],
 ): { covered: number; required: number } {
-  const claimed = new Set(product.controlsCovered);
+  const claimed = controlsClaimedBy(product, tier.id);
   let required = 0;
   let covered = 0;
 
@@ -449,7 +472,11 @@ export function hardFilter(product: Product, inputs: ScoringInputs): string[] {
 }
 
 /** Pass 2 (§7.3): weighted score out of 100 over the surviving products. */
-export function scoreProduct(product: Product, inputs: ScoringInputs): ProductScore {
+export function scoreProduct(
+  product: Product,
+  tier: ProductTier,
+  inputs: ScoringInputs,
+): ProductScore {
   const { profile, inventory, sizing, frameworks, weights, categoryWeights } = inputs;
 
   const opsFte = operationalFteFor(product, sizing.monitoredAssetCount);
@@ -458,6 +485,8 @@ export function scoreProduct(product: Product, inputs: ScoringInputs): ProductSc
   if (eliminationReasons.length > 0) {
     return {
       productId: product.id,
+      tierId: tier.id,
+      tierName: tier.name,
       category: product.category,
       eliminated: true,
       eliminationReasons,
@@ -480,7 +509,7 @@ export function scoreProduct(product: Product, inputs: ScoringInputs): ProductSc
       : `Reaches ${round(coverage.covered, 1)} of ${round(coverage.inRemit, 1)} weighted asset unit(s) in a ${product.category}'s remit` +
         (coverage.missedClasses.length > 0 ? `; misses ${coverage.missedClasses.join(', ')}.` : '.');
 
-  const compliance = complianceCoverage(product, frameworks);
+  const compliance = complianceCoverage(product, tier, frameworks);
   const complianceScore =
     compliance.required === 0 ? 100 : (compliance.covered / compliance.required) * 100;
   const complianceNote =
@@ -548,6 +577,8 @@ export function scoreProduct(product: Product, inputs: ScoringInputs): ProductSc
 
   return {
     productId: product.id,
+    tierId: tier.id,
+    tierName: tier.name,
     category: product.category,
     eliminated: false,
     eliminationReasons: [],
@@ -561,18 +592,43 @@ export function scoreProduct(product: Product, inputs: ScoringInputs): ProductSc
 }
 
 /**
- * Scores a whole catalog. Eliminated products are kept in the result rather
- * than dropped — §7.3 requires the reason to be recorded, and "why was X not
- * recommended" is a question analysts get asked on every call.
+ * Scores a whole catalog, one entry per sellable SKU.
+ *
+ * Every tier of every surviving product is scored separately, because the tier
+ * is part of the recommendation: Plan 1 and Plan 2 of the same product claim
+ * different controls at different prices, and a bundle has to name which one it
+ * is quoting.
+ *
+ * An eliminated product appears exactly once, not once per tier. Every hard
+ * filter in §7.3 tests the product — the analyst excluded it, it cannot run
+ * air-gapped, it is outside the scale band, it reaches none of the assets its
+ * category exists for — and none of those change with what you pay. Repeating
+ * one reason per SKU would pad "why was X ruled out" with the same sentence
+ * three times.
+ *
+ * Catalog order, then tier declaration order, so the output is stable.
  */
 export function scoreProducts(
   products: readonly Product[],
   inputs: ScoringInputs,
 ): readonly ProductScore[] {
-  return products.map((product) => scoreProduct(product, inputs));
+  return products.flatMap((product) => {
+    const first = product.tiers[0];
+    if (first === undefined) return [];
+
+    const eliminated = scoreProduct(product, first, inputs);
+    if (eliminated.eliminated) return [eliminated];
+
+    return product.tiers.map((tier) => scoreProduct(product, tier, inputs));
+  });
 }
 
-/** Surviving products for one category, best first. Ties break on catalog order. */
+/**
+ * Surviving SKUs for one category, best first. Ties break on catalog order, so
+ * the cheaper tier of a product that scores identically at both is listed
+ * first — a tie on fit is decided by price later, and this keeps the order
+ * stable rather than arbitrary.
+ */
 export function rankWithinCategory(
   scores: readonly ProductScore[],
   category: ProductCategory,

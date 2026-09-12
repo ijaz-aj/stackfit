@@ -15,6 +15,8 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { cheapestTierCost } from '@stackfit/engine';
+
 import {
   CATALOG_CATEGORIES,
   allRationale,
@@ -79,9 +81,10 @@ describe('§12.1 — small retail client, PCI DSS, USD 25k/yr cap', () => {
     // the invariant holds rather than that a warning fired.
     const mandatory = result.recommended.selections.filter((selection) => selection.mandatory);
     for (const selection of mandatory) {
-      const cost = result.costs.get(selection.productId);
+      // The costing the selection was actually made on, tier included.
+      const cost = selection.cost;
       expect(
-        cost?.hasPlaceholderPricing,
+        cost.hasPlaceholderPricing,
         `${selection.productId} is placeholder-priced inside the mandatory set`,
       ).toBe(false);
     }
@@ -179,13 +182,13 @@ describe('§12.3 — open-source-first, low budget, 2 security FTE', () => {
     // The single most important assertion in this file. Hard rule 8 exists
     // because "Wazuh is free" is the wrong answer, and this is what proves the
     // tool never gives it.
-    const wazuh = result.costs.get('wazuh');
+    const wazuh = cheapestTierCost(result.costs, 'wazuh');
     expect(wazuh?.licenceAnnual.amountMinor).toBe(0);
     expect(wazuh?.tco.amountMinor).toBeGreaterThan(0);
   });
 
   it('makes people and implementation the dominant line items for open source', () => {
-    const wazuh = result.costs.get('wazuh');
+    const wazuh = cheapestTierCost(result.costs, 'wazuh');
     expect(wazuh).toBeDefined();
 
     const opsOverHorizon =

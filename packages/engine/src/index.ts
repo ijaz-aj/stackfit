@@ -11,6 +11,7 @@ export const ENGINE_VERSION = '0.0.0';
 export * from './sizing';
 export * from './money';
 export * from './freshness';
+export * from './claims';
 export * from './cost';
 export * from './infrastructure';
 export * from './scoring';

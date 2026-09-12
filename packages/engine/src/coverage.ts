@@ -36,9 +36,10 @@ import type {
   ResidualRisk,
 } from '@stackfit/schema';
 
-import type { ProductCost } from './cost';
+import { controlsClaimedBy, tiersClaiming } from './claims';
+import { cheapestTierCost, costOfTier, type CostsByProduct, type ProductCost } from './cost';
 import type { CategoryRelevance } from './infrastructure';
-import { sumMoney } from './money';
+import { subtractMoney, sumMoney } from './money';
 import type { Bundle } from './portfolio';
 import type { ProductScore } from './scoring';
 
@@ -108,6 +109,22 @@ export interface GapCloser {
   readonly productName: string;
   readonly vendor: string;
   readonly category: ProductCategory;
+  /** The SKU being quoted. Naming the product without the tier is not a quote. */
+  readonly tierId: string;
+  readonly tierName: string;
+  /**
+   * Set when this closer is an upgrade to a product the bundle already owns,
+   * naming the tier it is already on. The money below is then the *difference*,
+   * not the price of the tier.
+   *
+   * Worth its own shape because "move Defender from Plan 1 to Plan 2" and "buy
+   * a second tool" are different recommendations at different prices, and a
+   * gap list that can only say the second one sends analysts to quote a
+   * purchase the client does not need.
+   */
+  readonly upgradeFromTierId: string | null;
+  /** The name of that tier, so the sentence reads as a client would say it. */
+  readonly upgradeFromTierName: string | null;
   /**
    * The product claims the control outright, so buying it moves the control to
    * `covered`. False means it only moves it to `partial` — the right kind of
@@ -131,6 +148,18 @@ export interface CoverageGap {
   readonly inScope: boolean;
   readonly title: string;
   readonly mandatory: boolean;
+  /**
+   * Why this control is not covered.
+   *
+   * `gap` is nothing in the stack addressing it at all. `partial` is the right
+   * *kind* of tool in the stack with no claim on this specific control — which
+   * is uncovered too, and was being left out of this list entirely: the client
+   * was shown a coverage percentage and no route to the missing half of it,
+   * because the only controls with a costed fix were the ones nothing
+   * addressed. A partial is often the cheapest thing to close, since the client
+   * already owns something in the category and may only need a bigger SKU.
+   */
+  readonly kind: 'gap' | 'partial';
   readonly residualRisk: ResidualRisk;
   readonly satisfiedBy: readonly ProductCategory[];
   /** Cheapest product that would close this one gap, taken on its own (§7.5). */
@@ -150,6 +179,15 @@ export interface RemediationOption {
   readonly productName: string;
   readonly vendor: string;
   readonly category: ProductCategory;
+  /** The SKU to buy. A shopping list that names no tier is not a quote. */
+  readonly tierId: string;
+  readonly tierName: string;
+  /**
+   * Set when this is an upgrade to something the bundle already owns, naming
+   * the tier it is on today. The money on this option is then the difference.
+   */
+  readonly upgradeFromTierId: string | null;
+  readonly upgradeFromTierName: string | null;
   readonly annualSpend: Money;
   readonly oneTime: Money;
   readonly tco: Money;
@@ -199,7 +237,7 @@ export interface CoverageInputs {
   readonly products: readonly Product[];
   /** Scores for the same catalog, so an eliminated product is never offered. */
   readonly scores: readonly ProductScore[];
-  readonly costs: ReadonlyMap<string, ProductCost>;
+  readonly costs: CostsByProduct;
   /**
    * Frameworks to report against. The caller decides which: the analyst's
    * selections, plus NIST CSF 2.0 as the reference lens §7.5 asks for even
@@ -393,23 +431,6 @@ function rollUpGroups(
   });
 }
 
-/**
- * What a product claims when bought at a given tier.
- *
- * Capabilities are sold by tier and control claims were not, so the cheapest
- * tier of a product inherited every claim the top tier made. Tier claims are
- * additive to the product-level list, so passing no tier returns the claims
- * common to every tier — the conservative answer, which is the right one for a
- * caller that has not chosen a tier yet.
- */
-export function controlsClaimedBy(
-  product: Product,
-  tierId: string | undefined,
-): ReadonlySet<string> {
-  const tier = tierId === undefined ? undefined : product.tiers.find((entry) => entry.id === tierId);
-  return new Set([...product.controlsCovered, ...(tier?.controlsCovered ?? [])]);
-}
-
 /** The matrix: every control of every supplied framework, with its status. */
 export function computeFrameworkCoverage(inputs: CoverageInputs): readonly FrameworkCoverage[] {
   const { bundle, frameworks, products, profile } = inputs;
@@ -522,20 +543,87 @@ export function computeFrameworkCoverage(inputs: CoverageInputs): readonly Frame
  * it is here for the same reason — charging a client's own salaried team to a
  * purchase order prices open source out of every budget.
  */
+/**
+ * What would close this control, as things a client can actually buy.
+ *
+ * Two shapes, because there are two real answers. A product the bundle does not
+ * own is a purchase, quoted at the cheapest tier that actually claims the
+ * control rather than at the cheapest tier outright — quoting a SKU that does
+ * not close the gap is not quoting the fix. A product the bundle already owns
+ * is an *upgrade*, priced as the difference, because telling an analyst to buy
+ * a second tool when the licence they hold has the capability one tier up is
+ * how a proposal loses a technical review.
+ *
+ * A product is eligible if its category satisfies the control, or if one of its
+ * tiers claims the control outright. The second half keeps this list consistent
+ * with the matrix above, which counts a product's own claim whether or not the
+ * category mapping agrees.
+ */
 function closersFor(
   control: ControlCoverage,
   inputs: CoverageInputs,
   eliminated: ReadonlySet<string>,
 ): readonly GapCloser[] {
-  const { products, costs, profile } = inputs;
+  const { products, costs, profile, bundle } = inputs;
   const satisfying = new Set(control.satisfiedBy);
+  const ownedTierByProduct = new Map(
+    bundle.selections.map((selection) => [selection.productId, selection.tierId]),
+  );
+
+  // A control that is already `partial` has the right kind of tool in the stack
+  // and is waiting on a *claim*. Another product of the same category that
+  // claims nothing here would change its status not at all, so offering one is
+  // recommending a purchase that buys the client nothing.
+  const claimRequired = control.status === 'partial';
 
   return products
-    .filter((product) => satisfying.has(product.category))
     .filter((product) => !eliminated.has(product.id))
     .filter((product) => !profile.excludedProducts.includes(product.id))
     .flatMap((product): GapCloser[] => {
-      const cost = costs.get(product.id);
+      const ownedTierId = ownedTierByProduct.get(product.id);
+      const claiming = tiersClaiming(product, control.controlId, ownedTierId);
+      if (!satisfying.has(product.category) && claiming.length === 0) return [];
+
+      const cheapestClaiming = claiming
+        .map((tierId) => costOfTier(costs, product.id, tierId))
+        .filter((cost): cost is ProductCost => cost !== undefined)
+        .sort((a, b) => a.procurementAnnual.amountMinor - b.procurementAnnual.amountMinor)[0];
+
+      if (ownedTierId !== undefined) {
+        // Already in the bundle. The only thing left to sell is a bigger SKU,
+        // and only if a bigger SKU claims what this one does not.
+        const from = costOfTier(costs, product.id, ownedTierId);
+        if (from === undefined || cheapestClaiming === undefined) return [];
+        return [
+          {
+            productId: product.id,
+            productName: product.name,
+            vendor: product.vendor,
+            category: product.category,
+            tierId: cheapestClaiming.tierId,
+            tierName: tierNameOf(product, cheapestClaiming.tierId),
+            upgradeFromTierId: ownedTierId,
+            upgradeFromTierName: tierNameOf(product, ownedTierId),
+            closesFully: true,
+            annualSpend: subtractMoney(cheapestClaiming.procurementAnnual, from.procurementAnnual),
+            // Not the new tier's implementation cost: the product is already
+            // deployed, and re-charging the whole rollout to an upgrade would
+            // overstate it. What an upgrade actually costs in services is the
+            // difference, floored at nothing.
+            oneTime: atLeastZero(
+              subtractMoney(cheapestClaiming.implementationOneTime, from.implementationOneTime),
+            ),
+            tco: subtractMoney(cheapestClaiming.tco, from.tco),
+            opsFte: round3(cheapestClaiming.opsFte - from.opsFte),
+            pricingConfidence: cheapestClaiming.pricingConfidence,
+            needsRecheck: cheapestClaiming.needsRecheck,
+          },
+        ];
+      }
+
+      // Not owned. Quote the SKU that closes it if there is one, otherwise the
+      // cheapest, which buys the right kind of tool and reads as partial.
+      const cost = cheapestClaiming ?? cheapestTierCost(costs, product.id);
       if (cost === undefined) return [];
       return [
         {
@@ -543,6 +631,10 @@ function closersFor(
           productName: product.name,
           vendor: product.vendor,
           category: product.category,
+          tierId: cost.tierId,
+          tierName: tierNameOf(product, cost.tierId),
+          upgradeFromTierId: null,
+          upgradeFromTierName: null,
           closesFully: controlsClaimedBy(product, cost.tierId).has(control.controlId),
           annualSpend: cost.procurementAnnual,
           oneTime: cost.implementationOneTime,
@@ -553,14 +645,38 @@ function closersFor(
         },
       ];
     })
+    .filter((closer) => closer.closesFully || !claimRequired)
     .sort((a, b) => {
       if (a.closesFully !== b.closesFully) return a.closesFully ? -1 : 1;
+      // An upgrade to something already owned beats a new product at the same
+      // price: one fewer tool to run, one fewer vendor to manage.
+      const aUpgrade = a.upgradeFromTierId !== null;
+      const bUpgrade = b.upgradeFromTierId !== null;
+      if (aUpgrade !== bUpgrade) return aUpgrade ? -1 : 1;
       if (a.annualSpend.amountMinor !== b.annualSpend.amountMinor) {
         return a.annualSpend.amountMinor - b.annualSpend.amountMinor;
       }
       if (a.tco.amountMinor !== b.tco.amountMinor) return a.tco.amountMinor - b.tco.amountMinor;
-      return a.productId.localeCompare(b.productId);
+      return a.productId.localeCompare(b.productId) || a.tierId.localeCompare(b.tierId);
     });
+}
+
+function tierNameOf(product: Product, tierId: string): string {
+  return product.tiers.find((tier) => tier.id === tierId)?.name ?? tierId;
+}
+
+function atLeastZero(amount: Money): Money {
+  return amount.amountMinor < 0 ? { amountMinor: 0, currency: amount.currency } : amount;
+}
+
+function round3(value: number): number {
+  const scaled = value * 1000;
+  return (scaled < 0 ? -Math.round(-scaled) : Math.round(scaled)) / 1000;
+}
+
+/** One purchasable thing: a product at a tier. */
+function skuKey(closer: GapCloser): string {
+  return `${closer.productId}::${closer.tierId}`;
 }
 
 interface RemediationAssignment {
@@ -599,17 +715,21 @@ function planRemediation(
       for (const gap of remaining.values()) {
         for (const candidate of candidatesByControl.get(gap.controlId) ?? []) {
           if (fullyOnly && !candidate.closesFully) continue;
-          const entry = tally.get(candidate.productId) ?? { closer: candidate, assignments: [] };
+          // Keyed on the SKU, not the product: two tiers of one product are two
+          // different purchases at two different prices, and merging them would
+          // credit the cheaper one with what only the dearer one closes.
+          const key = skuKey(candidate);
+          const entry = tally.get(key) ?? { closer: candidate, assignments: [] };
           entry.assignments.push({ gap, closesFully: candidate.closesFully });
-          tally.set(candidate.productId, entry);
+          tally.set(key, entry);
         }
       }
       if (tally.size === 0) break;
 
       const [best] = [...tally.values()].sort((a, b) => {
         // A purchase already on the list costs nothing more to use again.
-        const aPlanned = planned.has(a.closer.productId);
-        const bPlanned = planned.has(b.closer.productId);
+        const aPlanned = planned.has(skuKey(a.closer));
+        const bPlanned = planned.has(skuKey(b.closer));
         if (aPlanned !== bPlanned) return aPlanned ? -1 : 1;
         const byCount = b.assignments.length - a.assignments.length;
         if (byCount !== 0) return byCount;
@@ -619,14 +739,17 @@ function planRemediation(
         if (a.closer.tco.amountMinor !== b.closer.tco.amountMinor) {
           return a.closer.tco.amountMinor - b.closer.tco.amountMinor;
         }
-        return a.closer.productId.localeCompare(b.closer.productId);
+        return (
+          a.closer.productId.localeCompare(b.closer.productId) ||
+          a.closer.tierId.localeCompare(b.closer.tierId)
+        );
       });
       if (best === undefined) break;
 
       for (const assignment of best.assignments) remaining.delete(assignment.gap.controlId);
-      const existing = planned.get(best.closer.productId);
+      const existing = planned.get(skuKey(best.closer));
       if (existing === undefined) {
-        planned.set(best.closer.productId, best);
+        planned.set(skuKey(best.closer), best);
       } else {
         existing.assignments.push(...best.assignments);
       }
@@ -656,7 +779,10 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
   const graded = coverage
     .flatMap((frameworkCoverage) =>
       frameworkCoverage.controls
-        .filter((control) => control.status === 'gap')
+        // Partials belong here too: they are uncovered, they are excluded from
+        // the coverage percentage, and they are frequently the cheapest thing
+        // to close because the client already owns something in the category.
+        .filter((control) => control.status === 'gap' || control.status === 'partial')
         .map((control) => ({ frameworkCoverage, control })),
     )
     .map(({ frameworkCoverage, control }) => {
@@ -694,10 +820,18 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
     const best = candidates[0] ?? null;
     if (best === null) unclosable.push(entry.control.controlId);
 
+    const partial = entry.control.status === 'partial';
     const rationale: string[] = [
       `Residual risk ${entry.risk}: ${entry.why}.`,
       ...entry.control.rationale,
     ];
+    if (partial) {
+      rationale.push(
+        'The stack has the right kind of tool for this control and nothing in it claims this ' +
+          'control specifically, so it is reported as partial and counted as uncovered. Often ' +
+          'the cheapest thing on this list to close.',
+      );
+    }
     if (best === null) {
       rationale.push(
         `No product in the catalog can close this for this client: ` +
@@ -723,6 +857,7 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
 
     gaps.push({
       controlId: entry.control.controlId,
+      kind: partial ? 'partial' : 'gap',
       frameworkId: entry.frameworkCoverage.frameworkId,
       frameworkName: entry.frameworkCoverage.name,
       inScope: entry.frameworkCoverage.inScope,
@@ -757,11 +892,17 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
       );
       const frameworkIds = [...new Set(closed.map((gap) => gap.frameworkId))].sort();
 
+      const upgrade = closer.upgradeFromTierId !== null;
+
       return {
         productId: closer.productId,
         productName: closer.productName,
         vendor: closer.vendor,
         category: closer.category,
+        tierId: closer.tierId,
+        tierName: closer.tierName,
+        upgradeFromTierId: closer.upgradeFromTierId,
+        upgradeFromTierName: closer.upgradeFromTierName,
         annualSpend: closer.annualSpend,
         oneTime: closer.oneTime,
         tco: closer.tco,
@@ -771,14 +912,29 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
         frameworks: frameworkIds,
         worstResidualRisk: worst,
         rationale: [
-          `Adding ${closer.productName} (${closer.category}) closes ${fully.length} control(s) ` +
-            'outright' +
-            (partly.length > 0 ? ` and partly addresses ${partly.length} more` : '') +
-            ` across ${frameworkIds.join(', ')}.`,
-          `${closer.annualSpend.amountMinor / 100} ${currency}/yr of procurement spend, ` +
-            `${closer.oneTime.amountMinor / 100} ${currency} to implement, and ` +
-            `${closer.tco.amountMinor / 100} ${currency} over the horizon once the ` +
-            `${round(closer.opsFte, 2)} FTE to run it is counted.`,
+          upgrade
+            ? `Upgrading ${closer.productName} from ${closer.upgradeFromTierName} to ` +
+              `${closer.tierName} closes ${fully.length} control(s) outright` +
+              (partly.length > 0 ? ` and partly addresses ${partly.length} more` : '') +
+              ` across ${frameworkIds.join(', ')}. No new tool to deploy, run or renew: the ` +
+              'client already owns this product at a lower tier.'
+            : `Adding ${closer.productName} — ${closer.tierName} (${closer.category}) closes ` +
+              `${fully.length} control(s) outright` +
+              (partly.length > 0 ? ` and partly addresses ${partly.length} more` : '') +
+              ` across ${frameworkIds.join(', ')}.`,
+          upgrade
+            ? `The difference, not the price of the tier: ` +
+              `${closer.annualSpend.amountMinor / 100} ${currency}/yr more procurement spend and ` +
+              `${closer.tco.amountMinor / 100} ${currency} more over the horizon. ` +
+              (closer.opsFte === 0
+                ? 'No extra people are shown because operational burden is recorded per product ' +
+                  'rather than per tier — a heavier SKU usually is more work to run, and this ' +
+                  'catalog cannot yet say how much.'
+                : `${round(closer.opsFte, 2)} more FTE to run.`)
+            : `${closer.annualSpend.amountMinor / 100} ${currency}/yr of procurement spend, ` +
+              `${closer.oneTime.amountMinor / 100} ${currency} to implement, and ` +
+              `${closer.tco.amountMinor / 100} ${currency} over the horizon once the ` +
+              `${round(closer.opsFte, 2)} FTE to run it is counted.`,
         ],
       };
     })
@@ -791,7 +947,7 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
       if (a.annualSpend.amountMinor !== b.annualSpend.amountMinor) {
         return a.annualSpend.amountMinor - b.annualSpend.amountMinor;
       }
-      return a.productId.localeCompare(b.productId);
+      return a.productId.localeCompare(b.productId) || a.tierId.localeCompare(b.tierId);
     });
 
   // The gap list and the shopping list are two views of one answer, so each gap

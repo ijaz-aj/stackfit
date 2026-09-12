@@ -103,13 +103,34 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     expect(coverage.rationale.join(' ')).toContain('obligations, not preferences');
   });
 
-  it('says plainly that the catalog cannot close these gaps yet', () => {
-    // ⚠ CATALOG LIMITATION. Every gap here needs iam, pam, ngfw, backup or
-    // email_security, none of which the catalog stocks. The honest output is
-    // "StackFit cannot fix this", not a silent empty fix list. Phase 7 is what
-    // changes this number, and this assertion should change with it.
-    expect(coverage.unclosableGaps.length).toBe(coverage.gaps.length);
-    expect(coverage.remediation).toEqual([]);
+  it('says plainly which gaps the catalog cannot close yet, and closes the rest', () => {
+    // ⚠ CATALOG LIMITATION. Nine of the eleven uncovered controls need iam,
+    // pam, ngfw, backup or email_security, none of which the catalog stocks.
+    // The honest output for those is "StackFit cannot fix this", not a silent
+    // empty fix list. Phase 7 is what changes this number.
+    expect(coverage.unclosableGaps.length).toBe(9);
+    expect(coverage.gaps.length).toBe(11);
+
+    // The other two are partials — the stack has the right kind of tool and
+    // nothing in it claims the control — and those do have a route. Before
+    // partials entered this list the client was shown a coverage percentage
+    // with no way to improve it at all.
+    const closable = coverage.gaps.filter((gap) => gap.cheapestCloser !== null);
+    expect(closable.map((gap) => gap.controlId)).toEqual([
+      'nist-csf-2.0:RS.MI',
+      'nist-csf-2.0:RS.AN',
+    ]);
+    expect(closable.every((gap) => gap.kind === 'partial')).toBe(true);
+
+    // And every purchase on the list must actually achieve something. A
+    // product that merely belongs to the right category cannot move a control
+    // that is already partial, so offering one would be recommending a
+    // purchase that buys nothing.
+    expect(coverage.remediation).toHaveLength(1);
+    expect(coverage.remediation[0]?.productId).toBe('velociraptor');
+    for (const option of coverage.remediation) {
+      expect(option.closesControls.length).toBeGreaterThan(0);
+    }
     expect(coverage.rationale.join(' ')).toContain('a gap in StackFit, not in the client');
   });
 
@@ -151,10 +172,13 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
 
   it('prices the fix list in money and in people, even when every fix is free', () => {
     // At USD 3,000/yr the bundle affords one EDR. The two products that would
-    // close the most gaps are Wazuh and OpenVAS — both zero-licence, and the
+    // close the most gaps are OpenVAS and Wazuh — both zero-licence, and the
     // fix list still costs thousands a year and most of an engineer. That is
     // hard rule 8 carried into the gap analysis rather than solved once in the
     // cost stage and forgotten here.
+    //
+    // CrowdStrike sits between them closing one control: it is dearer than
+    // either free tool and earns its place only on the control neither claims.
     const coverage = at(300_000).coverage;
 
     expect(
@@ -165,7 +189,8 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
       ),
     ).toMatchInlineSnapshot(`
       [
-        "greenbone-openvas (vulnerability_management) | 2450.04 USD/yr | 0.33 FTE | closes 4",
+        "greenbone-openvas (vulnerability_management) | 2450.04 USD/yr | 0.33 FTE | closes 6",
+        "crowdstrike-falcon-go (edr) | 11998 USD/yr | 0.12 FTE | closes 1",
         "wazuh (siem) | 2450.04 USD/yr | 0.57 FTE | closes 3",
       ]
     `);

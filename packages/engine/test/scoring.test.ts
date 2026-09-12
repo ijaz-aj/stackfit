@@ -21,6 +21,7 @@ import {
   rankWithinCategory,
   scoreProduct,
   scoreProducts,
+  type ProductScore,
   type ScoringInputs,
 } from '../src/scoring';
 import {
@@ -37,6 +38,17 @@ function inventory(counts: Record<string, number>): AssetInventory {
     ...Object.fromEntries(Object.entries(counts).map(([key, count]) => [key, { count }])),
     networkVendors: [],
   } as AssetInventory;
+}
+
+/**
+ * Scores a product at its first tier.
+ *
+ * Scoring is per SKU now, but almost every test here is about a dimension
+ * rather than about tiering, and `buildProduct` makes a single-tier product.
+ * Tier behaviour has its own block at the bottom.
+ */
+function scoreAtFirstTier(product: Product, inputs: ScoringInputs): ProductScore {
+  return scoreProduct(product, product.tiers[0]!, inputs);
 }
 
 function buildInputs(overrides: Partial<ScoringInputs> = {}): ScoringInputs {
@@ -152,7 +164,7 @@ describe('asset coverage is scored against the category remit', () => {
       inventory: inventory({ windowsServers: 500, windowsEndpoints: 500, m365Seats: 40 }),
     });
 
-    const score = scoreProduct(gateway, inputs);
+    const score = scoreAtFirstTier(gateway, inputs);
     const coverage = score.dimensions.find((d) => d.dimension === 'asset_coverage');
     expect(coverage?.score).toBe(100);
   });
@@ -167,7 +179,7 @@ describe('asset coverage is scored against the category remit', () => {
     const inputs = buildInputs({
       inventory: inventory({ windowsServers: 30, windowsEndpoints: 10 }),
     });
-    const coverage = scoreProduct(serversOnly, inputs).dimensions.find(
+    const coverage = scoreAtFirstTier(serversOnly, inputs).dimensions.find(
       (d) => d.dimension === 'asset_coverage',
     );
     expect(coverage?.score).toBe(75);
@@ -175,7 +187,7 @@ describe('asset coverage is scored against the category remit', () => {
 
   it('is neutral rather than zero when nothing in the remit was captured', () => {
     const inputs = buildInputs({ inventory: inventory({ routers: 5 }) });
-    const coverage = scoreProduct(coveringProduct(), inputs).dimensions.find(
+    const coverage = scoreAtFirstTier(coveringProduct(), inputs).dimensions.find(
       (d) => d.dimension === 'asset_coverage',
     );
     expect(coverage?.score).toBe(100);
@@ -192,7 +204,7 @@ describe('asset coverage is scored against the category remit', () => {
       ...base,
       supports: { ...base.supports, deviceClasses: ['server'] },
     };
-    const score = scoreProduct(
+    const score = scoreAtFirstTier(
       serversOnly,
       buildInputs({ inventory: inventory({ windowsServers: 38, windowsEndpoints: 12 }) }),
     );
@@ -207,7 +219,7 @@ describe('asset coverage is scored against the category remit', () => {
       ...base,
       supports: { ...base.supports, deviceClasses: ['ot_ics'] },
     };
-    const score = scoreProduct(
+    const score = scoreAtFirstTier(
       unusable,
       buildInputs({ inventory: inventory({ windowsServers: 10 }) }),
     );
@@ -233,12 +245,12 @@ describe('compliance fit', () => {
   it('scores controls covered against controls the frameworks ask of this category', () => {
     // Two SIEM controls are asked for; this product claims one.
     const product = { ...coveringProduct(), controlsCovered: ['pci-dss-4.0:10'] };
-    const score = scoreProduct(product, buildInputs({ frameworks: [framework] }));
+    const score = scoreAtFirstTier(product, buildInputs({ frameworks: [framework] }));
     expect(score.dimensions.find((d) => d.dimension === 'compliance_fit')?.score).toBe(50);
   });
 
   it('is neutral for everyone when no framework was selected', () => {
-    const score = scoreProduct(coveringProduct(), buildInputs({ frameworks: [] }));
+    const score = scoreAtFirstTier(coveringProduct(), buildInputs({ frameworks: [] }));
     const fit = score.dimensions.find((d) => d.dimension === 'compliance_fit');
     expect(fit?.score).toBe(100);
     expect(fit?.rationale).toContain('No compliance frameworks were selected');
@@ -250,7 +262,7 @@ describe('compliance fit', () => {
       ...coveringProduct(),
       controlsCovered: ['pci-dss-4.0:10', 'pci-dss-4.0:11'],
     };
-    const score = scoreProduct(product, buildInputs({ frameworks: [framework] }));
+    const score = scoreAtFirstTier(product, buildInputs({ frameworks: [framework] }));
     expect(score.dimensions.find((d) => d.dimension === 'compliance_fit')?.score).toBe(100);
   });
 });
@@ -259,7 +271,7 @@ describe('ops fit — the dimension that stops "free" winning by default', () =>
   it('scores full marks for a tool the team can absorb', () => {
     const light = { ...coveringProduct(), opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } };
     const inputs = buildInputs({ profile: buildClientProfile({ securityStaffFte: 2 }) });
-    expect(scoreProduct(light, inputs).dimensions.find((d) => d.dimension === 'ops_fit')?.score).toBe(
+    expect(scoreAtFirstTier(light, inputs).dimensions.find((d) => d.dimension === 'ops_fit')?.score).toBe(
       100,
     );
   });
@@ -267,7 +279,7 @@ describe('ops fit — the dimension that stops "free" winning by default', () =>
   it('scores zero for a tool that would need more than the whole team', () => {
     const heavy = { ...coveringProduct(), opsBurden: { baseFte: 3, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } };
     const inputs = buildInputs({ profile: buildClientProfile({ securityStaffFte: 2 }) });
-    const fit = scoreProduct(heavy, inputs).dimensions.find((d) => d.dimension === 'ops_fit');
+    const fit = scoreAtFirstTier(heavy, inputs).dimensions.find((d) => d.dimension === 'ops_fit');
     expect(fit?.score).toBe(0);
     expect(fit?.rationale).toContain('cannot run it');
   });
@@ -275,7 +287,7 @@ describe('ops fit — the dimension that stops "free" winning by default', () =>
   it('handles a client with no security staff without dividing by zero', () => {
     // Zero security FTE is valid, common, and must not produce NaN.
     const inputs = buildInputs({ profile: buildClientProfile({ securityStaffFte: 0 }) });
-    const fit = scoreProduct(coveringProduct(), inputs).dimensions.find(
+    const fit = scoreAtFirstTier(coveringProduct(), inputs).dimensions.find(
       (d) => d.dimension === 'ops_fit',
     );
     expect(fit?.score).toBe(15);
@@ -289,7 +301,7 @@ describe('ops fit — the dimension that stops "free" winning by default', () =>
     };
     // 1.55 of 2.0 FTE = 77.5% share, between 35% and 120%.
     const inputs = buildInputs({ profile: buildClientProfile({ securityStaffFte: 2 }) });
-    const score = scoreProduct(midweight, inputs).dimensions.find(
+    const score = scoreAtFirstTier(midweight, inputs).dimensions.find(
       (d) => d.dimension === 'ops_fit',
     )?.score;
     expect(score).toBeGreaterThan(0);
@@ -314,7 +326,7 @@ describe('deployment fit — what they asked for, or what they run', () => {
       }),
       ...(overrides.estateShape === undefined ? {} : { estateShape: overrides.estateShape }),
     });
-    return scoreProduct(product, inputs).dimensions.find((d) => d.dimension === 'deployment_fit');
+    return scoreAtFirstTier(product, inputs).dimensions.find((d) => d.dimension === 'deployment_fit');
   }
 
   describe('a stated preference is a requirement the analyst heard', () => {
@@ -401,8 +413,8 @@ describe('procurement bias shifts the weights', () => {
   it('penalises an operationally heavy tool harder for an open-source-first buyer', () => {
     const heavy = { ...coveringProduct(), opsBurden: { baseFte: 3, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } };
     const profile = { securityStaffFte: 2 };
-    const neutral = scoreProduct(heavy, buildInputs({ profile: buildClientProfile(profile) })).score;
-    const oss = scoreProduct(
+    const neutral = scoreAtFirstTier(heavy, buildInputs({ profile: buildClientProfile(profile) })).score;
+    const oss = scoreAtFirstTier(
       heavy,
       buildInputs({
         profile: buildClientProfile({ ...profile, procurementBias: 'open_source_first' }),
@@ -414,7 +426,7 @@ describe('procurement bias shifts the weights', () => {
 
 describe('the overall score', () => {
   it('sums the weighted contributions and stays within 0–100', () => {
-    const score = scoreProduct(coveringProduct(), buildInputs());
+    const score = scoreAtFirstTier(coveringProduct(), buildInputs());
     const summed = score.dimensions.reduce((sum, d) => sum + d.contribution, 0);
     expect(score.score).toBeCloseTo(summed, 1);
     expect(score.score).toBeGreaterThanOrEqual(0);
@@ -422,7 +434,7 @@ describe('the overall score', () => {
   });
 
   it('gives every dimension a rationale (hard rule 5)', () => {
-    const score = scoreProduct(coveringProduct(), buildInputs());
+    const score = scoreAtFirstTier(coveringProduct(), buildInputs());
     expect(score.dimensions).toHaveLength(7);
     for (const dimension of score.dimensions) {
       expect(dimension.rationale.length, `${dimension.dimension} has no rationale`).toBeGreaterThan(0);
@@ -438,7 +450,74 @@ describe('the overall score', () => {
 
   it('is deterministic', () => {
     const inputs = buildInputs();
-    expect(scoreProduct(coveringProduct(), inputs)).toEqual(scoreProduct(coveringProduct(), inputs));
+    expect(scoreAtFirstTier(coveringProduct(), inputs)).toEqual(scoreAtFirstTier(coveringProduct(), inputs));
+  });
+});
+
+describe('a candidate is a SKU, not a product', () => {
+  /** Two tiers; only the upper one claims the control the framework asks for. */
+  function tiered(): Product {
+    const base = coveringProduct({ id: 'tiered' });
+    const tier = base.tiers[0]!;
+    return {
+      ...base,
+      category: 'siem',
+      tiers: [
+        { ...tier, id: 'basic', name: 'Basic', controlsCovered: [] },
+        { ...tier, id: 'advanced', name: 'Advanced', controlsCovered: ['pci-dss-4.0:10'] },
+      ],
+    };
+  }
+
+  const framework: Framework = buildFramework({
+    id: 'pci-dss-4.0',
+    controls: [
+      { id: '10', title: 'Log and monitor', satisfiedBy: ['siem'] },
+      { id: '11', title: 'Test security', satisfiedBy: ['siem'] },
+    ],
+  });
+
+  it('scores every tier of a surviving product', () => {
+    const scores = scoreProducts([tiered()], buildInputs());
+    expect(scores.map((score) => score.tierId)).toEqual(['basic', 'advanced']);
+    expect(scores.every((score) => score.productId === 'tiered')).toBe(true);
+  });
+
+  it('scores an eliminated product once, not once per tier', () => {
+    // Every §7.3 hard filter tests the product, not what you pay for it, so
+    // repeating the reason per SKU would pad "why was X ruled out".
+    const scores = scoreProducts(
+      [tiered()],
+      buildInputs({
+        profile: buildClientProfile({ securityStaffFte: 2, excludedProducts: ['tiered'] }),
+      }),
+    );
+    expect(scores).toHaveLength(1);
+    expect(scores[0]?.eliminated).toBe(true);
+  });
+
+  it('credits compliance fit to the tier that claims the control', () => {
+    // The dimension the catalog has evidence for. Two of two controls are asked
+    // of a SIEM; Basic claims neither, Advanced claims one.
+    const inputs = buildInputs({ frameworks: [framework] });
+    const [basic, advanced] = scoreProducts([tiered()], inputs);
+
+    const fitOf = (score: ProductScore | undefined) =>
+      score?.dimensions.find((d) => d.dimension === 'compliance_fit')?.score;
+
+    expect(fitOf(basic)).toBe(0);
+    expect(fitOf(advanced)).toBe(50);
+    expect(advanced!.score).toBeGreaterThan(basic!.score);
+  });
+
+  it('scores the tiers identically on everything the catalog cannot tell apart', () => {
+    // Asset coverage, ops, deployment, scale and maturity are product-level
+    // facts. Inventing a per-tier difference for them would be fabrication.
+    const [basic, advanced] = scoreProducts([tiered()], buildInputs());
+    const others = (score: ProductScore | undefined) =>
+      score?.dimensions.filter((d) => d.dimension !== 'compliance_fit').map((d) => d.score);
+
+    expect(others(basic)).toEqual(others(advanced));
   });
 });
 
@@ -484,7 +563,7 @@ describe('regressions', () => {
       }),
     });
 
-    const coverage = scoreProduct(siem, inputs).dimensions.find(
+    const coverage = scoreAtFirstTier(siem, inputs).dimensions.find(
       (d) => d.dimension === 'asset_coverage',
     );
     // 20×4 + 2×25 + 4×10 = 170 covered, against 170 + 5000×0.15 = 920 in remit.
@@ -514,7 +593,7 @@ describe('regressions', () => {
     });
 
     const scoreOf = (inputs: ScoringInputs) =>
-      scoreProduct(cloudOnly, inputs).dimensions.find((d) => d.dimension === 'deployment_fit')
+      scoreAtFirstTier(cloudOnly, inputs).dimensions.find((d) => d.dimension === 'deployment_fit')
         ?.score;
 
     expect(scoreOf(noPreference)).toBe(100);

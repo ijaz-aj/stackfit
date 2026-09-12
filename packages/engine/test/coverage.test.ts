@@ -7,7 +7,7 @@
 import type { CoverageAssumptions, Framework, Money, Product, ProductCategory } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { computeProductCost, type ProductCost } from '../src/cost';
+import { costCatalog } from '../src/cost';
 import { computeCoverage, type CoverageInputs } from '../src/coverage';
 import { computeCategoryRelevance, computeInfrastructureProfile } from '../src/infrastructure';
 import type { Bundle, BundleSelection } from '../src/portfolio';
@@ -122,6 +122,7 @@ function bundleOf(
     productName: entry.id,
     vendor: 'Example Inc.',
     tierId: entry.tierId ?? 'standard',
+    tierName: entry.tierId ?? 'Standard',
     fitScore: 80,
     categoryWeight: 90,
     mandatory: false,
@@ -194,12 +195,7 @@ function buildInputs(scenario: Scenario): CoverageInputs {
     })),
   };
 
-  const costs = new Map<string, ProductCost>(
-    scenario.catalog.map((entry) => [
-      entry.id,
-      computeProductCost(entry, entry.tiers[0]!, sizing, profile, costInputs),
-    ]),
-  );
+  const costs = costCatalog(scenario.catalog, sizing, profile, costInputs);
 
   return {
     profile,
@@ -335,7 +331,11 @@ describe('the coverage matrix', () => {
     );
 
     expect(statusOf(result, 'pci-dss-4.0:5')).toBe('gap');
-    expect(result.gaps.map((gap) => gap.controlId)).toEqual(['pci-dss-4.0:5']);
+    // The gap list also carries partials, which are uncovered for a different
+    // reason; this assertion is about the controls nothing addresses at all.
+    expect(
+      result.gaps.filter((gap) => gap.kind === 'gap').map((gap) => gap.controlId),
+    ).toEqual(['pci-dss-4.0:5']);
   });
 
   it('says when a framework has no product mappings at all, rather than just 0%', () => {
@@ -542,8 +542,11 @@ describe('what it would cost to fix', () => {
       }),
     );
 
-    expect(result.unclosableGaps).toEqual(['pci-dss-4.0:5']);
-    expect(result.gaps[0]?.cheapestCloser).toBeNull();
+    // Control 11 is a partial — the bundle's SIEM is the right kind of tool and
+    // claims nothing here — and no product or tier in this catalog claims it
+    // either, so it is as unclosable as the one nothing addresses at all.
+    expect(result.unclosableGaps).toEqual(['pci-dss-4.0:5', 'pci-dss-4.0:11']);
+    expect(result.gaps.every((gap) => gap.cheapestCloser === null)).toBe(true);
     expect(result.rationale.join(' ')).toContain('a gap in StackFit, not in the client');
   });
 
@@ -708,6 +711,88 @@ describe('a claim belongs to the tier that was bought', () => {
   it('still credits every tier with the product-level claims', () => {
     expect(statusOf('plan-1', 'pci-dss-4.0:5')).toBe('covered');
     expect(statusOf('plan-2', 'pci-dss-4.0:5')).toBe('covered');
+  });
+});
+
+describe('closing a gap with a SKU the client already owns', () => {
+  /** Owned at `basic`; only `advanced` claims control 11. */
+  function tieredSiem(): Product {
+    const base = product('owned-siem', 'siem', 100_000, ['pci-dss-4.0:10']);
+    const tier = base.tiers[0]!;
+    return {
+      ...base,
+      tiers: [
+        {
+          ...tier,
+          id: 'basic',
+          name: 'Basic',
+          controlsCovered: [],
+          pricing: [
+            { ...tier.pricing[0]!, tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(100_000) }] },
+          ],
+        },
+        {
+          ...tier,
+          id: 'advanced',
+          name: 'Advanced',
+          controlsCovered: ['pci-dss-4.0:11'],
+          pricing: [
+            { ...tier.pricing[0]!, tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(150_000) }] },
+          ],
+        },
+      ],
+    };
+  }
+
+  /** A second tool that would also close control 11, and costs more. */
+  const rival = product('rival-siem', 'siem', 900_000, ['pci-dss-4.0:11']);
+
+  function remediationFor() {
+    return computeCoverage(
+      buildInputs({
+        catalog: [tieredSiem(), rival],
+        selected: [{ id: 'owned-siem', category: 'siem', tierId: 'basic' }],
+        frameworks: [pci],
+        compliance: ['pci-dss-4.0'],
+      }),
+    ).remediation;
+  }
+
+  it('offers the upgrade rather than a second tool', () => {
+    // The recommendation an analyst needs: the client already holds this
+    // licence, and the capability is one tier up. Telling them to buy another
+    // SIEM instead is how a proposal loses a technical review.
+    const [first] = remediationFor();
+    expect(first?.productId).toBe('owned-siem');
+    expect(first?.upgradeFromTierId).toBe('basic');
+    expect(first?.tierName).toBe('Advanced');
+    expect(first?.closesControls).toContain('pci-dss-4.0:11');
+  });
+
+  it('prices the upgrade as the difference, not as the price of the tier', () => {
+    const [first] = remediationFor();
+    // 150,000 minor less the 100,000 already being paid.
+    expect(first?.annualSpend.amountMinor).toBe(50_000);
+    expect(first?.rationale.join(' ')).toContain('The difference, not the price of the tier');
+  });
+
+  it('still offers a new product when nothing owned can be upgraded', () => {
+    const plain = product('plain-siem', 'siem', 100_000, ['pci-dss-4.0:10']);
+    const remediation = computeCoverage(
+      buildInputs({
+        catalog: [plain, rival],
+        selected: [{ id: 'plain-siem', category: 'siem' }],
+        frameworks: [pci],
+        compliance: ['pci-dss-4.0'],
+      }),
+    ).remediation;
+
+    const forEleven = remediation.find((option) =>
+      option.closesControls.includes('pci-dss-4.0:11'),
+    );
+    expect(forEleven?.productId).toBe('rival-siem');
+    expect(forEleven?.upgradeFromTierId).toBeNull();
+    expect(forEleven?.annualSpend.amountMinor).toBe(900_000);
   });
 });
 

@@ -31,7 +31,13 @@ import type {
 } from '@stackfit/schema';
 import { ProductCategory as ProductCategoryEnum } from '@stackfit/schema';
 
-import { computeProductCost, type CostInputs, type ProductCost } from './cost';
+import {
+  computeProductCost,
+  costOfTier,
+  type CostInputs,
+  type CostsByProduct,
+  type ProductCost,
+} from './cost';
 import type { CategoryRelevance } from './infrastructure';
 import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money';
 import type { ProductScore } from './scoring';
@@ -61,6 +67,9 @@ export interface CategoryRanking {
 
 export interface Candidate {
   readonly productId: string;
+  /** The SKU this candidate is. One candidate per tier, not per product. */
+  readonly tierId: string;
+  readonly tierName: string;
   readonly category: ProductCategory;
   readonly vendor: string;
   readonly licenceModel: LicenceModel;
@@ -76,6 +85,8 @@ export interface BundleSelection {
   readonly productName: string;
   readonly vendor: string;
   readonly tierId: string;
+  /** The SKU as a client would recognise it: "Plan 2", not "plan-2". */
+  readonly tierName: string;
   readonly fitScore: number;
   readonly categoryWeight: number;
   readonly mandatory: boolean;
@@ -153,7 +164,7 @@ export interface PortfolioInputs {
   readonly products: readonly Product[];
   readonly scores: readonly ProductScore[];
   /** Costs keyed by product id. One per product that survived scoring. */
-  readonly costs: ReadonlyMap<string, ProductCost>;
+  readonly costs: CostsByProduct;
   readonly relevance: readonly CategoryRelevance[];
   /** The frameworks the analyst ticked. Empty is normal and fully supported. */
   readonly frameworks: readonly Framework[];
@@ -273,7 +284,7 @@ export function buildCandidates(
   for (const score of inputs.scores) {
     if (score.eliminated) continue;
     const product = productById.get(score.productId);
-    const cost = inputs.costs.get(score.productId);
+    const cost = costOfTier(inputs.costs, score.productId, score.tierId);
     if (product === undefined || cost === undefined) continue;
 
     const weight = weightByCategory.get(score.category) ?? 0;
@@ -282,6 +293,8 @@ export function buildCandidates(
     const density = (weight * score.score) / annualisedMinor(cost, inputs.assumptions);
     candidates.push({
       productId: product.id,
+      tierId: score.tierId,
+      tierName: score.tierName,
       category: product.category,
       vendor: product.vendor,
       licenceModel: product.licenceModel,
@@ -293,6 +306,15 @@ export function buildCandidates(
   return candidates;
 }
 
+/**
+ * The difference between two amounts, for a sentence rather than a table. Both
+ * are in the scenario currency by the time they reach here.
+ */
+function formatMinor(dearer: Money, cheaper: Money): string {
+  const delta = Math.abs(dearer.amountMinor - cheaper.amountMinor) / 100;
+  return `${dearer.currency} ${delta.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+}
+
 function withinCap(amount: Money, cap: Money | null): boolean {
   return cap === null || amount.amountMinor <= cap.amountMinor;
 }
@@ -301,8 +323,23 @@ interface SelectionOptions {
   readonly ignoreBudget: boolean;
   /** Categories eligible for selection at all. */
   readonly eligible: (ranking: CategoryRanking) => boolean;
-  /** Prefer the cheapest acceptable option rather than the best value. */
-  readonly cheapestFirst: boolean;
+  /**
+   * What this bundle is optimising for.
+   *
+   * `value_density` is §7.4 step 2 — risk-reduction per pound, which is the
+   * right objective when money is the binding constraint.
+   *
+   * `cheapest` is step 3's "cheapest acceptable option if budget is tight".
+   *
+   * `best_fit` is what Ideal needs and did not have. §7.4 step 5 says Ideal
+   * "ignores the budget cap; exists to quantify the gap" — and a gap measured
+   * with a value-for-money objective is not the gap, because the best-value
+   * option is by construction the *cheap* one. With one candidate per SKU that
+   * stopped being a subtlety: density will pick the entry-level tier of every
+   * product every time, so Ideal would have quoted the same SKUs as
+   * Recommended and quantified a gap of zero.
+   */
+  readonly objective: 'value_density' | 'cheapest' | 'best_fit';
 }
 
 /**
@@ -392,15 +429,39 @@ function select(
         const spendCost = cost.procurementAnnual;
         const oneTimeCost = addMoney(cost.implementationOneTime, cost.trainingOneTime);
         const density = (ranking.weight * effectiveFit) / annualisedMinor(cost, assumptions);
-        return { candidate, suite, openSourcePreferred, cost, annualCost, spendCost, oneTimeCost, density };
+        return {
+          candidate,
+          suite,
+          openSourcePreferred,
+          effectiveFit,
+          cost,
+          annualCost,
+          spendCost,
+          oneTimeCost,
+          density,
+        };
       });
 
-      scored.sort((a, b) =>
-        options.cheapestFirst
-          ? a.spendCost.amountMinor - b.spendCost.amountMinor ||
-            b.candidate.fitScore - a.candidate.fitScore
-          : b.density - a.density || b.candidate.fitScore - a.candidate.fitScore,
-      );
+      scored.sort((a, b) => {
+        switch (options.objective) {
+          case 'cheapest':
+            return (
+              a.spendCost.amountMinor - b.spendCost.amountMinor ||
+              b.candidate.fitScore - a.candidate.fitScore
+            );
+          case 'best_fit':
+            // Fit first, then value, then price. Two SKUs that fit a client
+            // equally well are not equally good buys, so the tie-breaks still
+            // do the work that stops Ideal being "the most expensive thing".
+            return (
+              b.effectiveFit - a.effectiveFit ||
+              b.density - a.density ||
+              a.spendCost.amountMinor - b.spendCost.amountMinor
+            );
+          case 'value_density':
+            return b.density - a.density || b.candidate.fitScore - a.candidate.fitScore;
+        }
+      });
 
       // Take the first option that fits the remaining budget. For a mandatory
       // category, fall back to the cheapest that fits rather than skipping it.
@@ -433,10 +494,34 @@ function select(
 
       const product = productById.get(picked.candidate.productId);
       const rationale: string[] = [
-        `${product?.name ?? picked.candidate.productId} selected for ${ranking.category}: ` +
-          `fit ${picked.candidate.fitScore}/100 against a category weight of ${ranking.weight}.`,
+        `${product?.name ?? picked.candidate.productId} (${picked.candidate.tierName}) selected ` +
+          `for ${ranking.category}: fit ${picked.candidate.fitScore}/100 against a category ` +
+          `weight of ${ranking.weight}.`,
         ...ranking.rationale,
       ];
+
+      // Why this SKU and not the one next to it. A tier is a decision the
+      // client pays for, so it gets a sentence of its own rather than appearing
+      // only as an id on the cost line.
+      const siblings = scored.filter(
+        (entry) =>
+          entry.candidate.productId === picked.candidate.productId &&
+          entry.candidate.tierId !== picked.candidate.tierId,
+      );
+      for (const sibling of siblings) {
+        const dearer = sibling.spendCost.amountMinor > picked.spendCost.amountMinor;
+        const fitGap = round(sibling.candidate.fitScore - picked.candidate.fitScore, 1);
+        rationale.push(
+          fitGap > 0
+            ? `${sibling.candidate.tierName} scores ${fitGap} point(s) higher and costs ` +
+              `${formatMinor(sibling.spendCost, picked.spendCost)} more a year in procurement. ` +
+              'Not worth it at this budget; it is the upgrade to quote if the coverage gaps matter.'
+            : dearer
+              ? `${sibling.candidate.tierName} costs more and scores no better for this client, ` +
+                'so the cheaper SKU is the honest recommendation.'
+              : `${sibling.candidate.tierName} is cheaper but scores ${-fitGap} point(s) lower here.`,
+        );
+      }
       if (picked.suite) {
         rationale.push(
           `Suite synergy: ${picked.candidate.vendor} is already in this bundle, so a ` +
@@ -453,7 +538,7 @@ function select(
             'raised for that preference, so this had to earn the place on ops fit too.',
         );
       }
-      if (options.cheapestFirst) {
+      if (options.objective === 'cheapest') {
         rationale.push(
           profile.budget.annualCap === null
             ? 'Chosen as the cheapest acceptable option for this category, because this bundle is ' +
@@ -467,6 +552,7 @@ function select(
         category: ranking.category,
         productId: picked.candidate.productId,
         productName: product?.name ?? picked.candidate.productId,
+        tierName: picked.candidate.tierName,
         vendor: picked.candidate.vendor,
         tierId: picked.candidate.cost.tierId,
         fitScore: picked.candidate.fitScore,
@@ -613,10 +699,12 @@ function buildBundle(
     currency,
     result.selections.map((selection) => selection.tco),
   );
-  const totalOpsFte = result.selections.reduce((sum, selection) => {
-    const cost = inputs.costs.get(selection.productId);
-    return sum + (cost?.opsFte ?? 0);
-  }, 0);
+  // The selection carries the costing it was made on, tier included. Looking it
+  // up by product id again is the Phase 4 finding-2 mistake in another form.
+  const totalOpsFte = result.selections.reduce(
+    (sum, selection) => sum + selection.cost.opsFte,
+    0,
+  );
 
   // §7.4 step 7. What would it take to cover everything mandatory?
   const mandatoryCategories = rankings.filter((ranking) => ranking.mandatory);
@@ -758,7 +846,7 @@ function buildRecommended(
   const byDensity = buildBundle('recommended', inputs, rankings, candidates, {
     ignoreBudget: false,
     eligible,
-    cheapestFirst: false,
+    objective: 'value_density',
   });
 
   // No cap means nothing can be starved, so there is nothing to repair.
@@ -769,7 +857,7 @@ function buildRecommended(
   const byCheapest = buildBundle('recommended', inputs, rankings, candidates, {
     ignoreBudget: false,
     eligible,
-    cheapestFirst: true,
+    objective: 'cheapest',
   });
 
   const coveredWeight = (bundle: Bundle): number =>
@@ -809,13 +897,13 @@ export function buildPortfolio(inputs: PortfolioInputs): {
     essential: buildBundle('essential', inputs, rankings, candidates, {
       ignoreBudget: false,
       eligible: (ranking) => ranking.mandatory || ranking.essential,
-      cheapestFirst: true,
+      objective: 'cheapest',
     }),
     recommended: buildRecommended(inputs, rankings, candidates),
     ideal: buildBundle('ideal', inputs, rankings, candidates, {
       ignoreBudget: true,
       eligible: (ranking) => ranking.weight > 0,
-      cheapestFirst: false,
+      objective: 'best_fit',
     }),
   };
 }

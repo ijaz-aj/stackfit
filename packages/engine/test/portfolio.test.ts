@@ -14,7 +14,7 @@ import type {
 } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { computeProductCost } from '../src/cost';
+import { costCatalog, costOfTier } from '../src/cost';
 import { computeCategoryRelevance, computeInfrastructureProfile } from '../src/infrastructure';
 import { buildPortfolio, msspAlternative, type PortfolioInputs } from '../src/portfolio';
 import { scoreProducts } from '../src/scoring';
@@ -161,12 +161,8 @@ function buildInputs(scenario: Scenario): PortfolioInputs {
     categoryWeights: weights,
   });
 
-  const costs = new Map(
-    scenario.products.map((product) => [
-      product.id,
-      computeProductCost(product, product.tiers[0]!, sizing, profile, costInputs),
-    ]),
-  );
+  // Every tier, the way the pipeline costs a catalog.
+  const costs = costCatalog(scenario.products, sizing, profile, costInputs);
 
   const profileInfra = computeInfrastructureProfile(inv, weights);
 
@@ -370,6 +366,81 @@ describe('step 5 — the three bundles', () => {
   });
 });
 
+describe('tiers — the SKU is part of the recommendation', () => {
+  /**
+   * One product, two SKUs. Only the upper one claims the control the client's
+   * framework asks for, and it costs four times as much.
+   */
+  function tieredSiem(): Product {
+    const base = product('tiered-siem', 'siem', 10_000_00);
+    const tier = base.tiers[0]!;
+    return {
+      ...base,
+      tiers: [
+        {
+          ...tier,
+          id: 'basic',
+          name: 'Basic',
+          controlsCovered: [],
+          pricing: [
+            { ...tier.pricing[0]!, tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(10_000_00) }] },
+          ],
+        },
+        {
+          ...tier,
+          id: 'advanced',
+          name: 'Advanced',
+          controlsCovered: ['pci-dss-4.0:10'],
+          pricing: [
+            { ...tier.pricing[0]!, tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(40_000_00) }] },
+          ],
+        },
+      ],
+    };
+  }
+
+  const scenario = { products: [tieredSiem()], frameworks: [pciMandatingSiem] };
+
+  it('never puts two tiers of one product in the same bundle', () => {
+    const { ideal } = buildPortfolio(buildInputs(scenario));
+    const ids = ideal.selections.map((selection) => selection.productId);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('recommends the cheaper SKU on value and the better one for ideal', () => {
+    // The heart of it. Value density is risk-reduction per pound, so the entry
+    // tier wins when money is the binding constraint — and Ideal, which exists
+    // to quantify the gap, has to be free to say the dearer SKU is the one the
+    // client actually wants. Before Ideal had its own objective it sorted on
+    // density too, so it named the same SKU and quantified a gap of nothing.
+    const { recommended, ideal } = buildPortfolio(buildInputs(scenario));
+
+    expect(recommended.selections[0]?.tierId).toBe('basic');
+    expect(ideal.selections[0]?.tierId).toBe('advanced');
+    expect(ideal.annualSpend.amountMinor).toBeGreaterThan(recommended.annualSpend.amountMinor);
+  });
+
+  it('names the SKU a client would recognise, not the slug', () => {
+    const { ideal } = buildPortfolio(buildInputs(scenario));
+    expect(ideal.selections[0]?.tierName).toBe('Advanced');
+  });
+
+  it('says why this SKU and not the one next to it', () => {
+    // A tier is a decision the client pays for, so hard rule 5 applies to it.
+    const { recommended } = buildPortfolio(buildInputs(scenario));
+    expect(recommended.selections[0]?.rationale.join(' ')).toContain('Advanced');
+  });
+
+  it('costs the bundle on the tier it selected', () => {
+    const { ideal } = buildPortfolio(buildInputs(scenario));
+    const selection = ideal.selections[0]!;
+    expect(selection.cost.tierId).toBe(selection.tierId);
+    // List, not net: a volume band applies on top, and this is asserting which
+    // SKU was costed rather than what the discount did to it.
+    expect(selection.cost.licenceListAnnual.amountMinor).toBe(40_000_00);
+  });
+});
+
 describe('step 6 — the MSSP alternative', () => {
   it('costs the managed option from the rate card', () => {
     const inputs = buildInputs({ products: [product('siem-a', 'siem', 100_000)] });
@@ -437,7 +508,8 @@ describe('regressions', () => {
     const discounted = recommended.selections.find((s) => s.suiteDiscountApplied);
     expect(discounted).toBeDefined();
 
-    const undiscountedTco = inputs.costs.get(discounted!.productId)!.tco.amountMinor;
+    const undiscountedTco = costOfTier(inputs.costs, discounted!.productId, discounted!.tierId)!
+      .tco.amountMinor;
     expect(discounted!.tco.amountMinor).toBeLessThan(undiscountedTco);
 
     // And the bundle total must reflect it too.

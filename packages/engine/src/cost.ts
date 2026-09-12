@@ -514,3 +514,49 @@ export function computeProductCosts(
     .map((tier) => computeProductCost(product, tier, sizing, profile, inputs))
     .sort((a, b) => a.tco.amountMinor - b.tco.amountMinor || a.tierId.localeCompare(b.tierId));
 }
+
+/**
+ * Every costed tier of every product, keyed by product id, cheapest three-year
+ * TCO first.
+ *
+ * Keyed by product rather than by product-and-tier so that "what else does this
+ * product cost at its other tiers" stays a single lookup — which is the
+ * question behind a tier upgrade, and the one a composite string key makes
+ * awkward.
+ */
+export type CostsByProduct = ReadonlyMap<string, readonly ProductCost[]>;
+
+/** The costing for one tier, or undefined when that tier was not costed. */
+export function costOfTier(
+  costs: CostsByProduct,
+  productId: string,
+  tierId: string,
+): ProductCost | undefined {
+  return costs.get(productId)?.find((cost) => cost.tierId === tierId);
+}
+
+/**
+ * The cheapest tier's costing — what a caller wants when no tier has been
+ * chosen. Never used to *present* a product whose tier a bundle has fixed: that
+ * is the cheapest-tier assumption this model exists to stop making.
+ */
+export function cheapestTierCost(
+  costs: CostsByProduct,
+  productId: string,
+): ProductCost | undefined {
+  return costs.get(productId)?.[0];
+}
+
+/** Costs every tier of every product, ready for scoring and portfolio assembly. */
+export function costCatalog(
+  products: readonly Product[],
+  sizing: SizingResult,
+  profile: ClientProfile,
+  inputs: CostInputs,
+): CostsByProduct {
+  const costs = new Map<string, readonly ProductCost[]>();
+  for (const product of products) {
+    costs.set(product.id, computeProductCosts(product, sizing, profile, inputs));
+  }
+  return costs;
+}

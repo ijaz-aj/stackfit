@@ -26,7 +26,7 @@ import type {
   SizingOverrides,
 } from '@stackfit/schema';
 
-import { computeProductCosts, type CostInputs, type ProductCost } from './cost';
+import { costCatalog, type CostInputs, type CostsByProduct } from './cost';
 import { computeCoverage, type CoverageInputs, type CoverageResult } from './coverage';
 import {
   computeCategoryRelevance,
@@ -83,7 +83,7 @@ export interface PipelineResult {
   readonly relevance: readonly CategoryRelevance[];
   readonly scores: readonly ProductScore[];
   /** Cheapest tier per product, keyed by product id. */
-  readonly costs: ReadonlyMap<string, ProductCost>;
+  readonly costs: CostsByProduct;
   readonly rankings: readonly CategoryRanking[];
   /** Every scored, costed option, in value-density order. The runners-up. */
   readonly candidates: readonly Candidate[];
@@ -130,12 +130,13 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
   const sizing = computeSizing(inventory, profile, effectiveAssumptions);
   const inScope = selectedFrameworks(profile, frameworks);
 
-  // Cheapest tier per product, which is the order computeProductCosts returns.
-  const costs = new Map<string, ProductCost>();
-  for (const product of products) {
-    const [cheapest] = computeProductCosts(product, sizing, profile, costInputs);
-    if (cheapest !== undefined) costs.set(product.id, cheapest);
-  }
+  // Every tier of every product, not just the cheapest one.
+  //
+  // Costing only the cheapest tier made the tier invisible to every stage after
+  // this: a SKU that closes a compliance control could never be selected,
+  // recommended or even quoted as an upgrade, because nothing downstream had
+  // ever priced it.
+  const costs = costCatalog(products, sizing, profile, costInputs);
 
   // Infrastructure first: scoring needs the estate's shape, because a client
   // who states no deployment preference is telling the tool to work it out from
