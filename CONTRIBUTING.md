@@ -282,3 +282,15 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   findable; the message can carry a database path or a row's contents, and this
   app holds a client's asset inventory. Next redacts messages in production
   builds — that is not a reason to depend on it.
+- **Every page, route handler and server action starts with `requireAnalyst()`.**
+  A server action is a POST endpoint with a generated URL, so gating the page
+  that renders its form protects nothing — the gate has to be in the action. The
+  same call also asserts that a production deployment is actually configured,
+  which is why it is a function call on every request rather than a check at
+  module load: `next build` runs with `NODE_ENV=production` and no secrets, and
+  asserting at import time fails the build instead of the deployment.
+- **An empty `STACKFIT_ALLOWED_EMAILS` admits nobody, deliberately.** A missing
+  or misspelled environment variable is a configuration failure, and in an
+  access check that reads as "no". Do not "fix" it to fail open for local
+  convenience — local convenience is already handled, because an install with no
+  auth configured at all runs in single-user mode and only production refuses.

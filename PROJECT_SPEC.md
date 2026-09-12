@@ -56,7 +56,7 @@ Do not re-litigate these. If you think one is wrong, say so once, then follow it
 | Tests | Vitest. Engine requires unit tests; UI gets smoke tests only |
 | Catalog | YAML files in `data/catalog/`, loaded and Zod-validated at build time |
 | Export | Markdown → DOCX (docx lib) and PDF (react-pdf). HTML preview first |
-| Auth | None in v1. Local single-user tool. Structure code so auth can be added later |
+| Auth | OAuth sign-in with an email allowlist, added 2026-09-12. This line originally read "none in v1, local single-user tool", which contradicted Q4's answer that the portal is hosted and shared; Q4 won. See docs/STATUS.md. |
 
 **Currency:** multi-currency from day one (USD / INR / EUR). All money stored as integer minor units + currency code. FX rates live in `data/config/fx.yaml` with an `asOf` date. Never store floats for money.
 

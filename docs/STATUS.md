@@ -1480,6 +1480,71 @@ production product has and this one did not.
   commit. Includes `pnpm build`, because a production build that has only run
   on one laptop is untested.
 
+### Authentication, 2026-09-12
+
+Built because the project was about to be deployed, and the decision log
+contained a contradiction that only mattered at that point.
+
+PROJECT_SPEC §5 says **"Auth: none in v1. Local single-user tool."** Q4,
+answered the same week, says **"hosted, shared, multi-user (~5–6 people), on a
+zero-cost stack."** Both cannot hold. The README then commits to Vercel Hobby,
+which has no password protection on its free tier, so the plan as written put
+every saved scoping session — prospective clients' full asset inventories — on
+a public URL with a working delete button. Q4 is the later and more specific
+answer, so it wins, and the spec table is the line that was stale.
+
+**Decisions.**
+
+- 2026-09-12 — **OAuth proves identity; an allowlist grants access.** Separate
+  concerns and separate files. A Google account proves somebody is who they say
+  they are and nothing at all about whether they should be reading a client's
+  inventory. `allowlist.ts` is pure and carries 21 tests, because it is the one
+  function in the authentication path that actually grants anything.
+
+- 2026-09-12 — **An empty allowlist admits nobody.** A missing or misspelled
+  environment variable is a configuration failure, and the safe reading of a
+  configuration failure in an access check is "no". Treating "no list" as
+  "everyone" would turn one typo in a hosting dashboard into a full data
+  exposure that looked, from the outside, exactly like everything working.
+  Verified by sabotage rather than assertion: flipping the line to fail-open
+  turns the test red.
+
+- 2026-09-12 — **Zero setup survives, and cannot become a hole.** `pnpm dev`
+  still runs with no `.env` file, in single-user local mode. The same
+  unconfigured state refuses to serve a request in production, and the refusal
+  names the exposure rather than only the missing variable — whoever reads it is
+  mid-deploy, and "set NEXTAUTH_SECRET" invites them to silence it.
+
+- 2026-09-12 — **The production guard runs per request, not at module load.**
+  The first version asserted at import time and broke `pnpm build`: `next build`
+  runs with `NODE_ENV=production` and no secrets, because every host worth using
+  injects them at runtime. Asserting at import failed the build instead of the
+  deployment. Inside `requireAnalyst` it is also unbypassable — it sits in the
+  function every page and action calls, rather than in a module a new route
+  might forget to import.
+
+- 2026-09-12 — **Every server action is gated, not only the pages.** A server
+  action is a POST endpoint with a generated URL, reachable by anyone who can
+  read the page source, so gating the page that renders the form protects
+  nothing. `createScenario` and `cloneScenario` fill in `ownerId`/`createdBy`,
+  and a clone belongs to whoever made it rather than to the original's owner.
+
+- 2026-09-12 — **Sessions are JWTs, no database adapter.** No schema change and
+  nothing to migrate when the database moves from SQLite to Postgres, which
+  matters because the alternative puts an auth migration in the middle of the
+  hosting change.
+
+**Dependency**, with the justification hard rule 7 asks for:
+
+| Package | Why | Note |
+|---|---|---|
+| `next-auth` 4.24.15 | OAuth sign-in for a handful of named analysts | ⚠ Pinned to the stable line, not 5.x beta. The v5 API suits the App Router better, and this repo does not put a beta in the authentication path — the same judgement already recorded against Prisma 8's release candidate. v4 is in maintenance, which means security fixes, and those are the fixes that matter here. |
+
+**Still open.** Authorisation is all-or-nothing: any analyst on the list can
+read and delete any scenario. For five or six colleagues sharing a scoping
+tool that is the intended behaviour, and `ownerId` now carries the data a
+per-owner rule would need if that changes.
+
 ## Open defects
 
 Found on 2026-09-12 while fixing the charts. Neither is a chart bug; both are
