@@ -216,8 +216,18 @@ products:
         # response and advanced hunting are what make incident analysis real,
         # and software inventory arrives with threat and vulnerability
         # management.
+        #
+        # cis-v8:7 is a deliberate exception to that control's own satisfiedBy,
+        # which names vulnerability_management alone. Defender Vulnerability
+        # Management is continuous, agent-based and sold inside this tier, so
+        # for a client buying Plan 2 it is a purchase that genuinely does the
+        # job. It is claimed here and nowhere else: Plan 1 has no TVM, and
+        # before tier-level claims existed this entry credited Plan 1 with it.
+        # A category mapping is a floor for what a *kind* of tool does, not a
+        # ceiling on what one product can claim.
         controlsCovered:
           - cis-v8:2
+          - cis-v8:7
           - nist-csf-2.0:DE.CM
           - nist-csf-2.0:RS.AN
         capabilities:
@@ -276,11 +286,9 @@ products:
     # automated investigation or threat and vulnerability management is claimed
     # on plan-2 above, where it is actually sold.
     #
-    # cis-v8:7 (Continuous Vulnerability Management) is claimed by neither.
-    # Plan 2's TVM is a real capability, but this control's satisfiedBy names
-    # vulnerability_management and an EDR is not one; a client who needs
-    # continuous vulnerability management should see it as a gap and buy a tool
-    # for it.
+    # cis-v8:7 (Continuous Vulnerability Management) is deliberately absent
+    # here and claimed on plan-2 only. A Plan 1 client who needs continuous
+    # vulnerability management should see it as a gap and buy a tool for it.
     controlsCovered:
       - cis-v8:4
       - cis-v8:10
