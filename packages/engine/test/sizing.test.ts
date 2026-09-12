@@ -325,18 +325,20 @@ describe('measured ingest, which outranks every coefficient here', () => {
   //
   // So a client who measured their own is right and this file is a guess.
 
-  const inventory = {
+  // Typed rather than `as never`, because these tests spread it to add the
+  // measured fields and a `never` cannot be spread.
+  const inventory: AssetInventory = {
     windowsEndpoints: { count: 500 },
     windowsServers: { count: 40 },
     networkVendors: [],
-  } as never;
+  };
 
   const assumptions = buildSizingAssumptions();
   const profile = buildClientProfile();
   const derived = computeSizing(inventory, profile, assumptions);
 
   it('replaces the derived event rate, and everything that follows from it', () => {
-    const measured = computeSizing(inventory, profile, assumptions, { eps: 4_000 });
+    const measured = computeSizing({ ...inventory, measuredEps: 4_000 }, profile, assumptions);
 
     expect(derived.epsTotal).not.toBe(4_000);
     expect(measured.epsTotal).toBe(4_000);
@@ -349,7 +351,7 @@ describe('measured ingest, which outranks every coefficient here', () => {
   it('replaces the volume directly, whatever the event rate implies', () => {
     // The commoner case. An organisation running a SIEM knows its GB/day,
     // because that is the number the licence bills on.
-    const measured = computeSizing(inventory, profile, assumptions, { gbPerDay: 42 });
+    const measured = computeSizing({ ...inventory, measuredGbPerDay: 42 }, profile, assumptions);
 
     expect(measured.gbPerDay).toBe(42);
     expect(measured.licensedGbPerDay).toBeCloseTo(42 * assumptions.peakFactor, 6);
@@ -360,10 +362,11 @@ describe('measured ingest, which outranks every coefficient here', () => {
   it('accepts both, and reports the estate’s real event size', () => {
     // Measuring both is legitimate and useful: the ratio between them is this
     // client's actual average event size rather than this file's assumption.
-    const measured = computeSizing(inventory, profile, assumptions, {
-      eps: 1_000,
-      gbPerDay: 8.64,
-    });
+    const measured = computeSizing(
+      { ...inventory, measuredEps: 1_000, measuredGbPerDay: 8.64 },
+      profile,
+      assumptions,
+    );
     expect(measured.epsTotal).toBe(1_000);
     expect(measured.gbPerDay).toBe(8.64);
     // 8.64 GB/day at 1,000 EPS is 100 bytes an event.
@@ -373,23 +376,44 @@ describe('measured ingest, which outranks every coefficient here', () => {
   it('treats a measured zero as a measurement, not as an absence', () => {
     // "We forward nothing today" is a real answer and a common one on a first
     // call. It must not fall back to the coefficients.
-    const measured = computeSizing(inventory, profile, assumptions, { eps: 0 });
+    const measured = computeSizing({ ...inventory, measuredEps: 0 }, profile, assumptions);
     expect(measured.epsTotal).toBe(0);
     expect(measured.gbPerDay).toBe(0);
-    expect(measured.ingestSource).toBe('measured');
+    expect(measured.epsSource).toBe('measured');
   });
 
-  it('labels which of the two it is', () => {
+  it('labels each figure separately, because they are answered separately', () => {
     // A coefficient-derived 40 GB/day and a metered 40 GB/day are the same
-    // number and not the same claim.
-    expect(derived.ingestSource).toBe('derived');
-    expect(computeSizing(inventory, profile, assumptions, { gbPerDay: 40 }).ingestSource).toBe(
-      'measured',
+    // number and not the same claim, and a client can make that claim about one
+    // of the two figures without making it about the other.
+    expect(derived.epsSource).toBe('derived');
+    expect(derived.gbPerDaySource).toBe('derived');
+
+    // The ordinary case: GB/day is on the SIEM invoice, events per second is
+    // not. The event rate here is still this file's coefficients and the result
+    // must not describe it as measured.
+    const volumeOnly = computeSizing({ ...inventory, measuredGbPerDay: 40 }, profile, assumptions);
+    expect(volumeOnly.gbPerDaySource).toBe('measured');
+    expect(volumeOnly.epsSource).toBe('derived');
+    expect(volumeOnly.epsTotal).toBe(derived.epsTotal);
+
+    // The mirror: a measured rate still passes through `averageEventBytes`, so
+    // volume rests on a measurement without being one.
+    const rateOnly = computeSizing({ ...inventory, measuredEps: 4_000 }, profile, assumptions);
+    expect(rateOnly.epsSource).toBe('measured');
+    expect(rateOnly.gbPerDaySource).toBe('derived');
+
+    const both = computeSizing(
+      { ...inventory, measuredEps: 4_000, measuredGbPerDay: 40 },
+      profile,
+      assumptions,
     );
+    expect(both.epsSource).toBe('measured');
+    expect(both.gbPerDaySource).toBe('measured');
   });
 
   it('says in the rationale what it did and what it would have said', () => {
-    const measured = computeSizing(inventory, profile, assumptions, { eps: 4_000 });
+    const measured = computeSizing({ ...inventory, measuredEps: 4_000 }, profile, assumptions);
     const said = measured.rationale.join(' ');
     expect(said).toContain('because the client measured it');
     // The derived figure is still reported, so the gap between the estimate and

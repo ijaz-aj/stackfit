@@ -1551,14 +1551,34 @@ What follows is the honest scorecard, including where the sources are weak.
   estate forwards, which is a fact about the client's configuration. One
   published note puts "tens of thousands of events a day" on a single server
   from event ID 4688 alone.
-  `SizingOverrides.measuredEps` and `.measuredGbPerDay` pin the chain at either
+  `AssetInventory.measuredEps` and `.measuredGbPerDay` pin the chain at either
   link: EPS feeds volume feeds licence and storage, so a client who meters
   events pins the first and one who reads their SIEM bill pins the second.
   Giving both is legitimate and the ratio between them is that estate's real
-  average event size. `SizingResult.ingestSource` labels which it was, because a
-  derived 40 GB/day and a metered 40 GB/day are the same number and not the same
-  claim. Entered at the top of the sizing worksheet, above the coefficients it
-  replaces.
+  average event size.
+- **Corrected twice on the way, both worth recording.** The pair was first put
+  on `SizingOverrides` and entered at the top of the sizing worksheet, which was
+  wrong in two ways at once. That object holds coefficient tuning, which is a
+  statement about StackFit's assumptions and not about the client, and it is
+  written only by the results page, so the question never appeared on the screen
+  where the analyst is talking to the person who knows the answer. Raised
+  2026-09-13: "you didn't make changes in this so i am doubtfull", which was a
+  fair reading of a feature that had shipped somewhere nobody would find it. The
+  fields now sit on the inventory and the question is asked at the top of the
+  Estate step, above the counts it outranks; the worksheet reports which answer
+  was used and no longer accepts one.
+- **Provenance is per figure, not per block.** The result first carried a single
+  `ingestSource`, which was wrong for the most common case there is: a client
+  reads GB/day off a SIEM invoice far more readily than events per second off a
+  collector, so one figure is measured and the other is not. The sidebar duly
+  rendered a coefficient-derived 2,786 events/sec under the words "as measured".
+  `SizingResult.epsSource` and `.gbPerDaySource` replace it, because a derived
+  40 GB/day and a metered 40 GB/day are the same number and not the same claim,
+  and the claim has to be attached to the figure it is about. Note the asymmetry
+  they capture: a measured EPS still passes through `averageEventBytes` to
+  become volume, so volume can rest on a measurement without being one, and the
+  sidebar says "from measured events" rather than either "as measured" or
+  "estimate".
 - ⚠ **Three EPS coefficients sit outside every published range, all low.**
   Measured against four independent sources: `windowsEndpoints` is 0.2 where the
   lowest published figure is 1 (a factor of 5 to 25); `windowsDomainControllers`

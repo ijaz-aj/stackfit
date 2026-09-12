@@ -17,6 +17,37 @@ function blockedByOneTimeCap(reasons: readonly UnfundedCategory[]): boolean {
 }
 
 /**
+ * What to call the ingest block, given that its two figures can have different
+ * provenance.
+ *
+ * The mixed case is the common one, not an edge: a client reads GB/day off a
+ * SIEM invoice far more readily than events per second off a collector. Calling
+ * that block "measured" would extend the client's authority to a figure this
+ * tool guessed, and calling it "estimated" would discard a figure the client
+ * actually knows. It is neither, so it says so.
+ */
+function ingestHeading(sizing: SizingResult | null): string {
+  if (sizing === null) return 'Ingest, estimated';
+  const measured =
+    Number(sizing.epsSource === 'measured') + Number(sizing.gbPerDaySource === 'measured');
+  if (measured === 2) return 'Ingest, measured';
+  if (measured === 1) return 'Ingest, part measured';
+  return 'Ingest, estimated';
+}
+
+/**
+ * Volume has three provenances, not two. Stated by the client; computed from an
+ * event rate the client stated, which is a coefficient applied to a measurement;
+ * or computed from asset counts, which is a coefficient applied to a
+ * coefficient. The middle one is worth more than the last and the label is the
+ * only place that shows.
+ */
+function gbPerDayHint(sizing: SizingResult): string {
+  if (sizing.gbPerDaySource === 'measured') return 'as measured';
+  return sizing.epsSource === 'measured' ? 'from measured events' : 'estimate';
+}
+
+/**
  * The live readout (PROJECT_SPEC §9): "estimated ingest / estimated budget,
  * updating as they type. Instant feedback is the selling point."
  *
@@ -56,11 +87,10 @@ export function LiveReadout({
           The number is still worth showing: it is the right order of magnitude
           and it is what every vendor sizing calculator does. It is the word
           above it that has to be honest, and the label flips the moment the
-          client supplies a real one.
+          client supplies a real one. Per figure, because the client can supply
+          one of the two and usually does.
         */}
-        <h3 className="text-faint text-2xs tracking-wide uppercase">
-          {sizing?.ingestSource === 'measured' ? 'Ingest, measured' : 'Ingest, estimated'}
-        </h3>
+        <h3 className="text-faint text-2xs tracking-wide uppercase">{ingestHeading(sizing)}</h3>
         {sizing === null ? (
           <p className="text-faint text-xs">Enter an estate to size it.</p>
         ) : (
@@ -69,12 +99,12 @@ export function LiveReadout({
               label="Events/sec"
               value={formatNumber(sizing.epsTotal)}
               tone="accent"
-              hint={sizing.ingestSource === 'measured' ? 'as measured' : 'from asset counts'}
+              hint={sizing.epsSource === 'measured' ? 'as measured' : 'from asset counts'}
             />
             <Stat
               label="GB/day"
               value={formatNumber(sizing.gbPerDay, 1)}
-              hint={sizing.ingestSource === 'measured' ? 'as measured' : 'estimate'}
+              hint={gbPerDayHint(sizing)}
             />
             <Stat
               label="Licensed GB/day"

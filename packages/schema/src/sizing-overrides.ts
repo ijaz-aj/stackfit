@@ -31,33 +31,6 @@ export const SizingOverrides = z
      * enough does not thereby exempt a PCI client from requirement 10's 365.
      */
     retentionDays: z.number().int().positive().max(3650).optional(),
-
-    /*
-     * Measured ingest, which beats every coefficient in this file.
-     *
-     * The per-asset EPS figures are the standard first-pass method and every
-     * vendor calculator uses them, but the published values for one device
-     * class disagree by more than an order of magnitude: a Windows workstation
-     * is quoted at 1, 2, 5 and 10 to 50 EPS by four different sources, and a
-     * domain controller at 100 to 500. They are not disagreeing about the
-     * device. They are disagreeing about audit policy and about what an estate
-     * actually forwards, which is a fact about the client's configuration and
-     * not about the hardware.
-     *
-     * So a client who knows their own number outranks any of it. An
-     * organisation running a SIEM today knows its GB/day, because that is what
-     * the licence bills on, and an organisation with a collector knows its EPS.
-     * Either one pins the chain at that point and everything downstream follows
-     * from it.
-     *
-     * Both are optional and independent. `measuredEps` replaces the derived
-     * EPS; `measuredGbPerDay` replaces the derived volume, whatever the EPS
-     * says. Giving both is legitimate: a client can measure their event rate
-     * and their volume separately, and the ratio between them is their real
-     * average event size rather than this file's assumption.
-     */
-    measuredEps: z.number().nonnegative().max(10_000_000).optional(),
-    measuredGbPerDay: z.number().nonnegative().max(1_000_000).optional(),
   })
   .strict();
 export type SizingOverrides = z.infer<typeof SizingOverrides>;

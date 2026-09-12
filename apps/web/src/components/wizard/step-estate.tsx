@@ -177,6 +177,72 @@ export function StepEstate() {
         </div>
 
         {/*
+          The first question, because it can make the rest of the step a
+          formality.
+
+          Everything below this derives log volume from an events-per-second
+          figure per device class. That is what every vendor sizing calculator
+          does and it is the right fallback, but the published figures for one
+          class disagree by more than tenfold: a Windows workstation is quoted
+          at 1, 2, 5 and 10 to 50 EPS by four different sources, because what a
+          machine emits is decided by its audit policy and not by what it is.
+
+          A client already running a SIEM does not need any of that estimated.
+          They know their GB/day, because it is the number the licence bills on.
+          Asked here, on the call, rather than buried in an advanced panel on a
+          page they reach afterwards.
+
+          The counts below are still wanted either way: they size per-endpoint
+          and per-asset licences, they decide which products can reach the
+          estate, and they are what the coverage matrix is scored against. The
+          measurement replaces the volume arithmetic, not the inventory.
+        */}
+        <div className="border-line mb-5 rounded-(--radius-control) border px-3 py-3">
+          <p className="text-ink text-sm font-medium">
+            Does the client already know their log volume?
+          </p>
+          <p className="text-faint measure mt-1 text-xs leading-relaxed">
+            If they run a SIEM today, these are on their licence and their collector. Either one
+            replaces the estimate below, which is a coefficient and not a measurement.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Field label="Measured events/sec" htmlFor="measuredEps">
+              <NumberInput
+                id="measuredEps"
+                min={0}
+                value={inventory.measuredEps ?? ''}
+                placeholder="they do not know"
+                onChange={(event) =>
+                  patchInventory({
+                    measuredEps:
+                      event.target.value === ''
+                        ? undefined
+                        : Math.max(0, Number(event.target.value) || 0),
+                  })
+                }
+              />
+            </Field>
+            <Field label="Measured GB/day" htmlFor="measuredGbPerDay">
+              <NumberInput
+                id="measuredGbPerDay"
+                min={0}
+                step={0.1}
+                value={inventory.measuredGbPerDay ?? ''}
+                placeholder="they do not know"
+                onChange={(event) =>
+                  patchInventory({
+                    measuredGbPerDay:
+                      event.target.value === ''
+                        ? undefined
+                        : Math.max(0, Number(event.target.value) || 0),
+                  })
+                }
+              />
+            </Field>
+          </div>
+        </div>
+
+        {/*
           Columns that flow, not a grid.
 
           These groups are wildly different lengths (Endpoints has three rows,

@@ -43,6 +43,9 @@ const SECONDS_PER_DAY = 86_400;
 const BYTES_PER_GB = 1e9;
 const GB_PER_TB = 1000;
 
+/** Whether a figure was stated by the client or produced by this file. */
+export type IngestSource = 'derived' | 'measured';
+
 /** One row of the sizing worksheet. */
 export interface AssetClassSizing {
   readonly assetClass: AssetClass;
@@ -89,14 +92,28 @@ export interface SizingResult {
    */
   readonly estateCaptured: boolean;
   /**
-   * Where the ingest figures came from.
+   * Where each ingest figure came from, separately.
    *
-   * `derived` is the per-asset arithmetic. `measured` means the client stated
-   * their own EPS or GB/day and it replaced that arithmetic, which is the
-   * stronger answer and has to be labelled as such: a coefficient-derived 40
-   * GB/day and a metered 40 GB/day are the same number and not the same claim.
+   * `derived` is this file's arithmetic. `measured` means the client stated
+   * that figure and it replaced the arithmetic, which is the stronger answer
+   * and has to be labelled as such: a coefficient-derived 40 GB/day and a
+   * metered 40 GB/day are the same number and not the same claim.
+   *
+   * Two fields rather than one flag, because the two are independently
+   * answerable and in practice answered unevenly. A client reads GB/day off a
+   * SIEM invoice far more often than they read events per second off a
+   * collector, so the ordinary case is a measured volume sitting beside an
+   * event rate that is still a coefficient. A single flag labelled that event
+   * rate "as measured", which is exactly the claim this pair exists to stop
+   * the UI from making.
+   *
+   * Note the asymmetry between them: a measured EPS still passes through
+   * `averageEventBytes` to become volume, so `gbPerDaySource` can be `derived`
+   * while resting on a measurement. `licensedGbPerDay` and `storageTb` follow
+   * `gbPerDay` and carry no separate provenance.
    */
-  readonly ingestSource: 'derived' | 'measured';
+  readonly epsSource: IngestSource;
+  readonly gbPerDaySource: IngestSource;
   readonly verbosityFactor: number;
   /** Every class with a non-zero count, in AssetClass declaration order. */
   readonly perAssetClass: readonly AssetClassSizing[];
@@ -204,31 +221,25 @@ function resolveScaleClass(
 /**
  * Derives ingest volume, storage and scale class from an inventory.
  *
+ * "Derives" with a caveat: the inventory can carry a figure the client
+ * measured, and where it does, that figure replaces the arithmetic rather than
+ * being averaged with it. The result says per figure which of the two happened,
+ * because a number is only as good as where it came from.
+ *
  * Deterministic: asset classes are always walked in `AssetClass` declaration
  * order, so the floating-point sum is associative in practice. The same input
  * produces a byte-identical result.
  */
-/**
- * What the client measured, where they measured anything.
- *
- * Separate from `SizingAssumptions` on purpose: an assumption is a coefficient
- * this tool chose and a measurement is a fact the client supplied, and folding
- * the second into the first would lose the distinction the whole feature
- * exists to make.
- */
-export interface MeasuredIngest {
-  /** Events per second, as metered by the client's own collector. */
-  readonly eps?: number | undefined;
-  /** GB/day, as billed by the client's current SIEM licence. */
-  readonly gbPerDay?: number | undefined;
-}
-
 export function computeSizing(
   inventory: AssetInventory,
   profile: ClientProfile,
   assumptions: SizingAssumptions,
-  measured: MeasuredIngest = {},
 ): SizingResult {
+  // Stated by the client, on the same step as the counts it outranks.
+  const measured = {
+    eps: inventory.measuredEps,
+    gbPerDay: inventory.measuredGbPerDay,
+  };
   const { factor: verbosityFactor, profile: verbosityProfile } = resolveVerbosityFactor(
     inventory,
     assumptions,
@@ -283,8 +294,8 @@ export function computeSizing(
     (epsTotal * SECONDS_PER_DAY * assumptions.averageEventBytes) / BYTES_PER_GB;
   const gbPerDay = measured.gbPerDay ?? derivedGbPerDay;
   const licensedGbPerDay = gbPerDay * assumptions.peakFactor;
-  const ingestSource: 'derived' | 'measured' =
-    measured.eps === undefined && measured.gbPerDay === undefined ? 'derived' : 'measured';
+  const epsSource: IngestSource = measured.eps === undefined ? 'derived' : 'measured';
+  const gbPerDaySource: IngestSource = measured.gbPerDay === undefined ? 'derived' : 'measured';
 
   const { days: retentionDays, drivenBy: retentionDrivenBy } = resolveRetentionDays(
     profile,
@@ -344,7 +355,8 @@ export function computeSizing(
 
   return {
     estateCaptured,
-    ingestSource,
+    epsSource,
+    gbPerDaySource,
     epsTotal: round(epsTotal, 2),
     gbPerDay: round(gbPerDay, 3),
     licensedGbPerDay: round(licensedGbPerDay, 3),
