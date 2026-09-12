@@ -60,7 +60,13 @@ products:
     integrations: [syslog, opensearch, suricata, misp, virustotal, thehive]
 
     controlsCovered:
-      - cis-v8:1
+      # cis-v8:1 (Inventory and Control of Enterprise Assets) was claimed here
+      # and is not: Wazuh's syscollector inventories hosts that already run an
+      # agent, and Control 1 is about finding the ones that do not.
+      # cis-v8:4 is kept and is deliberately outside that control's own
+      # satisfiedBy list — the Security Configuration Assessment module really
+      # does run CIS benchmark checks, which most SIEMs do not, so this is a
+      # product-level exception rather than a reason to widen the category.
       - cis-v8:4
       - cis-v8:8
       - cis-v8:13

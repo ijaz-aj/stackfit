@@ -73,7 +73,14 @@ controls:
     satisfiedBy: []
   - id: '17'
     title: Incident Response Management
-    satisfiedBy: [soar, mdr]
+    satisfiedBy: [soar, mdr, siem]
+    notes: >-
+      SIEM is listed because the platforms that dominate this category now ship
+      case management and response automation in the product — Sentinel's
+      playbooks and automation rules are sold as SOAR, not as an add-on. It is
+      not true of every SIEM: a log-management-first tool with no case handling
+      claims nothing here and reads as partial rather than covered, which is the
+      two-signal rule doing its job.
   - id: '18'
     title: Penetration Testing
     satisfiedBy: []

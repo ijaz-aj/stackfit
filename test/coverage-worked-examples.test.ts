@@ -48,7 +48,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     ).toMatchInlineSnapshot(`
       [
         "pci-dss-4.0 | in scope true | covered 5/8 of 12 | partial 0 | gaps 3 | 62.5%",
-        "nist-csf-2.0 | in scope false | covered 5/13 of 22 | partial 2 | gaps 6 | 38.5%",
+        "nist-csf-2.0 | in scope false | covered 5/13 of 22 | partial 3 | gaps 5 | 38.5%",
       ]
     `);
   });

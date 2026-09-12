@@ -138,7 +138,12 @@ controls:
   - id: RS.MA
     group: RS
     title: Incident Management
-    satisfiedBy: [soar, mdr]
+    satisfiedBy: [soar, mdr, siem]
+    notes: >-
+      Same reasoning as cis-v8:17. RS.AN below already credits a SIEM with
+      incident analysis; a platform that also carries the case through to
+      containment is managing the incident, not only analysing it. A SIEM that
+      does not make the claim still reads as partial.
   - id: RS.AN
     group: RS
     title: Incident Analysis

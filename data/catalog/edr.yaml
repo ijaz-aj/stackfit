@@ -211,6 +211,15 @@ products:
 
       - id: plan-2
         name: Defender for Endpoint Plan 2
+        # Claims on top of the product-level list, matching the capabilities
+        # below: EDR telemetry is what makes continuous monitoring real, live
+        # response and advanced hunting are what make incident analysis real,
+        # and software inventory arrives with threat and vulnerability
+        # management.
+        controlsCovered:
+          - cis-v8:2
+          - nist-csf-2.0:DE.CM
+          - nist-csf-2.0:RS.AN
         capabilities:
           - Everything in Plan 1
           - Endpoint detection and response with live response
@@ -261,14 +270,21 @@ products:
 
     integrations: [microsoft-sentinel, syslog]
 
+    # Product level is what *every* tier delivers, so this is the Plan 1 list:
+    # next-generation antivirus, attack surface reduction, device control and
+    # web protection. Everything that needs EDR telemetry, live response,
+    # automated investigation or threat and vulnerability management is claimed
+    # on plan-2 above, where it is actually sold.
+    #
+    # cis-v8:7 (Continuous Vulnerability Management) is claimed by neither.
+    # Plan 2's TVM is a real capability, but this control's satisfiedBy names
+    # vulnerability_management and an EDR is not one; a client who needs
+    # continuous vulnerability management should see it as a gap and buy a tool
+    # for it.
     controlsCovered:
-      - cis-v8:2
       - cis-v8:4
-      - cis-v8:7
       - cis-v8:10
       - nist-csf-2.0:PR.PS
-      - nist-csf-2.0:DE.CM
-      - nist-csf-2.0:RS.AN
       - nist-csf-2.0:RS.MI
       - pci-dss-4.0:5
 
