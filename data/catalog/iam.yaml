@@ -1,0 +1,780 @@
+# IAM — workforce identity, SSO and MFA.
+#
+# Prices are in minor units (hard rule 1). Every rate below is read from the
+# vendor's own published pricing page; tiers that are quote-only are named in
+# the notes rather than invented (hard rule 2).
+#
+# Scope note. This file is *workforce* identity: who the staff are, how they
+# prove it, and what they can reach. Vaulting and session recording for
+# administrators is a different purchase and lives in data/catalog/pam.yaml.
+# Two products here (Okta Essentials, Entra ID P2) do sell a privileged-access
+# capability inside the identity licence; where they do, the claim is made on
+# that tier only.
+
+category: iam
+
+products:
+  - id: keycloak
+    name: Keycloak
+    vendor: CNCF (originated at Red Hat)
+    category: iam
+    subcategory: self-hosted open-source identity provider
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: Keycloak (self-hosted)
+        capabilities:
+          - OpenID Connect, OAuth 2.0 and SAML 2.0 single sign-on
+          - LDAP and Active Directory user federation
+          - Identity brokering to external OIDC and SAML providers
+          - TOTP and WebAuthn second factors
+          - Fine-grained role and group authorisation
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/keycloak/keycloak/blob/main/LICENSE.txt
+              note: >-
+                Confirm the licence is still Apache 2.0 and the project is still
+                a CNCF project rather than a Red Hat product. The commercial
+                path is Red Hat build of Keycloak, which is a support
+                subscription and priced separately.
+            sources:
+              - url: https://github.com/keycloak/keycloak/blob/main/LICENSE.txt
+                asOf: '2026-09-12'
+              - url: https://www.keycloak.org/
+                asOf: '2026-09-12'
+            notes: >-
+              Apache License 2.0. No licence fee and no per-user charge at any
+              scale; the entire cost is the cluster it runs on and the engineer
+              who owns it.
+
+    supports:
+      os: [linux, windows]
+      deviceClasses: [identity, saas_tenant, server, web_app]
+      cloudPlatforms: [aws, azure, gcp, oci]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [saml, oidc, oauth2, ldap, kerberos, scim]
+
+    controlsCovered:
+      - cis-v8:5
+      - cis-v8:6
+      - nist-csf-2.0:PR.AA
+      - iso-27001-2022:A.5.15
+      - iso-27001-2022:A.5.16
+      - iso-27001-2022:A.5.17
+      - iso-27001-2022:A.8.3
+      - iso-27001-2022:A.8.5
+      - pci-dss-4.0:7
+      - pci-dss-4.0:8
+      - hipaa:164.312.a.1
+      - hipaa:164.312.d
+      - soc-2:CC6
+      - nis2:21.2.j
+      - rbi-csf:user-access-control
+      - gdpr:art-32
+      - dpdp-2023:rule-6-access-control
+
+    opsBurden:
+      baseFte: 0.4
+      ftePerThousandAssets: 0.1
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 15
+      skillLevel: security_engineer
+      typicalWeeks: 6
+      confidence: analyst_estimate
+
+    strengths:
+      - No per-user licence, so identity cost does not scale with headcount
+      - Runs fully air-gapped, which no SaaS IdP does
+      - Standards-first — anything speaking OIDC or SAML federates without a connector catalogue
+    weaknesses:
+      - 'Availability is now yours: an IdP outage is a total outage, so HA and DR are mandatory, not optional'
+      - Major versions move quickly and upgrades are a standing commitment
+      - No pre-built SaaS app catalogue and no outbound provisioning — every integration is hand-built
+    bestFor:
+      - Air-gapped or data-residency-constrained environments
+      - Estates with a platform team already running Kubernetes or containers
+      - Customer- or partner-facing identity where per-user SaaS pricing would be ruinous
+    avoidWhen:
+      - Security staffing is at or near zero FTE
+      - The requirement is hundreds of SaaS integrations with joiner-mover-leaver automation
+
+    sources:
+      - url: https://www.keycloak.org/
+        asOf: '2026-09-12'
+      - url: https://github.com/keycloak/keycloak/blob/main/LICENSE.txt
+        asOf: '2026-09-12'
+    notes: >-
+      opsBurden and implementation are analyst estimates for a self-managed HA
+      pair fronting an existing directory, not vendor figures. The figure most
+      worth arguing with is baseFte — an IdP that nobody owns is an outage
+      waiting to happen, so 0.4 is a floor rather than a midpoint.
+
+  - id: microsoft-entra-id
+    name: Microsoft Entra ID
+    vendor: Microsoft
+    category: iam
+    subcategory: cloud identity provider for Microsoft estates
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: p1
+        name: Entra ID P1
+        capabilities:
+          - Conditional Access policies
+          - Self-service password reset with on-premises writeback
+          - Group-based application access and dynamic group membership
+          - Application Proxy for on-premises web applications
+          - Cloud sync and hybrid identity to on-premises Active Directory
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 8400
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing
+              note: >-
+                Read the per-user-per-month figure and multiply by 12. Check
+                whether the annual-commitment qualifier still applies.
+            sources:
+              - url: https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 7.00 per user per month with an annual commitment, so USD
+              84.00 per user per year. Most clients will already hold this
+              inside Microsoft 365 E3 or a Business Premium subscription — check
+              before quoting it as a new line, because the honest answer is
+              frequently that they are already paying for it.
+        controlsCovered:
+          - iso-27001-2022:A.5.15
+          - iso-27001-2022:A.5.18
+          - iso-27001-2022:A.8.3
+          - pci-dss-4.0:7
+          - pci-dss-4.0:8
+          - hipaa:164.312.a.1
+          - hipaa:164.308.a.4
+          - rbi-csf:user-access-control
+          - gdpr:art-32
+          - dpdp-2023:rule-6-access-control
+
+      - id: p2
+        name: Entra ID P2
+        capabilities:
+          - Everything in P1
+          - Identity Protection risk-based sign-in and user risk policies
+          - Privileged Identity Management with just-in-time role elevation
+          - Access reviews
+          - Entitlement management
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 12000
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing
+              note: Read the per-user-per-month figure and multiply by 12.
+            sources:
+              - url: https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 10.00 per user per month with an annual commitment, so USD
+              120.00 per user per year. Bundled into Microsoft 365 E5.
+        controlsCovered:
+          - iso-27001-2022:A.5.15
+          - iso-27001-2022:A.5.18
+          - iso-27001-2022:A.8.2
+          - iso-27001-2022:A.8.3
+          - pci-dss-4.0:7
+          - pci-dss-4.0:8
+          - hipaa:164.312.a.1
+          - hipaa:164.308.a.3
+          - hipaa:164.308.a.4
+          - rbi-csf:user-access-control
+          - rbi-csf:privileged-access
+          - nis2:21.2.i
+          - gdpr:art-32
+          - dpdp-2023:rule-6-access-control
+
+    supports:
+      os: [windows, linux, macos, ios, android]
+      deviceClasses: [identity, saas_tenant, workstation, server, web_app]
+      cloudPlatforms: [azure, m365, aws, gcp]
+      deploymentModes: [cloud, hybrid]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [saml, oidc, scim, ldap, microsoft-sentinel, microsoft-defender-for-endpoint]
+
+    controlsCovered:
+      # What every tier does, Free included. Conditional Access, PIM and access
+      # reviews are P1/P2 capabilities and are claimed on those tiers, not here.
+      - cis-v8:5
+      - cis-v8:6
+      - nist-csf-2.0:PR.AA
+      - iso-27001-2022:A.5.16
+      - iso-27001-2022:A.5.17
+      - iso-27001-2022:A.8.5
+      - hipaa:164.312.d
+      - soc-2:CC6
+      - nis2:21.2.j
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 8
+      skillLevel: security_engineer
+      typicalWeeks: 4
+      confidence: analyst_estimate
+
+    strengths:
+      - Already present in any Microsoft 365 estate, so adoption is a licence change rather than a migration
+      - Conditional Access is the single most effective identity control most clients can turn on this quarter
+      - Native signal into Microsoft Sentinel and Defender with no connector to build
+    weaknesses:
+      - Strongest inside the Microsoft estate and merely adequate outside it
+      - 'Licensing is a maze: the same capability arrives via E3, E5, Business Premium or standalone, at four different effective prices'
+      - SaaS-only, so it is eliminated outright in air-gapped scopes
+    bestFor:
+      - Microsoft 365 estates, which is most mid-market clients
+      - Hybrid estates keeping on-premises Active Directory for the foreseeable future
+    avoidWhen:
+      - The environment is air-gapped or has residency constraints Azure cannot meet
+      - The estate is deliberately non-Microsoft, where a neutral IdP integrates better
+
+    sources:
+      - url: https://www.microsoft.com/en-us/security/business/microsoft-entra-pricing
+        asOf: '2026-09-12'
+      - url: https://learn.microsoft.com/en-us/entra/fundamentals/whatis
+        asOf: '2026-09-12'
+    notes: >-
+      The number that decides this line on a real deal is almost never the
+      standalone rate — it is whether the client is on Business Premium, E3 or
+      E5. Business Premium and E3 include P1; E5 includes P2. Establish that
+      before putting a per-user figure in a proposal.
+
+      Entra ID Free is deliberately not catalogued as a tier, for the same
+      reason Duo Free is not. Microsoft charges nothing for it, but it is not
+      standalone — it exists only inside an Azure or Microsoft 365 subscription
+      the client has to already hold. The catalog has no way to express that
+      prerequisite, so a zero-cost tier here is offered to every client
+      including those with no Microsoft estate, and it then beats every
+      open-source option on cost by construction. It was catalogued briefly and
+      was selected as the identity answer for an explicitly open-source-first
+      client, over Keycloak, under the rationale line "No licence fee: Entra ID
+      Free is commercial". A client who genuinely already holds it should list
+      it in retainedTools, which is the field that models "already owned".
+
+  - id: okta-workforce-identity
+    name: Okta Workforce Identity Cloud
+    vendor: Okta
+    category: iam
+    subcategory: vendor-neutral workforce identity platform
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: starter
+        name: Starter
+        capabilities:
+          - Single sign-on
+          - Multi-factor authentication
+          - Universal Directory
+          - Five Okta Workflows
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 7200
+              currency: USD
+            minimumAnnual:
+              amountMinor: 150000
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.okta.com/pricing/
+              note: >-
+                Read the per-user-per-month figure for the suite and multiply
+                by 12, and re-check the minimum annual contract, which is quoted
+                separately from the rate.
+            sources:
+              - url: https://www.okta.com/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              USD 6.00 per user per month billed annually, so USD 72.00 per
+              user per year. Okta states a USD 1,500 minimum annual contract
+              for Workforce Identity, which is what the minimumAnnual floor
+              above encodes — below roughly 21 users the rate stops mattering.
+
+      - id: core-essentials
+        name: Core Essentials
+        capabilities:
+          - Everything in Starter
+          - Adaptive MFA
+          - Lifecycle Management
+          - Access Governance
+          - Okta Privileged Access
+          - Fifty Okta Workflows
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 16800
+              currency: USD
+            minimumAnnual:
+              amountMinor: 150000
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.okta.com/pricing/
+              note: >-
+                Check whether Core Essentials and Essentials still carry the
+                same headline feature list at different rates — see the notes
+                on this product.
+            sources:
+              - url: https://www.okta.com/pricing/
+                asOf: '2026-09-12'
+            notes: USD 14.00 per user per month billed annually, so USD 168.00 per user per year.
+        controlsCovered:
+          - iso-27001-2022:A.5.18
+          - iso-27001-2022:A.6.5
+          - iso-27001-2022:A.8.2
+          - hipaa:164.308.a.3
+          - rbi-csf:privileged-access
+          - nis2:21.2.i
+
+      - id: essentials
+        name: Essentials
+        capabilities:
+          - Everything in Starter
+          - Adaptive MFA
+          - Lifecycle Management
+          - Access Governance
+          - Okta Privileged Access
+          - Fifty Okta Workflows
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 20400
+              currency: USD
+            minimumAnnual:
+              amountMinor: 150000
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.okta.com/pricing/
+              note: Read the per-user-per-month figure and multiply by 12.
+            sources:
+              - url: https://www.okta.com/pricing/
+                asOf: '2026-09-12'
+            notes: USD 17.00 per user per month billed annually, so USD 204.00 per user per year.
+        controlsCovered:
+          - iso-27001-2022:A.5.18
+          - iso-27001-2022:A.6.5
+          - iso-27001-2022:A.8.2
+          - hipaa:164.308.a.3
+          - rbi-csf:privileged-access
+          - nis2:21.2.i
+
+    supports:
+      os: [windows, linux, macos, ios, android]
+      deviceClasses: [identity, saas_tenant, workstation, server, web_app]
+      cloudPlatforms: [aws, azure, gcp, m365, google_workspace, oci]
+      deploymentModes: [cloud, hybrid]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [saml, oidc, scim, ldap, radius, wazuh, microsoft-sentinel]
+
+    controlsCovered:
+      - cis-v8:5
+      - cis-v8:6
+      - nist-csf-2.0:PR.AA
+      - iso-27001-2022:A.5.15
+      - iso-27001-2022:A.5.16
+      - iso-27001-2022:A.5.17
+      - iso-27001-2022:A.8.3
+      - iso-27001-2022:A.8.5
+      - pci-dss-4.0:7
+      - pci-dss-4.0:8
+      - hipaa:164.312.a.1
+      - hipaa:164.312.d
+      - hipaa:164.308.a.4
+      - soc-2:CC6
+      - soc-2:P5
+      - nis2:21.2.j
+      - rbi-csf:user-access-control
+      - gdpr:art-32
+      - dpdp-2023:rule-6-access-control
+
+    opsBurden:
+      baseFte: 0.2
+      ftePerThousandAssets: 0.08
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 15
+      skillLevel: security_engineer
+      typicalWeeks: 8
+      confidence: analyst_estimate
+
+    strengths:
+      - Vendor-neutral, with the largest pre-integrated application catalogue in the category
+      - Lifecycle Management automates joiner-mover-leaver, which is the control auditors actually test
+      - Published list pricing on the entry suites, which is rare above the SMB tier
+    weaknesses:
+      - Materially more expensive than bundling identity into an existing Microsoft subscription
+      - 'Elapsed time is application integration, not product setup: the long pole is every app owner'
+      - SaaS-only, so air-gapped scopes eliminate it
+    bestFor:
+      - Multi-cloud or deliberately non-Microsoft estates
+      - Clients whose SaaS sprawl needs one place to offboard a leaver
+    avoidWhen:
+      - The client already pays for Microsoft 365 E3 or E5 and has no neutrality requirement
+      - Under about twenty users, where the minimum annual contract dominates the rate
+
+    sources:
+      - url: https://www.okta.com/pricing/
+        asOf: '2026-09-12'
+    notes: >-
+      ⚠ Okta's pricing page listed Core Essentials at USD 14 and Essentials at
+      USD 17 with the same headline feature list on 2026-09-12. Both are
+      catalogued at their published rates rather than one being guessed away,
+      but the difference between them should be confirmed with Okta before
+      either number reaches a proposal. The Professional and Enterprise suites
+      are quote-only and are deliberately absent rather than placeholder-priced.
+
+  - id: jumpcloud
+    name: JumpCloud
+    vendor: JumpCloud, Inc.
+    category: iam
+    subcategory: cloud directory with device management for SMB
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: device-management
+        name: Device Management
+        capabilities:
+          - Cross-platform device management for Windows, macOS and Linux
+          - Policy and patch management
+          - Remote assist
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 10800
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://jumpcloud.com/pricing
+              note: >-
+                JumpCloud quotes an annual and a month-to-month rate side by
+                side; take the annual one and multiply by 12. Package names on
+                this page change more often than the rates do.
+            sources:
+              - url: https://jumpcloud.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 9.00 per user per month on an annual commitment, so USD
+              108.00 per user per year. The month-to-month rate was USD 11.00.
+
+      - id: sso
+        name: SSO
+        capabilities:
+          - Single sign-on to SaaS applications
+          - Cloud directory
+          - Multi-factor authentication
+          - User lifecycle management
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 13200
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://jumpcloud.com/pricing
+              note: Take the annual rate and multiply by 12.
+            sources:
+              - url: https://jumpcloud.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 11.00 per user per month on an annual commitment, so USD
+              132.00 per user per year. The month-to-month rate was USD 13.00.
+
+      - id: device-identity-management
+        name: Device Identity Management
+        capabilities:
+          - Everything in Device Management and SSO
+          - Directory as a service with LDAP and RADIUS
+          - Password management
+          - Directory Insights event logging
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 15600
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://jumpcloud.com/pricing
+              note: Take the annual rate and multiply by 12.
+            sources:
+              - url: https://jumpcloud.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 13.00 per user per month on an annual commitment, so USD
+              156.00 per user per year. The month-to-month rate was USD 15.00.
+        controlsCovered:
+          - iso-27001-2022:A.5.18
+          - iso-27001-2022:A.6.5
+          - iso-27001-2022:A.8.1
+          - hipaa:164.308.a.3
+
+    supports:
+      os: [windows, linux, macos, ios, android]
+      deviceClasses: [identity, workstation, saas_tenant, server, mobile]
+      cloudPlatforms: [aws, azure, gcp, m365, google_workspace]
+      deploymentModes: [cloud, hybrid]
+      scaleFloor: small
+      scaleCeiling: mid
+      airGapCapable: false
+
+    integrations: [saml, oidc, scim, ldap, radius]
+
+    controlsCovered:
+      - cis-v8:5
+      - cis-v8:6
+      - nist-csf-2.0:PR.AA
+      - iso-27001-2022:A.5.15
+      - iso-27001-2022:A.5.16
+      - iso-27001-2022:A.5.17
+      - iso-27001-2022:A.8.3
+      - iso-27001-2022:A.8.5
+      - pci-dss-4.0:7
+      - pci-dss-4.0:8
+      - hipaa:164.312.a.1
+      - hipaa:164.312.d
+      - soc-2:CC6
+      - nis2:21.2.j
+      - rbi-csf:user-access-control
+      - gdpr:art-32
+      - dpdp-2023:rule-6-access-control
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.08
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 8
+      skillLevel: generalist
+      typicalWeeks: 4
+      confidence: analyst_estimate
+
+    strengths:
+      - Directory and device management in one subscription, which suits a client with no Active Directory
+      - Genuinely operable by a generalist IT admin rather than a security engineer
+      - Per-feature à la carte pricing, so a narrow requirement stays cheap
+    weaknesses:
+      - Aimed at SMB and mid-market; the Platform packages that scale further are quote-only
+      - 'Shallower governance than the enterprise IdPs: access certification and fine-grained entitlements are thin'
+      - SaaS-only
+    bestFor:
+      - Clients with no on-premises Active Directory and no appetite to build one
+      - Mixed Windows, macOS and Linux fleets under a single small IT team
+    avoidWhen:
+      - The estate already runs Active Directory and will keep it
+      - Enterprise identity governance or certification campaigns are a requirement
+
+    sources:
+      - url: https://jumpcloud.com/pricing
+        asOf: '2026-09-12'
+    notes: >-
+      The Platform Essentials, Platform and Platform Prime packages are
+      quote-only and are not catalogued. Platform Essentials is additionally
+      capped at 300 users, which is a useful signal about where this product
+      stops being the right answer.
+
+  - id: cisco-duo
+    name: Cisco Duo
+    vendor: Cisco
+    category: iam
+    subcategory: multi-factor authentication and device trust
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: essentials
+        name: Duo Essentials
+        capabilities:
+          - Multi-factor authentication with push, passcode and hardware tokens
+          - Single sign-on for SaaS and on-premises applications
+          - Basic access policies by user and group
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 3600
+              currency: USD
+            minimumUnits: 10
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://duo.com/pricing
+              note: >-
+                Read the per-user-per-month figure and multiply by 12. Also
+                re-check the purchasing increments, which are what makes the
+                small-estate price differ from headcount times rate.
+            sources:
+              - url: https://duo.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 3.00 per user per month, so USD 36.00 per user per year.
+              Licences are sold in increments of 10 below 100 users and 25
+              above, so a 62-user client buys 75. Only the floor of 10 is
+              modelled here; the rounding above 100 is not, and understates a
+              large estate by up to 24 users.
+
+      - id: advantage
+        name: Duo Advantage
+        capabilities:
+          - Everything in Essentials
+          - Trusted Endpoints device-trust policies
+          - Risk-Based Authentication
+          - Device health checks before access
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 7200
+              currency: USD
+            minimumUnits: 10
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://duo.com/pricing
+              note: Read the per-user-per-month figure and multiply by 12.
+            sources:
+              - url: https://duo.com/pricing
+                asOf: '2026-09-12'
+            notes: USD 6.00 per user per month, so USD 72.00 per user per year.
+        controlsCovered:
+          - iso-27001-2022:A.5.15
+          - iso-27001-2022:A.8.3
+          - pci-dss-4.0:7
+
+      - id: premier
+        name: Duo Premier
+        capabilities:
+          - Everything in Advantage
+          - Duo Network Gateway and Duo Desktop for remote access
+          - Identity threat detection and response
+          - Passwordless authentication
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 10800
+              currency: USD
+            minimumUnits: 10
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://duo.com/pricing
+              note: Read the per-user-per-month figure and multiply by 12.
+            sources:
+              - url: https://duo.com/pricing
+                asOf: '2026-09-12'
+            notes: USD 9.00 per user per month, so USD 108.00 per user per year.
+        controlsCovered:
+          - iso-27001-2022:A.5.15
+          - iso-27001-2022:A.8.3
+          - iso-27001-2022:A.6.7
+          - pci-dss-4.0:7
+
+    supports:
+      os: [windows, linux, macos, ios, android]
+      deviceClasses: [identity, workstation, server, saas_tenant, web_app]
+      cloudPlatforms: [aws, azure, gcp, m365, google_workspace]
+      deploymentModes: [cloud, hybrid]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [saml, oidc, radius, ldap]
+
+    controlsCovered:
+      # Duo authenticates people and gates access. It does not manage accounts,
+      # so cis-v8:5 (Account Management) is deliberately absent — the directory
+      # it sits in front of is what closes that control.
+      - cis-v8:6
+      - nist-csf-2.0:PR.AA
+      - iso-27001-2022:A.5.17
+      - iso-27001-2022:A.8.5
+      - pci-dss-4.0:8
+      - hipaa:164.312.d
+      - soc-2:CC6
+      - nis2:21.2.j
+      - rbi-csf:user-access-control
+      - gdpr:art-32
+
+    opsBurden:
+      baseFte: 0.05
+      ftePerThousandAssets: 0.03
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 4
+      skillLevel: generalist
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - The fastest route from no MFA to MFA everywhere, typically inside a fortnight
+      - Sits in front of an existing directory rather than replacing it, so there is no migration
+      - Covers on-premises VPN, RDP and SSH, which most cloud-native IdPs do not
+    weaknesses:
+      - Not a directory — it needs a source of identity to protect
+      - Adds a second identity vendor to the estate and a second console to operate
+      - 'Purchasing increments distort small deals: a 62-user client pays for 75'
+    bestFor:
+      - Clients whose immediate obligation is MFA on remote access and privileged logins
+      - Estates with on-premises applications that a SaaS IdP cannot reach
+    avoidWhen:
+      - Conditional Access or an equivalent is already licensed and unused
+      - The client needs a directory and lifecycle management, not just a second factor
+
+    sources:
+      - url: https://duo.com/pricing
+        asOf: '2026-09-12'
+    notes: >-
+      Duo Free exists at no charge for up to 10 users. It is deliberately not
+      catalogued as a tier: the schema has no way to express a headcount cap, so
+      a free tier here would be offered to a 500-person client at zero cost,
+      which is worse than not offering it at all. Raise it by hand for genuinely
+      tiny scopes.
