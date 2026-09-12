@@ -1,7 +1,7 @@
 # Status
 
 **Current phase:** 6 — results dashboard, all seven sections of §8 (in review)
-**Last updated:** 2026-09-11
+**Last updated:** 2026-09-12
 
 ## Phase log
 
@@ -17,7 +17,7 @@
 | 4 `scoring.ts` + `portfolio.ts` + tests | in review | Both stages plus all seven §7.4 steps. `scoring-weights.yaml`, `portfolio-assumptions.yaml`. **Reviewed; 7 defects found and fixed**, each pinned by a regression. 244 tests green. |
 | 4b `coverage.ts` (**inserted**) | in review | The §7.5 stage: coverage matrix per framework, CSF Function roll-up, risk-graded gap list, costed fix plan. `coverage-assumptions.yaml`. The engine pipeline is now complete end to end. 299 tests green. |
 | 5 Intake wizard UI | in review | Next 16 + React 19 + Tailwind v4 + Prisma 7/SQLite. Six steps, presets, continuous save, live readout. `runPipeline` + `@stackfit/data` extracted so the app and the tests share one path. 325 tests green; `pnpm audit` clean. |
-| 6 Results dashboard | in review | All seven parts of §8, server-rendered off one pipeline run. Recharts cost + cash-flow charts on a validated palette. Sizing assumptions are editable per scenario. 334 tests green. |
+| 6 Results dashboard | in review | All seven parts of §8, server-rendered off one pipeline run. Recharts cost + cash-flow charts on a validated palette. Sizing assumptions are editable per scenario. **Reviewed; one scoring defect found and fixed** (deployment fit read "no preference" as a demand). 347 tests green. |
 | 7 Catalog expansion (≥5 per category) | not started | |
 | 8 Export (DOCX/PDF/XLSX) | not started | |
 | 9 Scenario save / clone / compare | not started | |
@@ -626,6 +626,64 @@ actions over HTTP, not by looking at it. The charts in particular have been vali
 for colour and written to spec but **never seen**. Worth ten minutes with `pnpm dev`
 before Phase 7.
 
+
+### Phase 6 review — the deployment dimension was reading a non-answer as an answer
+
+Found by varying the scenario inputs, the same way the last four defects were.
+
+- 2026-09-12 — **⚠ "No preference" was scored as a demand for hybrid.**
+  `deploymentPreference: 'hybrid'` is the wording on the wizard's own dropdown for
+  a client with no strong view, and §7.3 scoring read it as a requirement. Any
+  product without a hybrid deployment mode scored **30 out of 100** on the
+  deployment dimension for a client who had expressed no opinion at all. In the
+  committed catalog that is the two cloud-delivered products, and it applied even
+  to the estate cloud delivery suits best: a SaaS consultancy with no server room
+  marked CrowdStrike down to 30 for not offering an on-prem option it has no use
+  for. A self-hosted-only product would have been penalised the same way in a
+  cloud-native estate; this catalog simply has none yet.
+- 2026-09-12 — **When nothing is stated, the estate decides.** `scoring` now runs
+  *after* `infrastructure` in the pipeline and takes `estateShape`. The shape-to-
+  deployment-mode affinities are data (`deploymentFit.byEstateShape` in
+  `scoring-weights.yaml`), one entry per shape, each with a mandatory `basis`, and
+  the schema rejects the file if a shape is missing — the same convention as the
+  surface weights and the EPS coefficients.
+- 2026-09-12 — **An inferred preference is a weaker claim than a stated one, and
+  is scored like one.** Stated bands are unchanged at 30–100; inferred bands are
+  compressed to 55–100. A guess should move a ranking without overturning it, and
+  every rationale says which of the two produced the number — "this is StackFit
+  reading the asset counts, not something the client said."
+- 2026-09-12 — **An unknown estate scores every product alike (85).** No
+  preference and no inventory is not evidence against anything. Same rule as
+  Phase 3d's "an absent inventory means *not asked*, never *does not exist*",
+  carried rather than re-decided.
+- 2026-09-12 — **A stated preference still outranks the estate.** Pinned by a
+  test: a cloud-only product in a cloud-native estate, for a client who asked for
+  on-prem, still scores 30. The client's words are not overridden by the tool's
+  reading of their asset counts.
+
+**Worth eyeballing.** The three Phase 3d estates, same catalog, no stated
+preference, deployment dimension before → after:
+
+| Estate | Shape | Moved up | Moved down |
+|---|---|---|---|
+| SaaS consultancy | `saas_centric` | **CrowdStrike 30 → 100** | Velociraptor, Graylog, OpenVAS, Nessus 100 → 85 |
+| On-prem manufacturer | `on_prem_centric` | CrowdStrike **30 → 55**, Sentinel **30 → 55** | Defender 100 → 85 |
+| OT plant | `ot_heavy` | Sentinel **30 → 55** | Defender 100 → 85 |
+
+The SaaS row is the defect in one line: the only product built for an estate with
+no server room was the one product the tool marked down. The moves down are the
+inferred hybrid fallback — a self-hosted tool still fits a SaaS estate, it is just
+not the obvious shape for it.
+
+**No recommended stack changed in any of the three**, which is the compressed band
+working as intended: 10 to 15 points on a dimension weighted 10 tilts a ranking
+without overturning it. What changed is that the reason each product scored what
+it did is now true, and on the card.
+
+**The pattern, for the fifth time:** a rule established in one stage
+(*infrastructure decides what an unregulated client should buy*, Phase 3d) had
+not been carried into the next. Phase 4's review named this exact failure mode
+and predicted it would recur.
 
 ## Open questions
 - **Five catalog control claims fall outside the framework's own category mapping** (Phase 4b). Wazuh claims `cis-v8:1` and `cis-v8:4`, Defender claims `cis-v8:7`, Sentinel claims `cis-v8:17` and `nist-csf-2.0:RS.MA`. Each is defensible on the merits, and each means either the framework file's `satisfiedBy` is too narrow or the product entry is too generous. Coverage reports the disagreement rather than resolving it. **Worth a decision before Phase 7 multiplies it.**
