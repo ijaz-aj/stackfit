@@ -73,12 +73,45 @@ export interface RoadmapEntry {
   readonly phaseLabel: string;
   readonly horizon: string;
   readonly category: ProductCategory;
+  /** Carried so a renderer never has to own its own copy of the label map. */
+  readonly categoryLabel: string;
   readonly productName: string;
   readonly tierName: string;
   readonly mandatory: boolean;
   readonly typicalWeeks: number;
   readonly annualSpend: Money;
   readonly oneTime: Money;
+}
+
+/**
+ * One row of the raw cost model §8 asks for: "Plus a raw XLSX/CSV of the cost
+ * model for the analyst."
+ *
+ * Deliberately wider than anything the prose sections show. This is the sheet
+ * an analyst pivots, argues with and pastes into their own model, so it carries
+ * the four cost lines separately, the confidence grading and the price age —
+ * everything needed to challenge a number rather than just read it.
+ */
+export interface CostModelRow {
+  readonly category: ProductCategory;
+  readonly categoryLabel: string;
+  readonly productName: string;
+  readonly vendor: string;
+  readonly tierName: string;
+  readonly mandatory: boolean;
+  readonly fitScore: number;
+  readonly licenceAnnual: Money;
+  readonly supportAnnual: Money;
+  readonly infraAnnual: Money;
+  readonly opsFteAnnual: Money;
+  readonly opsFte: number;
+  readonly annualSpend: Money;
+  readonly annualRecurring: Money;
+  readonly oneTime: Money;
+  readonly tco: Money;
+  readonly pricingConfidence: string;
+  readonly priceAge: string;
+  readonly suiteDiscountApplied: boolean;
 }
 
 export interface ProposalDocument {
@@ -90,6 +123,8 @@ export interface ProposalDocument {
   readonly sections: readonly ProposalSection[];
   /** Exposed separately as well, because the XLSX export is a table not a document. */
   readonly roadmap: readonly RoadmapEntry[];
+  /** Likewise: §8's "raw cost model for the analyst" is a sheet, not prose. */
+  readonly costModel: readonly CostModelRow[];
 }
 
 export interface ProposalInputs {
@@ -190,6 +225,7 @@ export function buildRoadmap(inputs: ProposalInputs): RoadmapEntry[] {
       phaseLabel: phase?.label ?? 'Unscheduled',
       horizon: phase?.horizon ?? '',
       category: selection.category,
+      categoryLabel: CATEGORY_LABELS[selection.category],
       productName: selection.productName,
       tierName: selection.tierName,
       mandatory: selection.mandatory,
@@ -554,6 +590,39 @@ function round(value: number, decimals: number): number {
   return (scaled < 0 ? -Math.round(-scaled) : Math.round(scaled)) / factor;
 }
 
+/**
+ * The recommended bundle as a flat table, one row per selection.
+ *
+ * Reads `selection.cost` rather than looking the product's cost up again by id:
+ * a suite-discounted selection is costed a second time inside the portfolio
+ * stage, and the by-id figure is the undiscounted one. Re-deriving it here
+ * would put a licence line in the analyst's spreadsheet that disagrees with the
+ * total in the proposal.
+ */
+export function buildCostModel(inputs: ProposalInputs): CostModelRow[] {
+  return inDeliveryOrder(inputs.recommended.selections).map((selection) => ({
+    category: selection.category,
+    categoryLabel: CATEGORY_LABELS[selection.category],
+    productName: selection.productName,
+    vendor: selection.vendor,
+    tierName: selection.tierName,
+    mandatory: selection.mandatory,
+    fitScore: selection.fitScore,
+    licenceAnnual: selection.cost.licenceAnnual,
+    supportAnnual: selection.cost.supportAnnual,
+    infraAnnual: selection.cost.infraAnnual,
+    opsFteAnnual: selection.cost.opsFteAnnual,
+    opsFte: selection.cost.opsFte,
+    annualSpend: selection.annualSpend,
+    annualRecurring: selection.annualRecurring,
+    oneTime: selection.oneTime,
+    tco: selection.tco,
+    pricingConfidence: selection.cost.pricingConfidence,
+    priceAge: selection.cost.freshness.status,
+    suiteDiscountApplied: selection.suiteDiscountApplied,
+  }));
+}
+
 /** Total annual spend across a roadmap phase. */
 export function phaseSpend(
   entries: readonly RoadmapEntry[],
@@ -570,6 +639,7 @@ export function buildProposal(inputs: ProposalInputs): ProposalDocument {
   const roadmap = buildRoadmap(inputs);
 
   return {
+    costModel: buildCostModel(inputs),
     title: 'Security stack proposal',
     preparedFor: inputs.profile.orgName,
     asOf: inputs.asOf,

@@ -17,6 +17,7 @@ import { describe, expect, it } from 'vitest';
 
 import { engineData, today } from '../src/lib/config.server';
 import { proposalToDocx } from '../src/lib/proposal-docx.server';
+import { proposalToXlsx } from '../src/lib/proposal-xlsx.server';
 import { proposalFilename } from '../src/lib/proposal.server';
 import { NEW_INVENTORY, NEW_PROFILE } from '../src/lib/scenario';
 
@@ -171,6 +172,111 @@ describe('the DOCX export', () => {
         b.file(name)!.async('string'),
       ]);
       expect(left, `${name} differs between two exports of the same scenario`).toBe(right);
+    }
+  });
+});
+
+/** Every `<si>` in the shared string table, in index order. */
+async function sharedStrings(zip: JSZip): Promise<string[]> {
+  const xml = await zip.file('xl/sharedStrings.xml')!.async('string');
+  return [...xml.matchAll(/<si>(.*?)<\/si>/gs)].map((match) =>
+    [...match[1]!.matchAll(/<t(?:\s[^>]*)?>([^<]*)<\/t>/g)].map((run) => run[1]).join(''),
+  );
+}
+
+describe('the XLSX cost model', () => {
+  it('is a structurally valid workbook with the three sheets an analyst needs', async () => {
+    const zip = await JSZip.loadAsync(await proposalToXlsx(documentFor()));
+    const names = Object.keys(zip.files);
+
+    for (const required of [
+      '[Content_Types].xml',
+      '_rels/.rels',
+      'xl/workbook.xml',
+      'xl/worksheets/sheet1.xml',
+      'xl/styles.xml',
+    ]) {
+      expect(names, `missing required part ${required}`).toContain(required);
+    }
+
+    const parser = new XMLParser({ ignoreAttributes: false });
+    for (const name of names) {
+      if (!name.endsWith('.xml') && !name.endsWith('.rels')) continue;
+      const content = await zip.file(name)!.async('string');
+      expect(() => parser.parse(content), `${name} is not well-formed XML`).not.toThrow();
+    }
+
+    const workbook = await zip.file('xl/workbook.xml')!.async('string');
+    for (const sheet of ['Cost model', 'Roadmap', 'Assumptions']) {
+      expect(workbook, `sheet "${sheet}" is missing`).toContain(`name="${sheet}"`);
+    }
+  });
+
+  it('writes money as numbers, not as formatted text', async () => {
+    // The whole reason this export exists separately from the DOCX. The client
+    // gets prose with "$170,100" in it; the analyst gets a cell they can sum,
+    // sort and pivot. A column of currency strings is a spreadsheet that cannot
+    // be used as one.
+    const document = documentFor();
+    const zip = await JSZip.loadAsync(await proposalToXlsx(document));
+    const sheet = await zip.file('xl/worksheets/sheet1.xml')!.async('string');
+
+    const rows = [...sheet.matchAll(/<row[^>]*>(.*?)<\/row>/gs)];
+    expect(rows.length).toBe(document.costModel.length + 1);
+
+    // A shared-string cell carries t="s"; a numeric one carries no type at all.
+    // Every money column must be the latter.
+    const numericCells = [...sheet.matchAll(/<c(?![^>]*\st="s")[^>]*>\s*<v>([^<]+)<\/v>/g)];
+    expect(numericCells.length).toBeGreaterThan(document.costModel.length);
+
+    // And no cell anywhere should contain a rendered currency string.
+    const strings = await sharedStrings(zip);
+    expect(strings.some((value) => /^[$€₹][\d,]/.test(value))).toBe(false);
+  });
+
+  it('carries the §6 rule 4 disclaimer on its own sheet', async () => {
+    // A spreadsheet is the export most likely to be forwarded on its own with
+    // no covering note, so the disclaimer cannot live only in the DOCX.
+    const document = documentFor();
+    const zip = await JSZip.loadAsync(await proposalToXlsx(document));
+    const strings = await sharedStrings(zip);
+
+    expect(strings).toContain(document.disclaimer);
+  });
+
+  it('carries every cost line separately, so a figure can be argued with', async () => {
+    // Licence, support, infrastructure and people as four columns rather than
+    // one total. An analyst who cannot see which line is wrong cannot correct
+    // it, and the people line is the one most often disputed.
+    const zip = await JSZip.loadAsync(await proposalToXlsx(documentFor()));
+    const strings = await sharedStrings(zip);
+
+    for (const heading of [
+      'Licence /yr',
+      'Support /yr',
+      'Infrastructure /yr',
+      'People /yr',
+      'Ops FTE',
+      'Pricing confidence',
+      'Price age',
+    ]) {
+      expect(strings, `cost model is missing the "${heading}" column`).toContain(heading);
+    }
+  });
+
+  it('reads the costing the selection was made on, discount included', async () => {
+    // The Phase 4 finding-2 trap, in a new place: re-deriving a discounted
+    // product's licence by id yields the undiscounted figure, and the
+    // spreadsheet would then disagree with the proposal it came from.
+    const document = documentFor();
+    for (const row of document.costModel) {
+      const lines =
+        row.licenceAnnual.amountMinor +
+        row.supportAnnual.amountMinor +
+        row.infraAnnual.amountMinor;
+      expect(lines, `${row.productName}: spend does not equal its own cost lines`).toBe(
+        row.annualSpend.amountMinor,
+      );
     }
   });
 });
