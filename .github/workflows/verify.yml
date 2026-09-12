@@ -1,0 +1,75 @@
+# Every gate this repo already has, run on every push.
+#
+# Phase 0 shipped a "CI-less test runner" on purpose — the commands are the
+# same ones a developer runs, and nothing here is CI-only. What CI adds is that
+# they stop being optional.
+#
+# The order is deliberate: the cheap checks that fail most often run first, so a
+# bad commit is rejected in seconds rather than after a full install-and-build.
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # A stale price is a defect this repo can acquire without anyone committing,
+  # so the tree is re-checked on a schedule as well as on a change.
+  schedule:
+    - cron: '0 6 * * 1'
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      # --frozen-lockfile: a lockfile that does not match package.json is a
+      # supply-chain question, not a convenience to be resolved silently.
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # The Prisma client is generated and gitignored, so the web app cannot be
+      # typechecked or built without this. No database is needed to generate it.
+      - name: Generate the Prisma client
+        run: pnpm db:generate
+
+      - name: Catalog validates
+        run: pnpm catalog:validate
+
+      - name: Tests
+        run: pnpm test
+
+      # Hard rule 9. Fails on anything stale or undateable, which is a defect
+      # the tree acquires by the passage of time rather than by a commit.
+      - name: No price has gone stale
+        run: pnpm catalog:staleness
+
+      # Hard rule 10. The Vitest/Vite/esbuild chain is the usual source of
+      # noise, which is exactly why this is a gate and not a reminder.
+      - name: No known vulnerabilities
+        run: pnpm audit
+
+      # The production path the hosting target will use. A build that only ever
+      # runs on one laptop is a build nobody has tested.
+      - name: Production build
+        run: pnpm build
