@@ -21,7 +21,6 @@ import type {
 } from '@stackfit/schema';
 
 import type { CoverageResult } from './coverage';
-import { addMoney, zeroMoney } from './money';
 import type { Bundle, BundleSelection } from './portfolio';
 import type { SizingResult } from './sizing';
 
@@ -621,17 +620,6 @@ export function buildCostModel(inputs: ProposalInputs): CostModelRow[] {
     priceAge: selection.cost.freshness.status,
     suiteDiscountApplied: selection.suiteDiscountApplied,
   }));
-}
-
-/** Total annual spend across a roadmap phase. */
-export function phaseSpend(
-  entries: readonly RoadmapEntry[],
-  phaseLabel: string,
-  currency: CurrencyCode,
-): Money {
-  return entries
-    .filter((entry) => entry.phaseLabel === phaseLabel)
-    .reduce((total, entry) => addMoney(total, entry.annualSpend), zeroMoney(currency));
 }
 
 /** §8's proposal, as a document model every renderer can read. */

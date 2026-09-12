@@ -173,8 +173,9 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
             them for this client: {coverage.unclosableGaps.join(', ')}.
           </p>
           <p className="text-faint mt-1 text-[11px] leading-snug">
-            That is a gap in the catalog, not in the client. Phase 7 — catalog expansion — is what
-            changes this number.
+            That is a gap in the catalog, not in the client — either no product here claims the
+            control, or no product category can satisfy it at all. Say so rather than letting a
+            coverage percentage imply it was considered.
           </p>
         </Card>
       )}

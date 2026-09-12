@@ -8,15 +8,13 @@
 # catalogued here is therefore the free and self-hosted half of the market plus
 # one published cloud price list.
 #
-# ⚠ THREE ENTRIES CARRY A VENDOR LIMIT THE SCHEMA CANNOT EXPRESS. Tines Free
-# allows three live workflows, TheHive Community two users and one
-# organisation, and n8n's cloud plans meter workflow executions. None of those
-# is a headcount or an asset count, so none can be enforced by scaleFloor or
-# scaleCeiling honestly. Where a limit plainly means "small team only" the
-# scale ceiling is set to reflect that and the entry says it is an
-# approximation; the execution metering is simply named in the notes. This is
-# the same gap Duo Free, Entra ID Free and Sublime Platform hit, and it is the
-# strongest recurring argument in Phase 7 for a `limits` block on a tier.
+# ⚠ THREE ENTRIES CARRY A VENDOR LIMIT, AND ONLY ONE IS ENFORCEABLE. TheHive
+# Community's two-user cap is declared as a tier cap and enforced against
+# headcount. Tines Free's three live workflows and n8n Cloud's metered
+# executions are not quantities the sizing stage produces, so they are declared
+# as allowances — carried into the tier's scoring rationale where an analyst
+# sees them — and Tines keeps `scaleCeiling: small` as the enforcement stand-in.
+# It is the last approximation of its kind left in the catalog.
 #
 # ⚠ SOAR IS NOT A STARTER PURCHASE. Every entry here automates a process the
 # client must already have. A client with no SIEM, no EDR and no runbook does

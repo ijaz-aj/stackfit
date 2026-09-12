@@ -1,0 +1,196 @@
+// @vitest-environment jsdom
+
+// The two Recharts figures in §8.3, which had never been observed working.
+//
+// They are client components: `curl` on the results page returns the container
+// div and zero `<svg>` elements, so five sessions of "verified over HTTP"
+// proved nothing at all about them. Browser automation has been unavailable
+// throughout. This is the substitute — render them into a DOM and read the axis
+// back out.
+//
+// What it does and does not prove. It proves the charts render without
+// throwing, and that the y-axis labels are the ones intended and are distinct,
+// which is the defect that was reported from the browser and fixed blind. It
+// does not prove anything about layout: jsdom does no text measurement, so
+// whether thirteen angled category labels overlap is still a question only a
+// pair of eyes can answer.
+
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { CashflowChart, CostByCategoryChart } from '../src/components/results/cost-charts';
+
+// Recharts measures its container; jsdom reports zero for everything, so the
+// ResponsiveContainer needs an observer that tells it a real size once.
+class StubResizeObserver {
+  constructor(private readonly callback: ResizeObserverCallback) {}
+  observe(target: Element): void {
+    this.callback(
+      [{ target, contentRect: { width: 900, height: 320 } } as unknown as ResizeObserverEntry],
+      this as unknown as ResizeObserver,
+    );
+  }
+  unobserve(): void {}
+  disconnect(): void {}
+}
+
+let container: HTMLDivElement;
+let root: Root;
+
+beforeEach(() => {
+  // React only treats act() as configured when this is set, and without it
+  // every render logs a warning that drowns the actual failure.
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  globalThis.ResizeObserver = StubResizeObserver as unknown as typeof ResizeObserver;
+  container = document.createElement('div');
+  Object.defineProperty(container, 'clientWidth', { value: 900, configurable: true });
+  Object.defineProperty(container, 'clientHeight', { value: 320, configurable: true });
+  document.body.append(container);
+  root = createRoot(container);
+});
+
+afterEach(() => {
+  act(() => root.unmount());
+  container.remove();
+});
+
+function render(element: React.ReactElement): string {
+  act(() => root.render(element));
+  return container.innerHTML;
+}
+
+/**
+ * Every string Recharts painted.
+ *
+ * Both element shapes, because it uses both: axis ticks are wrapped in a
+ * `<tspan>`, and a `<LabelList>` above a bar is bare text inside `<text>`.
+ * Matching only tspans finds the axis and silently misses every bar label —
+ * which is exactly where the rounding defect was most misleading.
+ */
+function labels(markup: string): string[] {
+  return [...markup.matchAll(/<text[^>]*>([\s\S]*?)<\/text>/g)]
+    .map((match) => match[1]!.replace(/<[^>]+>/g, '').trim())
+    .filter((label) => label.length > 0);
+}
+
+/** A full bundle: thirteen categories, which is what broke the category axis. */
+const CATEGORIES = [
+  'SIEM',
+  'EDR',
+  'Network detection',
+  'Privileged access',
+  'Identity',
+  'Vulnerability management',
+  'Email security',
+  'Automation',
+  'Backup and recovery',
+  'Firewall / NGFW',
+  'Asset discovery',
+  'Deception',
+  'Managed detection',
+];
+
+const byCategory = CATEGORIES.map((label, index) => ({
+  label,
+  licence: index === 12 ? 17_010_000 : 0,
+  support: 0,
+  infra: index < 2 ? 631_900 : 108_000,
+  people: 3_000_000 + index * 1_100_000,
+}));
+
+describe('the cost-by-category chart', () => {
+  it('renders an SVG with every category on the axis', () => {
+    // interval={0} is deliberate: dropping a label would hide a category the
+    // client is paying for. Thirteen of them is the case that broke it.
+    const markup = render(<CostByCategoryChart data={byCategory} currency="USD" />);
+
+    expect(markup).toContain('<svg');
+    const painted = labels(markup);
+    for (const category of CATEGORIES) {
+      expect(painted, `"${category}" is missing from the axis`).toContain(category);
+    }
+  });
+
+  it('gives every y-axis tick a distinct label', () => {
+    // The reported defect: $1.5M, $2.0M and $2.4M all rendered as "$2M", so the
+    // same label appeared at three different heights. Checked here through
+    // Recharts' own tick generation rather than against a tick set this test
+    // made up.
+    const markup = render(<CostByCategoryChart data={byCategory} currency="USD" />);
+    const money = labels(markup).filter((label) => label.startsWith('$'));
+
+    expect(money.length).toBeGreaterThan(2);
+    expect(new Set(money).size, `duplicate axis labels: ${money.join(' ')}`).toBe(money.length);
+  });
+
+  it('angles the category labels, because thirteen will not fit flat', () => {
+    const markup = render(<CostByCategoryChart data={byCategory} currency="USD" />);
+    expect(markup).toMatch(/rotate\(\s*-35/);
+  });
+});
+
+describe('the cash-flow chart', () => {
+  const cashflow = [
+    { label: 'Year 1', amount: 194_100_000 },
+    { label: 'Year 2', amount: 164_276_600 },
+    { label: 'Year 3', amount: 166_000_000 },
+  ];
+
+  it('renders an SVG with a bar label and an axis for each year', () => {
+    const markup = render(<CashflowChart data={cashflow} currency="USD" />);
+
+    expect(markup).toContain('<svg');
+    const painted = labels(markup);
+    for (const year of ['Year 1', 'Year 2', 'Year 3']) {
+      expect(painted).toContain(year);
+    }
+  });
+
+  it('gives every y-axis tick a distinct label, on three near-identical years', () => {
+    // Years 2 and 3 are within 1% of each other here, which is the shape a real
+    // cash flow has once implementation drops out of year one. Before the fix
+    // the ticks either side of them collapsed onto the same label.
+    const markup = render(<CashflowChart data={cashflow} currency="USD" />);
+    const money = labels(markup).filter((label) => label.startsWith('$'));
+
+    expect(money.length).toBeGreaterThan(2);
+    expect(new Set(money).size, `duplicate axis labels: ${money.join(' ')}`).toBe(money.length);
+  });
+
+  it.skip('labels each bar with its own figure — NOT VERIFIABLE HEADLESSLY', () => {
+    // ⚠ Left skipped deliberately rather than deleted, so the gap stays
+    // visible. Recharts' <LabelList> paints nothing under jsdom: the only text
+    // this chart produces here is the two axes, because a bar label needs the
+    // bar's computed geometry and jsdom measures nothing.
+    //
+    // The content is not unchecked — the labels go through the same
+    // formatMoney(..., { compact: true }) that format.test.ts sweeps for
+    // collisions — but that they appear at all, above the right bars, is still
+    // something only a browser can confirm.
+    const markup = render(<CashflowChart data={cashflow} currency="USD" />);
+    const money = labels(markup).filter((label) => label.startsWith('$'));
+    expect(money).toContain('$1.9M');
+  });
+
+  it('renders without a legend, because one series needs no key', () => {
+    const markup = render(<CashflowChart data={cashflow} currency="USD" />);
+    expect(markup).not.toContain('recharts-legend');
+  });
+});
+
+describe('both charts', () => {
+  it('survive an empty bundle without throwing', () => {
+    // A shortfall scenario funds nothing. The dashboard guards this upstream,
+    // but a chart that throws on empty data takes the whole page with it.
+    expect(() => render(<CostByCategoryChart data={[]} currency="USD" />)).not.toThrow();
+    expect(() => render(<CashflowChart data={[]} currency="USD" />)).not.toThrow();
+  });
+
+  it('render in every supported currency', () => {
+    for (const currency of ['USD', 'EUR', 'INR'] as const) {
+      const markup = render(<CostByCategoryChart data={byCategory} currency={currency} />);
+      expect(markup, `${currency} produced no chart`).toContain('<svg');
+    }
+  });
+});

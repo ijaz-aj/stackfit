@@ -4,14 +4,14 @@
 // framework library. They are the tests CONTRIBUTING.md forbids editing to make a
 // change pass: if one goes red, the engine or the data is wrong.
 //
-// ⚠ CATALOG LIMITATION. The catalog currently holds 8 products across 3
-// categories — siem, edr and vulnerability_management. There is no MDR,
-// backup, iam, pam, ngfw, ndr, email_security, soar, asset_discovery or
-// deception product. Scenarios 1 and 2 depend on categories that do not exist
-// yet, so each asserts the engine behaviour that *can* be verified today and
-// names precisely what is still unverifiable, rather than being skipped or
-// quietly weakened. Phase 7 (catalog expansion) is what closes this, and those
-// assertions must be tightened when it lands.
+// The catalog holds 65 products across all 13 categories. It held 8 across 3
+// until Phase 7, and two assertions here were standing in for what could not
+// be checked against so thin a catalog — §12.1's "every mandated category is
+// funded" and §12.2's "managed options outrank self-hosted". Both were
+// tightened when the catalog landed, and neither stands in for anything now.
+//
+// If a scenario below goes red, the engine or the committed data is wrong.
+// Weakening one to make a change pass is the thing CONTRIBUTING.md forbids.
 
 import { describe, expect, it } from 'vitest';
 
@@ -60,6 +60,24 @@ describe('§12.1 — small retail client, PCI DSS, USD 25k/yr cap', () => {
     expect(result.sizing.retentionDays).toBe(365);
     const categories = result.essential.selections.map((selection) => selection.category);
     expect(categories).toContain('siem');
+  });
+
+  it('covers the requirement file integrity monitoring exists to satisfy', () => {
+    // §12.1 asks for "log retention and FIM". Retention is above; FIM is the
+    // half that went unasserted for six phases, because it is not a thing this
+    // model has. FIM is a product *capability* — a line in a tier's capability
+    // list — and nothing in the engine reasons about capabilities. What the
+    // engine reasons about is controls, and the control FIM is bought to
+    // satisfy is PCI requirement 11.
+    //
+    // So that is what is asserted, and the distinction is worth keeping: a
+    // client does not need file integrity monitoring, they need requirement 11
+    // closed, and more than one kind of product can close it.
+    const pci = result.coverage.frameworks.find((framework) => framework.frameworkId === 'pci-dss-4.0');
+    const requirement11 = pci?.controls.find((control) => control.controlId === 'pci-dss-4.0:11');
+
+    expect(requirement11, 'PCI requirement 11 is not in the coverage matrix').toBeDefined();
+    expect(requirement11?.status).toBe('covered');
   });
 
   it('funds every category PCI mandates, now the catalog stocks them', () => {
