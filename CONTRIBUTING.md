@@ -270,3 +270,15 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   process, evidence and an assessor decide that. "PCI DSS 100% covered" read as
   "the audit is handled" is the single largest client-facing liability this
   product has. Tests in the engine and in all three export formats pin it.
+- **The security headers are pinned by `apps/web/test/security-headers.test.ts`,
+  not just configured.** CSP lives in `src/proxy.ts` (per-request nonce) and the
+  static headers in `next.config.ts`. Next renamed this convention once already
+  — `middleware.ts` → `proxy.ts` in 16 — and a rename that leaves the right
+  function under the wrong filename disables every header while build, lint and
+  typecheck all stay green. If those tests fail, the app has lost its headers;
+  do not "fix" them by relaxing an assertion.
+- **An error boundary shows `error.digest`, never `error.message`.** The digest
+  is also written to the server log, so it is the string that makes a failure
+  findable; the message can carry a database path or a row's contents, and this
+  app holds a client's asset inventory. Next redacts messages in production
+  builds — that is not a reason to depend on it.

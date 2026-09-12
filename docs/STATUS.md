@@ -1449,6 +1449,38 @@ look expensive: the direction is almost certainly right, the magnitude is
 indicative only. The EPS figures are the weakest of the lot, which is why they
 are recorded rather than applied.
 
+### Production hardening, 2026-09-12
+
+Three gaps a client's security review would find before it read a word of a
+proposal. None was a bug in the running app; all three were things a
+production product has and this one did not.
+
+- 2026-09-12 — **Hard rule 10 was implemented and never tested.** The CSP and
+  the static headers were correct and served, and nothing asserted them. For a
+  security tool that is the wrong way round: a header scan is the first thing
+  run against this, and a policy that quietly stopped applying is invisible
+  from inside the app. The regression is concrete — Next renamed this
+  convention once already (`middleware.ts` → `proxy.ts` in 16) and a rename
+  leaving the right function under the wrong name disables every header without
+  failing a build, a lint or a typecheck. Twelve tests now cover it, including
+  that the nonce is *fresh per request*: a reused nonce is no better than
+  `unsafe-inline`. Verified load-bearing by deleting directives.
+
+- 2026-09-12 — **There were no error boundaries at all.** Any throw in a server
+  component reached Next's default page. The three boundaries render
+  `error.digest` and never `error.message`: the digest is also in the server
+  log, so it turns "it broke" into a line an engineer can find, while the
+  message can carry a database path or a row's contents and this application
+  holds a prospective client's asset inventory. Next redacts the message in
+  production, but relying on that leaks in development and puts the decision in
+  someone else's release notes.
+
+- 2026-09-12 — **CI.** Every gate the repo already had, now non-optional, plus
+  a weekly schedule because two of them — `catalog:staleness` and `pnpm audit` —
+  catch defects the tree acquires by the passage of time rather than by a
+  commit. Includes `pnpm build`, because a production build that has only run
+  on one laptop is untested.
+
 ## Open defects
 
 Found on 2026-09-12 while fixing the charts. Neither is a chart bug; both are
