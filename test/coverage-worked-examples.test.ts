@@ -204,6 +204,7 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
         "crowdstrike-falcon-go (edr) | 11998 USD/yr | 0.12 FTE | closes 1",
         "azure-backup (backup) | 2640 USD/yr | 0.11 FTE | closes 4",
         "wazuh (siem) | 2450.04 USD/yr | 0.57 FTE | closes 3",
+        "proxmox-mail-gateway (email_security) | 2450.04 USD/yr | 0.26 FTE | closes 1",
       ]
     `);
 

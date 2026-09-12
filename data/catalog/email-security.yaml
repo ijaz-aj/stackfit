@@ -1,0 +1,689 @@
+# Email security — the gateway, the filter and the phishing defence.
+#
+# Prices are in minor units (hard rule 1).
+#
+# ⚠ THIS IS THE LEAST TRANSPARENT CATEGORY IN THE CATALOG. Barracuda,
+# Hornetsecurity, IRONSCALES, SpamTitan, Guardz, Mimecast, Cloudflare and
+# Check Point Harmony Email were all checked on 2026-09-12 and every one of
+# them answers "contact sales". Two of the five products below publish a rate;
+# two are free; one is on a flagged analyst estimate.
+#
+# That is itself a finding worth saying out loud on a scoping call: in this
+# category a published comparison does not exist, so any number an analyst
+# quotes without a vendor conversation is a guess, including the ones below.
+
+category: email_security
+
+products:
+  - id: rspamd
+    name: Rspamd
+    vendor: Rspamd project
+    category: email_security
+    subcategory: self-hosted mail filtering and authentication engine
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: Rspamd (self-hosted)
+        capabilities:
+          - Spam classification by Bayesian statistics, neural networks and fuzzy hashing
+          - SPF, DKIM, DMARC and ARC validation, and DKIM signing
+          - Milter integration with Postfix and Exim
+          - Greylisting, rate limiting and reputation tracking
+          - Real-time blacklist lookups and external antivirus integration
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/rspamd/rspamd/blob/master/LICENSE
+              note: >-
+                Confirm the licence is still Apache 2.0 and that no commercial
+                edition has split off. Rspamd has no vendor, which makes a
+                licence change unlikely and unannounced if it happens.
+            sources:
+              - url: https://github.com/rspamd/rspamd/blob/master/LICENSE
+                asOf: '2026-09-12'
+              - url: https://docs.rspamd.com/
+                asOf: '2026-09-12'
+            notes: >-
+              Apache License 2.0. No licence fee at any mail volume. The cost is
+              the mail-relay infrastructure it runs on and the engineer who
+              tunes it — and tuning is not optional, because an untuned filter
+              either passes phishing or eats invoices.
+
+    supports:
+      os: [linux]
+      deviceClasses: [mailbox, server]
+      cloudPlatforms: []
+      deploymentModes: [on_prem, hybrid, air_gapped]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: true
+
+    integrations: [postfix, exim, syslog, clamav, redis]
+
+    controlsCovered:
+      - cis-v8:9
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.5.14
+      - iso-27001-2022:A.8.7
+      - rbi-csf:anti-malware
+      - rbi-csf:secure-messaging
+      - rbi-csf:anti-phishing
+
+    opsBurden:
+      baseFte: 0.35
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 12
+      skillLevel: security_engineer
+      typicalWeeks: 5
+      confidence: analyst_estimate
+
+    strengths:
+      - No per-mailbox licence, so a large or fast-growing mailbox count costs nothing extra
+      - Runs entirely on-premises and fully air-gapped, which no SaaS gateway does
+      - Every rule is inspectable, so a false positive can actually be explained to the user it hit
+    weaknesses:
+      - 'Requires you to run a mail relay: if the client is on Microsoft 365 with no MTA, this is a new system to operate'
+      - No sandboxing, no URL detonation and no post-delivery clawback
+      - Tuning is a standing job, and an untuned filter is worse than no filter
+    bestFor:
+      - Clients already running their own mail infrastructure
+      - Air-gapped or residency-constrained environments
+      - Very large mailbox counts where per-seat gateway pricing is prohibitive
+    avoidWhen:
+      - Mail is in Microsoft 365 or Google Workspace and there is no on-premises relay
+      - The threat being bought against is targeted BEC rather than bulk spam
+
+    sources:
+      - url: https://docs.rspamd.com/
+        asOf: '2026-09-12'
+      - url: https://github.com/rspamd/rspamd/blob/master/LICENSE
+        asOf: '2026-09-12'
+    notes: >-
+      Deliberately claims no data-leakage or confidentiality control. Rspamd
+      inspects inbound mail; outbound DLP and encryption are a different
+      purchase, and crediting it with them would inflate coverage against
+      ISO A.8.12 and SOC 2 C1 for a capability it does not have.
+
+  - id: microsoft-defender-for-office-365
+    name: Microsoft Defender for Office 365
+    vendor: Microsoft
+    category: email_security
+    subcategory: integrated email security for Microsoft 365
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: plan-1
+        name: Plan 1
+        capabilities:
+          - Safe Attachments detonation
+          - Safe Links URL rewriting and time-of-click protection
+          - Anti-phishing policies with impersonation protection
+          - Real-time detections
+        pricing:
+          - model: per_mailbox_year
+            unitPrice:
+              amountMinor: 2400
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.microsoft.com/en-us/security/business/siem-and-xdr/microsoft-defender-office-365
+              note: >-
+                Read the per-user-per-month figure and multiply by 12. Check
+                whether the capability has moved into a bundle — Microsoft
+                reshuffles what sits in E3 and E5 more often than it changes
+                the standalone rate.
+            sources:
+              - url: https://www.microsoft.com/en-us/security/business/siem-and-xdr/microsoft-defender-office-365
+                asOf: '2026-09-12'
+            notes: >-
+              USD 2.00 per user per month, paid yearly on an auto-renewing
+              annual subscription, so USD 24.00 per user per year. Included in
+              Microsoft 365 Business Premium — check before quoting it.
+
+      - id: plan-2
+        name: Plan 2
+        capabilities:
+          - Everything in Plan 1
+          - Threat Explorer and advanced hunting over mail
+          - Automated investigation and response
+          - Attack simulation training
+          - Campaign views and compromised-user detection
+        pricing:
+          - model: per_mailbox_year
+            unitPrice:
+              amountMinor: 6000
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.microsoft.com/en-us/security/business/siem-and-xdr/microsoft-defender-office-365
+              note: Read the per-user-per-month figure and multiply by 12.
+            sources:
+              - url: https://www.microsoft.com/en-us/security/business/siem-and-xdr/microsoft-defender-office-365
+                asOf: '2026-09-12'
+            notes: >-
+              USD 5.00 per user per month, paid yearly, so USD 60.00 per user
+              per year. Included in Microsoft 365 E5.
+        controlsCovered:
+          - nist-csf-2.0:RS.AN
+          - iso-27001-2022:A.5.28
+          - iso-27001-2022:A.8.16
+
+    supports:
+      os: [windows, linux, macos, ios, android]
+      deviceClasses: [mailbox, saas_tenant, identity]
+      cloudPlatforms: [m365]
+      deploymentModes: [cloud]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [microsoft-sentinel, microsoft-defender-for-endpoint, microsoft-entra-id]
+
+    controlsCovered:
+      - cis-v8:9
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.5.14
+      - iso-27001-2022:A.8.7
+      - iso-27001-2022:A.8.23
+      - rbi-csf:anti-malware
+      - rbi-csf:secure-messaging
+      - rbi-csf:anti-phishing
+      - dpdp-2023:s-8-5
+
+    opsBurden:
+      baseFte: 0.1
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 5
+      skillLevel: generalist
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - No MX change and no mail routing project — it is a policy change inside a tenant the client already has
+      - Signal flows straight into Defender XDR and Sentinel with nothing to build
+      - Published price, which almost nothing else in this category has
+    weaknesses:
+      - Only protects Microsoft 365 mail; a client on Google Workspace or an on-premises Exchange cannot use it
+      - Consistently rated behind the specialist gateways on targeted BEC
+      - 'Licensing confusion is real: Business Premium includes Plan 1 and E5 includes Plan 2, at four different effective prices'
+    bestFor:
+      - Microsoft 365 estates, which is most mid-market clients
+      - Clients who want defensible email protection without a mail-routing project
+    avoidWhen:
+      - Mail is not in Microsoft 365
+      - The client has already been hit by BEC and needs a specialist answer
+
+    sources:
+      - url: https://www.microsoft.com/en-us/security/business/siem-and-xdr/microsoft-defender-office-365
+        asOf: '2026-09-12'
+      - url: https://learn.microsoft.com/en-us/defender-office-365/mdo-about
+        asOf: '2026-09-12'
+    notes: >-
+      Deliberately claims no data-leakage control. Microsoft's mail DLP lives in
+      Purview, which is a separate licence, and crediting Defender for Office
+      365 with ISO A.8.12 would credit the client with something they have not
+      bought.
+
+  - id: proxmox-mail-gateway
+    name: Proxmox Mail Gateway
+    vendor: Proxmox Server Solutions GmbH
+    category: email_security
+    subcategory: self-hosted mail security gateway
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: no-subscription
+        name: No-subscription repository
+        capabilities:
+          - Inbound and outbound mail filtering with a quarantine per user
+          - Virus and spam detection with ClamAV and SpamAssassin
+          - SPF, DKIM and DMARC checking
+          - Rule-based policy by sender, recipient and content
+          - Mail tracking and statistics
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.proxmox.com/en/products/proxmox-mail-gateway/pricing
+              note: >-
+                Confirm the no-subscription repository is still available with
+                the complete feature set. Proxmox gates the tested repository,
+                not features.
+            sources:
+              - url: https://www.proxmox.com/en/products/proxmox-mail-gateway/pricing
+                asOf: '2026-09-12'
+              - url: https://www.proxmox.com/en/products/proxmox-mail-gateway/overview
+                asOf: '2026-09-12'
+            notes: >-
+              AGPLv3, complete feature set, no licence fee. The subscriptions
+              below buy the tested enterprise repository and support, not
+              capability.
+
+      - id: community
+        name: Community subscription
+        capabilities:
+          - Everything in the no-subscription repository
+          - Access to the tested enterprise repository
+          - Community-based support
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: 2000
+                flatPrice:
+                  amountMinor: 19000
+                  currency: EUR
+              - minUnits: 2001
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 38000
+                  currency: EUR
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.proxmox.com/en/products/proxmox-mail-gateway/pricing
+              note: >-
+                Read the per-host annual rate. Re-check the coverage sentence
+                too — it is per host with unlimited users and unlimited domains,
+                and if that changes the banding below stops making sense.
+            sources:
+              - url: https://www.proxmox.com/en/products/proxmox-mail-gateway/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              Proxmox publishes "€ 190/year" per host, with unlimited users and
+              unlimited domains.
+
+              ⚠ The bands are an analyst assumption over that published rate,
+              not a Proxmox price list. The rate is per gateway host, and the
+              catalog has no field for how many gateway hosts an estate needs,
+              so the bands encode one host up to 2,000 monitored assets and two
+              above. A mail gateway actually scales on message volume, not asset
+              count, which makes this the crudest banding in the catalog.
+
+      - id: basic
+        name: Basic subscription
+        capabilities:
+          - Everything in Community
+          - Support via the customer portal, three tickets a year
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: 2000
+                flatPrice:
+                  amountMinor: 54000
+                  currency: EUR
+              - minUnits: 2001
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 108000
+                  currency: EUR
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.proxmox.com/en/products/proxmox-mail-gateway/pricing
+              note: Read the per-host annual rate; the bands are this file's assumption.
+            sources:
+              - url: https://www.proxmox.com/en/products/proxmox-mail-gateway/pricing
+                asOf: '2026-09-12'
+            notes: Published at "€ 540/year" per host. Same banding assumption as the Community tier.
+
+      - id: standard
+        name: Standard subscription
+        capabilities:
+          - Everything in Basic
+          - Faster response times and a larger annual ticket allowance
+          - Remote support
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: 2000
+                flatPrice:
+                  amountMinor: 126000
+                  currency: EUR
+              - minUnits: 2001
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 252000
+                  currency: EUR
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.proxmox.com/en/products/proxmox-mail-gateway/pricing
+              note: Read the per-host annual rate; the bands are this file's assumption.
+            sources:
+              - url: https://www.proxmox.com/en/products/proxmox-mail-gateway/pricing
+                asOf: '2026-09-12'
+            notes: Published at "€ 1260/year" per host. Same banding assumption as the Community tier.
+
+    supports:
+      os: [linux]
+      deviceClasses: [mailbox, server]
+      cloudPlatforms: []
+      deploymentModes: [on_prem, hybrid, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [postfix, clamav, syslog, ldap]
+
+    controlsCovered:
+      - cis-v8:9
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.5.14
+      - iso-27001-2022:A.8.7
+      - rbi-csf:anti-malware
+      - rbi-csf:secure-messaging
+      - rbi-csf:anti-phishing
+
+    opsBurden:
+      baseFte: 0.25
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 8
+      skillLevel: security_engineer
+      typicalWeeks: 4
+      confidence: analyst_estimate
+
+    strengths:
+      - A complete gateway appliance rather than a filter library — quarantine, policy and reporting included
+      - Priced per host with unlimited users, so mailbox growth is free
+      - Runs fully air-gapped and in front of any mail system, including Microsoft 365
+    weaknesses:
+      - Detection is SpamAssassin and ClamAV underneath; it will not match a modern BEC engine
+      - No sandboxing, no URL detonation, no post-delivery remediation
+      - Putting a gateway in front of Microsoft 365 means owning MX records and an availability problem
+    bestFor:
+      - On-premises or hybrid mail estates
+      - Clients with a large mailbox count and a small budget
+      - Environments where mail must not leave the premises
+    avoidWhen:
+      - The client is Microsoft 365-only and would rather not run a gateway at all
+      - Targeted impersonation attacks are the stated threat
+
+    sources:
+      - url: https://www.proxmox.com/en/products/proxmox-mail-gateway/overview
+        asOf: '2026-09-12'
+      - url: https://www.proxmox.com/en/products/proxmox-mail-gateway/pricing
+        asOf: '2026-09-12'
+    notes: >-
+      The Premium subscription (published at "€ 1900/year" per host) is not
+      catalogued, on the same reasoning as Proxmox Backup Server's: it differs
+      from Standard only in response time and ticket allowance.
+
+  - id: sublime-platform
+    name: Sublime Platform
+    vendor: Sublime Security
+    category: email_security
+    subcategory: open-source detection-as-code email security
+    licenceModel: open_source
+    maturity: emerging
+
+    tiers:
+      - id: self-hosted
+        name: Self-hosted (Docker)
+        capabilities:
+          - Detection rules written in Message Query Language, reviewable and version-controlled
+          - BEC, credential phishing and malware detection
+          - Community detection-rule feed
+          - Message triage and hunting over mail
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/sublime-security/sublime-platform
+              note: >-
+                Confirm the licence is still MIT and — more importantly —
+                re-read the mailbox limit on the self-hosted deployment. That
+                limit, not the licence, is what decides whether this product is
+                viable for a given client.
+            sources:
+              - url: https://github.com/sublime-security/sublime-platform
+                asOf: '2026-09-12'
+            notes: >-
+              MIT licence, free to self-host. Sublime's own cloud and managed
+              offerings are quote-only and are not catalogued.
+
+    supports:
+      os: [linux]
+      deviceClasses: [mailbox, saas_tenant]
+      cloudPlatforms: [m365, google_workspace]
+      deploymentModes: [on_prem, hybrid]
+      scaleFloor: small
+      scaleCeiling: small
+      airGapCapable: false
+
+    integrations: [m365, google-workspace, syslog]
+
+    controlsCovered:
+      - cis-v8:9
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.5.14
+      - iso-27001-2022:A.8.7
+      - rbi-csf:anti-phishing
+      - rbi-csf:secure-messaging
+
+    opsBurden:
+      baseFte: 0.3
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 8
+      skillLevel: security_engineer
+      typicalWeeks: 4
+      confidence: analyst_estimate
+
+    strengths:
+      - Detection-as-code — every rule is readable, testable and version-controlled, which no commercial gateway offers
+      - Sits alongside Microsoft 365 or Google Workspace rather than in front of the MX record
+      - Genuinely strong on BEC and credential phishing, which is where the money is lost
+    weaknesses:
+      - 'The free deployment is capped: Sublime documents the Docker deployment as limited to 100 active mailboxes'
+      - Needs an engineer who will write and maintain detections; it is a platform, not an appliance
+      - Youngest product in this file, with the vendor risk that implies
+    bestFor:
+      - Small estates with a capable security engineer
+      - Clients who want to see why a message was blocked, not just that it was
+    avoidWhen:
+      - Nobody will own the detection content
+      - The mailbox count is above the documented self-hosted limit
+
+    sources:
+      - url: https://github.com/sublime-security/sublime-platform
+        asOf: '2026-09-12'
+    notes: >-
+      ⚠ SCALE CEILING IS DOING REAL WORK HERE. Sublime documents the free
+      self-hosted Docker deployment as "limited to 100 active mailboxes".
+      The catalog has no field for a licence-level headcount cap, so the cap is
+      expressed as scaleCeiling "small", which hard-filters this product out of
+      any estate above the small band and says why. That band tops out at 250
+      monitored assets, so between 100 and 250 this entry over-permits — the
+      only place in the catalog where a stated vendor limit is knowingly
+      approximated rather than enforced. Check the mailbox count by hand before
+      shortlisting it.
+
+  - id: proofpoint-essentials
+    name: Proofpoint Essentials
+    vendor: Proofpoint
+    category: email_security
+    subcategory: SMB email security gateway
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: business
+        name: Essentials Business
+        capabilities:
+          - Inbound spam, phishing and malware filtering
+          - Outbound filtering
+          - URL Defense
+          - 30-day emergency inbox and email continuity
+        pricing:
+          - model: per_mailbox_year
+            unitPrice:
+              amountMinor: 4716
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.proofpoint.com/us/products/email-security-and-protection
+              note: >-
+                Check first whether Proofpoint has started publishing a rate on
+                its own site; if it has, regrade this entry to public_list
+                immediately. Otherwise re-derive from resellers and expect them
+                to disagree — see the notes.
+            sources:
+              - url: https://www.proofpoint.com/us/products/email-security-and-protection
+                asOf: '2026-09-12'
+              - url: https://costbench.com/software/email-security/proofpoint/
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED, AND THE SOURCES DISAGREE. USD 3.93 per
+              user per month, so USD 47.16 per year. Proofpoint publishes no
+              rate of its own; reseller and aggregator reporting on 2026-09-12
+              put Essentials Business at anywhere between USD 3.03 and USD 3.93
+              per user per month, a spread of about 30%.
+
+              The higher figure is used deliberately — for a pre-sales budget
+              the cost of overstating is a conversation and the cost of
+              understating is a proposal that cannot be honoured. Get a quote
+              before this number reaches a client.
+
+      - id: advanced
+        name: Essentials Advanced
+        capabilities:
+          - Everything in Business
+          - Attachment Defense sandboxing
+          - Social media account protection
+          - One year of email archiving
+        pricing:
+          - model: per_mailbox_year
+            unitPrice:
+              amountMinor: 6444
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.proofpoint.com/us/products/email-security-and-protection
+              note: See the Business tier's note — the whole product is on estimated pricing.
+            sources:
+              - url: https://www.proofpoint.com/us/products/email-security-and-protection
+                asOf: '2026-09-12'
+              - url: https://costbench.com/software/email-security/proofpoint/
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED. USD 5.37 per user per month, so USD 64.44
+              per year, reported rather than published. See the Business tier.
+
+      - id: professional
+        name: Essentials Professional
+        capabilities:
+          - Everything in Advanced
+          - Ten years of email archiving with discovery
+          - Data loss prevention and email encryption
+        pricing:
+          - model: per_mailbox_year
+            unitPrice:
+              amountMinor: 9768
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.proofpoint.com/us/products/email-security-and-protection
+              note: See the Business tier's note — the whole product is on estimated pricing.
+            sources:
+              - url: https://www.proofpoint.com/us/products/email-security-and-protection
+                asOf: '2026-09-12'
+              - url: https://costbench.com/software/email-security/proofpoint/
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED. USD 8.14 per user per month, so USD 97.68
+              per year, reported rather than published. See the Business tier.
+        controlsCovered:
+          # DLP and encryption arrive only at this tier, so the confidentiality
+          # and data-leakage controls are claimed only here.
+          - iso-27001-2022:A.8.12
+          - iso-27001-2022:A.5.33
+          - soc-2:C1
+          - rbi-csf:data-leak-prevention
+
+    supports:
+      os: [windows, linux, macos, ios, android]
+      deviceClasses: [mailbox, saas_tenant]
+      cloudPlatforms: [m365, google_workspace]
+      deploymentModes: [cloud, hybrid]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: false
+
+    integrations: [m365, google-workspace, syslog, microsoft-sentinel]
+
+    controlsCovered:
+      - cis-v8:9
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.5.14
+      - iso-27001-2022:A.8.7
+      - iso-27001-2022:A.8.23
+      - rbi-csf:anti-malware
+      - rbi-csf:secure-messaging
+      - rbi-csf:anti-phishing
+      - dpdp-2023:s-8-5
+
+    opsBurden:
+      baseFte: 0.1
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 5
+      skillLevel: generalist
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - Proofpoint's detection on an SMB-priced packaging, and the detection is the reason to buy it
+      - Mail-agnostic — works in front of Microsoft 365, Google Workspace or on-premises Exchange
+      - Email continuity means a mail outage stops being a business outage
+    weaknesses:
+      - 'No published price: the rates here are reported and the sources disagree by about 30%'
+      - Gateway deployment means owning MX records and accepting a new dependency
+      - Archiving and DLP only appear at the most expensive tier
+    bestFor:
+      - Clients on Google Workspace or on-premises Exchange, where Microsoft's own product is unavailable
+      - Clients who have already been hit by BEC and need specialist detection
+    avoidWhen:
+      - Budget certainty matters and a quote cannot be obtained in time
+      - The client is Microsoft 365-only with Business Premium already paid for
+
+    sources:
+      - url: https://www.proofpoint.com/us/products/email-security-and-protection
+        asOf: '2026-09-12'
+    notes: >-
+      Every tier of this product is on analyst-estimated pricing and will show a
+      pricing-confidence warning wherever it is costed. That warning is correct.
+      It is catalogued because the alternative — an email-security shortlist
+      with no specialist gateway on it — would misrepresent the market more than
+      a flagged estimate does.
