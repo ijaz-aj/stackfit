@@ -170,13 +170,16 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   installations (OPNsense) — carry an explicit analyst assumption converting
   estate size into the vendor's unit. Those assumptions are stated on the rule,
   and they are the crudest numbers in the catalog.
-- **A tier cannot express a vendor limit**, so a free tier with a user, mailbox
-  or workflow cap has no honest home. Four such tiers approximate it with
-  `scaleCeiling: small`; two more (Duo Free, Entra ID Free) were left out of the
-  catalog entirely. Before adding a capped free tier, read the Phase 7 section
-  of `docs/STATUS.md` — a zero-cost tier with an unmodelled condition beats
-  every open-source option on cost by construction, and it has done exactly that
-  twice.
+- **A capped or conditional tier declares `limits`, and the engine enforces it.**
+  `caps` are measured against the sizing figure their unit names and eliminate
+  that tier alone; `prerequisites` are checked against `retainedTools` and are
+  unmet by default; `allowances` are the limits nothing here can measure (live
+  workflows, metered executions) and are carried into the tier's scoring
+  rationale rather than enforced. Never ship a zero-cost tier whose condition is
+  only described in prose — it beats every priced option by construction, and
+  did exactly that twice before the field existed. Only Tines Free is still
+  approximated with `scaleCeiling: small`, because a workflow count is not a
+  quantity the sizing stage produces.
 - **An Azure meter's unit is not the catalog's unit.** `prices:refresh` compares
   the feed's number to the stored one directly, so a meter quoting "1 Hour" or
   "1/Month" cannot be stored as a per-year price and still be machine-refreshed.

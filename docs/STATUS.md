@@ -18,7 +18,7 @@
 | 4b `coverage.ts` (**inserted**) | in review | The §7.5 stage: coverage matrix per framework, CSF Function roll-up, risk-graded gap list, costed fix plan. `coverage-assumptions.yaml`. The engine pipeline is now complete end to end. 299 tests green. |
 | 5 Intake wizard UI | in review | Next 16 + React 19 + Tailwind v4 + Prisma 7/SQLite. Six steps, presets, continuous save, live readout. `runPipeline` + `@stackfit/data` extracted so the app and the tests share one path. 325 tests green; `pnpm audit` clean. |
 | 6 Results dashboard | in review | All seven parts of §8, server-rendered off one pipeline run. Recharts cost + cash-flow charts on a validated palette. Sizing assumptions are editable per scenario. **Reviewed; six defects found and fixed** — deployment fit read "no preference" as a demand, the fit score was rendered with no working shown, a control was credited to a tier that does not sell it, Ideal optimised for value rather than fit, a partial control had no route to being closed, and the fix list offered purchases that closed nothing. Both pre-Phase-7 open questions closed; the SKU is now part of the recommendation. 368 tests green. |
-| 7 Catalog expansion (≥5 per category) | **in progress** | 9 new categories landed at 5 products each — iam, backup, email_security, pam, ngfw, ndr, soar, mdr, asset_discovery — plus SentinelOne into edr. 54 products across 12 files, 90 catalog prices, all fresh, no placeholders. **Three engine defects found and fixed**, each pinned by a regression: a bigger budget could buy less compliance, a mandated control was outranked by one more funded category, and ops fit returned a flat score for every product when the client had no security staff. **Outstanding: deception (0 of 5), siem (3 of 5), edr (4 of 5), vulnerability_management (2 of 5)** — 12 products. Stopped because web research hit a session rate limit, and hard rule 2 forbids writing a price from memory. 372 tests green. |
+| 7 Catalog expansion (≥5 per category) | **in progress** | 9 new categories landed at 5 products each — iam, backup, email_security, pam, ngfw, ndr, soar, mdr, asset_discovery — plus SentinelOne into edr. 54 products across 12 files, 90 catalog prices, all fresh, no placeholders. **Three engine defects found and fixed**, each pinned by a regression: a bigger budget could buy less compliance, a mandated control was outranked by one more funded category, and ops fit returned a flat score for every product when the client had no security staff. **`ProductTier.limits` added**, closing the one design question the phase raised — five vendor limits now enforced exactly, two previously undeliverable free tiers back in the catalog. **Outstanding: deception (0 of 5), siem (3 of 5), edr (4 of 5), vulnerability_management (2 of 5)** — 12 products. Stopped because web research hit a session rate limit, and hard rule 2 forbids writing a price from memory. 372 tests green. |
 | 8 Export (DOCX/PDF/XLSX) | not started | |
 | 9 Scenario save / clone / compare | not started | |
 | 10 Polish + demo scenarios + README | not started | Pick + document the free hosting target (Vercel Hobby + Neon/Supabase free Postgres). |
@@ -470,6 +470,38 @@ discovered missing halfway through building the results page.
   re-decided — as is the rule that a price's confidence and freshness travel
   with the number, so a gap priced from a stale figure says so.
 
+**Tier limits.** `ProductTier.limits` was added on 2026-09-12, after the phase
+had hit seven vendor limits with nowhere to put any of them. Three kinds,
+because the three behave differently:
+
+| Kind | Measured against | Behaviour |
+|---|---|---|
+| `caps` | a sizing figure the unit names | eliminates that tier, with the vendor's own wording in the reason |
+| `prerequisites` | `ClientProfile.retainedTools` | eliminates that tier unless the analyst records the holding; unmet by default |
+| `allowances` | nothing — unmeasurable here | never eliminates; carried into the tier's scoring rationale |
+
+Where the seven ended up: **five enforced exactly** (Duo Free 10 users, Sublime
+100 mailboxes, TheHive Community 2 users, runZero Community 100 assets, Entra ID
+Free's prerequisite subscription), **one still approximated** (Tines Free's three
+live workflows — a workflow is not a quantity the sizing stage produces, so
+`scaleCeiling: small` stays as the stand-in), and **three carried as visible
+allowances** (Tines' workflows, n8n's metered executions, TheHive's
+one-organisation limit).
+
+Two tiers that had been dropped from the catalog entirely are back: Duo Free and
+Entra ID Free. Verified end to end on the §12.1 retailer — at 60 employees with
+no retained tools both are ruled out and Duo Essentials is bought; at 60
+employees holding `microsoft-365` Entra ID Free becomes available and is
+selected at zero cost, correctly, because they are already paying for it; at 8
+employees Duo Free is selected. The second and third of those were unreachable
+before, and the first was wrong.
+
+Adding the field also exposed a latent bug: `scoreProducts` collapsed a product
+to a single score when its *first* tier was eliminated. That was correct while
+every hard filter was product-level and became wrong the moment a tier could be
+ruled out on its own terms — a capped free tier would have taken the paid tier
+beside it. It now keys off the product-level filter directly.
+
 **Worth eyeballing.** The §12.1 retailer's stack — Nessus, CrowdStrike, Graylog —
 read against the CSF Functions:
 
@@ -855,27 +887,15 @@ more design questions than any phase since 4.
 
 **Decisions.**
 
-- 2026-09-12 — **A vendor's free tier is only catalogued when it is genuinely
-  unconditional.** Three were dropped or constrained rather than shipped as a
-  zero-cost option a client cannot actually take:
-  - `Duo Free` — capped at 10 users. Not catalogued; the schema cannot express a
-    headcount cap, so it would have been offered to a 500-person client at zero.
-  - `Entra ID Free` — not standalone, it needs an Azure or Microsoft 365
-    subscription the client must already hold. Catalogued briefly and
-    immediately selected as the identity answer for an explicitly
-    open-source-first client, beating Keycloak, under the rationale line "No
-    licence fee: Entra ID Free is commercial". Removed.
-  - `Tines Free` — three live workflows. Kept, but with `scaleCeiling: small`,
-    after it was selected over Shuffle for the same open-source-first client.
+- 2026-09-12 — **A vendor's free tier must declare its condition, and the
+  condition is enforced.** Three free tiers were selected for clients who could
+  not actually take them, because a zero-cost tier whose condition the engine
+  cannot see beats every priced option by construction. `ProductTier.limits`
+  now exists and closes this — see the section below.
 
-  A client who genuinely already owns one of these should list it in
-  `retainedTools`, which is the field that models "already owned".
-
-- 2026-09-12 — **`scaleCeiling` is now doing double duty as a licence cap, and
-  it is an approximation every time.** Sublime Platform (100 mailboxes), TheHive
-  Community (2 users), runZero Community (100 assets) and Tines Free (3
-  workflows) are all pinned to `small`, which tops out at 250 monitored assets.
-  Each entry says so in its own notes. This is a stopgap, not a model.
+  A client who genuinely already owns a prerequisite should list it in
+  `retainedTools`, which is the field that models "already owned" and is what
+  the prerequisite check reads.
 
 - 2026-09-12 — **A product too important to omit may ship on `analyst_estimate`
   pricing, flagged, when the vendor publishes nothing.** Precedent set by
@@ -931,12 +951,8 @@ written. It reads the directory now.
 **Limitations found and deliberately NOT fixed.** All are recorded here rather
 than worked around in the data, and all understate rather than overstate.
 
-- **A tier cannot declare its limits.** Seven instances in one phase: Duo Free
-  (10 users), Entra ID Free (prerequisite subscription), Sublime (100
-  mailboxes), TheHive Community (2 users), Tines Free (3 workflows), runZero
-  Community (100 assets), n8n Cloud (metered executions). This is the single
-  strongest case for a `limits` block on `ProductTier`, and it would replace
-  four `scaleCeiling` approximations with something true.
+- ~~**A tier cannot declare its limits.**~~ **Fixed the same day** — see
+  "Tier limits" below. The other six stand.
 - **A pricing rule cannot say what unit it bills or bands on.** `flat_tiered`
   always bands on `monitoredAssetCount`, which forced an assumed
   one-administrator-per-40-assets mapping onto ManageEngine PAM360's published
@@ -989,22 +1005,13 @@ markets will give you a number and which will not.
 
 ## Open questions
 
-**One decision needed before Phase 7 can be called done**, plus two unverified
-items carried forward.
+**Nothing blocking except the remaining products.** The one design decision this
+section carried was answered and implemented on 2026-09-12.
 
-- **Should a `ProductTier` gain a `limits` block?** Seven products in Phase 7
-  carry a vendor limit the schema cannot express — a user cap, a mailbox cap, a
-  workflow cap, a prerequisite subscription, metered executions. Four of them
-  are approximated today by pinning `scaleCeiling` to `small`, which is wrong in
-  both directions: it over-permits between the real cap and 250 assets, and it
-  hard-filters products that would be fine for a large estate with few analysts.
-  Two others (Duo Free, Entra ID Free) were dropped from the catalog entirely
-  because there was no honest way to ship them.
-
-  It is a schema plus scoring change, not a data change, so it was not done
-  inside a `data:` phase. Say the word and it becomes a small inserted phase
-  before the remaining 12 products land; otherwise the approximations stand and
-  every affected entry documents itself.
+- ~~**Should a `ProductTier` gain a `limits` block?**~~ Asked and answered on
+  2026-09-12: yes, and it is done. Five of the seven limits are now enforced
+  exactly, one remains approximated, and the two tiers that had been dropped
+  from the catalog are back. See "Tier limits" in the Phase 7 section.
 
 - **The remaining 12 products need a session with web research available.**
   `deception` has no products at all, and `siem`, `edr` and
