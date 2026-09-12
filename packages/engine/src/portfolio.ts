@@ -72,6 +72,23 @@ export interface CategoryRanking {
    * prevent. It surfaces as a scoping question instead.
    */
   readonly mandatedButNotApplicable: boolean;
+  /**
+   * Products the client already owns in this category, so nothing is bought
+   * for it.
+   *
+   * A held category is not funded by any bundle, including Ideal. "What would
+   * you buy with no budget limit" is still a question about what they need,
+   * and quoting a second EDR to a client who opened the call by saying they
+   * keep CrowdStrike is the answer nobody asked for.
+   *
+   * It stops being mandatory too. The obligation is met by the holding, and
+   * `unfundedMandatory` means "compliance demands this and the budget could not
+   * buy it", which would be a false alarm here. Whether the holding covers the
+   * specific controls is a different question, asked and answered in
+   * `coverage.ts`, which credits the same holding and still reports a gap if
+   * one remains.
+   */
+  readonly servedByRetained: readonly string[];
   readonly rationale: readonly string[];
 }
 
@@ -234,7 +251,31 @@ function round(value: number, decimals: number): number {
  * client's frameworks make mandatory marked as such.
  */
 export function rankCategoriesForClient(inputs: PortfolioInputs): readonly CategoryRanking[] {
-  const { profile, relevance, frameworks, categoryWeights, assumptions } = inputs;
+  const { profile, relevance, frameworks, categoryWeights, assumptions, products, scores } = inputs;
+
+  // What the client already runs, by category. An id the catalog does not carry
+  // is ignored rather than rejected: the analyst typed what the client said,
+  // and the catalog not having it is StackFit's gap, not theirs.
+  const retainedByCategory = new Map<ProductCategory, string[]>();
+  const retainedProducts = products.filter((product) => profile.retainedTools.includes(product.id));
+  for (const product of retainedProducts) {
+    const held = retainedByCategory.get(product.category) ?? [];
+    held.push(product.name);
+    retainedByCategory.set(product.category, held);
+  }
+
+  // A holding that would not survive scoring is still a holding: the client
+  // owns it whatever StackFit thinks. But "you are keeping something that does
+  // not reach your estate" is exactly the finding a scoping call exists to
+  // produce, so it is said rather than acted on.
+  const failing = new Map<ProductCategory, string[]>();
+  for (const product of retainedProducts) {
+    const score = scores.find((entry) => entry.productId === product.id && entry.eliminated);
+    if (score === undefined) continue;
+    const list = failing.get(product.category) ?? [];
+    list.push(`${product.name} (${score.eliminationReasons[0] ?? 'ruled out'})`);
+    failing.set(product.category, list);
+  }
 
   const mandatedBy = new Map<ProductCategory, string[]>();
   for (const framework of frameworks) {
@@ -276,8 +317,30 @@ export function rankCategoriesForClient(inputs: PortfolioInputs): readonly Categ
       }
 
       const mandatedButNotApplicable = mandates.length > 0 && !applicable;
+      const servedByRetained = retainedByCategory.get(category) ?? [];
 
-      if (mandates.length > 0 && applicable) {
+      if (servedByRetained.length > 0) {
+        rationale.push(
+          `Not quoted: the client already runs ${listOf(servedByRetained)} here and is keeping ` +
+            'it. Whether that holding closes the controls this category is asked for is a ' +
+            'separate question, and the coverage matrix answers it.',
+        );
+        for (const note of failing.get(category) ?? []) {
+          rationale.push(
+            `⚠ ${note}. They are keeping it regardless, so nothing is quoted, but a holding ` +
+              'that does not fit this estate is worth raising on the call.',
+          );
+        }
+      }
+
+      if (mandates.length > 0 && applicable && servedByRetained.length > 0) {
+        rationale.push(
+          `${listOf(mandates)} require${mandates.length === 1 ? 's' : ''} this category, and the ` +
+            'holding above is what meets it. Not counted as unfunded.',
+        );
+      }
+
+      if (mandates.length > 0 && applicable && servedByRetained.length === 0) {
         rationale.push(
           `Mandatory: ${mandates.join(', ')} require${mandates.length === 1 ? 's' : ''} a ` +
             `${category} control, so this must be funded before anything discretionary.`,
@@ -298,10 +361,12 @@ export function rankCategoriesForClient(inputs: PortfolioInputs): readonly Categ
         weight: round(weight, 1),
         // Not mandatory: buying this would protect nothing. Reported instead,
         // via mandatedButNotApplicable, so the obligation cannot vanish.
-        mandatory: mandates.length > 0 && applicable,
+        mandatory: mandates.length > 0 && applicable && servedByRetained.length === 0,
         mandatedBy: mandates,
-        essential: applicable && weight >= assumptions.essentialWeightFloor,
+        essential:
+          applicable && weight >= assumptions.essentialWeightFloor && servedByRetained.length === 0,
         mandatedButNotApplicable,
+        servedByRetained,
         rationale,
       };
     })
@@ -518,9 +583,11 @@ function select(
     });
   };
 
+  // Nothing is quoted for a category the client already runs, in any bundle.
+  const buyable = rankings.filter((ranking) => ranking.servedByRetained.length === 0);
   const passes: readonly CategoryRanking[][] = [
-    orderCategories(rankings.filter((ranking) => ranking.mandatory && options.eligible(ranking))),
-    orderCategories(rankings.filter((ranking) => !ranking.mandatory && options.eligible(ranking))),
+    orderCategories(buyable.filter((ranking) => ranking.mandatory && options.eligible(ranking))),
+    orderCategories(buyable.filter((ranking) => !ranking.mandatory && options.eligible(ranking))),
   ];
 
   for (const pass of passes) {
@@ -974,6 +1041,20 @@ function buildBundle(
   const capacityFte = profile.securityStaffFte * inputs.assumptions.operableCapacity.utilisation;
 
   const rationale: string[] = [];
+
+  // Said in every bundle, because a category vanishing from the quote without
+  // explanation is a worse answer than quoting it twice. This line is also what
+  // carries the fact into the proposal exports, which render the same rationale.
+  const held = rankings.filter((ranking) => ranking.servedByRetained.length > 0);
+  if (held.length > 0) {
+    rationale.push(
+      `Not quoted, because the client already runs it: ` +
+        `${listOf(held.map((ranking) => `${CATEGORY_LABELS[ranking.category]} (${listOf(ranking.servedByRetained)})`))}. ` +
+        'Whether those holdings close the controls their categories are asked for is answered in ' +
+        'the coverage matrix, which credits them and still reports a gap where one remains.',
+    );
+  }
+
   switch (kind) {
     case 'essential':
       rationale.push(

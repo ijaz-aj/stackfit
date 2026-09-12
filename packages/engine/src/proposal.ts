@@ -22,7 +22,7 @@ import type {
 
 import { coverageDisclaimer, type CoverageResult } from './coverage';
 import type { CategoryJustification } from './justification';
-import { CATEGORY_LABELS, SERVICE_LEVEL_LABELS, formatCount, plural } from './labels';
+import { CATEGORY_LABELS, SERVICE_LEVEL_LABELS, formatCount, listOf, plural } from './labels';
 import type { Bundle, BundleSelection } from './portfolio';
 import type { SizingResult } from './sizing';
 
@@ -329,7 +329,21 @@ function currentState(inputs: ProposalInputs): ProposalSection {
 }
 
 function recommendedStack(inputs: ProposalInputs): ProposalSection {
-  const { recommended } = inputs;
+  const { recommended, profile, products } = inputs;
+
+  // Categories the client holds, named by the product they hold. Derived here
+  // from the same two facts the engine used, rather than carried on the bundle:
+  // a bundle is what was selected, and this is the opposite.
+  const heldCategories = [
+    ...new Map(
+      products
+        .filter((product) => profile.retainedTools.includes(product.id))
+        .map((product) => [
+          product.category,
+          `${CATEGORY_LABELS[product.category]} (${product.name})`,
+        ]),
+    ).values(),
+  ];
 
   const rows = inDeliveryOrder(recommended.selections).map((selection) => [
     text(CATEGORY_LABELS[selection.category]),
@@ -358,6 +372,24 @@ function recommendedStack(inputs: ProposalInputs): ProposalSection {
         rows,
         total: [text('Total'), text(''), text(''), money(recommended.annualSpend)],
       },
+      // What the client already runs, and is therefore not being sold.
+      //
+      // The engine stops quoting a category the client holds, which is the
+      // right answer and a silent one: a reader who counts thirteen categories
+      // in the coverage matrix and twelve in the table above is owed the
+      // reason. Said here rather than left to the rationale, because this is
+      // the table they are reading when the question occurs to them.
+      ...(heldCategories.length === 0
+        ? []
+        : [
+            {
+              kind: 'paragraph' as const,
+              text:
+                `Not quoted, because ${profile.orgName} already runs it and is keeping it: ` +
+                `${listOf(heldCategories)}. Those holdings are credited in the coverage matrix, ` +
+                'which still reports a gap where one of them leaves a control open.',
+            },
+          ]),
     ],
   };
 }

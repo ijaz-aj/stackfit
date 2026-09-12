@@ -1481,15 +1481,28 @@ What follows is the honest scorecard, including where the sources are weak.
   none, and the gap had been false the whole time. Holdings resolve at the
   conservative floor, what every tier of that product does, because the tier
   they hold is not recorded. `test/retained-tools.test.ts`.
-- ⚠ **A retained tool still does not stop the portfolio re-buying its
-  category.** The other half of the same field, left deliberately. A bank that
-  states it is keeping CrowdStrike Falcon Go is still recommended, and quoted
-  for, a separate EDR. Coverage is a question of fact and was simply wrong;
-  this one is a question of policy, and both answers are defensible. "Do not
-  re-buy what they own" is what a client expects. "Here is what replacing it
-  would cost" is a real pre-sales motion, and the tool that silently skips the
-  category cannot express it. **Needs the reviewer**, because whichever way it
-  goes it changes every bundle for every client with a holding.
+- ~~⚠ **A retained tool still does not stop the portfolio re-buying its
+  category.**~~ **Reviewer decided 2026-09-12: do not re-buy what they own.**
+  A category the client holds is not quoted in any bundle, Ideal included,
+  because "what would you buy with no budget limit" is still a question about
+  what they need. It also stops being mandatory: `unfundedMandatory` means
+  "compliance demands this and the budget could not buy it", and a holding that
+  meets the obligation is not that. Whether the holding closes the specific
+  controls is a separate question that `coverage.ts` answers, crediting the same
+  holding and still reporting a gap where one remains.
+  Measured on the bank preset: the EDR line disappears and annual spend falls by
+  exactly the price of the product that is no longer quoted.
+  Two things the first cut got wrong and that the tests now hold. The category
+  vanished silently, which is a worse answer than quoting it twice, so the
+  bundle rationale names it. And the proposal exports were still silent after
+  that, because they render their own sections rather than the rationale: a
+  reader counting thirteen categories in the coverage matrix against twelve in
+  the stack table was owed the reason in the document they are reading.
+  `test/retained-tools.test.ts`, nine tests, including one that asserts it
+  through `buildProposal` rather than through the bundle.
+  A holding that would not survive scoring is still reported: "you are keeping
+  something that does not reach your estate" is exactly the finding a scoping
+  call exists to produce, so it is said rather than acted on.
 - ⚠ **No client-side maturity model.** Practitioner gap-assessment deliverables
   pair a current-state maturity rating with a target one and sequence the
   roadmap between them; StackFit rates *products* (emerging/established/legacy)

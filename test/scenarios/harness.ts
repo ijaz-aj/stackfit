@@ -35,6 +35,7 @@ import {
   loadSizingAssumptions,
 } from '@stackfit/data';
 import {
+  buildProposal,
   coverageOfBundle,
   runPipeline,
   type Bundle,
@@ -99,6 +100,29 @@ export function allRationale(bundle: Bundle): string {
     ...bundle.selections.flatMap((selection) => selection.rationale),
     ...bundle.mssp.rationale,
   ].join(' \n');
+}
+
+/**
+ * The client-facing document for a scenario, built from the same inputs.
+ *
+ * Exported because "does this reach the proposal" is a different question from
+ * "does the engine know it", and the two have already diverged once: a change
+ * that stopped quoting a held category was correct in the bundle and silent in
+ * the DOCX.
+ */
+export function proposalFor(result: ScenarioResult, profile: ClientProfile) {
+  return buildProposal({
+    profile,
+    sizing: result.sizing,
+    products: config.products,
+    recommended: result.recommended,
+    essential: result.essential,
+    ideal: result.ideal,
+    coverage: result.coverage,
+    justifications: [],
+    assumptions: config.portfolioAssumptions,
+    asOf: AS_AT,
+  });
 }
 
 /** Categories the catalog can actually supply a product for. */
