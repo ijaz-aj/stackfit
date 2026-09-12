@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 8 — export (in review)
+**Current phase:** 9 — scenario save / clone / compare (in review)
 **Last updated:** 2026-09-12
 
 ## Phase log
@@ -20,7 +20,7 @@
 | 6 Results dashboard | in review | All seven parts of §8, server-rendered off one pipeline run. Recharts cost + cash-flow charts on a validated palette. Sizing assumptions are editable per scenario. **Reviewed; six defects found and fixed** — deployment fit read "no preference" as a demand, the fit score was rendered with no working shown, a control was credited to a tier that does not sell it, Ideal optimised for value rather than fit, a partial control had no route to being closed, and the fix list offered purchases that closed nothing. Both pre-Phase-7 open questions closed; the SKU is now part of the recommendation. 368 tests green. |
 | 7 Catalog expansion (≥5 per category) | in review | **65 products across all 13 categories**, up from 8 across 3. Every category holds at least five. 106 catalog prices, all fresh, no placeholders. **Three engine defects found and fixed**, each pinned by a regression: a bigger budget could buy less compliance, a mandated control was outranked by one more funded category, and ops fit returned a flat score for every product when the client had no security staff. **`ProductTier.limits` added**, closing the design question the phase raised — five vendor limits now enforced exactly, two previously undeliverable free tiers back in the catalog. Both §12.1 and §12.2 acceptance assertions tightened to what the spec actually asks for. 377 tests green. |
 | 8 Export (DOCX/PDF/XLSX) | in review | All four outputs off one document model: HTML preview, DOCX, PDF and an XLSX cost model. Roadmap phasing added to the engine. The §6 rule 4 disclaimer is verbatim in every one of them and pinned by a test. Three new dependencies, audit clean. 415 tests green. |
-| 9 Scenario save / clone / compare | not started | |
+| 9 Scenario save / clone / compare | in review | Save already worked; clone copies profile, inventory and sizing overrides, and `compareScenarios` in the engine diffs two runs at both ends — what the analyst changed, and what it cost. Refuses to subtract across currencies; has no notion of an "original", so flipping the sides tells the same story. 425 tests green. |
 | 10 Polish + demo scenarios + README | not started | Pick + document the free hosting target (Vercel Hobby + Neon/Supabase free Postgres). |
 
 ## Decisions made
@@ -1134,6 +1134,38 @@ text back out — all seven sections present, money formatted rather than raw
 minor units, and the §6 rule 4 disclaimer verbatim. An export is exactly where a
 client stops seeing the dashboard's badges, which is why that last one has a test
 of its own in all three formats.
+
+### Phase 9
+
+- 2026-09-12 — **A clone carries the sizing overrides too.** They are part of
+  what makes two runs comparable: an override the analyst corrected on the call
+  is a deliberate input, and dropping it on copy would silently change a second
+  variable in an experiment meant to change one.
+
+- 2026-09-12 — **A clone is a new row, not a version.** Phase 9 asks for two
+  scenarios that can be opened, edited and compared independently. Versioning is
+  a different feature with a different UI and was not built.
+
+- 2026-09-12 — **A comparison has no notion of an original.** The change kinds
+  are `only-left` and `only-right` rather than "added" and "removed", because
+  neither side came first. Flipping the two sides must show the same differences
+  rather than an inverted story about who changed what, and a test pins that
+  symmetry.
+
+- 2026-09-12 — **A comparison across two currencies refuses to subtract.** Every
+  money delta is suppressed and the mismatch is stated at the top of the summary
+  rather than in a footnote. A number in a difference column looks like an
+  answer, and rupees minus dollars is not one. Everything currency-free — FTE,
+  asset counts, coverage percentages — still compares, and is the more useful
+  half of the comparison anyway.
+
+**Worth eyeballing.** Cloning the 300-bed hospital and raising security staff
+from 2 FTE to 6 moves the recommendation toward *more* operationally demanding
+products — Bareos over Proxmox Backup Server, OpenSearch over Elastic Security —
+at identical annual spend and USD 63,079 more in people. The stack gets better
+because there is now somebody to run it, and the cost moves entirely into a line
+the budget cap does not constrain. That is the question clone-and-compare exists
+to answer.
 
 ## Open defects
 
