@@ -48,7 +48,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     ).toMatchInlineSnapshot(`
       [
         "pci-dss-4.0 | in scope true | covered 8/8 of 12 | partial 0 | gaps 0 | 100%",
-        "nist-csf-2.0 | in scope false | covered 13/13 of 22 | partial 0 | gaps 0 | 100%",
+        "nist-csf-2.0 | in scope false | covered 12/13 of 22 | partial 0 | gaps 1 | 92.3%",
       ]
     `);
   });
@@ -69,7 +69,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
         "Identify 2/2 = 100",
         "Protect 4/4 = 100",
         "Detect 2/2 = 100",
-        "Respond 4/4 = 100",
+        "Respond 3/4 = 75",
         "Recover 1/1 = 100",
       ]
     `);
@@ -104,17 +104,23 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
   });
 
   it('says plainly which gaps the catalog cannot close yet, and closes the rest', () => {
-    // ⚠ CATALOG LIMITATION: GONE, for this scenario, and so is the gap list.
-    // It was nine unclosable gaps out of eleven when Phase 7 started, because
-    // the catalog stocked three categories. It is now zero of zero: the
-    // recommended bundle for a 60-staff PCI retailer at USD 25k/yr covers every
-    // control in scope that a purchase could satisfy.
+    // ⚠ CATALOG LIMITATION: GONE, for this scenario. It was nine unclosable
+    // gaps out of eleven when Phase 7 started, because the catalog stocked
+    // three categories. Nothing is unclosable now: whatever the bundle leaves
+    // open, something in the catalog could close.
     //
-    // Keep these as equalities rather than bounds. If a later catalog or engine
-    // change reintroduces a gap here, that is worth going red over.
+    // One gap is open, and it is a decision rather than a shortfall. Year one
+    // defers SOAR for a 60-staff retailer with one security person, so the CSF
+    // Respond control only a SOAR closes is reported as a gap with SOAR named
+    // as its cheapest closer, and SOAR sits in the Phase 2 bundle for the same
+    // scenario. That is the tool working: a deferral has a consequence, and the
+    // client is entitled to see it priced rather than have it disappear.
+    //
+    // Note what is not open. PCI is the framework this client selected and it
+    // stays at 100%, asserted just above. The gap is in CSF, which is reported
+    // as a lens and is explicitly out of scope, asserted just below.
     expect(coverage.unclosableGaps).toEqual([]);
-    expect(coverage.gaps).toEqual([]);
-    expect(coverage.remediation).toEqual([]);
+    expect(coverage.gaps.map((gap) => gap.controlId)).toEqual(['nist-csf-2.0:RS.CO']);
 
     // PCI requirement 7 is worth watching across Phase 7 as a measure of what
     // the catalog is for. Before the phase it was an unclosable critical gap:
@@ -137,15 +143,17 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
   });
 
   it('covers more as the bundle gets richer', () => {
+    // Phase 2 is measured on its own and is expected to cover little: it holds
+    // what year one deliberately left out, so a high figure here would mean the
+    // year-one line had been drawn in the wrong place.
     const essential = coverageOf(retail, retail.essential).summary.coveragePercent ?? 0;
     const recommended = coverage.summary.coveragePercent ?? 0;
-    const ideal = coverageOf(retail, retail.ideal).summary.coveragePercent ?? 0;
+    const phase2 = coverageOf(retail, retail.phase2).summary.coveragePercent ?? 0;
 
     expect(
-      `essential ${essential} → recommended ${recommended} → ideal ${ideal}`,
-    ).toMatchInlineSnapshot(`"essential 87.5 → recommended 100 → ideal 100"`);
+      `essential ${essential} → recommended ${recommended}, deferred ${phase2}`,
+    ).toMatchInlineSnapshot(`"essential 100 → recommended 100, deferred 0"`);
     expect(recommended).toBeGreaterThanOrEqual(essential);
-    expect(ideal).toBeGreaterThanOrEqual(recommended);
   });
 });
 
@@ -193,20 +201,34 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
       ),
     ).toMatchInlineSnapshot(`
       [
-        "greenbone-openvas (vulnerability_management) | 1080 USD/yr | 0.33 FTE | closes 4",
+        "arctic-wolf (mdr) | 51000 USD/yr | 0.16 FTE | closes 6",
+        "greenbone-openvas (vulnerability_management) | 1080 USD/yr | 0.33 FTE | closes 3",
         "huntress (mdr) | 10800 USD/yr | 0.11 FTE | closes 1",
         "azure-backup (backup) | 2640 USD/yr | 0.11 FTE | closes 4",
-        "security-onion (ndr) | 2457 USD/yr | 0.57 FTE | closes 3",
         "opnsense (ngfw) | 1080 USD/yr | 0.22 FTE | closes 1",
         "proxmox-mail-gateway (email_security) | 1080 USD/yr | 0.26 FTE | closes 1",
+        "tines (soar) | 0 USD/yr | 0.16 FTE | closes 1",
       ]
     `);
 
+    // Nobody runs for free. This is the assertion that carries hard rule 8 into
+    // the gap analysis: a zero-licence fix still costs an engineer's time, and a
+    // fix list quoted in money alone would read as almost free.
     for (const option of coverage.remediation) {
-      expect(option.annualSpend.amountMinor).toBeGreaterThan(0);
-      expect(option.opsFte).toBeGreaterThan(0);
+      expect(option.opsFte, `${option.productId} costs nobody anything`).toBeGreaterThan(0);
     }
     expect(coverage.remediationOpsFte).toBeGreaterThan(0);
+
+    // Money, on the list as a whole rather than per option. Per option it used
+    // to hold, because every zero-licence closer here was self-hosted and
+    // carried infrastructure cost. A hosted free tier broke that: Tines is
+    // genuinely 0/yr, and asserting otherwise would be asserting that no
+    // vendor may offer one.
+    const listAnnual = coverage.remediation.reduce(
+      (total, option) => total + option.annualSpend.amountMinor,
+      0,
+    );
+    expect(listAnnual).toBeGreaterThan(0);
   });
 
   it('never covers less as the budget goes up', () => {

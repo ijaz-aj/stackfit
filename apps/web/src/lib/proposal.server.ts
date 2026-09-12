@@ -26,7 +26,7 @@ export function proposalFor(profile: ClientProfile, result: PipelineResult): Pro
     products: result.products,
     recommended: result.recommended,
     essential: result.essential,
-    ideal: result.ideal,
+    phase2: result.phase2,
     coverage: result.coverage,
     justifications: justifyBundle(result.recommended, {
       scores: result.scores,

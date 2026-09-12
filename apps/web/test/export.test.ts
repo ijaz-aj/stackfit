@@ -75,7 +75,7 @@ function documentFor() {
       ),
     }),
     essential: result.essential,
-    ideal: result.ideal,
+    phase2: result.phase2,
     coverage: result.coverage,
     assumptions: data.portfolioAssumptions,
     // Pinned rather than read from a clock, so the assertions below do not

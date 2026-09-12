@@ -585,3 +585,75 @@ industryModifiers:
     category: siem
     multiplier: 1.15
     basis: Long dwell times make retrospective search the control that finds the intrusion.
+
+# How the operating model changes what a category is worth.
+#
+# A different axis from industry. Industry says what an attacker wants from this
+# kind of business; this says who will be at the console, which decides whether
+# a category arises at all.
+#
+# Only the categories that genuinely move are listed. Everything absent is 1.0,
+# because a modifier of 1.0 stated thirty-nine times is noise that hides the
+# nine lines that matter.
+deliveryModifiers:
+  # ---- We operate it. Our SOC, our rota, our analysts. ----
+  - delivery: mssp_managed
+    category: mdr
+    multiplier: 0
+    basis: >-
+      We are the monitoring on this engagement. A third-party MDR service is a
+      second provider hired to do the job we were hired for, and quoting one
+      alongside our own fee is either a duplicate charge or an admission. Zero
+      rather than a low multiplier, because this is not "worth less", it is "does
+      not arise".
+  - delivery: mssp_managed
+    category: soar
+    multiplier: 1.3
+    basis: >-
+      Automation pays back against analyst hours, and on this model the analyst
+      hours are ours across every client. A playbook written once runs for all of
+      them, which is the opposite of the single-tenant case where SOAR is a force
+      multiplier for a team that does not exist yet.
+  - delivery: mssp_managed
+    category: siem
+    multiplier: 1.2
+    basis: >-
+      The stack we operate is the stack we can only operate through its
+      telemetry. Central collection stops being one category among thirteen and
+      becomes the thing the engagement runs on.
+
+  # ---- Split. We take detection and response; they keep the rest. ----
+  - delivery: co_managed
+    category: mdr
+    multiplier: 0.3
+    basis: >-
+      Mostly redundant with what we provide, but not always: a client keeping
+      their own endpoint estate sometimes keeps the response contract on it too.
+      Low enough to fall out of year one unless something else argues for it.
+  - delivery: co_managed
+    category: soar
+    multiplier: 1.15
+    basis: A shared queue is exactly where handoff automation earns its keep.
+
+  # ---- They operate it. We consume the telemetry. ----
+  - delivery: client_operated
+    category: mdr
+    multiplier: 1.6
+    basis: >-
+      The case this modifier was added for. MDR supplies what every other
+      category quietly assumes, somebody looking at the alerts at 3am, and its
+      weight did not move when the client had nobody to do that. A 300-endpoint
+      firm with zero security staff ranked it mid-table and deferred it, which is
+      the single worst recommendation this tool could make to that client.
+  - delivery: client_operated
+    category: soar
+    multiplier: 0.7
+    basis: >-
+      A force multiplier for a team that already exists. Bought before there is
+      a team to multiply, it is a second product to run and nobody to run it.
+  - delivery: client_operated
+    category: deception
+    multiplier: 0.6
+    basis: >-
+      Cheap to run and almost false-positive free, but a decoy only works if an
+      interaction with it reaches somebody. Without a rota it is an unread log.

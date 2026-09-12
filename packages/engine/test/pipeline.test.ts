@@ -173,10 +173,10 @@ describe('runPipeline', () => {
   });
 
   it('measures every bundle against the same denominator', () => {
-    // §8.1 puts the three bundles side by side, which only means anything if
-    // they are scored out of the same total.
+    // §8.1 puts the bundles side by side, which only means anything if they
+    // are scored out of the same total.
     const result = runPipeline(inputs());
-    const totals = [result.essential, result.recommended, result.ideal].map(
+    const totals = [result.essential, result.recommended, result.phase2].map(
       (bundle) => coverageOfBundle(result, bundle).summary.addressableControls,
     );
 

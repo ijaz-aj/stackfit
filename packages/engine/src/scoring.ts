@@ -143,10 +143,12 @@ export function effectiveWeights(
   const adjustment = weights.biasAdjustments.find(
     (entry) => entry.bias === profile.procurementBias,
   );
-  const soc = weights.socAdjustments.find((entry) => entry.soc === profile.hasSoc);
+  const delivery = weights.deliveryAdjustments.find(
+    (entry) => entry.delivery === profile.deliveryModel,
+  );
 
   const deltas = new Map<ScoringDimension, number>();
-  for (const delta of [...(adjustment?.deltas ?? []), ...(soc?.deltas ?? [])]) {
+  for (const delta of [...(adjustment?.deltas ?? []), ...(delivery?.deltas ?? [])]) {
     deltas.set(delta.dimension, (deltas.get(delta.dimension) ?? 0) + delta.delta);
   }
 
@@ -426,14 +428,40 @@ function integrationFit(product: Product, profile: ClientProfile): { score: numb
   };
 }
 
+/**
+ * Whose people this lands on, in FTE.
+ *
+ * The denominator of every ops-fit judgement below, and it is not always the
+ * client's. On a managed engagement our SOC runs the stack, so the capacity
+ * that matters is the slice of an analyst we allocate, and the client's own
+ * headcount is beside the point. Measuring against their headcount is what made
+ * a zero-staff client score every tool at the floor on the one engagement model
+ * where their staffing does not matter at all.
+ *
+ * Co-managed adds the two: the client keeps part of the stack and we take the
+ * rest, and neither side's capacity is the whole answer.
+ */
+function operatingCapacityFte(profile: ClientProfile, weights: ScoringWeights): number {
+  const ours = weights.opsFit.msspAnalystFtePerClient;
+  switch (profile.deliveryModel) {
+    case 'mssp_managed':
+      return ours;
+    case 'co_managed':
+      return profile.securityStaffFte + ours;
+    case 'client_operated':
+      return profile.securityStaffFte;
+  }
+}
+
 function opsFit(
   opsFte: number,
   profile: ClientProfile,
   weights: ScoringWeights,
 ): { score: number; note: string } {
   const policy = weights.opsFit;
+  const available = operatingCapacityFte(profile, weights);
 
-  if (profile.securityStaffFte === 0) {
+  if (available === 0) {
     // No security staff is not "every tool is equally bad". It is the case
     // where how much running a tool costs matters most. A managed service
     // needing almost no client-side effort is the right answer here, and a
@@ -458,17 +486,33 @@ function opsFit(
     };
   }
 
-  const share = opsFte / profile.securityStaffFte;
+  /*
+   * Whose team this is, in the sentence a client reads.
+   *
+   * Hard rule 5 is not satisfied by a correct number under the wrong noun. This
+   * note used to say "this team" and quote the client's headcount in every
+   * case, so on a managed engagement it told a client their two people could
+   * not run a stack we were going to be running for them.
+   */
+  const whose =
+    profile.deliveryModel === 'client_operated'
+      ? `the ${round(available, 2)} security FTE the client has`
+      : profile.deliveryModel === 'mssp_managed'
+        ? `the ${round(available, 2)} analyst FTE we allocate per client`
+        : `the ${round(available, 2)} FTE across their team and ours`;
+  const who = profile.deliveryModel === 'client_operated' ? 'This team' : 'That';
+
+  const share = opsFte / available;
   if (share <= policy.comfortableShareOfFte) {
     return {
       score: 100,
-      note: `Needs ${round(opsFte, 2)} FTE of the ${profile.securityStaffFte} available (${round(share * 100, 0)}%), which this team can absorb.`,
+      note: `Needs ${round(opsFte, 2)} FTE of ${whose} (${round(share * 100, 0)}%), which is absorbable.`,
     };
   }
   if (share >= policy.unusableShareOfFte) {
     return {
       score: 0,
-      note: `⚠ Needs ${round(opsFte, 2)} FTE against ${profile.securityStaffFte} available (${round(share * 100, 0)}%). This team cannot run it, whatever else it does well.`,
+      note: `⚠ Needs ${round(opsFte, 2)} FTE against ${whose} (${round(share * 100, 0)}%). ${who} cannot run it, whatever else it does well.`,
     };
   }
 
@@ -477,7 +521,7 @@ function opsFit(
   const score = ((policy.unusableShareOfFte - share) / span) * 100;
   return {
     score,
-    note: `Needs ${round(opsFte, 2)} FTE of the ${profile.securityStaffFte} available (${round(share * 100, 0)}%), which is more than this team can comfortably carry.`,
+    note: `Needs ${round(opsFte, 2)} FTE of ${whose} (${round(share * 100, 0)}%), which is more than can comfortably be carried.`,
   };
 }
 

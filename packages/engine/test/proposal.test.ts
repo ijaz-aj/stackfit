@@ -109,7 +109,7 @@ function proposalInputs(
       ),
     }),
     essential: result.essential,
-    ideal: result.ideal,
+    phase2: result.phase2,
     coverage: result.coverage,
     assumptions: buildPortfolioAssumptions(),
     asOf: AS_OF,

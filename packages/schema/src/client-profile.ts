@@ -14,7 +14,7 @@ import {
   ProcurementBias,
   Region,
   RiskTolerance,
-  SocPosture,
+  DeliveryModel,
 } from './enums';
 import { NonNegativeMoney } from './money';
 import { Slug } from './product';
@@ -51,9 +51,14 @@ export const ClientProfile = z
     region: Region,
     employeeCount: z.number().int().nonnegative(),
     itStaffCount: z.number().int().nonnegative(),
-    /** Zero is valid, common, and drives the ops-fit penalty hard (§7.3). */
+    /**
+     * Zero is valid and common. It binds hard on `client_operated` engagements
+     * and is close to irrelevant on `mssp_managed` ones, where the people
+     * running the stack are ours.
+     */
     securityStaffFte: z.number().nonnegative(),
-    hasSoc: SocPosture,
+    /** How much of the stack we operate. See `DeliveryModel`. */
+    deliveryModel: DeliveryModel,
     riskTolerance: RiskTolerance,
     dataSensitivity: DataSensitivity,
     /** Ticked by the analyst. These are what promote a category to mandatory. */
@@ -103,6 +108,33 @@ const LEGACY_ENVIRONMENT: Readonly<Record<string, ClientEnvironment>> = {
   hybrid: 'not_asked',
 };
 
+/**
+ * Sessions saved before `hasSoc` became `deliveryModel` still parse.
+ *
+ * The old field asked what monitoring the client already had. The new one asks
+ * who will operate the stack we recommend, and they are not the same question,
+ * so this is a reading of the old answer rather than a rename.
+ *
+ * `outsourced` and `24x7` are the two that need care. A client who said their
+ * monitoring was outsourced was, on this tool, describing us, so it reads as
+ * `mssp_managed`. A client with a round-the-clock rota of their own is the one
+ * case where they genuinely run it, so it reads as `client_operated`, and so
+ * does `none`: nobody watching is not evidence that we were engaged to watch,
+ * and reading it as managed would quietly upgrade every old row into a sale.
+ * `business_hours` reads as `co_managed`, a team that carries part of it.
+ *
+ * Every mapping loses something, because the old field could not express what
+ * the new one is for. That is the cost of having asked the wrong question for
+ * as long as we did, and it is better paid here, once, in a stated table than
+ * by a database of rows nobody can open.
+ */
+const LEGACY_DELIVERY: Readonly<Record<string, DeliveryModel>> = {
+  outsourced: 'mssp_managed',
+  business_hours: 'co_managed',
+  '24x7': 'client_operated',
+  none: 'client_operated',
+};
+
 export type ClientProfile = z.infer<typeof ClientProfile>;
 
 /**
@@ -115,17 +147,26 @@ export type ClientProfile = z.infer<typeof ClientProfile>;
  */
 export const StoredClientProfile = z.preprocess((value) => {
   if (typeof value !== 'object' || value === null) return value;
-  if (!('deploymentPreference' in value)) return value;
+  let row = value as Record<string, unknown>;
 
-  const { deploymentPreference, ...rest } = value as Record<string, unknown> & {
-    deploymentPreference: unknown;
-  };
-  // An unrecognised legacy value is left to fail validation rather than being
-  // guessed at: a profile nobody can read is safer than one silently invented.
-  const migrated =
-    typeof deploymentPreference === 'string' ? LEGACY_ENVIRONMENT[deploymentPreference] : undefined;
+  if ('deploymentPreference' in row) {
+    const { deploymentPreference, ...rest } = row;
+    // An unrecognised legacy value is left to fail validation rather than being
+    // guessed at: a profile nobody can read is safer than one silently invented.
+    const migrated =
+      typeof deploymentPreference === 'string'
+        ? LEGACY_ENVIRONMENT[deploymentPreference]
+        : undefined;
+    row = migrated === undefined ? rest : { ...rest, environment: migrated };
+  }
 
-  return migrated === undefined ? rest : { ...rest, environment: migrated };
+  if ('hasSoc' in row) {
+    const { hasSoc, ...rest } = row;
+    const migrated = typeof hasSoc === 'string' ? LEGACY_DELIVERY[hasSoc] : undefined;
+    row = migrated === undefined ? rest : { ...rest, deliveryModel: migrated };
+  }
+
+  return row;
 }, ClientProfile);
 
 /** One saved scoping session: the profile plus the inventory it was sized from. */

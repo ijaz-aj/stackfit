@@ -355,7 +355,7 @@ describe('the live estimate', () => {
 
   it('reports the three bundles in the scenario currency', () => {
     expect(summary.currency).toBe('INR');
-    for (const bundle of [summary.essential, summary.recommended, summary.ideal]) {
+    for (const bundle of [summary.essential, summary.recommended, summary.phase2]) {
       expect(bundle.annualSpend.currency).toBe('INR');
       expect(bundle.tco.currency).toBe('INR');
     }

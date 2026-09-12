@@ -53,15 +53,67 @@ import {
 import type { ProductScore } from './scoring';
 import type { SizingResult } from './sizing';
 
-export type BundleKind = 'essential' | 'recommended' | 'ideal' | 'operable';
+/*
+ * Three bundles, and the two that are gone are worth recording.
+ *
+ * `ideal` ignored the budget and bought the best tier of every category with
+ * weight. On the committed presets that produced USD 26.8M a year against a
+ * 60k cap for the retail client and 59.9M for the bank, and in three of six
+ * presets its category set was identical to `recommended`, so it was the same
+ * stack at a price nobody would put in front of a client. "What would you buy
+ * with no limit" is not a question a scoping call asks.
+ *
+ * `operable` capped the stack at what the client's own security staff could
+ * run. That premise does not hold for an MSSP engagement: we run it. The
+ * professional-services preset has zero security FTE and came back with an
+ * empty bundle, and that client is the best prospect in the set. Operational
+ * load is still modelled, still costed into TCO, and still scored, but as a
+ * cost rather than as a ceiling on what can be proposed.
+ *
+ * `phase2` replaces both, and answers the question they were groping at: what
+ * is real, worth buying, and not this year.
+ */
+export type BundleKind = 'essential' | 'recommended' | 'phase2';
+
+/** One mandatory control that could have been met more than one way. */
+export interface MandateElection {
+  /** Qualified, as a reader would cite it: "pci-dss-4 10.2". */
+  readonly controlId: string;
+  readonly controlTitle: string;
+  /** The categories that would have satisfied it, this one included. */
+  readonly couldBeMetBy: readonly ProductCategory[];
+  /** Why this one carries it: elected on weight, or already held. */
+  readonly reason: 'only_option' | 'highest_weight' | 'already_held';
+}
 
 export interface CategoryRanking {
   readonly category: ProductCategory;
   /** Infrastructure weight after the industry modifier. */
   readonly weight: number;
+  /**
+   * A framework obligation lands here and nowhere else will do.
+   *
+   * True in two cases. The control names this category alone, so there is no
+   * choice; or the control offers a choice and this category was elected to
+   * carry it. Never true merely because the category appears somewhere in a
+   * mandatory control's `satisfiedBy` list: that list is a disjunction, and
+   * reading it as a conjunction is what used to make twelve of thirteen
+   * categories mandatory for a PCI client and left the recommendation with
+   * nothing to recommend.
+   */
   readonly mandatory: boolean;
   /** Frameworks that make this category mandatory, if any. */
   readonly mandatedBy: readonly string[];
+  /**
+   * Controls this category was elected to carry, and what it beat.
+   *
+   * Only populated where there was a genuine choice. "PCI DSS 10.2 is
+   * satisfied by a SIEM, a SOAR or an MDR service, and the SIEM is funded
+   * because it ranks highest for this estate" is the sentence an analyst has
+   * to be able to say in the room, and it cannot be reconstructed afterwards
+   * from a boolean.
+   */
+  readonly mandateElections: readonly MandateElection[];
   /** Weight is at or above `essentialWeightFloor`. */
   readonly essential: boolean;
   /**
@@ -205,13 +257,7 @@ export interface Bundle {
 }
 
 /** Why a mandatory category has nothing in the bundle. */
-export type UnfundedReason =
-  | 'no_candidate'
-  | 'annual_cap'
-  | 'one_time_cap'
-  | 'both_caps'
-  /** Affordable to buy, but there is nobody left to run it. */
-  | 'ops_capacity';
+export type UnfundedReason = 'no_candidate' | 'annual_cap' | 'one_time_cap' | 'both_caps';
 
 export interface UnfundedCategory {
   readonly category: ProductCategory;
@@ -277,29 +323,132 @@ export function rankCategoriesForClient(inputs: PortfolioInputs): readonly Categ
     failing.set(product.category, list);
   }
 
+  const byCategory = new Map(relevance.map((entry) => [entry.category, entry]));
+
+  /*
+   * Resolving mandates, which is a disjunction and was being read as a
+   * conjunction.
+   *
+   * `Control.satisfiedBy` lists the categories that would each satisfy the
+   * control. `coverage.ts` has always read it that way and renders it as
+   * "siem or soar or mdr". This function used to walk the same list and mark
+   * every category in it mandatory, which is the opposite reading, and the two
+   * stages of one engine disagreeing about one field is how a PCI client ended
+   * up with twelve of thirteen categories mandatory. Mandatory categories are
+   * funded before anything discretionary, so the budget was spent before the
+   * ranking was consulted and every bundle converged on "buy one of
+   * everything". A recommendation that recommends the whole catalog answers
+   * neither "what should they buy" nor "what should they spend".
+   *
+   * So each mandatory control is settled once, in favour of a single category:
+   *
+   *   1. A holding satisfies it outright. The client already runs something in
+   *      a satisfying category and is keeping it, so nothing is mandated.
+   *   2. Exactly one satisfying category is applicable to this estate. No
+   *      choice exists and that category is mandatory.
+   *   3. More than one is applicable. The highest-weighted carries it, and the
+   *      alternatives are recorded on it so the choice can be defended.
+   *
+   * Weight is infrastructure relevance after the industry modifier, so
+   * electing on it means the control is met by whichever tool this estate had
+   * the most use for anyway. Ties fall to `ProductCategory` declaration order,
+   * which keeps the result byte-identical run to run.
+   */
+  const industryModifierFor = (category: ProductCategory) =>
+    categoryWeights.industryModifiers.find(
+      (candidate) => candidate.industry === profile.industry && candidate.category === category,
+    );
+  /*
+   * Who will be at the console, applied to what the category is worth.
+   *
+   * Multiplied with the industry modifier rather than replacing it: they answer
+   * different questions and a healthcare client whose stack we operate is both
+   * a healthcare client and a managed one.
+   */
+  const deliveryModifierFor = (category: ProductCategory) =>
+    categoryWeights.deliveryModifiers.find(
+      (candidate) =>
+        candidate.delivery === profile.deliveryModel && candidate.category === category,
+    );
+
+  const weightOf = (category: ProductCategory): number => {
+    const entry = byCategory.get(category);
+    if (entry === undefined || !entry.applicable) return 0;
+    return (
+      entry.weight *
+      (industryModifierFor(category)?.multiplier ?? 1) *
+      (deliveryModifierFor(category)?.multiplier ?? 1)
+    );
+  };
+  const isApplicable = (category: ProductCategory): boolean =>
+    byCategory.get(category)?.applicable ?? true;
+
   const mandatedBy = new Map<ProductCategory, string[]>();
+  const elections = new Map<ProductCategory, MandateElection[]>();
+
+  const recordElection = (category: ProductCategory, election: MandateElection): void => {
+    const list = elections.get(category) ?? [];
+    list.push(election);
+    elections.set(category, list);
+  };
+
+  const orphanedFrameworks = new Map<ProductCategory, string[]>();
+
   for (const framework of frameworks) {
     for (const control of framework.controls) {
-      if (!control.mandatory) continue;
-      for (const category of control.satisfiedBy) {
-        const list = mandatedBy.get(category) ?? [];
-        if (!list.includes(framework.id)) list.push(framework.id);
-        mandatedBy.set(category, list);
+      if (!control.mandatory || control.satisfiedBy.length === 0) continue;
+      const controlId = `${framework.id} ${control.id}`;
+
+      // 1. Already met by something they own and are keeping.
+      const held = control.satisfiedBy.find(
+        (category) => (retainedByCategory.get(category) ?? []).length > 0,
+      );
+      if (held !== undefined) {
+        recordElection(held, {
+          controlId,
+          controlTitle: control.title,
+          couldBeMetBy: control.satisfiedBy,
+          reason: 'already_held',
+        });
+        continue;
       }
+
+      const viable = control.satisfiedBy.filter(isApplicable);
+      if (viable.length === 0) {
+        for (const category of control.satisfiedBy) {
+          const list = orphanedFrameworks.get(category) ?? [];
+          if (!list.includes(framework.id)) list.push(framework.id);
+          orphanedFrameworks.set(category, list);
+        }
+        continue;
+      }
+
+      // 2 and 3. One option, or the best of several.
+      let chosen = viable[0] as ProductCategory;
+      for (const category of viable) {
+        if (weightOf(category) > weightOf(chosen)) chosen = category;
+      }
+
+      const list = mandatedBy.get(chosen) ?? [];
+      if (!list.includes(framework.id)) list.push(framework.id);
+      mandatedBy.set(chosen, list);
+      recordElection(chosen, {
+        controlId,
+        controlTitle: control.title,
+        couldBeMetBy: control.satisfiedBy,
+        reason: viable.length === 1 ? 'only_option' : 'highest_weight',
+      });
     }
   }
-
-  const byCategory = new Map(relevance.map((entry) => [entry.category, entry]));
 
   return ProductCategoryEnum.options
     .map((category): CategoryRanking => {
       const entry = byCategory.get(category);
-      const modifier = categoryWeights.industryModifiers.find(
-        (candidate) => candidate.industry === profile.industry && candidate.category === category,
-      );
+      const modifier = industryModifierFor(category);
+      const delivery = deliveryModifierFor(category);
       const applicable = entry?.applicable ?? true;
       const base = entry?.weight ?? 0;
-      const weight = applicable ? base * (modifier?.multiplier ?? 1) : 0;
+      const weight = applicable ? weightOf(category) : 0;
       const mandates = mandatedBy.get(category) ?? [];
 
       const rationale: string[] = [];
@@ -314,9 +463,17 @@ export function rankCategoriesForClient(inputs: PortfolioInputs): readonly Categ
             `Industry modifier ×${modifier.multiplier} for ${profile.industry}: ${modifier.basis}`,
           );
         }
+        if (delivery !== undefined) {
+          rationale.push(
+            delivery.multiplier === 0
+              ? `Not ranked under this engagement: ${delivery.basis}`
+              : `Delivery modifier ×${delivery.multiplier}: ${delivery.basis}`,
+          );
+        }
       }
 
-      const mandatedButNotApplicable = mandates.length > 0 && !applicable;
+      const orphanedHere = orphanedFrameworks.get(category) ?? [];
+      const mandatedButNotApplicable = orphanedHere.length > 0 && !applicable;
       const servedByRetained = retainedByCategory.get(category) ?? [];
 
       if (servedByRetained.length > 0) {
@@ -348,7 +505,7 @@ export function rankCategoriesForClient(inputs: PortfolioInputs): readonly Categ
       }
       if (mandatedButNotApplicable) {
         rationale.push(
-          `⚠ ${mandates.join(', ')} require${mandates.length === 1 ? 's' : ''} a ${category} ` +
+          `⚠ ${orphanedHere.join(', ')} require${orphanedHere.length === 1 ? 's' : ''} a ${category} ` +
             'control, but nothing in the captured inventory needs one. This has NOT been funded ' +
             'and is not a satisfied requirement: either the inventory is incomplete, or the ' +
             'control is out of scope for this client and the assessor needs to say so. Confirm ' +
@@ -365,6 +522,7 @@ export function rankCategoriesForClient(inputs: PortfolioInputs): readonly Categ
         mandatedBy: mandates,
         essential:
           applicable && weight >= assumptions.essentialWeightFloor && servedByRetained.length === 0,
+        mandateElections: elections.get(category) ?? [],
         mandatedButNotApplicable,
         servedByRetained,
         rationale,
@@ -474,15 +632,15 @@ interface SelectionOptions {
    *
    * `cheapest` is step 3's "cheapest acceptable option if budget is tight".
    *
-   * `best_fit` is what Ideal needs and did not have. §7.4 step 5 says Ideal
-   * "ignores the budget cap; exists to quantify the gap", and a gap measured
-   * with a value-for-money objective is not the gap, because the best-value
-   * option is by construction the *cheap* one. With one candidate per SKU that
-   * stopped being a subtlety: density will pick the entry-level tier of every
-   * product every time, so Ideal would have quoted the same SKUs as
-   * Recommended and quantified a gap of zero.
+   * `lowest_tco` is cheapest to *own* rather than cheapest to buy, which is
+   * the objective that stops a stack of free tools nobody can afford to run.
+   *
+   * There was a fourth, `best_fit`, which ranked on fit alone and existed
+   * solely so the Ideal bundle could name a dearer SKU than Recommended. It
+   * went with that bundle. Nothing else ever wanted an objective that ignores
+   * what a thing costs.
    */
-  readonly objective: 'value_density' | 'cheapest' | 'best_fit' | 'lowest_tco';
+  readonly objective: 'value_density' | 'cheapest' | 'lowest_tco';
   /**
    * What order the *categories* are filled in. `objective` decides which
    * candidate wins inside a category; this decides which categories get a
@@ -503,15 +661,6 @@ interface SelectionOptions {
    * both and keeps whichever bundle is actually better.
    */
   readonly categoryOrder?: 'weight' | 'weight_per_cost';
-  /**
-   * Total operational FTE this bundle may consume, or undefined for no limit.
-   *
-   * Only the Operable bundle sets it. The others deliberately ignore ops
-   * capacity and report the overrun instead: what the estate needs does not
-   * change because the client is short-staffed, and hiding that would turn a
-   * staffing conversation into a silently smaller recommendation.
-   */
-  readonly fteCapacity?: number;
 }
 
 /**
@@ -548,7 +697,6 @@ function select(
   let annual = zeroMoney(currency);
   let spend = zeroMoney(currency);
   let oneTime = zeroMoney(currency);
-  let opsFte = 0;
 
   // Mandatory first, then the rest. Within each pass the best candidate for the
   // category wins; `categoryOrder` decides which categories are offered the
@@ -677,15 +825,6 @@ function select(
               annualisedMinor(a.cost, assumptions) - annualisedMinor(b.cost, assumptions) ||
               b.candidate.fitScore - a.candidate.fitScore
             );
-          case 'best_fit':
-            // Fit first, then value, then price. Two SKUs that fit a client
-            // equally well are not equally good buys, so the tie-breaks still
-            // do the work that stops Ideal being "the most expensive thing".
-            return (
-              b.effectiveFit - a.effectiveFit ||
-              b.density - a.density ||
-              a.spendCost.amountMinor - b.spendCost.amountMinor
-            );
           case 'value_density':
             return b.density - a.density || b.candidate.fitScore - a.candidate.fitScore;
         }
@@ -703,13 +842,7 @@ function select(
       // anything: it ran only when this `find` returned nothing, which means
       // nothing fitted both caps, which means the cheapest did not either. It
       // read like a safety net for compliance obligations and was not one.
-      // Capacity is a constraint on the same footing as the caps, and it binds
-      // per bundle: only Operable sets one.
-      const withinCapacity = (entry: (typeof scored)[number]): boolean =>
-        options.fteCapacity === undefined || opsFte + entry.cost.opsFte <= options.fteCapacity;
-
       const picked = scored.find((entry) => {
-        if (!withinCapacity(entry)) return false;
         if (options.ignoreBudget) return true;
         return (
           withinCap(addMoney(spend, entry.spendCost), profile.budget.annualCap) &&
@@ -723,17 +856,9 @@ function select(
           // Money before people: if nothing here is affordable either, the cap
           // is the more actionable answer. Capacity is only named as the cause
           // when something in the category could actually have been bought.
-          const affordable = scored.some(
-            (entry) =>
-              options.ignoreBudget ||
-              (withinCap(addMoney(spend, entry.spendCost), profile.budget.annualCap) &&
-                withinCap(addMoney(oneTime, entry.oneTimeCost), profile.budget.oneTimeCap)),
-          );
           unfundedReasons.push({
             category: ranking.category,
-            reason: affordable
-              ? 'ops_capacity'
-              : blockingCap(scored, spend, oneTime, profile.budget),
+            reason: blockingCap(scored, spend, oneTime, profile.budget),
           });
         }
         continue;
@@ -858,7 +983,6 @@ function select(
       annual = addMoney(annual, picked.annualCost);
       spend = addMoney(spend, picked.spendCost);
       oneTime = addMoney(oneTime, picked.oneTimeCost);
-      opsFte += picked.cost.opsFte;
       chosenVendors.add(picked.candidate.vendor);
       filledCategories.add(ranking.category);
     }
@@ -1038,8 +1162,6 @@ function buildBundle(
     mandatoryOneTimeFloor.amountMinor > oneTimeCap.amountMinor &&
     mandatoryCategories.length > 0;
 
-  const capacityFte = profile.securityStaffFte * inputs.assumptions.operableCapacity.utilisation;
-
   const rationale: string[] = [];
 
   // First, and in every bundle, because everything after it is arithmetic on
@@ -1082,42 +1204,24 @@ function buildBundle(
           'categories funded first.',
       );
       break;
-    case 'ideal':
+    case 'phase2':
       rationale.push(
-        'Ideal: ignores the budget cap entirely. It exists to quantify the gap between what this ' +
-          'client can afford and what the estate actually warrants.',
-      );
-      break;
-    case 'operable':
-      rationale.push(
-        `Operable: what ${profile.securityStaffFte} security FTE can actually run, at ` +
-          `${round(inputs.assumptions.operableCapacity.utilisation * 100, 0)}% of the stated team. ` +
-          'Everything here is affordable *and* staffable. The distance between this and ' +
-          'Recommended is the hiring, or the managed service, that the recommendation assumes.',
+        'Phase 2: real, worth buying, and not this year. Everything here ranked below the ' +
+          'year-one line for this estate or could not be funded inside the stated budget, so it ' +
+          'is priced and deferred rather than dropped. Not constrained by this year’s cap, ' +
+          'because this is next year’s money.',
       );
       if (result.selections.length === 0) {
         rationale.push(
-          profile.securityStaffFte === 0
-            ? '⚠ Nothing. This client has no security staff, so there is no tool they can operate ' +
-                'themselves, not the cheapest one and not a free one. Every option in the ' +
-                'recommendation above assumes somebody runs it. For this client the managed ' +
-                'alternative is not a comparison, it is the only route.'
-            : `⚠ Nothing fits. Every candidate costs more than the ${round(capacityFte, 2)} FTE ` +
-                'this team has spare, so there is no stack they can run unaided.',
+          'Nothing deferred. Year one already covers every category this estate warrants, which ' +
+            'is a finding rather than an omission.',
         );
       }
       rationale.push(
-        '⚠ Both figures behind this are soft, and it is a planning aid rather than a measurement: ' +
-          'every operational-effort estimate in the catalog is an analyst estimate, none is ' +
-          'vendor-stated, and effort is summed across products with no overlap, so one engineer ' +
-          'genuinely does run several tools, so the total overstates a real team’s load.',
-      );
-      rationale.push(
-        '⚠ Effort here means administering the tools: deploying, tuning and maintaining them. It ' +
-          'excludes staffing continuous monitoring, which published benchmarks put at several ' +
-          'analysts across shifts for in-house 24/7 operation. A team that clears this bar can ' +
-          'keep the stack running; whether anyone is watching it out of hours is a separate ' +
-          'question, and this tool does not answer it.',
+        '⚠ Operational effort here is additive to year one, and every operational-effort ' +
+          'estimate in the catalog is an analyst estimate rather than a vendor figure. Effort is ' +
+          'summed across products with no overlap modelled, so one engineer genuinely does run ' +
+          'several tools and the total overstates a real load.',
       );
       break;
   }
@@ -1142,22 +1246,6 @@ function buildBundle(
         `${moneyInWords(mandatoryOneTimeFloor)} once, against a stated one-time ` +
         `cap of ${oneTimeCap === null ? '0' : moneyInWords(oneTimeCap)}. The implementation budget ` +
         'cannot stand this stack up, whatever the annual budget is.',
-    );
-  }
-
-  // The sentence that stops the wrong negotiation. Naming the categories is not
-  // enough: "we could not fund EDR" reads as a licence problem, and an analyst
-  // who goes back for a bigger annual budget gets it, changes nothing, and has
-  // spent the concession they had.
-  const blockedByCapacity = result.unfundedReasons.filter(
-    (entry) => entry.reason === 'ops_capacity',
-  );
-  if (blockedByCapacity.length > 0) {
-    rationale.push(
-      `⚠ ${blockedByCapacity.map((entry) => entry.category).join(', ')} ` +
-        `${blockedByCapacity.length === 1 ? 'is' : 'are'} affordable but not staffable: the money ` +
-        'is there and the people are not. This is a hiring or managed-service decision, not a ' +
-        'procurement one, and no budget increase closes it.',
     );
   }
 
@@ -1281,9 +1369,8 @@ function buildRecommended(
   inputs: PortfolioInputs,
   rankings: readonly CategoryRanking[],
   candidates: readonly Candidate[],
+  eligible: (ranking: CategoryRanking) => boolean,
 ): Bundle {
-  const eligible = (ranking: CategoryRanking): boolean => ranking.weight > 0;
-
   const byDensity = buildBundle('recommended', inputs, rankings, candidates, {
     ignoreBudget: false,
     eligible,
@@ -1312,10 +1399,11 @@ function buildRecommended(
 
   // Cheapest to own rather than cheapest to buy. `cheapest` has to rank on
   // procurement to do its job, and the price of that is a stack of free tools
-  // nobody has the people to run: 8.58 FTE against 2 available on the hospital
-  // scenario. This fills the same categories choosing the lowest total cost in
-  // each, and wins whenever it covers as much, which at a comfortable budget it
-  // does. The comparison below decides; neither objective is trusted on its own.
+  // that costs a fortune to run: the hospital scenario reached 8.58 FTE of
+  // operational load that way. We carry that load on an MSSP engagement, so it
+  // is our cost and it is real. This fills the same categories choosing the
+  // lowest total cost in each, and wins whenever it covers as much. The
+  // comparison below decides; neither objective is trusted on its own.
   const byTco = buildBundle('recommended', inputs, rankings, candidates, {
     ignoreBudget: false,
     eligible,
@@ -1442,42 +1530,60 @@ function buildRecommended(
   };
 }
 
-/** Step 5: the three bundles, each with its MSSP alternative. */
+/**
+ * Where year one stops, for this client's ranking.
+ *
+ * A fraction of the top-ranked category's weight, so the line moves with the
+ * estate instead of being a fixed count. Compliance and the essential floor
+ * both sit above it: an obligation is not deferrable because the category
+ * happens to rank low here.
+ */
+export function yearOneFloor(
+  rankings: readonly CategoryRanking[],
+  assumptions: PortfolioAssumptions,
+): number {
+  const top = rankings.reduce((max, ranking) => Math.max(max, ranking.weight), 0);
+  return top * assumptions.yearOneWeightRatio;
+}
+
+/** Step 5: the bundles, each with its MSSP alternative. */
 export function buildPortfolio(inputs: PortfolioInputs): {
   rankings: readonly CategoryRanking[];
   candidates: readonly Candidate[];
   essential: Bundle;
   recommended: Bundle;
-  ideal: Bundle;
-  operable: Bundle;
+  phase2: Bundle;
 } {
   const rankings = rankCategoriesForClient(inputs);
   const candidates = buildCandidates(inputs, rankings);
+  const floor = yearOneFloor(rankings, inputs.assumptions);
 
-  return {
-    rankings,
-    candidates,
-    essential: buildBundle('essential', inputs, rankings, candidates, {
-      ignoreBudget: false,
-      eligible: (ranking) => ranking.mandatory || ranking.essential,
-      objective: 'cheapest',
-    }),
-    recommended: buildRecommended(inputs, rankings, candidates),
-    ideal: buildBundle('ideal', inputs, rankings, candidates, {
-      ignoreBudget: true,
-      eligible: (ranking) => ranking.weight > 0,
-      objective: 'best_fit',
-    }),
-    // Same budget as Recommended, plus a ceiling on people. Ranked on total
-    // cost of ownership rather than licence price, because a team at the limit
-    // of its capacity is exactly who cannot absorb a cheap tool that eats an
-    // engineer.
-    operable: buildBundle('operable', inputs, rankings, candidates, {
-      ignoreBudget: false,
-      eligible: (ranking) => ranking.weight > 0,
-      objective: 'lowest_tco',
-      fteCapacity:
-        inputs.profile.securityStaffFte * inputs.assumptions.operableCapacity.utilisation,
-    }),
-  };
+  const inYearOne = (ranking: CategoryRanking): boolean =>
+    ranking.weight > 0 && (ranking.mandatory || ranking.essential || ranking.weight >= floor);
+
+  const essential = buildBundle('essential', inputs, rankings, candidates, {
+    ignoreBudget: false,
+    eligible: (ranking) => ranking.mandatory || ranking.essential,
+    objective: 'cheapest',
+  });
+
+  const recommended = buildRecommended(inputs, rankings, candidates, inYearOne);
+  const funded = new Set(recommended.selections.map((selection) => selection.category));
+
+  /*
+   * What was left out on purpose, priced so the deferral is a decision rather
+   * than a silence.
+   *
+   * Not constrained by this year's cap, because that cap is this year's. A
+   * category lands here for one of two reasons and both are stated on the
+   * bundle: it fell below the year-one line, or year one wanted it and the
+   * budget could not reach it.
+   */
+  const phase2 = buildBundle('phase2', inputs, rankings, candidates, {
+    ignoreBudget: true,
+    eligible: (ranking) => ranking.weight > 0 && !funded.has(ranking.category),
+    objective: 'value_density',
+  });
+
+  return { rankings, candidates, essential, recommended, phase2 };
 }

@@ -128,7 +128,7 @@ export function StepReview({
         <>
           <Card
             title="Indicative bundles"
-            hint="Essential is the minimum defensible posture. Ideal ignores the budget, to quantify the gap."
+            hint="Essential is the floor. Recommended is year one. Phase 2 is what we would defer, priced."
           >
             <div className="grid gap-3 lg:grid-cols-3">
               <BundleColumn
@@ -139,12 +139,12 @@ export function StepReview({
               <BundleColumn
                 bundle={estimate.recommended}
                 label="Recommended"
-                hint="Best value inside the stated budget."
+                hint="Year one, inside the stated budget."
               />
               <BundleColumn
-                bundle={estimate.ideal}
-                label="Ideal"
-                hint="Ignores the cap on purpose."
+                bundle={estimate.phase2}
+                label="Phase 2"
+                hint="Deferred on purpose, and priced."
               />
             </div>
           </Card>

@@ -89,16 +89,16 @@ export interface PipelineResult {
   readonly candidates: readonly Candidate[];
   readonly essential: Bundle;
   readonly recommended: Bundle;
-  readonly ideal: Bundle;
   /**
-   * What this client's own team can actually run (§7.4, reviewer 2026-09-12).
+   * What year one deliberately left for later.
    *
-   * Recommended answers "what does the estate need, inside the budget" and can
-   * ask a two-person team for 8.58 FTE. This answers "what can they operate on
-   * Monday". The distance between the two is the hiring or the managed service,
-   * and stating it is more useful than quietly picking either one.
+   * Recommended answers "what should they buy now, inside the budget". This
+   * answers "what did we not propose, and what would it cost", which is the
+   * question a client asks the moment they see a stack with nine categories in
+   * it and know there are thirteen. Priced, so deferring is a decision on the
+   * record rather than a silence.
    */
-  readonly operable: Bundle;
+  readonly phase2: Bundle;
   /** Coverage of the Recommended bundle. */
   readonly coverage: CoverageResult;
   /** Everything `computeCoverage` needs but the bundle, to measure the others. */
@@ -208,8 +208,7 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
     candidates: portfolio.candidates,
     essential: portfolio.essential,
     recommended: portfolio.recommended,
-    ideal: portfolio.ideal,
-    operable: portfolio.operable,
+    phase2: portfolio.phase2,
     coverage: computeCoverage({ ...coverageInputs, bundle: portfolio.recommended }),
     coverageInputs,
   };

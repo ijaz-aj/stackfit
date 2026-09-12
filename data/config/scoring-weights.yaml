@@ -74,67 +74,80 @@ biasAdjustments:
   - bias: no_preference
     deltas: []
 
-# hasSoc shifts them too, and is summed with the bias above before
-# renormalising. The two answer different questions: how this client likes to
-# buy, and whether anybody is watching the tools once bought.
+# How the operating model shifts the weights.
 #
-# This field was captured at intake, stored, shown in the compare diff and read
-# by nothing at all. A client with a 24/7 SOC and a client with nobody watching
-# got byte-identical recommendations, which is the oldest failure in security
-# procurement written into the engine: a SIEM is a machine for producing
-# alerts, and alerts nobody is rostered to triage are shelfware with a licence
-# fee attached. Practitioner guidance on SIEM selection starts from how many
-# analysts are available to write detections, triage and hunt.
+# Replaced socAdjustments, which asked whether the client had a SOC. Every
+# client this tool is pointed at is being onboarded into ours, so that question
+# had a fixed answer. What actually varies is how much of the stack we operate,
+# and that is what decides how hard operability should constrain the choice.
 #
-# It moves ops_fit and nothing else. Monitoring capability is exactly the
-# question ops_fit exists to ask, and the alternative, eliminating heavy tools
-# for understaffed clients, would be StackFit deciding instead of advising. A
-# client with no SOC can legitimately buy a SIEM. They should not buy the one
-# that needs a team.
-#
-# The sizes are an analyst judgement, stated rather than derived: ops_fit is 20
-# by default, so +12 makes it the joint-largest dimension for a client with
-# nobody watching, and -5 leaves it material but no longer decisive for one
-# whose provider carries the load.
-socAdjustments:
-  - soc: none
+# The sizes are analyst judgement, stated rather than derived. ops_fit is 20 by
+# default, so -8 leaves it material but no longer decisive, and +12 makes it the
+# joint-largest dimension for a client who will be running the tools alone.
+deliveryAdjustments:
+  - delivery: mssp_managed
+    deltas:
+      - dimension: ops_fit
+        delta: -8
+        basis: >-
+          We run it, on a rota, as our job. Operability constrains this case
+          least. Still negative rather than zero and not larger than -8, because
+          a tool that eats an analyst eats one of ours across every client on it,
+          and that cost is real even when the client never sees it.
+      - dimension: integration_fit
+        delta: 5
+        basis: >-
+          The stack has to reach our console, not theirs. On this model
+          integration is the difference between a tool we can operate and a tool
+          somebody has to log into separately, which does not scale past a
+          handful of clients.
+  - delivery: co_managed
+    deltas:
+      - dimension: ops_fit
+        delta: 2
+        basis: >-
+          Part of the load stays with the client, so their capacity still bites,
+          but only for the half they keep. Small, and positive, because a split
+          queue is harder to run than either whole.
+      - dimension: integration_fit
+        delta: 3
+        basis: Two consoles have to agree about one incident, or the handoff is manual.
+  - delivery: client_operated
     deltas:
       - dimension: ops_fit
         delta: 12
         basis: >-
-          Nobody is rostered to look at anything this stack produces. The
-          largest adjustment in this file, because it is the case where a tool
-          that needs attention is not a worse buy but a wasted one. Note the
-          Operable bundle and the managed alternative already say this in
-          prose; this is the same finding reaching the ranking.
-  - soc: business_hours
-    deltas:
-      - dimension: ops_fit
-        delta: 5
-        basis: >-
-          Somebody is watching for a third of the week. Enough that a tool
-          demanding daily attention is viable, not enough that one demanding
-          constant attention is.
-  - soc: 24x7
-    deltas:
-      - dimension: ops_fit
-        delta: -3
-        basis: >-
-          A round-the-clock rota is the one case where operability constrains
-          the choice least, so the other dimensions get their weight back.
-          Small, not large: 24/7 cover is a rota, not spare capacity, and the
-          FTE arithmetic in opsFit still applies.
-  - soc: outsourced
-    deltas:
-      - dimension: ops_fit
-        delta: -5
-        basis: >-
-          The provider carries the operational load, which is what the client
-          is paying them for. Still negative rather than zero, because the tool
-          has to be one the provider can actually consume, and StackFit does
-          not model any particular provider's toolchain.
+          They run it and nobody else will. The largest adjustment in this file,
+          because this is the case where a tool that needs attention is not a
+          worse buy but a wasted one. A SIEM is a machine for producing alerts,
+          and alerts nobody is rostered to triage are shelfware with a licence
+          fee.
 
 opsFit:
+  # Analyst capacity we allocate to administering one client's stack, and the
+  # denominator whenever we are the operator rather than the client.
+  #
+  # 0.6 of an analyst. It has to be a fraction or the book does not close: at one
+  # analyst per client an MSSP is a staffing agency. It cannot be much smaller
+  # than this either, and 0.4 was tried and was wrong, because the curve below
+  # is applied per product and not to the stack. At 0.4 available, one product
+  # may comfortably take 0.14 FTE and anything over 0.48 scores zero, which put
+  # most of the catalog on the floor for every managed engagement and made the
+  # dimension stop discriminating. 0.6 leaves a comfortable product at 0.21 FTE
+  # and an unrunnable one at 0.72, which separates a managed service from a
+  # self-hosted platform without condemning the whole catalog.
+  #
+  # ⚠ Note what that implies and is not modelling: summed across a nine-product
+  # stack this allows far more than 0.6 FTE, because effort is added up per
+  # product with no overlap (the same known overstatement recorded against
+  # opsBurden in the catalog). This number is a per-product yardstick, not a
+  # capacity budget, and reading it as the latter would overstate what one
+  # analyst can carry.
+  #
+  # ⚠ Analyst judgement, not measured. Replace it with the real figure from our
+  # own utilisation data, which is the one number in this file we could actually
+  # know.
+  msspAnalystFtePerClient: 0.6
   comfortableShareOfFte: 0.35
   unusableShareOfFte: 1.2
   scoreWithNoSecurityStaff: 15

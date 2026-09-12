@@ -34,7 +34,7 @@ export const NEW_PROFILE: ClientProfile = {
   employeeCount: 100,
   itStaffCount: 3,
   securityStaffFte: 0,
-  hasSoc: 'none',
+  deliveryModel: 'client_operated',
   riskTolerance: 'medium',
   dataSensitivity: 'internal',
   compliance: [],

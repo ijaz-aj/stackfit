@@ -27,7 +27,7 @@ function profileFor(overrides: Partial<ClientProfile>): ClientProfile {
     employeeCount: 100,
     itStaffCount: 4,
     securityStaffFte: 0,
-    hasSoc: 'none',
+    deliveryModel: 'client_operated',
     riskTolerance: 'medium',
     dataSensitivity: 'internal',
     compliance: [],

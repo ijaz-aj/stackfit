@@ -134,7 +134,7 @@ export interface ProposalInputs {
   readonly products: readonly Product[];
   readonly recommended: Bundle;
   readonly essential: Bundle;
-  readonly ideal: Bundle;
+  readonly phase2: Bundle;
   readonly coverage: CoverageResult;
   /**
    * Why each selection beat the alternatives, from `justifyBundle`.
@@ -494,7 +494,7 @@ function whyTheseProducts(inputs: ProposalInputs): ProposalSection {
 }
 
 function costs(inputs: ProposalInputs): ProposalSection {
-  const { recommended, essential, ideal, profile } = inputs;
+  const { recommended, essential, phase2, profile } = inputs;
 
   const compare = (bundle: Bundle, label: string): readonly ProposalCell[] => [
     text(label),
@@ -524,8 +524,8 @@ function costs(inputs: ProposalInputs): ProposalSection {
       ],
       rows: [
         compare(essential, 'Essential: minimum defensible'),
-        compare(recommended, 'Recommended'),
-        compare(ideal, 'Ideal: no budget constraint'),
+        compare(recommended, 'Recommended: year one'),
+        compare(phase2, 'Phase 2: deferred'),
       ],
     },
   ];

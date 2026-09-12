@@ -4,7 +4,7 @@ import {
   Industry,
   Region,
   RiskTolerance,
-  SocPosture,
+  DeliveryModel,
   type ClientProfile,
   type CurrencyCode,
   type FxConfig,
@@ -15,7 +15,13 @@ import { Button, Card, Field, NumberInput, Select, TextInput } from '@/component
 import { formatMoney } from '@/lib/format';
 import { withRegion } from '@/lib/scenario';
 
-import { INDUSTRY_LABELS, REGION_LABELS, RISK_LABELS, SOC_LABELS } from './labels';
+import {
+  DELIVERY_HINTS,
+  DELIVERY_LABELS,
+  INDUSTRY_LABELS,
+  REGION_LABELS,
+  RISK_LABELS,
+} from './labels';
 import { useWizard } from './store';
 
 const optionsFrom = (
@@ -126,15 +132,27 @@ export function StepOrganisation({
             />
           </Field>
 
-          <Field label="SOC" htmlFor="hasSoc">
+          {/*
+            Who operates it, which used to be "does the client have a SOC".
+            That question had one answer here, because every client on this
+            screen is being onboarded into ours. This one decides how hard
+            operability constrains the choice, whose people carry the load, and
+            whether a third-party MDR service arises at all.
+          */}
+          <Field label="Who operates it" htmlFor="deliveryModel">
             <Select
-              id="hasSoc"
-              value={profile.hasSoc}
-              options={optionsFrom(SocPosture.options, SOC_LABELS)}
+              id="deliveryModel"
+              value={profile.deliveryModel}
+              options={optionsFrom(DeliveryModel.options, DELIVERY_LABELS)}
               onChange={(event) =>
-                patchProfile({ hasSoc: event.target.value as typeof profile.hasSoc })
+                patchProfile({
+                  deliveryModel: event.target.value as typeof profile.deliveryModel,
+                })
               }
             />
+            <p className="text-faint mt-1 text-xs leading-snug">
+              {DELIVERY_HINTS[profile.deliveryModel]}
+            </p>
           </Field>
 
           <Field label="Risk tolerance" htmlFor="riskTolerance" className="sm:col-span-2">

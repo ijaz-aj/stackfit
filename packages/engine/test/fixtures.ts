@@ -74,7 +74,7 @@ export function buildClientProfile(overrides: Partial<ClientProfile> = {}): Clie
     employeeCount: 100,
     itStaffCount: 4,
     securityStaffFte: 0,
-    hasSoc: 'none',
+    deliveryModel: 'client_operated',
     riskTolerance: 'medium',
     dataSensitivity: 'internal',
     compliance: [],
@@ -269,7 +269,7 @@ export function buildPortfolioAssumptions(
     suiteIntegrationBonusPoints: 5,
     minimumAnnualisedCostMinor: 100,
     openSourcePreferencePoints: 8,
-    operableCapacity: { utilisation: 1, basis: 'test fixture' },
+    yearOneWeightRatio: 0.5,
     roadmap: {
       parallelWorkstreams: 2,
       phases: [
@@ -382,16 +382,28 @@ export function buildScoringWeights(overrides: Partial<ScoringWeights> = {}): Sc
       { bias: 'commercial', deltas: [] },
       { bias: 'no_preference', deltas: [] },
     ],
-    // Deliberately the same shape as the committed config, so a test that
-    // asserts a SOC posture changes the ranking is asserting the mechanism and
-    // not a number invented for the fixture.
-    socAdjustments: [
-      { soc: 'none', deltas: [{ dimension: 'ops_fit', delta: 12, basis }] },
-      { soc: 'business_hours', deltas: [{ dimension: 'ops_fit', delta: 5, basis }] },
-      { soc: '24x7', deltas: [{ dimension: 'ops_fit', delta: -3, basis }] },
-      { soc: 'outsourced', deltas: [{ dimension: 'ops_fit', delta: -5, basis }] },
+    // Deliberately the same shape as the committed config, so a test asserting
+    // that the delivery model changes the ranking is asserting the mechanism
+    // and not a number invented for the fixture.
+    deliveryAdjustments: [
+      {
+        delivery: 'mssp_managed',
+        deltas: [
+          { dimension: 'ops_fit', delta: -8, basis },
+          { dimension: 'integration_fit', delta: 5, basis },
+        ],
+      },
+      {
+        delivery: 'co_managed',
+        deltas: [
+          { dimension: 'ops_fit', delta: 2, basis },
+          { dimension: 'integration_fit', delta: 3, basis },
+        ],
+      },
+      { delivery: 'client_operated', deltas: [{ dimension: 'ops_fit', delta: 12, basis }] },
     ],
     opsFit: {
+      msspAnalystFtePerClient: 0.6,
       comfortableShareOfFte: 0.35,
       unusableShareOfFte: 1.2,
       scoreWithNoSecurityStaff: 15,
@@ -505,5 +517,6 @@ export function buildCategoryWeights(
       affinities: [],
     })),
     industryModifiers: [],
+    deliveryModifiers: [],
   };
 }

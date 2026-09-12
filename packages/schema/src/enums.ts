@@ -148,8 +148,35 @@ export type RiskTolerance = z.infer<typeof RiskTolerance>;
 export const DataSensitivity = z.enum(['public', 'internal', 'regulated', 'critical']);
 export type DataSensitivity = z.infer<typeof DataSensitivity>;
 
-export const SocPosture = z.enum(['none', 'business_hours', '24x7', 'outsourced']);
-export type SocPosture = z.infer<typeof SocPosture>;
+/**
+ * Who will actually operate the recommended stack.
+ *
+ * This replaced `SocPosture` (`none | business_hours | 24x7 | outsourced`),
+ * which asked what security capability the client already had. That is the
+ * right question for a tool advising a company buying its own security. It is
+ * the wrong one here: every client this tool is pointed at is being onboarded
+ * into our SOC, so the honest answer was always "outsourced, to us" and a
+ * question with a fixed answer cannot drive anything.
+ *
+ * What varies between engagements is not whether the client has a SOC. It is
+ * how much of the stack we take on, and that changes three things at once:
+ * which categories matter (nobody needs a third-party MDR service when we are
+ * the monitoring), how hard operability constrains the choice, and whose
+ * people the operational load falls on.
+ *
+ * `client_operated` is the case where they run the tools and we consume the
+ * telemetry, which is also the shape of the world the acceptance scenarios
+ * were written in, so it stays the default.
+ */
+export const DeliveryModel = z.enum([
+  /** Our SOC runs the stack. Their headcount is not the constraint; ours is. */
+  'mssp_managed',
+  /** Split. We run the detection and response tooling, they keep the rest. */
+  'co_managed',
+  /** They operate it, we monitor. Their capacity is the binding constraint. */
+  'client_operated',
+]);
+export type DeliveryModel = z.infer<typeof DeliveryModel>;
 
 export const ProcurementBias = z.enum(['commercial', 'open_source_first', 'no_preference']);
 export type ProcurementBias = z.infer<typeof ProcurementBias>;

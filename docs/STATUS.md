@@ -1579,6 +1579,91 @@ What follows is the honest scorecard, including where the sources are weak.
   become volume, so volume can rest on a measurement without being one, and the
   sidebar says "from measured events" rather than either "as measured" or
   "estimate".
+- **The product was audited against what it is actually for, and three things
+  were wrong at the root.** Raised 2026-09-13: "we are MSSP and we are building
+  this for our new Clients, so Design the Product based on this context", with
+  the goal stated as finding the best security product, the budget to give the
+  client, why this tool for this infrastructure, and why it rather than another.
+  Everything below came out of running the pipeline over all six committed
+  presets and reading what it actually recommended.
+
+  **1. `Control.satisfiedBy` was read as a conjunction by one stage and a
+  disjunction by another.** `coverage.ts` renders it as "siem or soar or mdr".
+  `portfolio.ts` marked every category in the list mandatory. Mandatory
+  categories are funded before anything discretionary, so a PCI retailer arrived
+  at the budget with twelve of thirteen categories compulsory and the money was
+  spent before the ranking was consulted. Five of the six presets came back
+  recommending all thirteen categories; a 45-person firm with USD 15k a year and
+  no security staff was told to buy thirteen products including NDR and
+  deception. Now each mandatory control is settled once, in favour of a holding
+  that meets it, the only applicable option, or the highest-weighted of several.
+  The mandatory set fell from 12/13 to 6/13 for the retailer and from 13 to 0 for
+  the small firm.
+
+  **2. Four bundles, of which two answered nothing.** `ideal` ignored the budget:
+  USD 26.8M a year against a 60k cap for the retailer, 59.9M for the bank, and in
+  three of six presets its category set was byte-identical to Recommended, so it
+  was the same stack at a price nobody would show a client. `operable` capped the
+  stack at what the client's own staff could run, which is void on an MSSP
+  engagement because we run it, and returned an **empty bundle** for the
+  zero-staff preset, the best prospect in the set. Both are gone. `phase2`
+  replaces them and answers what they were groping at: what is real, worth
+  buying, and not this year. Year one now lands at 6 to 10 categories per preset
+  against a consistent deferred tranche of SOAR, deception, and NDR or email
+  security where the estate does not lean on them.
+
+  **3. `hasSoc` asked a question with a fixed answer.** `none | business_hours |
+  24x7 | outsourced` is the right question for a tool advising a company buying
+  its own security. Every client this tool is pointed at is being onboarded into
+  our SOC, so the answer was always "outsourced, to us", and it drove the largest
+  single scoring adjustment in the file. `deliveryModel` replaced it and asks
+  what varies between engagements: `mssp_managed | co_managed | client_operated`.
+  It moves the scoring weights, decides whose capacity `ops_fit` divides by, and
+  carries a category-weight modifier.
+
+  That last modifier resolves the commercial problem without deleting anything.
+  `mdr` was being recommended to five of six presets, which means the tool was
+  telling our own prospect to buy a competitor. Under `mssp_managed` its weight
+  is zero, with a stated reason, because we are the monitoring. Under
+  `client_operated` it is 1.6, because MDR supplies what every other category
+  assumes and its weight did not move when the client had nobody to do it: the
+  §12.2 acceptance scenario, 300 endpoints and zero security staff, deferred MDR
+  out of year one before this modifier existed.
+
+  Held at the reviewer's direction: all thirteen categories stay, including
+  `backup` and `mdr`, and the MSSP figure keeps its build-versus-buy framing
+  rather than being re-presented as our own fee.
+- ⚠ **A mandated category can be funded with a SKU that does not close the
+  mandate.** Found while removing the Ideal bundle, and it predates that removal.
+  Every selection objective ranks within a category on price or on value density,
+  and none of them can see that one tier claims a mandated control and the
+  cheaper one does not. So a PCI client with thirty times the budget needed is
+  sold the entry SIEM tier, the category is reported as mandatory and funded, and
+  the coverage matrix then reports the control as an open gap. Ideal used to
+  display the dearer SKU beside the recommendation, which looked like an answer
+  and was not: the recommendation itself was always wrong, and nobody buys Ideal.
+  **Not fixed**, because the candidate comparator does not currently know which
+  controls are mandated in scope and threading that through is a change of its
+  own. Pinned by a test named for what it is, in
+  `packages/engine/test/portfolio.test.ts`. This is the most consequential thing
+  still open in the engine.
+- **`yearOneWeightRatio` is 0.5 and is a judgement, not a measurement.** Half the
+  top-ranked category's weight, checked against the six committed presets: year
+  one lands at 6 to 10 categories and the deferred tranche is the one an analyst
+  would defer by hand, which is the only evidence available for a number like
+  this. A ratio rather than a category count, so a SaaS company and a plant get
+  different year-one stacks from the same rule.
+- **`msspAnalystFtePerClient` is 0.6 and 0.4 was tried and was wrong.** It is the
+  denominator of `ops_fit` whenever we are the operator. The curve it feeds is
+  applied *per product*, so at 0.4 available a single product could comfortably
+  take 0.14 FTE and anything over 0.48 scored zero, which put most of the catalog
+  on the floor for every managed engagement and stopped the dimension
+  discriminating at all. At 0.6 a comfortable product is 0.21 FTE and an
+  unrunnable one is 0.72. ⚠ It is a per-product yardstick and not a capacity
+  budget: effort is still summed across products with no overlap, so a
+  nine-product stack totals far more than 0.6. Replace it with the real figure
+  from our own utilisation data, which is the one number in that file we could
+  actually know.
 - ⚠ **Three EPS coefficients sit outside every published range, all low.**
   Measured against four independent sources: `windowsEndpoints` is 0.2 where the
   lowest published figure is 1 (a factor of 5 to 25); `windowsDomainControllers`

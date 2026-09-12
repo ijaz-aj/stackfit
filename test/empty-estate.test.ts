@@ -65,7 +65,7 @@ describe('everything downstream of an uncaptured estate', () => {
   it('warns in every bundle, not only in the sizing rationale', () => {
     // The regression. Each bundle is read on its own, and a warning that lives
     // one stage upstream is a warning nobody sees.
-    for (const bundle of [result.essential, result.operable, result.recommended, result.ideal]) {
+    for (const bundle of [result.essential, result.recommended, result.phase2]) {
       expect(bundle.rationale.join(' '), `${bundle.kind} is silent`).toContain(
         'not a recommendation yet',
       );
@@ -92,7 +92,7 @@ describe('everything downstream of an uncaptured estate', () => {
     const document = JSON.stringify(proposalFor(real, profile));
 
     expect(document).not.toContain('No asset inventory was captured');
-    for (const bundle of [real.essential, real.recommended, real.ideal]) {
+    for (const bundle of [real.essential, real.recommended, real.phase2]) {
       expect(bundle.rationale.join(' ')).not.toContain('not a recommendation yet');
     }
   });

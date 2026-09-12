@@ -64,7 +64,7 @@ describe('ClientProfile', () => {
     employeeCount: 60,
     itStaffCount: 3,
     securityStaffFte: 0,
-    hasSoc: 'none',
+    deliveryModel: 'client_operated',
     riskTolerance: 'medium',
     dataSensitivity: 'regulated',
     compliance: ['pci-dss-4.0'],
@@ -194,7 +194,7 @@ describe('profiles saved before the environment split', () => {
     employeeCount: 60,
     itStaffCount: 3,
     securityStaffFte: 0,
-    hasSoc: 'none',
+    deliveryModel: 'client_operated',
     riskTolerance: 'medium',
     dataSensitivity: 'regulated',
     compliance: ['pci-dss-4.0'],
@@ -236,5 +236,72 @@ describe('profiles saved before the environment split', () => {
     const parsed = StoredClientProfile.parse(current);
     expect((parsed as ClientProfile).environment).toBe('hybrid');
     expect((parsed as ClientProfile).deploymentConstraint).toBe('saas_not_permitted');
+  });
+});
+
+describe('profiles saved before hasSoc became deliveryModel', () => {
+  // The old field asked what monitoring the client already had; the new one
+  // asks who will operate what we recommend. Not a rename, so the mapping is a
+  // reading of the old answer and every entry loses something.
+  const legacy = {
+    orgName: 'Acme Retail',
+    industry: 'retail',
+    region: 'in',
+    employeeCount: 60,
+    itStaffCount: 3,
+    securityStaffFte: 0,
+    riskTolerance: 'medium',
+    dataSensitivity: 'regulated',
+    compliance: ['pci-dss-4.0'],
+    budget: { annualCap: null, oneTimeCap: null, currency: 'INR' },
+    environment: 'hybrid',
+    procurementBias: 'open_source_first',
+  } as const;
+
+  it('reads "outsourced" as us, because on this tool that is who it meant', () => {
+    const parsed = StoredClientProfile.parse({ ...legacy, hasSoc: 'outsourced' });
+    expect((parsed as ClientProfile).deliveryModel).toBe('mssp_managed');
+  });
+
+  it('does not read "none" as a sale', () => {
+    // The mapping that matters most. Nobody watching is not evidence that we
+    // were engaged to watch, and reading it as managed would quietly upgrade
+    // every old row into an engagement that was never agreed.
+    const parsed = StoredClientProfile.parse({ ...legacy, hasSoc: 'none' });
+    expect((parsed as ClientProfile).deliveryModel).toBe('client_operated');
+  });
+
+  it('reads a round-the-clock rota as a client who runs their own', () => {
+    const parsed = StoredClientProfile.parse({ ...legacy, hasSoc: '24x7' });
+    expect((parsed as ClientProfile).deliveryModel).toBe('client_operated');
+  });
+
+  it('reads business hours as a split', () => {
+    const parsed = StoredClientProfile.parse({ ...legacy, hasSoc: 'business_hours' });
+    expect((parsed as ClientProfile).deliveryModel).toBe('co_managed');
+  });
+
+  it('refuses to guess at a legacy value it does not recognise', () => {
+    // Better an unreadable row the analyst is told about than an invented one.
+    const result = StoredClientProfile.safeParse({ ...legacy, hasSoc: 'sometimes' });
+    expect(result.success).toBe(false);
+  });
+
+  it('migrates a row that predates both changes at once', () => {
+    // The realistic case: a row saved before either split carries both old
+    // fields, and one preprocess pass has to handle both.
+    const parsed = StoredClientProfile.parse({
+      ...legacy,
+      environment: undefined,
+      deploymentPreference: 'hybrid',
+      hasSoc: 'outsourced',
+    });
+    expect((parsed as ClientProfile).environment).toBe('not_asked');
+    expect((parsed as ClientProfile).deliveryModel).toBe('mssp_managed');
+  });
+
+  it('leaves a current profile completely alone', () => {
+    const parsed = StoredClientProfile.parse({ ...legacy, deliveryModel: 'co_managed' });
+    expect((parsed as ClientProfile).deliveryModel).toBe('co_managed');
   });
 });

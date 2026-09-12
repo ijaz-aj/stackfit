@@ -38,7 +38,7 @@ const RESULTS_SECTIONS = [
   { id: 'assumptions', label: 'Assumptions' },
 ] as const;
 
-const KINDS = ['essential', 'operable', 'recommended', 'ideal'] as const;
+const KINDS = ['essential', 'recommended', 'phase2'] as const;
 
 function bundleKindFrom(value: string | undefined): Bundle['kind'] {
   return KINDS.find((kind) => kind === value) ?? 'recommended';

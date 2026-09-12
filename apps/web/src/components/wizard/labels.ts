@@ -137,11 +137,18 @@ export const REGION_LABELS: Readonly<Record<string, string>> = {
   other: 'Other',
 };
 
-export const SOC_LABELS: Readonly<Record<string, string>> = {
-  none: 'No SOC',
-  business_hours: 'Business hours only',
-  '24x7': '24x7',
-  outsourced: 'Outsourced',
+/** Said the way an analyst would say it on the call, not as the enum reads. */
+export const DELIVERY_LABELS: Readonly<Record<string, string>> = {
+  mssp_managed: 'We run it',
+  co_managed: 'Co-managed',
+  client_operated: 'They run it, we monitor',
+};
+
+/** The one line that explains the choice, under the control. */
+export const DELIVERY_HINTS: Readonly<Record<string, string>> = {
+  mssp_managed: 'Our SOC operates the stack. Their headcount is not the constraint, ours is.',
+  co_managed: 'We take detection and response. They keep the rest.',
+  client_operated: 'They operate it and we consume the telemetry. Their capacity binds.',
 };
 
 export const SENSITIVITY_LABELS: Readonly<Record<string, string>> = {

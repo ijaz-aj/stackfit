@@ -66,40 +66,6 @@ export const RoadmapAssumptions = z
   });
 export type RoadmapAssumptions = z.infer<typeof RoadmapAssumptions>;
 
-/**
- * How much of a client's stated security headcount the Operable bundle is
- * allowed to spend on running tools.
- *
- * The Operable bundle exists because the Recommended one can ask a two-person
- * team for 8.58 FTE. It is a planning aid, not a measurement, and two things
- * about the number it constrains on have to be said out loud rather than buried
- * here:
- *
- * 1. **Every `opsBurden` in the catalog is an analyst estimate.** Not one is
- *    vendor-stated or measured. This is the softest figure StackFit holds, which
- *    is exactly why it shapes a *fourth* bundle rather than constraining the
- *    Recommended one.
- * 2. **FTE is summed across products with no overlap modelled.** One engineer
- *    genuinely does run several tools, so the total overstates a real team's
- *    load. Modelling the overlap would mean inventing a coefficient nobody can
- *    source, so it is stated as a known overstatement instead.
- */
-export const OperableCapacityAssumptions = z
-  .object({
-    /**
-     * Share of stated security FTE available for running tooling.
-     *
-     * Defaults to the whole team: an analyst who says "two people" means two
-     * people, and quietly discounting that to 1.4 would be StackFit inventing a
-     * number about the client's own staffing. Lower it per deployment where the
-     * team also carries incident response, audit and project work.
-     */
-    utilisation: z.number().gt(0).max(1),
-    basis: z.string().min(1),
-  })
-  .strict();
-export type OperableCapacityAssumptions = z.infer<typeof OperableCapacityAssumptions>;
-
 export const PortfolioAssumptions = z
   .object({
     notes: z.string().min(1).optional(),
@@ -114,6 +80,24 @@ export const PortfolioAssumptions = z
      * manufacturer's rather than being the same fixed list.
      */
     essentialWeightFloor: z.number().min(0),
+    /**
+     * Where year one stops and Phase 2 begins.
+     *
+     * A fraction of the top-ranked category's weight. A category at or above
+     * it is proposed now; one below it is real, worth buying, and deferred,
+     * which is a different statement from "not recommended".
+     *
+     * Something has to draw this line. Without it the recommendation is a
+     * greedy fill that stops only when the money runs out, so a client with
+     * headroom is told to buy all thirteen categories in their first year and
+     * a client without one is told to buy whatever happened to be cheap. Both
+     * answer "what can they afford". Neither answers "what should they spend",
+     * which is the question a scoping call is actually asked.
+     *
+     * Compliance and the essential floor both override it: an obligation does
+     * not become deferrable because the category ranks low for this estate.
+     */
+    yearOneWeightRatio: z.number().min(0).max(1),
     /**
      * Discount applied to a product's licence when another product from the
      * same vendor is already in the bundle (§7.4 step 4). An assumption, and
@@ -149,8 +133,6 @@ export const PortfolioAssumptions = z
     openSourcePreferencePoints: z.number().min(0).max(25),
     /** Delivery sequencing for the exported proposal (§8). */
     roadmap: RoadmapAssumptions,
-    /** What the Operable bundle treats as this team's real capacity. */
-    operableCapacity: OperableCapacityAssumptions,
     basis: z.string().min(1),
   })
   .strict();

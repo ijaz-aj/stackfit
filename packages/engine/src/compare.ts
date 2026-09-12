@@ -143,7 +143,7 @@ function profileChanges(
     numberChange('Employees', left.employeeCount, right.employeeCount),
     numberChange('IT staff', left.itStaffCount, right.itStaffCount),
     numberChange('Security staff (FTE)', left.securityStaffFte, right.securityStaffFte, 2),
-    textChange('SOC posture', left.hasSoc, right.hasSoc),
+    textChange('Delivery model', left.deliveryModel, right.deliveryModel),
     textChange('Risk tolerance', left.riskTolerance, right.riskTolerance),
     textChange('Data sensitivity', left.dataSensitivity, right.dataSensitivity),
     textChange('Environment', left.environment, right.environment),

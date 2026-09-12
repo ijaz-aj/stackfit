@@ -915,69 +915,113 @@ describe('regressions', () => {
   });
 });
 
-describe('SOC posture: the input that used to reach nothing', () => {
-  // `hasSoc` was captured at intake, stored, diffed on the compare page and
-  // read by no stage of the pipeline. A client with a 24/7 rota and a client
-  // with nobody watching received byte-identical recommendations.
+describe('delivery model: who will actually be running this', () => {
+  // Replaced a block about `hasSoc`, which asked what monitoring the client
+  // already had. Every client this tool is pointed at is being onboarded into
+  // our SOC, so that question had one answer. What varies is how much of the
+  // stack we operate, and that is what should decide how hard operability
+  // constrains the choice.
   //
-  // These assert the property rather than the constants: that the answer
-  // changes the weighting, in the right direction, by the right relative
-  // amounts. The numbers themselves live in `data/config/scoring-weights.yaml`
-  // and are an analyst judgement that should be tunable without breaking a test.
+  // These assert the property rather than the constants: that the answer moves
+  // the weighting, in the right direction, by the right relative amounts. The
+  // numbers live in `data/config/scoring-weights.yaml` and are an analyst
+  // judgement that should be tunable without breaking a test.
 
-  const weightsFor = (soc: ClientProfile['hasSoc']) =>
-    effectiveWeights(buildScoringWeights(), buildClientProfile({ hasSoc: soc }));
+  const weightsFor = (delivery: ClientProfile['deliveryModel']) =>
+    effectiveWeights(buildScoringWeights(), buildClientProfile({ deliveryModel: delivery }));
 
   it('reaches the weights at all', () => {
-    // The regression itself. If this passes with the engine ignoring hasSoc,
-    // it is not testing anything.
-    expect(weightsFor('none').get('ops_fit')).not.toBe(weightsFor('24x7').get('ops_fit'));
+    expect(weightsFor('client_operated').get('ops_fit')).not.toBe(
+      weightsFor('mssp_managed').get('ops_fit'),
+    );
   });
 
-  it('orders the four postures by how much cover they actually provide', () => {
-    const ops = (soc: ClientProfile['hasSoc']) => weightsFor(soc).get('ops_fit') ?? 0;
+  it('orders the models by how much of the load we carry', () => {
+    const ops = (delivery: ClientProfile['deliveryModel']) =>
+      weightsFor(delivery).get('ops_fit') ?? 0;
 
-    // Nobody watching weights operability hardest; a provider carrying the
-    // load weights it least. Business hours sits between none and 24/7.
-    expect(ops('none')).toBeGreaterThan(ops('business_hours'));
-    expect(ops('business_hours')).toBeGreaterThan(ops('24x7'));
-    expect(ops('24x7')).toBeGreaterThan(ops('outsourced'));
+    // They run it alone: operability decides. We run it: it constrains least.
+    expect(ops('client_operated')).toBeGreaterThan(ops('co_managed'));
+    expect(ops('co_managed')).toBeGreaterThan(ops('mssp_managed'));
   });
 
-  it('keeps the dimensions summing to 100 for every posture', () => {
-    // §7.4 step 2 divides by this total. A posture that broke the
-    // renormalisation would silently rescale every value-density comparison.
-    for (const soc of ['none', 'business_hours', '24x7', 'outsourced'] as const) {
-      const total = [...weightsFor(soc).values()].reduce((sum, value) => sum + value, 0);
-      expect(total, `${soc} does not renormalise`).toBeCloseTo(100, 6);
+  it('weights integration higher the more of the stack we operate', () => {
+    // A tool we cannot reach from our own console is a tool somebody logs into
+    // separately, which does not survive a tenth client.
+    const integration = (delivery: ClientProfile['deliveryModel']) =>
+      weightsFor(delivery).get('integration_fit') ?? 0;
+
+    expect(integration('mssp_managed')).toBeGreaterThan(integration('client_operated'));
+  });
+
+  it('keeps the dimensions summing to 100 for every model', () => {
+    // §7.4 step 2 divides by this total. A model that broke the renormalisation
+    // would silently rescale every value-density comparison.
+    for (const delivery of ['mssp_managed', 'co_managed', 'client_operated'] as const) {
+      const total = [...weightsFor(delivery).values()].reduce((sum, value) => sum + value, 0);
+      expect(total, `${delivery} does not renormalise`).toBeCloseTo(100, 6);
     }
   });
 
   it('sums with the procurement bias rather than overriding it', () => {
-    // Open-source-first with no SOC is the shape that most needs operability to
-    // dominate. Taking only the larger of the two adjustments would discard
-    // half of what the analyst said.
+    // Open-source-first on a client-operated engagement is the shape that most
+    // needs operability to dominate. Taking only the larger of the two
+    // adjustments would discard half of what the analyst said.
     const both = effectiveWeights(
       buildScoringWeights(),
-      buildClientProfile({ hasSoc: 'none', procurementBias: 'open_source_first' }),
+      buildClientProfile({
+        deliveryModel: 'client_operated',
+        procurementBias: 'open_source_first',
+      }),
     );
-    const socOnly = effectiveWeights(
+    const deliveryOnly = effectiveWeights(
       buildScoringWeights(),
-      buildClientProfile({ hasSoc: 'none', procurementBias: 'no_preference' }),
+      buildClientProfile({ deliveryModel: 'client_operated', procurementBias: 'no_preference' }),
     );
     const biasOnly = effectiveWeights(
       buildScoringWeights(),
-      buildClientProfile({ hasSoc: '24x7', procurementBias: 'open_source_first' }),
+      buildClientProfile({ deliveryModel: 'mssp_managed', procurementBias: 'open_source_first' }),
     );
 
-    expect(both.get('ops_fit')).toBeGreaterThan(socOnly.get('ops_fit') ?? 0);
+    expect(both.get('ops_fit')).toBeGreaterThan(deliveryOnly.get('ops_fit') ?? 0);
     expect(both.get('ops_fit')).toBeGreaterThan(biasOnly.get('ops_fit') ?? 0);
   });
 
+  it('measures effort against our capacity when the stack is ours to run', () => {
+    // The bug this pair exists to stop. Ops fit was always divided by the
+    // *client's* headcount, so a client with no security staff scored every
+    // tool at the floor on the one engagement model where their headcount is
+    // beside the point, and that client is the best prospect there is.
+    const heavy = buildProduct({
+      id: 'heavy',
+      opsBurden: { baseFte: 0.5, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+    });
+    const opsFitFor = (delivery: ClientProfile['deliveryModel']) => {
+      const profile = buildClientProfile({ deliveryModel: delivery, securityStaffFte: 0 });
+      const inventory = { windowsServers: { count: 200 }, networkVendors: [] } as never;
+      const scores = scoreProducts([heavy], {
+        profile,
+        inventory,
+        sizing: computeSizing(inventory, profile, buildSizingAssumptions()),
+        frameworks: [],
+        weights: buildScoringWeights(),
+        categoryWeights: buildCategoryWeightsFixture(),
+      });
+      return scores[0]!.dimensions.find((d) => d.dimension === 'ops_fit');
+    };
+
+    expect(opsFitFor('mssp_managed')?.score).toBeGreaterThan(
+      opsFitFor('client_operated')?.score ?? 0,
+    );
+    // And the sentence names whose people it is, because a correct number under
+    // the wrong noun does not satisfy hard rule 5.
+    expect(opsFitFor('mssp_managed')?.rationale).toContain('we allocate per client');
+    expect(opsFitFor('client_operated')?.rationale).toContain('no security staff');
+  });
+
   it('changes which product wins when two differ only in how much running they need', () => {
-    // The whole point, end to end through scoreProducts rather than through the
-    // weights alone: a light managed tool and a heavy self-hosted one, scored
-    // for the same client twice.
+    // End to end through scoreProducts rather than through the weights alone: a
+    // light managed tool and a heavy self-hosted one, scored twice.
     const light = buildProduct({
       id: 'light',
       opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
@@ -987,8 +1031,24 @@ describe('SOC posture: the input that used to reach nothing', () => {
       opsBurden: { baseFte: 1.4, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
     });
 
-    const scoreFor = (soc: ClientProfile['hasSoc'], product: Product) => {
-      const profile = buildClientProfile({ hasSoc: soc, securityStaffFte: 2 });
+    /*
+     * Both sides given the same capacity on purpose, so this isolates the
+     * weight.
+     *
+     * The first version of this test gave the client two staff and compared
+     * them against our 0.6 allocation, and failed: a 1.4 FTE tool is further
+     * beyond 0.6 than it is beyond 2, so the raw ops-fit gap was larger on the
+     * managed side and the weighting was swamped by the denominator. Two
+     * mechanisms moving at once and the test could not say which it was
+     * measuring. Holding the denominator equal leaves only the question this
+     * test is for: does the delivery model change how much operability counts?
+     */
+    const capacity = buildScoringWeights().opsFit.msspAnalystFtePerClient;
+    const scoreFor = (delivery: ClientProfile['deliveryModel'], product: Product) => {
+      const profile = buildClientProfile({
+        deliveryModel: delivery,
+        securityStaffFte: delivery === 'client_operated' ? capacity : 0,
+      });
       const inventory = { windowsServers: { count: 200 }, networkVendors: [] } as never;
       const sizing = computeSizing(inventory, profile, buildSizingAssumptions());
       const scores = scoreProducts([product], {
@@ -1002,11 +1062,10 @@ describe('SOC posture: the input that used to reach nothing', () => {
       return scores[0]!.score;
     };
 
-    // With nobody watching, the gap between them must widen: that is the
-    // adjustment doing its job rather than shifting both equally.
-    const gapWithNoSoc = scoreFor('none', light) - scoreFor('none', heavy);
-    const gapWithRota = scoreFor('24x7', light) - scoreFor('24x7', heavy);
+    // Same capacity either way, so a wider gap can only be the weighting.
+    const gapAlone = scoreFor('client_operated', light) - scoreFor('client_operated', heavy);
+    const gapManaged = scoreFor('mssp_managed', light) - scoreFor('mssp_managed', heavy);
 
-    expect(gapWithNoSoc).toBeGreaterThan(gapWithRota);
+    expect(gapAlone).toBeGreaterThan(gapManaged);
   });
 });

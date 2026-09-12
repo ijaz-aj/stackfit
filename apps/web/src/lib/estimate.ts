@@ -62,7 +62,7 @@ export interface EstimateSummary {
   };
   readonly essential: BundleSummary;
   readonly recommended: BundleSummary;
-  readonly ideal: BundleSummary;
+  readonly phase2: BundleSummary;
   /** Categories the estate has nothing for, so nothing was recommended. */
   readonly ruledOutCategories: readonly ProductCategory[];
   /** Mandated by a framework but with nothing in the estate to protect. */
@@ -165,7 +165,7 @@ export function summariseEstimate(result: PipelineResult): EstimateSummary {
     },
     essential: summariseBundle(result, result.essential),
     recommended: summariseBundle(result, result.recommended),
-    ideal: summariseBundle(result, result.ideal),
+    phase2: summariseBundle(result, result.phase2),
     ruledOutCategories: result.relevance
       .filter((entry) => !entry.applicable)
       .map((entry) => entry.category),

@@ -16,7 +16,7 @@
 import { z } from 'zod';
 
 import { AssetClass } from './asset-inventory';
-import { Industry, ProductCategory } from './enums';
+import { DeliveryModel, Industry, ProductCategory } from './enums';
 
 /**
  * The attack surfaces an estate can present. Every asset class maps to exactly
@@ -152,6 +152,33 @@ export const IndustryModifier = z
   .strict();
 export type IndustryModifier = z.infer<typeof IndustryModifier>;
 
+/**
+ * How the operating model changes what a category is worth to this client.
+ *
+ * A separate axis from industry, because it asks a different question.
+ * Industry says what an attacker wants from this kind of business.
+ * This says who will be at the console, which decides whether a category is
+ * needed at all.
+ *
+ * The case that forced it: `mdr` supplies the thing every other category
+ * quietly assumes, somebody looking at the alerts at 3am. Its weight did not
+ * move when the client had nobody to do that, so for a 300-endpoint firm with
+ * zero security staff it ranked mid-table and fell out of the first year. Nor
+ * did it move the other way: on an engagement where our own SOC does the
+ * monitoring, a third-party MDR service is a second provider doing the job we
+ * were hired for, and it was still being quoted.
+ */
+export const DeliveryModifier = z
+  .object({
+    delivery: DeliveryModel,
+    category: ProductCategory,
+    /** Zero is meaningful: the category does not arise under this model. */
+    multiplier: z.number().nonnegative(),
+    basis: z.string().min(1),
+  })
+  .strict();
+export type DeliveryModifier = z.infer<typeof DeliveryModifier>;
+
 export const CategoryWeights = z
   .object({
     notes: z.string().min(1).optional(),
@@ -170,6 +197,7 @@ export const CategoryWeights = z
     surfaceUnits: z.record(AssetClass, SurfaceUnit),
     categories: z.array(CategoryWeight).min(1),
     industryModifiers: z.array(IndustryModifier).default([]),
+    deliveryModifiers: z.array(DeliveryModifier).default([]),
   })
   .strict()
   .superRefine((config, ctx) => {

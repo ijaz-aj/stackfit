@@ -19,6 +19,31 @@ notes: >-
 # categories for a typical estate.
 essentialWeightFloor: 85
 
+# Where year one stops and Phase 2 begins, as a fraction of the top-ranked
+# category's weight for this client.
+#
+# Something has to draw this line. Without one the Recommended bundle is a
+# greedy fill that stops only when the money runs out, so a client with budget
+# headroom was told to buy all thirteen categories at once, and the six
+# committed presets showed exactly that: five of six came back with 13 of 13.
+# That answers "what can they afford" and never "what should they spend".
+#
+# 0.5 rather than a category count, because the weights already carry the
+# estate: a SaaS company and a plant get different year-one stacks from the same
+# ratio, where "the top seven" would give them both seven. Half the top-ranked
+# category's risk reduction is the judgement, and it is a judgement rather than
+# a measurement.
+#
+# Checked against the committed presets. Year one lands at 6 to 10 categories
+# and the deferred tranche is consistently the same shape: SOAR, deception, and
+# NDR or email security where the estate does not lean on them. That is the
+# tranche an analyst would defer by hand, which is the only evidence available
+# for a number like this.
+#
+# Compliance and essentialWeightFloor both override it. An obligation does not
+# become deferrable because the category ranks low.
+yearOneWeightRatio: 0.5
+
 # §7.4 step 4. Applied to a product's licence when another product from the same
 # vendor is already selected.
 suiteDiscountRate: 0.1
@@ -104,23 +129,3 @@ roadmap:
     moves the plan: halve it and the roadmap roughly doubles in length. Both
     are worth confirming against the client's real delivery capacity on the
     call, because a roadmap nobody can staff is a roadmap that slips.
-
-# What the Operable bundle treats as this team's real capacity to run tools.
-#
-# ⚠ Two things about the figure this constrains on, stated here because they
-# decide how much weight the bundle deserves:
-#   - every opsBurden in data/catalog is an analyst_estimate: 65 of 65, none
-#     vendor-stated and none measured;
-#   - FTE is summed across products with no overlap, so a thirteen-tool stack
-#     overstates what one team actually carries. Modelling the overlap would
-#     mean inventing a coefficient nobody can source.
-# That is why operability shapes a fourth bundle rather than constraining the
-# Recommended one.
-operableCapacity:
-  utilisation: 1.0
-  basis: >-
-    The whole stated team, by default. An analyst who writes "two security
-    staff" means two, and discounting that to 1.4 would be StackFit inventing a
-    fact about the client's own staffing. Lower it for a team that also carries
-    incident response, audit and project work, which is most of them, and the
-    Operable bundle shrinks accordingly.

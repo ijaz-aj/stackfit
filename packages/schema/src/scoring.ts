@@ -9,7 +9,13 @@ import { z } from 'zod';
 
 import { AssetClass } from './asset-inventory';
 import { EstateShape } from './infrastructure';
-import { DeploymentMode, DeviceClass, ProcurementBias, ProductCategory, SocPosture } from './enums';
+import {
+  DeliveryModel,
+  DeploymentMode,
+  DeviceClass,
+  ProcurementBias,
+  ProductCategory,
+} from './enums';
 
 export const ScoringDimension = z.enum([
   /** Share of the assets this category is meant to cover that this product does. */
@@ -56,30 +62,24 @@ export const BiasAdjustment = z
 export type BiasAdjustment = z.infer<typeof BiasAdjustment>;
 
 /**
- * How the client's monitoring capability shifts the weights.
+ * How the operating model shifts the weights.
  *
- * Same mechanism as `biasAdjustments`, for a question that turned out to
- * matter more. `hasSoc` was captured at intake, stored, shown in the compare
- * diff and read by nothing: a client with a 24/7 SOC and a client with nobody
- * watching received byte-identical recommendations.
+ * Same mechanism as `biasAdjustments`, for the question that decides most of
+ * the answer. A SIEM is a machine for producing alerts, and alerts nobody is
+ * rostered to triage are shelfware with a licence fee, so how hard operability
+ * should constrain the choice depends entirely on who is doing the operating.
  *
- * That is the oldest failure in security procurement. A SIEM is a machine for
- * producing alerts, and alerts nobody is rostered to triage are shelfware with
- * a licence fee. Practitioner guidance on SIEM selection says to start from how
- * many analysts are available to write detections, triage and hunt; ours did
- * not ask the engine to care.
- *
- * It moves `ops_fit` rather than eliminating anything, because a client with no
- * SOC can still legitimately buy a SIEM, they just should not buy the one that
- * needs a team. Elimination would be this tool deciding for them.
+ * It moves `ops_fit` rather than eliminating anything. A client who will run
+ * their own tools can still legitimately buy a demanding one; they just should
+ * not buy it by accident. Elimination would be this tool deciding for them.
  */
-export const SocAdjustment = z
+export const DeliveryAdjustment = z
   .object({
-    soc: SocPosture,
+    delivery: DeliveryModel,
     deltas: z.array(BiasDelta).default([]),
   })
   .strict();
-export type SocAdjustment = z.infer<typeof SocAdjustment>;
+export type DeliveryAdjustment = z.infer<typeof DeliveryAdjustment>;
 
 /**
  * What a category is *supposed* to cover.
@@ -106,6 +106,20 @@ export const OpsFitPolicy = z
      * Share of the client's security FTE one product may consume before its
      * ops-fit score starts falling.
      */
+    /**
+     * Analyst capacity we allocate to one client's tooling, in FTE.
+     *
+     * The denominator when we are the ones operating. Without it, ops fit was
+     * always measured against the *client's* headcount, so a client with zero
+     * security staff scored every tool near the floor on an engagement where
+     * our SOC runs the whole stack and their headcount is irrelevant. It made
+     * the best-fit answer for our best prospect look like the worst.
+     *
+     * A real cost, not a formality: an analyst allocated here is not available
+     * to another client, so a tool that eats capacity is a tool that shrinks
+     * the book. That is why this is small.
+     */
+    msspAnalystFtePerClient: z.number().gt(0),
     comfortableShareOfFte: z.number().min(0).max(1),
     /**
      * Share at which ops fit reaches zero. Beyond this the tool is not
@@ -215,7 +229,7 @@ export const ScoringWeights = z
     notes: z.string().min(1).optional(),
     dimensions: z.array(DimensionWeight).min(1),
     biasAdjustments: z.array(BiasAdjustment).default([]),
-    socAdjustments: z.array(SocAdjustment).default([]),
+    deliveryAdjustments: z.array(DeliveryAdjustment).default([]),
     opsFit: OpsFitPolicy,
     deploymentFit: DeploymentFitPolicy,
     /** Score by maturity band, 0–100. */
@@ -292,16 +306,16 @@ export const ScoringWeights = z
       }
     }
 
-    const seenSoc = new Set<string>();
-    config.socAdjustments.forEach((adjustment, index) => {
-      if (seenSoc.has(adjustment.soc)) {
+    const seenDelivery = new Set<string>();
+    config.deliveryAdjustments.forEach((adjustment, index) => {
+      if (seenDelivery.has(adjustment.delivery)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          path: ['socAdjustments', index, 'soc'],
-          message: `duplicate adjustment for ${adjustment.soc}`,
+          path: ['deliveryAdjustments', index, 'delivery'],
+          message: `duplicate adjustment for ${adjustment.delivery}`,
         });
       }
-      seenSoc.add(adjustment.soc);
+      seenDelivery.add(adjustment.delivery);
     });
 
     const seenBias = new Set<string>();

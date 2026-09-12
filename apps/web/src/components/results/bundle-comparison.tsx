@@ -52,14 +52,9 @@ export function BundleComparison({
   scenarioId: string;
   fx: FxConfig;
 }) {
-  // Operable sits next to Recommended rather than at the end: the two are read
-  // against each other, and the distance between them is the point.
-  const bundles: readonly Bundle[] = [
-    result.essential,
-    result.operable,
-    result.recommended,
-    result.ideal,
-  ];
+  // In the order a conversation goes: the floor, what we propose, what we
+  // deliberately left for later.
+  const bundles: readonly Bundle[] = [result.essential, result.recommended, result.phase2];
 
   const rows = bundles.map((bundle) => {
     const confidences: readonly PricingConfidence[] = bundle.selections.map(
@@ -85,21 +80,19 @@ export function BundleComparison({
 
   const label = {
     essential: 'Essential',
-    operable: 'Operable',
     recommended: 'Recommended',
-    ideal: 'Ideal',
+    phase2: 'Phase 2',
   } as const;
   const hint = {
     essential: 'Minimum defensible posture, plus everything compliance mandates.',
-    operable: 'What this team can run unaided. Affordable and staffable.',
-    recommended: 'Best value inside the stated budget.',
-    ideal: 'Ignores the budget cap, to quantify the gap.',
+    recommended: 'What to buy this year, inside the stated budget.',
+    phase2: 'Real, worth buying, and deliberately not this year.',
   } as const;
 
   return (
     <Card
       title="Bundle comparison"
-      hint="Click a tier for its detail. Operable against Recommended is the staffing gap."
+      hint="Click a bundle for its detail. Phase 2 is priced so deferring it is a decision, not a silence."
     >
       <div className="overflow-x-auto">
         {/*

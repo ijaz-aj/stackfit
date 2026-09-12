@@ -119,6 +119,7 @@ function buildCategoryWeights(overrides: Record<ProductCategory, number> = {} as
       affinities: [],
     })),
     industryModifiers: [],
+    deliveryModifiers: [],
   } as never;
 }
 
@@ -128,7 +129,7 @@ const assumptions: PortfolioAssumptions = {
   suiteIntegrationBonusPoints: 5,
   minimumAnnualisedCostMinor: 100,
   openSourcePreferencePoints: 8,
-  operableCapacity: { utilisation: 1, basis: 'test fixture' },
+  yearOneWeightRatio: 0.5,
   roadmap: {
     parallelWorkstreams: 2,
     phases: [
@@ -191,6 +192,8 @@ interface Scenario {
   readonly frameworks?: readonly Framework[];
   readonly inventory?: AssetInventory;
   readonly securityStaffFte?: number;
+  /** Base risk reduction per category. The fixture is otherwise flat at 90. */
+  readonly categoryWeights?: Record<string, number>;
 }
 
 function buildInputs(scenario: Scenario): PortfolioInputs {
@@ -214,7 +217,7 @@ function buildInputs(scenario: Scenario): PortfolioInputs {
   });
   const sizing = computeSizing(inv, profile, buildSizingAssumptions());
   const costInputs = buildCostInputs();
-  const weights = buildCategoryWeights();
+  const weights = buildCategoryWeights((scenario.categoryWeights ?? {}) as never);
 
   const scores = scoreProducts(scenario.products, {
     profile,
@@ -279,6 +282,26 @@ const pciMandatingSiem: Framework = buildFramework({
   controls: [{ id: '10', title: 'Log and monitor', satisfiedBy: ['siem'], mandatory: true }],
 });
 
+/** A control only a deception platform can close, so the mandate cannot move. */
+const pciMandatingDeception: Framework = buildFramework({
+  id: 'pci-dss-4.0',
+  name: 'PCI DSS',
+  sourceQuality: 'secondary_sources',
+  version: '4.0',
+  controls: [{ id: '11', title: 'Detect intrusion', satisfiedBy: ['deception'], mandatory: true }],
+});
+
+/** One control, three ways to close it. The disjunction case. */
+const pciSatisfiedByAnyOfThree: Framework = buildFramework({
+  id: 'pci-dss-4.0',
+  name: 'PCI DSS',
+  sourceQuality: 'secondary_sources',
+  version: '4.0',
+  controls: [
+    { id: '10.2', title: 'Audit logs', satisfiedBy: ['siem', 'soar', 'mdr'], mandatory: true },
+  ],
+});
+
 describe('step 1: category ranking', () => {
   it('marks a category mandatory when a selected framework requires it', () => {
     const { rankings } = buildPortfolio(
@@ -292,6 +315,60 @@ describe('step 1: category ranking', () => {
     expect(siem?.mandatedBy).toContain('pci-dss-4.0');
   });
 
+  it('mandates one category for a control three could satisfy, not three', () => {
+    // The bug this pass exists to fix. `satisfiedBy` is a disjunction:
+    // coverage.ts has always read it that way and renders it as "siem or soar
+    // or mdr". This function read the same field as a conjunction and marked
+    // every category in it mandatory, so a PCI client arrived at the budget
+    // with twelve of thirteen categories compulsory, the mandatory set spent
+    // the money before the ranking was consulted, and the recommendation came
+    // back as the entire catalog.
+    const { rankings } = buildPortfolio(
+      buildInputs({
+        products: [
+          product('siem-a', 'siem', 100_000),
+          product('soar-a', 'soar', 100_000),
+          product('mdr-a', 'mdr', 100_000),
+        ],
+        categoryWeights: { siem: 90, soar: 40, mdr: 60 },
+        frameworks: [pciSatisfiedByAnyOfThree],
+      }),
+    );
+
+    const mandatory = rankings.filter((ranking) => ranking.mandatory).map((r) => r.category);
+    expect(mandatory).toEqual(['siem']);
+  });
+
+  it('elects the highest-weighted of the options, and says what it beat', () => {
+    // Hard rule 5 applied to a choice the engine made on the client's behalf.
+    // "PCI 10.2 is met by a SIEM, a SOAR or an MDR service, and the SIEM is
+    // funded because it ranks highest for this estate" is the sentence an
+    // analyst has to be able to say in the room.
+    const { rankings } = buildPortfolio(
+      buildInputs({
+        products: [
+          product('siem-a', 'siem', 100_000),
+          product('soar-a', 'soar', 100_000),
+          product('mdr-a', 'mdr', 100_000),
+        ],
+        // MDR is worth most to this estate, so it should carry the obligation
+        // rather than the SIEM, which is what makes this an election and not a
+        // fixed preference order.
+        categoryWeights: { siem: 40, soar: 30, mdr: 95 },
+        frameworks: [pciSatisfiedByAnyOfThree],
+      }),
+    );
+
+    const mdr = rankings.find((ranking) => ranking.category === 'mdr');
+    expect(mdr?.mandatory).toBe(true);
+    expect(rankings.find((ranking) => ranking.category === 'siem')?.mandatory).toBe(false);
+
+    const election = mdr?.mandateElections[0];
+    expect(election?.reason).toBe('highest_weight');
+    expect(election?.couldBeMetBy).toEqual(['siem', 'soar', 'mdr']);
+    expect(election?.controlId).toContain('10.2');
+  });
+
   it('marks nothing mandatory when no framework was selected', () => {
     const { rankings } = buildPortfolio(
       buildInputs({ products: [product('siem-a', 'siem', 100_000)], frameworks: [] }),
@@ -300,103 +377,106 @@ describe('step 1: category ranking', () => {
   });
 });
 
-describe('the Operable bundle: what this team can actually run', () => {
-  // Recommended answers "what does the estate need, inside the budget", and on
-  // the hospital demo that is thirteen categories needing 8.58 FTE from a
-  // two-person team. Operable answers "what can they run on Monday". The gap
-  // between them is the hiring, or the managed service, and stating it is more
-  // useful than quietly picking either one.
-  function heavy(id: string, category: ProductCategory, fte: number): Product {
-    return {
-      ...product(id, category, 100_00),
-      opsBurden: { baseFte: fte, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
-    };
-  }
+describe('Phase 2: what year one left for later', () => {
+  // Recommended used to be a greedy fill that stopped only when the money ran
+  // out, so a client with headroom was told to buy every category at once. The
+  // year-one line is what stops it, and Phase 2 is where everything below the
+  // line goes: priced and deferred, rather than silently dropped.
 
-  it('never exceeds the capacity the client stated', () => {
-    const { operable } = buildPortfolio(
+  it('defers a category that ranks below the year-one line', () => {
+    const { recommended, phase2 } = buildPortfolio(
       buildInputs({
         products: [
-          heavy('siem-a', 'siem', 0.8),
-          heavy('edr-a', 'edr', 0.8),
-          heavy('iam-a', 'iam', 0.8),
+          product('siem-a', 'siem', 10_000_00),
+          product('deception-a', 'deception', 10_000_00),
         ],
-        securityStaffFte: 2,
+        // A quarter of the SIEM's weight, which is roughly the committed ratio
+        // between them and well under the year-one line either way.
+        categoryWeights: { siem: 90, deception: 22 },
         annualCap: 500_000_00,
       }),
     );
 
-    expect(operable.totalOpsFte).toBeLessThanOrEqual(2);
-    expect(operable.selections.length).toBeLessThan(3);
+    const inYearOne = recommended.selections.map((selection) => selection.category);
+    expect(inYearOne).toContain('siem');
+    expect(inYearOne).not.toContain('deception');
+    expect(phase2.selections.map((selection) => selection.category)).toContain('deception');
   });
 
-  it('leaves Recommended alone: a short-staffed client still sees what they need', () => {
-    // The whole point of a fourth bundle rather than a constraint. What the
-    // estate warrants does not shrink because the client is short-handed.
-    const inputs = buildInputs({
-      products: [
-        heavy('siem-a', 'siem', 0.8),
-        heavy('edr-a', 'edr', 0.8),
-        heavy('iam-a', 'iam', 0.8),
-      ],
-      securityStaffFte: 2,
-      annualCap: 500_000_00,
-    });
-    const { recommended, operable } = buildPortfolio(inputs);
-
-    expect(recommended.selections).toHaveLength(3);
-    expect(recommended.totalOpsFte).toBeGreaterThan(operable.totalOpsFte);
-  });
-
-  it('recommends nothing at all to a client with no security staff', () => {
-    // The most important case in the catalog and the easiest to get wrong. A
-    // free tool is not operable by nobody, and an empty bundle here is the
-    // honest answer rather than a bug.
-    const { operable } = buildPortfolio(
+  it('never proposes the same category twice across the two', () => {
+    const { recommended, phase2 } = buildPortfolio(
       buildInputs({
-        products: [heavy('siem-a', 'siem', 0.1), heavy('edr-a', 'edr', 0.1)],
-        securityStaffFte: 0,
+        products: [
+          product('siem-a', 'siem', 10_000_00),
+          product('edr-a', 'edr', 10_000_00),
+          product('ndr-a', 'ndr', 10_000_00),
+          product('deception-a', 'deception', 10_000_00),
+        ],
         annualCap: 500_000_00,
       }),
     );
 
-    expect(operable.selections).toEqual([]);
-    expect(operable.totalOpsFte).toBe(0);
-    expect(operable.rationale.join(' ')).toContain('no security staff');
-    expect(operable.rationale.join(' ')).toContain('only route');
+    const yearOne = new Set(recommended.selections.map((selection) => selection.category));
+    for (const selection of phase2.selections) {
+      expect(yearOne.has(selection.category), `${selection.category} proposed twice`).toBe(false);
+    }
   });
 
-  it('calls an unstaffable mandatory category a staffing problem, not a budget one', () => {
-    // Money is there, people are not. Telling the analyst to ask for a bigger
-    // budget would send them into a negotiation that cannot fix it.
-    const { operable } = buildPortfolio(
+  it('is not held to this year’s cap, because it is not this year’s money', () => {
+    const { phase2 } = buildPortfolio(
       buildInputs({
-        products: [heavy('siem-a', 'siem', 5)],
-        frameworks: [pciMandatingSiem],
-        securityStaffFte: 1,
+        products: [
+          product('siem-a', 'siem', 10_000_00),
+          product('deception-a', 'deception', 400_000_00),
+        ],
+        categoryWeights: { siem: 90, deception: 22 },
+        annualCap: 12_000_00,
+      }),
+    );
+
+    expect(phase2.selections.map((selection) => selection.category)).toContain('deception');
+  });
+
+  it('keeps a mandatory category in year one however low it ranks', () => {
+    // An obligation does not become deferrable because the estate has little
+    // use for the category. This is the clause the ratio must not override.
+    const { recommended, phase2 } = buildPortfolio(
+      buildInputs({
+        products: [
+          product('siem-a', 'siem', 10_000_00),
+          product('deception-a', 'deception', 10_000_00),
+        ],
+        categoryWeights: { siem: 90, deception: 22 },
+        frameworks: [pciMandatingDeception],
         annualCap: 500_000_00,
       }),
     );
 
-    expect(operable.unfundedMandatory).toContain('siem');
-    expect(operable.unfundedReasons).toContainEqual({ category: 'siem', reason: 'ops_capacity' });
-    const rationale = operable.rationale.join(' ');
-    expect(rationale).toContain('affordable but not staffable');
-    expect(rationale).toContain('no budget increase closes it');
+    expect(recommended.selections.map((selection) => selection.category)).toContain('deception');
+    expect(phase2.selections.map((selection) => selection.category)).not.toContain('deception');
+  });
+
+  it('says a client needs nothing deferred rather than showing an empty list', () => {
+    const { phase2 } = buildPortfolio(
+      buildInputs({ products: [product('siem-a', 'siem', 10_000_00)], annualCap: 500_000_00 }),
+    );
+
+    expect(phase2.selections).toEqual([]);
+    expect(phase2.rationale.join(' ')).toContain('Nothing deferred');
   });
 
   it('says plainly that the effort figures behind it are estimates', () => {
-    // Every opsBurden in the catalog is an analyst estimate and effort is summed
-    // with no overlap. A bundle that constrains on that must not be read as a
-    // measurement.
-    const { operable } = buildPortfolio(
+    const { phase2 } = buildPortfolio(
       buildInputs({
-        products: [heavy('siem-a', 'siem', 0.5)],
-        securityStaffFte: 2,
+        products: [
+          product('siem-a', 'siem', 10_000_00),
+          product('deception-a', 'deception', 10_000_00),
+        ],
+        categoryWeights: { siem: 90, deception: 22 },
         annualCap: 500_000_00,
       }),
     );
-    const rationale = operable.rationale.join(' ');
+    const rationale = phase2.rationale.join(' ');
     expect(rationale).toContain('analyst estimate');
     expect(rationale).toContain('overstates');
   });
@@ -643,7 +723,7 @@ describe('steps 3 and 4: selection', () => {
   });
 });
 
-describe('step 5: the three bundles', () => {
+describe('step 5: the bundles', () => {
   const products = [
     product('siem-a', 'siem', 10_000_00),
     product('edr-a', 'edr', 10_000_00),
@@ -651,12 +731,10 @@ describe('step 5: the three bundles', () => {
     product('backup-a', 'backup', 10_000_00),
   ];
 
-  it('ideal ignores the budget and is at least as large as recommended', () => {
-    const { recommended, ideal } = buildPortfolio(buildInputs({ products, annualCap: 15_000_00 }));
-    expect(ideal.selections.length).toBeGreaterThanOrEqual(recommended.selections.length);
-    expect(ideal.annualRecurring.amountMinor).toBeGreaterThanOrEqual(
-      recommended.annualRecurring.amountMinor,
-    );
+  it('proposes each category once, across year one and Phase 2 together', () => {
+    const { recommended, phase2 } = buildPortfolio(buildInputs({ products, annualCap: 15_000_00 }));
+    const all = [...recommended.selections, ...phase2.selections].map((s) => s.category);
+    expect(new Set(all).size).toBe(all.length);
   });
 
   it('essential is no larger than recommended', () => {
@@ -668,7 +746,7 @@ describe('step 5: the three bundles', () => {
     const portfolio = buildPortfolio(buildInputs({ products }));
     expect(portfolio.essential.rationale.join(' ')).toContain('minimum-defensible');
     expect(portfolio.recommended.rationale.join(' ')).toContain('best value density');
-    expect(portfolio.ideal.rationale.join(' ')).toContain('quantify the gap');
+    expect(portfolio.phase2.rationale.join(' ')).toContain('not this year');
   });
 
   it('warns when a bundle needs more people than the client has', () => {
@@ -682,8 +760,8 @@ describe('step 5: the three bundles', () => {
         opsBurden: { baseFte: 2, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
       },
     ];
-    const { ideal } = buildPortfolio(buildInputs({ products: heavy, securityStaffFte: 1 }));
-    expect(ideal.rationale.join(' ')).toContain('more people than the client has');
+    const { recommended } = buildPortfolio(buildInputs({ products: heavy, securityStaffFte: 1 }));
+    expect(recommended.rationale.join(' ')).toContain('more people than the client has');
   });
 });
 
@@ -729,27 +807,39 @@ describe('tiers: the SKU is part of the recommendation', () => {
   const scenario = { products: [tieredSiem()], frameworks: [pciMandatingSiem] };
 
   it('never puts two tiers of one product in the same bundle', () => {
-    const { ideal } = buildPortfolio(buildInputs(scenario));
-    const ids = ideal.selections.map((selection) => selection.productId);
+    const { recommended } = buildPortfolio(buildInputs(scenario));
+    const ids = recommended.selections.map((selection) => selection.productId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('recommends the cheaper SKU on value and the better one for ideal', () => {
-    // The heart of it. Value density is risk-reduction per pound, so the entry
-    // tier wins when money is the binding constraint, and Ideal, which exists
-    // to quantify the gap, has to be free to say the dearer SKU is the one the
-    // client actually wants. Before Ideal had its own objective it sorted on
-    // density too, so it named the same SKU and quantified a gap of nothing.
-    const { recommended, ideal } = buildPortfolio(buildInputs(scenario));
-
+  it('buys the entry SKU on value when the budget is what binds', () => {
+    // Value density is risk-reduction per pound, so the cheap tier wins when
+    // money is the constraint.
+    const { recommended } = buildPortfolio(buildInputs({ ...scenario, annualCap: 15_000_00 }));
     expect(recommended.selections[0]?.tierId).toBe('basic');
-    expect(ideal.selections[0]?.tierId).toBe('advanced');
-    expect(ideal.annualSpend.amountMinor).toBeGreaterThan(recommended.annualSpend.amountMinor);
   });
 
-  it('names the SKU a client would recognise, not the slug', () => {
-    const { ideal } = buildPortfolio(buildInputs(scenario));
-    expect(ideal.selections[0]?.tierName).toBe('Advanced');
+  it('⚠ buys the entry SKU even when only the dearer one closes the mandate', () => {
+    // PINNING A KNOWN GAP, not asserting desired behaviour. See docs/STATUS.md.
+    //
+    // Only 'advanced' claims the control PCI asks for, and the budget here is
+    // thirty times the price of it, yet every selection objective ranks within
+    // a category on price or on value density and none of them can see that one
+    // tier closes a mandated control and the other does not. So the bundle
+    // funds the category, reports it as mandatory, and buys a SKU that does not
+    // satisfy the obligation it was bought for.
+    //
+    // It predates this commit. The Ideal bundle used to display the dearer SKU
+    // beside the recommendation, which looked like an answer and was not: the
+    // recommendation itself was always wrong, and nobody buys Ideal. Removing
+    // that bundle did not create the gap, it uncovered it.
+    //
+    // The coverage matrix still reports the control as a gap, so this is not
+    // silent. It is worse than silent in one way: the client is told they need
+    // a SIEM for PCI 10, sold a SIEM, and then shown PCI 10 as an open gap.
+    const { recommended } = buildPortfolio(buildInputs({ ...scenario, annualCap: 500_000_00 }));
+
+    expect(recommended.selections[0]?.tierId).toBe('basic');
   });
 
   it('says why this SKU and not the one next to it', () => {
@@ -759,12 +849,12 @@ describe('tiers: the SKU is part of the recommendation', () => {
   });
 
   it('costs the bundle on the tier it selected', () => {
-    const { ideal } = buildPortfolio(buildInputs(scenario));
-    const selection = ideal.selections[0]!;
+    const { recommended } = buildPortfolio(buildInputs({ ...scenario, annualCap: 500_000_00 }));
+    const selection = recommended.selections[0]!;
     expect(selection.cost.tierId).toBe(selection.tierId);
     // List, not net: a volume band applies on top, and this is asserting which
     // SKU was costed rather than what the discount did to it.
-    expect(selection.cost.licenceListAnnual.amountMinor).toBe(40_000_00);
+    expect(selection.cost.licenceListAnnual.amountMinor).toBe(10_000_00);
   });
 });
 
@@ -794,7 +884,7 @@ describe('step 6: the MSSP alternative', () => {
     const portfolio = buildPortfolio(
       buildInputs({ products: [product('siem-a', 'siem', 100_000)] }),
     );
-    for (const bundle of [portfolio.essential, portfolio.recommended, portfolio.ideal]) {
+    for (const bundle of [portfolio.essential, portfolio.recommended, portfolio.phase2]) {
       expect(bundle.mssp.annual.amountMinor).toBeGreaterThan(0);
     }
   });
@@ -888,23 +978,23 @@ describe('regressions', () => {
   });
 
   it('gives a different managed alternative per bundle, with the residual named', () => {
-    // Was: msspAlternative ignored the bundle, so Essential and Ideal quoted
+    // Was: msspAlternative ignored the bundle, so two bundles quoted
     // identically and the build-vs-buy comparison could not be right for both.
     // backup is not covered at the mdr service level, so it must show as residual.
     const inputs = buildInputs({
       products: [product('siem-a', 'siem', 10_000_00), product('backup-a', 'backup', 10_000_00)],
     });
-    const { ideal } = buildPortfolio(inputs);
+    const { recommended } = buildPortfolio(inputs);
 
-    expect(ideal.mssp.coversCategories).toContain('siem');
-    expect(ideal.mssp.uncoveredCategories).toContain('backup');
-    expect(ideal.mssp.residualAnnual.amountMinor).toBeGreaterThan(0);
-    expect(ideal.mssp.totalAnnual.amountMinor).toBe(
-      ideal.mssp.annual.amountMinor + ideal.mssp.residualAnnual.amountMinor,
+    expect(recommended.mssp.coversCategories).toContain('siem');
+    expect(recommended.mssp.uncoveredCategories).toContain('backup');
+    expect(recommended.mssp.residualAnnual.amountMinor).toBeGreaterThan(0);
+    expect(recommended.mssp.totalAnnual.amountMinor).toBe(
+      recommended.mssp.annual.amountMinor + recommended.mssp.residualAnnual.amountMinor,
     );
     // The category is named in words, not as its enum value: this sentence is
     // printed verbatim into a proposal, and "backup" there is a leaked field.
-    expect(ideal.mssp.rationale.join(' ')).toContain('Does not cover Backup and recovery');
+    expect(recommended.mssp.rationale.join(' ')).toContain('Does not cover Backup and recovery');
   });
 
   it('does not buy less compliance with more budget when both strategies fund the same categories', () => {

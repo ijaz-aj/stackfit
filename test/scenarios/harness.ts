@@ -117,7 +117,7 @@ export function proposalFor(result: ScenarioResult, profile: ClientProfile) {
     products: config.products,
     recommended: result.recommended,
     essential: result.essential,
-    ideal: result.ideal,
+    phase2: result.phase2,
     coverage: result.coverage,
     justifications: [],
     assumptions: config.portfolioAssumptions,
@@ -139,7 +139,10 @@ export function profileOf(overrides: Partial<ClientProfile> = {}): ClientProfile
     employeeCount: 100,
     itStaffCount: 5,
     securityStaffFte: 1,
-    hasSoc: 'none',
+    // The acceptance scenarios were written about a company buying and running
+    // its own security, so this is the model they mean. A scenario that is
+    // about a managed engagement says so.
+    deliveryModel: 'client_operated',
     riskTolerance: 'medium',
     dataSensitivity: 'internal',
     compliance: [],

@@ -249,14 +249,29 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   separate strategies for exactly this reason; do not merge them, and do not
   "fix" `cheapest` to rank on TCO. That breaks budget monotonicity, because at a
   tight cap the lowest-TCO option frequently does not fit the procurement cap.
-- **There are four bundles, not three.** `operable` is the stack the client's
-  own team can run: Recommended's budget plus a ceiling of `securityStaffFte ×
-  operableCapacity.utilisation`, ranked `lowest_tco`. It is deliberately *not* a
-  constraint on Recommended. Every `opsBurden` in the catalog is an
-  `analyst_estimate` and FTE is summed with no overlap, so it is the softest
-  number here and must not be allowed to shrink what the estate demonstrably
-  needs. An empty Operable bundle is a correct answer, not a bug: a client with
-  zero security staff cannot operate a free tool either.
+- **There are three bundles: `essential`, `recommended`, `phase2`.** Essential is
+  the floor. Recommended is year one. Phase 2 is everything with real weight that
+  year one did not fund, priced and not held to this year's cap, so a deferral is
+  a decision on the record rather than a silence. `ideal` and `operable` were
+  removed; the reasoning is on `BundleKind` in `portfolio.ts` and in
+  `docs/STATUS.md`.
+- **`Control.satisfiedBy` is a disjunction. Never read it as a conjunction.**
+  `[siem, soar, mdr]` means any one of the three closes the control, which is how
+  `coverage.ts` has always read it and how it renders it in prose. `portfolio.ts`
+  read it as "all three are mandatory" and that single misreading made twelve of
+  thirteen categories compulsory for a PCI client, spent the budget before the
+  ranking was consulted, and turned every recommendation into the whole catalog.
+  Each mandatory control is now settled once, in favour of one category: a
+  holding that already meets it, the only applicable option, or the
+  highest-weighted of several, recorded in `mandateElections` so the choice can
+  be defended on the call.
+- **`deliveryModel` decides more than it looks like it does.** It replaced
+  `hasSoc`, which asked what monitoring the client already had; every client here
+  is being onboarded into our SOC, so that question had one answer. This one
+  moves the scoring weights, decides whose FTE is the denominator of `ops_fit`
+  (ours, via `opsFit.msspAnalystFtePerClient`, when we operate), and zeroes the
+  `mdr` category weight on a managed engagement, because we are the monitoring
+  and quoting a third-party MDR alongside our own fee is a duplicate charge.
 - **`opsBurden` is administration effort, not SOC staffing.** Deploy, tune,
   maintain, upgrade. Not staffing continuous monitoring, which published
   benchmarks put at several analysts across shifts for in-house 24/7 SIEM

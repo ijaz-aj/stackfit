@@ -29,10 +29,11 @@
 #      headcount-based ratio that turns up (one security specialist per 5 to 10
 #      IT staff, which every preset here already satisfies) is an uncited
 #      industry convention rather than a survey.
-#   3. Raising them would hide the finding. The Operable bundle exists to show a
-#      client that the recommended stack needs more people than they have.
-#      Inflating the assumed headcount shrinks exactly the gap the tool was
-#      built to put in front of them.
+#   3. Raising them would hide the finding. On a client-operated engagement the
+#      ops-fit score exists to show that the recommended stack needs more people
+#      than the client has, and inflating the assumed headcount shrinks exactly
+#      the gap the tool was built to put in front of them. On a managed one it
+#      is the reason they are talking to us.
 #
 # What these figures are, then: analyst estimates of a typical understaffed
 # client, stated per preset in `staffingBasis`, and the first thing to correct
@@ -70,7 +71,8 @@ presets:
       employeeCount: 600
       itStaffCount: 6
       securityStaffFte: 1
-      hasSoc: none
+      # One security person across 40 stores cannot carry a stack. We run it.
+      deliveryModel: mssp_managed
       riskTolerance: medium
       dataSensitivity: regulated
       compliance: [pci-dss-4.0, dpdp-2023]
@@ -126,7 +128,8 @@ presets:
       employeeCount: 120
       itStaffCount: 4
       securityStaffFte: 1
-      hasSoc: none
+      # Engineers who already run their own tooling and want eyes on it.
+      deliveryModel: client_operated
       riskTolerance: medium
       dataSensitivity: regulated
       compliance: [soc-2, gdpr]
@@ -181,7 +184,8 @@ presets:
       employeeCount: 850
       itStaffCount: 9
       securityStaffFte: 2
-      hasSoc: business_hours
+      # A real team on days. They keep the plant, we take detection and response.
+      deliveryModel: co_managed
       riskTolerance: medium
       dataSensitivity: internal
       compliance: [nis2, iso-27001-2022]
@@ -241,7 +245,8 @@ presets:
       employeeCount: 1400
       itStaffCount: 14
       securityStaffFte: 2
-      hasSoc: business_hours
+      # Two people for 300 beds, and nothing out of hours. We run it.
+      deliveryModel: mssp_managed
       riskTolerance: low
       dataSensitivity: critical
       compliance: [hipaa]
@@ -303,7 +308,8 @@ presets:
       employeeCount: 1800
       itStaffCount: 25
       securityStaffFte: 4
-      hasSoc: outsourced
+      # Four staff and a regulator. They keep identity and the network.
+      deliveryModel: co_managed
       riskTolerance: low
       dataSensitivity: critical
       compliance: [rbi-csf, pci-dss-4.0, dpdp-2023]
@@ -362,7 +368,8 @@ presets:
       employeeCount: 45
       itStaffCount: 1
       securityStaffFte: 0
-      hasSoc: none
+      # Nobody at all. The clearest managed case in the set.
+      deliveryModel: mssp_managed
       riskTolerance: medium
       dataSensitivity: internal
       compliance: []

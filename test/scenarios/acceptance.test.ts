@@ -296,7 +296,7 @@ describe('§12.4: air-gapped OT environment', () => {
     const eliminated = new Set(
       result.scores.filter((score) => score.eliminated).map((score) => score.productId),
     );
-    for (const bundle of [result.essential, result.recommended, result.ideal]) {
+    for (const bundle of [result.essential, result.recommended, result.phase2]) {
       for (const selection of bundle.selections) {
         expect(eliminated.has(selection.productId), `${selection.productId} in ${bundle.kind}`).toBe(
           false,

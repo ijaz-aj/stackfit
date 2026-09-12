@@ -32,12 +32,19 @@ const profileOf = (retainedTools: string[]) => ({
 
 describe('a tool the client already owns', () => {
   it('closes the controls it claims, instead of being reported as a gap', () => {
-    // The retail preset cannot afford backup, so nothing in the recommended
-    // stack covers it. A client who already runs Proxmox Backup Server has
-    // those controls closed: the proposal should say so rather than quote them
-    // a gap they closed years ago.
+    // The retail preset defers EDR to Phase 2, so nothing in the year-one stack
+    // covers the controls an endpoint agent closes. A client who already runs
+    // Defender for Endpoint has them closed: the proposal should say so rather
+    // than quote them a gap they closed years ago.
+    //
+    // It used to use a backup product, on the premise that the retailer could
+    // not afford backup. That stopped being true when mandate resolution was
+    // corrected: a PCI client had twelve of thirteen categories marked
+    // mandatory, the mandatory set consumed the budget before the ranking was
+    // consulted, and the freed money now reaches backup in year one. The
+    // premise moved, not the property being tested.
     const without = runScenario(profileOf([]), retailer.inventory);
-    const with_ = runScenario(profileOf(['proxmox-backup-server']), retailer.inventory);
+    const with_ = runScenario(profileOf(['microsoft-defender-for-endpoint']), retailer.inventory);
 
     const coveredIn = (result: typeof without) =>
       result.coverage.frameworks
@@ -57,7 +64,7 @@ describe('a tool the client already owns', () => {
     // A client reading "covered" has to be able to tell what they are paying
     // for from what they already have. Otherwise the coverage figure quietly
     // includes things the quote does not buy.
-    const result = runScenario(profileOf(['proxmox-backup-server']), retailer.inventory);
+    const result = runScenario(profileOf(['microsoft-defender-for-endpoint']), retailer.inventory);
     const rationale = result.coverage.frameworks
       .flatMap((framework) => framework.controls)
       .flatMap((control) => control.rationale)
@@ -72,7 +79,7 @@ describe('a tool the client already owns', () => {
     // denominator, two clients with the same obligations would be scored out of
     // different totals and §8.1's comparison would mean nothing.
     const without = runScenario(profileOf([]), retailer.inventory);
-    const with_ = runScenario(profileOf(['proxmox-backup-server']), retailer.inventory);
+    const with_ = runScenario(profileOf(['microsoft-defender-for-endpoint']), retailer.inventory);
 
     const addressable = (result: typeof without) =>
       result.coverage.frameworks.map((framework) => framework.addressableControls).join(',');
@@ -84,9 +91,9 @@ describe('a tool the client already owns', () => {
     // The analyst typed what the client said. A catalog that does not carry it
     // is StackFit's gap, not theirs, and it must not throw or silently drop the
     // rest of the list.
-    const real = runScenario(profileOf(['proxmox-backup-server']), retailer.inventory);
+    const real = runScenario(profileOf(['microsoft-defender-for-endpoint']), retailer.inventory);
     const withNoise = runScenario(
-      profileOf(['proxmox-backup-server', 'some-tool-we-have-never-heard-of']),
+      profileOf(['microsoft-defender-for-endpoint', 'some-tool-we-have-never-heard-of']),
       retailer.inventory,
     );
 
@@ -119,12 +126,7 @@ describe('a category the client already runs', () => {
       bundle.selections.filter((selection) => selection.category === 'edr').length;
 
     expect(edrIn(without.recommended)).toBeGreaterThan(0);
-    for (const bundle of [
-      keeping.recommended,
-      keeping.essential,
-      keeping.ideal,
-      keeping.operable,
-    ]) {
+    for (const bundle of [keeping.recommended, keeping.essential, keeping.phase2]) {
       expect(edrIn(bundle)).toBe(0);
     }
   });
