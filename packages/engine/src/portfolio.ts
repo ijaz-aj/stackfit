@@ -151,12 +151,39 @@ export interface Bundle {
    * a §7.4 step 7 failure and must be reported, never hidden.
    */
   readonly unfundedMandatory: readonly ProductCategory[];
+  /**
+   * Which constraint actually stopped each one.
+   *
+   * The category list alone sends an analyst into the wrong negotiation. A
+   * client whose implementation budget is exhausted does not need a bigger
+   * annual budget, and being told "that cap cannot buy compliance" next to an
+   * annual figure is how they come back with the wrong concession.
+   */
+  readonly unfundedReasons: readonly UnfundedCategory[];
   /** Annual amount by which the mandatory set exceeds the cap, if it does. */
   readonly annualShortfall: Money | null;
   /** Annual budget that would cover the mandatory set. */
   readonly minimumViableAnnual: Money | null;
+  /** One-time amount by which standing the mandatory set up exceeds the cap. */
+  readonly oneTimeShortfall: Money | null;
+  /**
+   * One-time budget that would stand the mandatory set up.
+   *
+   * A lower bound, and independent of `minimumViableAnnual`: each is the
+   * cheapest option in its own dimension, so the two figures may come from
+   * different SKUs and no single stack costs exactly both.
+   */
+  readonly minimumViableOneTime: Money | null;
   readonly mssp: MsspAlternative;
   readonly rationale: readonly string[];
+}
+
+/** Why a mandatory category has nothing in the bundle. */
+export type UnfundedReason = 'no_candidate' | 'annual_cap' | 'one_time_cap' | 'both_caps';
+
+export interface UnfundedCategory {
+  readonly category: ProductCategory;
+  readonly reason: UnfundedReason;
 }
 
 export interface PortfolioInputs {
@@ -320,6 +347,38 @@ function withinCap(amount: Money, cap: Money | null): boolean {
   return cap === null || amount.amountMinor <= cap.amountMinor;
 }
 
+/** Everything a product charges once: professional services plus training. */
+function oneTimeOf(cost: ProductCost): Money {
+  return addMoney(cost.implementationOneTime, cost.trainingOneTime);
+}
+
+/**
+ * Which cap stopped a mandatory category being funded.
+ *
+ * Asked once no candidate fits both. Each cap is tested on its own, so the
+ * answer distinguishes the three cases an analyst would act on differently:
+ * the licence is unaffordable, the implementation is unaffordable, or neither
+ * fits — including the case where some SKU clears each cap separately but none
+ * clears both, which is still a two-cap problem.
+ */
+function blockingCap(
+  scored: readonly { spendCost: Money; oneTimeCost: Money }[],
+  spend: Money,
+  oneTime: Money,
+  budget: ClientProfile['budget'],
+): UnfundedReason {
+  const anyAnnualFits = scored.some((entry) =>
+    withinCap(addMoney(spend, entry.spendCost), budget.annualCap),
+  );
+  const anyOneTimeFits = scored.some((entry) =>
+    withinCap(addMoney(oneTime, entry.oneTimeCost), budget.oneTimeCap),
+  );
+
+  if (anyAnnualFits && !anyOneTimeFits) return 'one_time_cap';
+  if (!anyAnnualFits && anyOneTimeFits) return 'annual_cap';
+  return 'both_caps';
+}
+
 interface SelectionOptions {
   readonly ignoreBudget: boolean;
   /** Categories eligible for selection at all. */
@@ -379,6 +438,7 @@ function select(
 ): {
   selections: BundleSelection[];
   unfundedMandatory: ProductCategory[];
+  unfundedReasons: UnfundedCategory[];
   annual: Money;
   spend: Money;
   oneTime: Money;
@@ -389,6 +449,7 @@ function select(
 
   const selections: BundleSelection[] = [];
   const unfundedMandatory: ProductCategory[] = [];
+  const unfundedReasons: UnfundedCategory[] = [];
   const chosenVendors = new Set<string>();
   const filledCategories = new Set<ProductCategory>();
 
@@ -442,7 +503,10 @@ function select(
         (candidate) => candidate.category === ranking.category,
       );
       if (forCategory.length === 0) {
-        if (ranking.mandatory) unfundedMandatory.push(ranking.category);
+        if (ranking.mandatory) {
+          unfundedMandatory.push(ranking.category);
+          unfundedReasons.push({ category: ranking.category, reason: 'no_candidate' });
+        }
         continue;
       }
 
@@ -515,9 +579,19 @@ function select(
         }
       });
 
-      // Take the first option that fits the remaining budget. For a mandatory
-      // category, fall back to the cheapest that fits rather than skipping it.
-      const affordable = scored.find((entry) => {
+      // The best option, in this bundle's objective order, that fits what is
+      // left of *both* caps. They are independent budgets: the annual-cheapest
+      // SKU is not always the cheapest to stand up, so a category can be
+      // affordable per year and impossible to implement.
+      //
+      // `find` already scans the whole list in objective order, so a category
+      // whose best-value option is too dear still gets a cheaper one — there is
+      // no need for, and used to be, a second "fall back to the cheapest that
+      // fits" pass for mandatory categories. That pass could never find
+      // anything: it ran only when this `find` returned nothing, which means
+      // nothing fitted both caps, which means the cheapest did not either. It
+      // read like a safety net for compliance obligations and was not one.
+      const picked = scored.find((entry) => {
         if (options.ignoreBudget) return true;
         return (
           withinCap(addMoney(spend, entry.spendCost), profile.budget.annualCap) &&
@@ -525,22 +599,14 @@ function select(
         );
       });
 
-      let picked = affordable;
-      if (picked === undefined && ranking.mandatory && !options.ignoreBudget) {
-        const cheapest = [...scored].sort(
-          (a, b) => a.spendCost.amountMinor - b.spendCost.amountMinor,
-        )[0];
-        if (
-          cheapest !== undefined &&
-          withinCap(addMoney(spend, cheapest.spendCost), profile.budget.annualCap) &&
-          withinCap(addMoney(oneTime, cheapest.oneTimeCost), profile.budget.oneTimeCap)
-        ) {
-          picked = cheapest;
-        }
-      }
-
       if (picked === undefined) {
-        if (ranking.mandatory) unfundedMandatory.push(ranking.category);
+        if (ranking.mandatory) {
+          unfundedMandatory.push(ranking.category);
+          unfundedReasons.push({
+            category: ranking.category,
+            reason: blockingCap(scored, spend, oneTime, profile.budget),
+          });
+        }
         continue;
       }
 
@@ -628,7 +694,7 @@ function select(
     }
   }
 
-  return { selections, unfundedMandatory, annual, spend, oneTime };
+  return { selections, unfundedMandatory, unfundedReasons, annual, spend, oneTime };
 }
 
 /**
@@ -779,9 +845,28 @@ function buildBundle(
     }),
   );
 
+  // The same floor in the other dimension. Standing a stack up is a separate
+  // budget with a separate cap, and a mandatory set can be comfortably
+  // affordable per year while being impossible to implement.
+  const mandatoryOneTimeFloor = sumMoney(
+    currency,
+    mandatoryCategories.map((ranking) => {
+      const forCategory = candidates.filter((candidate) => candidate.category === ranking.category);
+      const cheapest = [...forCategory].sort(
+        (a, b) => oneTimeOf(a.cost).amountMinor - oneTimeOf(b.cost).amountMinor,
+      )[0];
+      return cheapest === undefined ? zeroMoney(currency) : oneTimeOf(cheapest.cost);
+    }),
+  );
+
   const cap = profile.budget.annualCap;
+  const oneTimeCap = profile.budget.oneTimeCap;
   const mandatoryUnaffordable =
     cap !== null && mandatoryFloor.amountMinor > cap.amountMinor && mandatoryCategories.length > 0;
+  const mandatoryUnimplementable =
+    oneTimeCap !== null &&
+    mandatoryOneTimeFloor.amountMinor > oneTimeCap.amountMinor &&
+    mandatoryCategories.length > 0;
 
   const rationale: string[] = [];
   switch (kind) {
@@ -815,8 +900,34 @@ function buildBundle(
   if (mandatoryUnaffordable) {
     rationale.push(
       `The cheapest acceptable option for every mandatory category totals ` +
-        `${mandatoryFloor.amountMinor / 100} ${currency} a year, against a stated cap of ` +
+        `${mandatoryFloor.amountMinor / 100} ${currency} a year, against a stated annual cap of ` +
         `${(cap?.amountMinor ?? 0) / 100} ${currency}. That cap cannot buy compliance.`,
+    );
+  }
+  if (mandatoryUnimplementable) {
+    rationale.push(
+      `Standing up the cheapest acceptable option for every mandatory category costs ` +
+        `${mandatoryOneTimeFloor.amountMinor / 100} ${currency} once, against a stated one-time ` +
+        `cap of ${(oneTimeCap?.amountMinor ?? 0) / 100} ${currency}. The implementation budget ` +
+        'cannot stand this stack up, whatever the annual budget is.',
+    );
+  }
+
+  // The sentence that stops the wrong negotiation. Naming the categories is not
+  // enough: "we could not fund EDR" reads as a licence problem, and an analyst
+  // who goes back for a bigger annual budget gets it, changes nothing, and has
+  // spent the concession they had.
+  const blockedByOneTime = result.unfundedReasons.filter(
+    (entry) => entry.reason === 'one_time_cap',
+  );
+  if (blockedByOneTime.length > 0 && oneTimeCap !== null) {
+    rationale.push(
+      `⚠ ${blockedByOneTime.map((entry) => entry.category).join(', ')} ` +
+        `${blockedByOneTime.length === 1 ? 'was' : 'were'} stopped by the ONE-TIME cap, not the ` +
+        `annual one: ${result.oneTime.amountMinor / 100} of ` +
+        `${oneTimeCap.amountMinor / 100} ${currency} implementation budget is already committed. ` +
+        'A bigger annual budget will not fund them; a bigger implementation budget, or fewer ' +
+        'tools to stand up, is the conversation to have.',
     );
   }
   if (mandatoryWithoutCandidates.length > 0) {
@@ -844,6 +955,13 @@ function buildBundle(
         'operational people are counted. The budget cap is judged against spend, because a stated ' +
         'security budget is a procurement figure; the people are constrained separately, below.',
     );
+    if (oneTimeCap !== null) {
+      rationale.push(
+        `One-time cost to stand this up: ${result.oneTime.amountMinor / 100} ${currency} against ` +
+          `a cap of ${oneTimeCap.amountMinor / 100} ${currency}. Implementation is a separate ` +
+          'budget from the annual one and runs out separately.',
+      );
+    }
     rationale.push(
       `Bundle needs ${round(totalOpsFte, 2)} FTE to run against ${profile.securityStaffFte} available.`,
     );
@@ -867,8 +985,14 @@ function buildBundle(
     withinAnnualCap: withinCap(result.spend, profile.budget.annualCap),
     withinOneTimeCap: withinCap(result.oneTime, profile.budget.oneTimeCap),
     unfundedMandatory: result.unfundedMandatory,
+    unfundedReasons: result.unfundedReasons,
     annualShortfall: mandatoryUnaffordable && cap !== null ? subtractMoney(mandatoryFloor, cap) : null,
     minimumViableAnnual: mandatoryCategories.length > 0 ? mandatoryFloor : null,
+    oneTimeShortfall:
+      mandatoryUnimplementable && oneTimeCap !== null
+        ? subtractMoney(mandatoryOneTimeFloor, oneTimeCap)
+        : null,
+    minimumViableOneTime: mandatoryCategories.length > 0 ? mandatoryOneTimeFloor : null,
     mssp: msspAlternative(inputs, result.selections),
     rationale,
   };

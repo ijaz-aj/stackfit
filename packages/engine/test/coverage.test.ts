@@ -148,8 +148,11 @@ function bundleOf(
     withinAnnualCap: true,
     withinOneTimeCap: true,
     unfundedMandatory: [],
+    unfundedReasons: [],
     annualShortfall: null,
     minimumViableAnnual: null,
+    oneTimeShortfall: null,
+    minimumViableOneTime: null,
     mssp: {
       monthly: zero,
       annual: zero,

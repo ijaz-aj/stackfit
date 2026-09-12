@@ -1,4 +1,9 @@
-import { coverageOfBundle, type Bundle, type PipelineResult } from '@stackfit/engine';
+import {
+  coverageOfBundle,
+  type Bundle,
+  type PipelineResult,
+  type UnfundedCategory,
+} from '@stackfit/engine';
 import type { CurrencyCode, Money, ProductCategory, ScaleClass } from '@stackfit/schema';
 
 /**
@@ -31,9 +36,13 @@ export interface BundleSummary {
   readonly tco: Money;
   readonly totalOpsFte: number;
   readonly withinAnnualCap: boolean;
+  readonly withinOneTimeCap: boolean;
   readonly annualShortfall: Money | null;
   readonly minimumViableAnnual: Money | null;
+  readonly oneTimeShortfall: Money | null;
+  readonly minimumViableOneTime: Money | null;
   readonly unfundedMandatory: readonly ProductCategory[];
+  readonly unfundedReasons: readonly UnfundedCategory[];
   readonly msspTotalAnnual: Money;
   readonly msspServiceLevel: string;
   readonly coveragePercent: number | null;
@@ -84,9 +93,13 @@ function summariseBundle(result: PipelineResult, bundle: Bundle): BundleSummary 
     tco: bundle.tco,
     totalOpsFte: bundle.totalOpsFte,
     withinAnnualCap: bundle.withinAnnualCap,
+    withinOneTimeCap: bundle.withinOneTimeCap,
     annualShortfall: bundle.annualShortfall,
     minimumViableAnnual: bundle.minimumViableAnnual,
+    oneTimeShortfall: bundle.oneTimeShortfall,
+    minimumViableOneTime: bundle.minimumViableOneTime,
     unfundedMandatory: bundle.unfundedMandatory,
+    unfundedReasons: bundle.unfundedReasons,
     msspTotalAnnual: bundle.mssp.totalAnnual,
     msspServiceLevel: bundle.mssp.serviceLevel,
     coveragePercent: coverageOfBundle(result, bundle).summary.coveragePercent,

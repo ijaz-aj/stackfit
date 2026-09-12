@@ -92,21 +92,51 @@ export default async function ResultsPage({
           {bundle.annualShortfall !== null && (
             <Badge tone="bad">shortfall {formatMoney(bundle.annualShortfall)}/yr</Badge>
           )}
+          {bundle.oneTimeShortfall !== null && (
+            <Badge tone="bad">setup shortfall {formatMoney(bundle.oneTimeShortfall)}</Badge>
+          )}
           <Badge tone={bundle.withinAnnualCap ? 'good' : 'warn'}>
             {bundle.withinAnnualCap ? 'within budget' : 'over budget'}
           </Badge>
+          {/* The implementation budget is a separate cap and runs out separately.
+              It was computed and never shown, so a stack blocked by it looked
+              simply unaffordable. */}
+          {!bundle.withinOneTimeCap && <Badge tone="warn">over setup budget</Badge>}
         </div>
       </header>
 
-      {bundle.annualShortfall !== null && (
+      {/* Two independent caps, so two independent shortfalls. Showing only the
+          annual one sent the analyst back for a bigger annual budget when the
+          implementation budget was what had run out. */}
+      {(bundle.annualShortfall !== null || bundle.oneTimeShortfall !== null) && (
         <div className="border-bad/40 bg-bad/10 rounded border px-3 py-2">
           <p className="text-bad text-[12px] leading-snug">
-            The stated budget does not cover what compliance makes mandatory. Shortfall{' '}
-            {formatMoney(bundle.annualShortfall)}/yr
-            {bundle.minimumViableAnnual !== null && (
-              <>; the minimum viable annual budget is {formatMoney(bundle.minimumViableAnnual)}</>
+            The stated budget does not cover what compliance makes mandatory.
+            {bundle.annualShortfall !== null && (
+              <>
+                {' '}
+                Annual shortfall {formatMoney(bundle.annualShortfall)}/yr
+                {bundle.minimumViableAnnual !== null && (
+                  <>; the minimum viable annual budget is {formatMoney(bundle.minimumViableAnnual)}</>
+                )}
+                .
+              </>
             )}
-            . This is reported rather than resolved by quietly recommending a stack that fails the
+            {bundle.oneTimeShortfall !== null && (
+              <>
+                {' '}
+                One-time shortfall {formatMoney(bundle.oneTimeShortfall)}
+                {bundle.minimumViableOneTime !== null && (
+                  <>
+                    ; standing the mandatory set up costs at least{' '}
+                    {formatMoney(bundle.minimumViableOneTime)}
+                  </>
+                )}
+                . Implementation is a separate budget from the annual one, and a bigger annual
+                budget will not fix it.
+              </>
+            )}{' '}
+            This is reported rather than resolved by quietly recommending a stack that fails the
             obligation.
           </p>
         </div>

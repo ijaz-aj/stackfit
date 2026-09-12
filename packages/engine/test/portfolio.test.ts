@@ -141,6 +141,8 @@ const msspCard: MsspRateCard = {
 interface Scenario {
   readonly products: readonly Product[];
   readonly annualCap?: number | null;
+  /** Implementation budget. Independent of the annual cap, and binds separately. */
+  readonly oneTimeCap?: number | null;
   readonly frameworks?: readonly Framework[];
   readonly inventory?: AssetInventory;
   readonly securityStaffFte?: number;
@@ -152,7 +154,10 @@ function buildInputs(scenario: Scenario): PortfolioInputs {
     securityStaffFte: scenario.securityStaffFte ?? 3,
     budget: {
       annualCap: scenario.annualCap === undefined ? null : scenario.annualCap === null ? null : usd(scenario.annualCap),
-      oneTimeCap: null,
+      oneTimeCap:
+        scenario.oneTimeCap === undefined || scenario.oneTimeCap === null
+          ? null
+          : usd(scenario.oneTimeCap),
       currency: 'USD',
       horizonYears: 3,
     },
@@ -276,6 +281,90 @@ describe('step 7 — the budget that cannot buy compliance', () => {
     );
     expect(recommended.unfundedMandatory).toEqual([]);
     expect(recommended.selections.map((s) => s.category)).toContain('siem');
+  });
+
+  it('blames the one-time cap when the one-time cap is what bound', () => {
+    // Found on the retail preset, which is the first thing the home page
+    // offers. Seven mandatory categories were unfunded with two thirds of the
+    // annual cap unspent, and the only explanation offered named the annual
+    // cap — so the analyst goes back to the client for a bigger annual budget,
+    // gets it, and nothing changes.
+    //
+    // A generous annual cap and a tight implementation one: the licence is
+    // affordable many times over and standing it up is not.
+    const { recommended } = buildPortfolio(
+      buildInputs({
+        products: [product('siem-a', 'siem', 100_000)],
+        frameworks: [pciMandatingSiem],
+        annualCap: 500_000_00,
+        oneTimeCap: 1_00,
+      }),
+    );
+
+    expect(recommended.unfundedMandatory).toContain('siem');
+    expect(recommended.unfundedReasons).toContainEqual({
+      category: 'siem',
+      reason: 'one_time_cap',
+    });
+
+    const rationale = recommended.rationale.join(' ');
+    expect(rationale).toContain('ONE-TIME cap, not the annual one');
+    // The annual cap is not the problem here and must not be named as one.
+    expect(rationale).not.toContain('That cap cannot buy compliance');
+  });
+
+  it('separates the two shortfalls rather than reporting one number', () => {
+    const { recommended } = buildPortfolio(
+      buildInputs({
+        products: [product('siem-a', 'siem', 100_000)],
+        frameworks: [pciMandatingSiem],
+        annualCap: 500_000_00,
+        oneTimeCap: 1_00,
+      }),
+    );
+
+    // Affordable per year, unaffordable to stand up. One figure covering both
+    // would have to be wrong about one of them.
+    expect(recommended.annualShortfall).toBeNull();
+    expect(recommended.oneTimeShortfall).not.toBeNull();
+    expect(recommended.minimumViableOneTime?.amountMinor).toBeGreaterThan(0);
+  });
+
+  it('passes over a cheap SKU it cannot implement for a dearer one it can', () => {
+    // The two caps are independent, so the cheapest licence is not always the
+    // buyable one. A 500-day implementation blows a modest one-time budget
+    // however little the licence costs, and the category must still be funded
+    // from what is left of the list rather than reported as unfundable.
+    const cheapLicenceHugeSetup: Product = {
+      ...product('siem-cheap', 'siem', 10_000),
+      implementation: {
+        effortDays: 500,
+        skillLevel: 'generalist',
+        typicalWeeks: 52,
+        confidence: 'analyst_estimate',
+      },
+    };
+    const dearerLicenceQuickSetup: Product = {
+      ...product('siem-quick', 'siem', 90_000, 'Vendor B'),
+      implementation: {
+        effortDays: 1,
+        skillLevel: 'generalist',
+        typicalWeeks: 1,
+        confidence: 'analyst_estimate',
+      },
+    };
+
+    const { recommended } = buildPortfolio(
+      buildInputs({
+        products: [cheapLicenceHugeSetup, dearerLicenceQuickSetup],
+        frameworks: [pciMandatingSiem],
+        annualCap: 500_000_00,
+        oneTimeCap: 50_000_00,
+      }),
+    );
+
+    expect(recommended.unfundedMandatory).toEqual([]);
+    expect(recommended.selections.map((selection) => selection.productId)).toContain('siem-quick');
   });
 
   it('does not let a framework mandate a category the estate has nothing for', () => {

@@ -414,6 +414,21 @@ function costs(inputs: ProposalInputs): ProposalSection {
     });
   }
 
+  // A separate callout, not a clause in the one above. The reader's response to
+  // each is different — one is a recurring budget conversation, the other a
+  // one-off project-funding one — and a proposal that blurs them invites the
+  // client to solve the wrong problem.
+  if (recommended.oneTimeShortfall !== null) {
+    blocks.push({
+      kind: 'callout',
+      tone: 'warning',
+      text:
+        'Standing up the required controls costs more than the stated one-time budget. This is ' +
+        'a separate constraint from the annual one: raising the recurring budget does not pay ' +
+        'for the implementation, and the figure below is what it would take.',
+    });
+  }
+
   const mssp = recommended.mssp;
   const serviceLevel = SERVICE_LEVEL_LABELS[mssp.serviceLevel] ?? mssp.serviceLevel;
 

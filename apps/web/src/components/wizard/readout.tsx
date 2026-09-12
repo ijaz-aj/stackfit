@@ -1,10 +1,20 @@
 'use client';
 
-import type { SizingResult } from '@stackfit/engine';
+import type { SizingResult, UnfundedCategory } from '@stackfit/engine';
 
 import { Badge, Stat } from '@/components/ui';
 import type { EstimateSummary } from '@/lib/estimate';
 import { formatMoney, formatNumber } from '@/lib/format';
+
+/**
+ * Whether the implementation budget, rather than the annual one, is what left a
+ * mandatory category out. Worth a clause of its own in the sidebar: it is the
+ * difference between asking the client for more money and asking them for a
+ * different kind of money.
+ */
+function blockedByOneTimeCap(reasons: readonly UnfundedCategory[]): boolean {
+  return reasons.some((entry) => entry.reason === 'one_time_cap');
+}
 
 /**
  * The live readout (PROJECT_SPEC §9): "estimated ingest / estimated budget,
@@ -112,7 +122,10 @@ export function LiveReadout({
               </ul>
             )}
 
-            {!estimate.recommended.withinAnnualCap && estimate.recommended.annualShortfall !== null && (
+            {/* Not gated on withinAnnualCap. A shortfall is the case where the
+                bundle *underspends* because it could not buy compliance, so the
+                cap is comfortably met and the warning never appeared. */}
+            {estimate.recommended.annualShortfall !== null && (
               <p className="text-warn text-[11px] leading-snug">
                 Shortfall of {formatMoney(estimate.recommended.annualShortfall)}/yr against the cap.
                 {estimate.recommended.minimumViableAnnual !== null && (
@@ -121,9 +134,19 @@ export function LiveReadout({
               </p>
             )}
 
+            {estimate.recommended.oneTimeShortfall !== null && (
+              <p className="text-warn text-[11px] leading-snug">
+                Setup shortfall of {formatMoney(estimate.recommended.oneTimeShortfall)} against the
+                one-time cap. Implementation is a separate budget.
+              </p>
+            )}
+
             {estimate.recommended.unfundedMandatory.length > 0 && (
               <p className="text-bad text-[11px] leading-snug">
                 Unfunded mandatory: {estimate.recommended.unfundedMandatory.join(', ')}
+                {blockedByOneTimeCap(estimate.recommended.unfundedReasons) && (
+                  <> — stopped by the one-time budget, not the annual one.</>
+                )}
               </p>
             )}
 
