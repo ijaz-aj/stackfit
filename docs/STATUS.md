@@ -680,6 +680,21 @@ working as intended: 10 to 15 points on a dimension weighted 10 tilts a ranking
 without overturning it. What changed is that the reason each product scored what
 it did is now true, and on the card.
 
+- 2026-09-12 — **The fit score had no working shown, and §9 forbids that.**
+  Found while checking that the new deployment rationale reached the screen: it
+  did not, and neither did any of the other six. The category card rendered
+  `fit 94.3/100` as a badge, and nothing in `apps/web` read `ProductScore.
+  dimensions` at all — the sentences every dimension has carried since Phase 4
+  existed only in the engine's output. §9 is explicit: *"if you cannot render a
+  rationale for a number, do not render the number."* A folded `<details>` per
+  card now shows each dimension, its score, the weight actually used after any
+  procurement-bias adjustment, its contribution, and the engine's own sentence.
+  Native `<details>`, so it costs no client JavaScript.
+- 2026-09-12 — **The rationale built its prose by swapping underscores for
+  spaces**, which read as "this is a on prem centric environment" the moment it
+  was on screen. One phrase per estate shape in code now. It is wording, not a
+  tunable, so it does not belong in `data/config/`.
+
 **The pattern, for the fifth time:** a rule established in one stage
 (*infrastructure decides what an unregulated client should buy*, Phase 3d) had
 not been carried into the next. Phase 4's review named this exact failure mode
