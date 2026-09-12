@@ -248,3 +248,87 @@ describe('a verdict never says something a reader can disprove', () => {
     }
   });
 });
+
+describe('tiers of one product', () => {
+  // Tiers differ in what they licence, not in how well they fit an estate, so
+  // they score identically far more often than not. Running each through the
+  // normal comparison produced rows of literally identical text — the
+  // email-security table carried seven of them, all reading "Scores 97.7
+  // against 100 — widest gap on scale fit, 2.3 points."
+  /**
+   * One product, three tiers, identical fit and rising price — the shape that
+   * produced seven identical rows. `buildProduct` ships a single tier, so the
+   * tier list is replaced rather than passed as an override.
+   */
+  function tiered(id: string, category: ProductCategory): Product {
+    const base = buildProduct({ id });
+    return {
+      ...base,
+      category,
+      name: id,
+      vendor: `${id} Inc.`,
+      supports: { ...base.supports, deviceClasses: ['server', 'workstation'] },
+      opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+      tiers: [
+        { id: 'basic', name: 'Basic', price: 1_000_00 },
+        { id: 'plus', name: 'Plus', price: 2_000_00 },
+        { id: 'max', name: 'Max', price: 3_000_00 },
+      ].map((tier) => ({
+        id: tier.id,
+        name: tier.name,
+        capabilities: [],
+        pricing: [
+          {
+            model: 'flat_tiered' as const,
+            tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(tier.price) }],
+            termYears: 1,
+            pricingConfidence: 'public_list' as const,
+            sources: [{ url: 'https://example.com/pricing', asOf: '2026-01-01' }],
+            refresh: { method: 'manual' as const, url: 'https://example.com/pricing', note: 'test fixture' },
+          },
+        ],
+      })),
+    } as Product;
+  }
+
+  it('describes a second tier against its sibling, not against the selection', () => {
+    const result = run([product('siem-win', 'siem', 100_00), tiered('siem-tiered', 'siem')]);
+    const siem = justify(result).find((entry) => entry.category === 'siem');
+    const tiers = (siem?.alternatives ?? []).filter(
+      (entry) => entry.productId === 'siem-tiered' && entry.kind !== 'eliminated',
+    );
+
+    expect(tiers.length).toBeGreaterThan(1);
+
+    // The first keeps the full comparison against the winner.
+    expect(tiers[0]?.kind).not.toBe('sibling_tier');
+
+    // The rest talk about the tier, which is the only thing separating them.
+    for (const sibling of tiers.slice(1)) {
+      expect(sibling.kind).toBe('sibling_tier');
+      expect(sibling.verdict).toContain('Same product as');
+      expect(sibling.decidingDimension).toBeNull();
+    }
+  });
+
+  it('no longer repeats one sentence down a whole category', () => {
+    // The defect, stated as the property that was violated.
+    const result = run([product('siem-win', 'siem', 100_00), tiered('siem-tiered', 'siem')]);
+    const siem = justify(result).find((entry) => entry.category === 'siem');
+    const verdicts = (siem?.alternatives ?? [])
+      .filter((entry) => entry.kind !== 'eliminated')
+      .map((entry) => entry.verdict);
+
+    expect(new Set(verdicts).size, `repeated: ${verdicts.join(' | ')}`).toBe(verdicts.length);
+  });
+
+  it('says the upgrade buys nothing when it measurably does not', () => {
+    // The row an analyst quotes when a client asks why not the dearer edition.
+    const result = run([product('siem-win', 'siem', 100_00), tiered('siem-tiered', 'siem')]);
+    const siem = justify(result).find((entry) => entry.category === 'siem');
+    const sibling = (siem?.alternatives ?? []).find((entry) => entry.kind === 'sibling_tier');
+
+    expect(sibling?.verdict).toContain('a year more');
+    expect(sibling?.verdict).toContain('Nothing it adds is measurable');
+  });
+});

@@ -21,6 +21,8 @@
 
 import type { Money, ProductCategory, ScoringDimension } from '@stackfit/schema';
 
+import { moneyInWords } from './money';
+
 import type { Bundle, BundleSelection, Candidate } from './portfolio';
 import { CATEGORY_LABELS } from './proposal';
 import type { ProductScore } from './scoring';
@@ -34,7 +36,15 @@ export type VerdictKind =
   /** Scored as well or better, but costs more for it. */
   | 'costs_more'
   /** Scored and priced comparably; only one product per category is funded. */
-  | 'not_preferred';
+  | 'not_preferred'
+  /**
+   * Another SKU of a product already listed above.
+   *
+   * It loses to the selection for whatever reason that product loses, which
+   * the first tier has already said. What this row adds is what the *tier*
+   * costs, which is the only thing that separates it from its sibling.
+   */
+  | 'sibling_tier';
 
 export interface AlternativeVerdict {
   readonly productId: string;
@@ -210,6 +220,53 @@ function verdictFor(
 }
 
 /**
+ * A tier of a product that is already in the list, described against that
+ * sibling rather than against the selection.
+ *
+ * Tiers of one product score identically far more often than not — they differ
+ * in what they licence, not in how well they fit an estate — so running each
+ * one through the normal comparison produced rows of literally identical text.
+ * The email-security table carried seven of them, all reading "Scores 97.7
+ * against 100 — widest gap on scale fit, 2.3 points." Seven rows, one fact,
+ * in a document a client reads.
+ *
+ * The tier difference is the thing worth stating: what the upgrade costs, and
+ * whether it buys anything measurable for this estate. Where it buys nothing,
+ * saying so is more useful than the fit comparison it replaces — that is the
+ * row an analyst quotes when a client asks why not the dearer edition.
+ */
+function siblingTierVerdict(
+  sibling: AlternativeVerdict,
+  fitScore: number,
+  spend: Money | null,
+): string {
+  const fitGap = round(fitScore - sibling.fitScore, 1);
+  const priced =
+    spend === null || sibling.annualSpend === null
+      ? null
+      : spend.amountMinor - sibling.annualSpend.amountMinor;
+
+  const money =
+    priced === null || priced === 0
+      ? 'the same price'
+      : `${moneyInWords({
+          amountMinor: Math.abs(priced),
+          currency: (spend as Money).currency,
+        })} a year ${priced > 0 ? 'more' : 'less'}`;
+
+  if (fitGap === 0) {
+    return (
+      `Same product as ${sibling.tierName}, at ${money}. Nothing it adds is measurable on this ` +
+      'estate, so the cheaper SKU is the honest line to quote.'
+    );
+  }
+
+  return fitGap > 0
+    ? `Same product as ${sibling.tierName}: ${fitGap} point(s) better fit for ${money}.`
+    : `Same product as ${sibling.tierName}: ${-fitGap} point(s) worse fit, at ${money}.`;
+}
+
+/**
  * One justification per funded category.
  *
  * Every scored SKU in the category appears except the winning one, eliminated
@@ -279,16 +336,41 @@ function justifyOne(selection: BundleSelection, inputs: JustificationInputs): Ca
       (a, b) =>
         Number(a.kind === 'eliminated') - Number(b.kind === 'eliminated') ||
         b.fitScore - a.fitScore ||
-        a.productId.localeCompare(b.productId),
+        // Tiers of one product stay together, so the sibling a row is compared
+        // against is always the one directly above it.
+        a.productId.localeCompare(b.productId) ||
+        (a.annualSpend?.amountMinor ?? 0) - (b.annualSpend?.amountMinor ?? 0),
     );
 
-  const contenders = alternatives.filter((entry) => entry.kind !== 'eliminated').length;
-  const ruledOut = alternatives.length - contenders;
+  // Done after sorting, because "the tier already listed" only means anything
+  // once the order is fixed.
+  const firstOfProduct = new Map<string, AlternativeVerdict>();
+  const described = alternatives.map((entry): AlternativeVerdict => {
+    if (entry.kind === 'eliminated') return entry;
+
+    const sibling = firstOfProduct.get(entry.productId);
+    if (sibling === undefined) {
+      firstOfProduct.set(entry.productId, entry);
+      return entry;
+    }
+
+    return {
+      ...entry,
+      kind: 'sibling_tier',
+      // The deciding dimension belonged to the comparison against the
+      // selection, which this row no longer makes.
+      decidingDimension: null,
+      verdict: siblingTierVerdict(sibling, entry.fitScore, entry.annualSpend),
+    };
+  });
+
+  const contenders = described.filter((entry) => entry.kind !== 'eliminated').length;
+  const ruledOut = described.length - contenders;
   const named = inputs.productNames.get(selection.productId);
   const selectedName = named === undefined ? selection.productId : named.name;
 
   const headline =
-    alternatives.length === 0
+    described.length === 0
       ? `${selectedName} was the only option in this category for this client.`
       : `${selectedName} (${selection.tierName}) was chosen from ${alternatives.length + 1} SKUs ` +
         `considered: ${contenders} scored against it` +
@@ -302,8 +384,8 @@ function justifyOne(selection: BundleSelection, inputs: JustificationInputs): Ca
     selectedTierId: selection.tierId,
     selectedProductName: selectedName,
     selectedFitScore: round(winner === undefined ? selection.fitScore : winner.score, 1),
-    consideredCount: alternatives.length + 1,
+    consideredCount: described.length + 1,
     headline,
-    alternatives,
+    alternatives: described,
   };
 }
