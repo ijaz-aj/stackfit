@@ -27,7 +27,7 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
     <div className="flex flex-col gap-3">
       <Card
         title="Gap analysis"
-        hint={`${gaps.length} control(s) a purchase could satisfy that this bundle does not. Worst first.`}
+        hint={`${gaps.length} ${gaps.length === 1 ? 'control' : 'controls'} a purchase could satisfy that this bundle does not. Worst first.`}
       >
         {gaps.length === 0 ? (
           <p className="text-good text-sm">
@@ -165,8 +165,9 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
       {coverage.unclosableGaps.length > 0 && (
         <Card title="What StackFit cannot close">
           <p className="text-muted text-sm leading-snug">
-            {coverage.unclosableGaps.length} gap(s) have no product in this catalog that could close
-            them for this client: {coverage.unclosableGaps.join(', ')}.
+            {coverage.unclosableGaps.length}{' '}
+            {coverage.unclosableGaps.length === 1 ? 'gap has' : 'gaps have'} no product in this
+            catalog that could close them for this client: {coverage.unclosableGaps.join(', ')}.
           </p>
           <p className="text-faint mt-1 text-xs leading-snug">
             A gap in the catalog, not in the client: no product here claims the control, or no

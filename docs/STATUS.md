@@ -1511,6 +1511,34 @@ What follows is the honest scorecard, including where the sources are weak.
   organisation size, dedicated IT staff, security resourcing. The blocker is
   recorded in `data/frameworks/cis-v8.yaml`: IGs select *Safeguards* and the
   file is held at Control level, so IG filtering arrives when Safeguards do.
+- **A blank intake produced a thirteen-product recommendation and said nothing.**
+  Found 2026-09-13, from the question "how are EPS, GB/day and storage
+  calculated when I start a blank project". The arithmetic was right: every
+  sizing figure is correctly zero, and `sizing.ts` has always said so in its
+  rationale ("an empty inventory, not a small environment"). Nothing downstream
+  could read a rationale string, so the portfolio funded thirteen products, the
+  cost engine put a three-year TCO on them, and the proposal's opening sentence
+  read "operates an estate of 0 monitored assets ... This proposal recommends
+  13 security controls, costed over 3 years" in the document that goes to a
+  client. Only the wizard sidebar warned; the results page, which is the screen
+  an analyst turns toward a client and the one the exports are built from, said
+  nothing at all.
+  `SizingResult.estateCaptured` now carries the fact rather than the prose.
+  `scaleClass` still answers `small` for an empty inventory, and has to: products
+  declare their support in those four bands. The two questions are different and
+  now have two answers. Warned in every bundle, in the proposal, and on the
+  results page. `test/empty-estate.test.ts`.
+- **Storage was reported in a unit that does not exist.** `GB_per_day` is
+  bytes/1e9, decimal, which is right: it is what SIEM vendors price ingest in.
+  TB was 1024 of those, which is neither TB nor TiB: 2.3% under a real TB and
+  7.4% over a real TiB. PROJECT_SPEC §7.1 carried the same `/1024` and has been
+  corrected with the code, because a spec and an implementation that disagree is
+  worse than either alone. Effect on TCO is 0.01 to 0.03%, and only on
+  self-hosted products, which are the only ones carrying storage-derived infra
+  cost. The six worked-example snapshots moved and were regenerated; no
+  acceptance test pins storage.
+  Worth noting why it survived: at 2.3% it was never large enough to look wrong
+  next to `averageEventBytes`, which is a 300 to 800 byte range.
 - ⚠ **Domain-controller and workstation EPS look understated.** Published
   rules of thumb cite 300–500 EPS for a domain controller and 1–5 for a
   workstation, against our 25 and 0.2. Some of the gap closes against our

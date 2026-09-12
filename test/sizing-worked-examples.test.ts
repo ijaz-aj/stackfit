@@ -97,7 +97,7 @@ describe('Worked example A: small retail chain, 40 stores, PCI DSS', () => {
         "monitoredAssets": 100,
         "retentionDays": 365,
         "scaleClass": "small",
-        "storageTb": 2.025,
+        "storageTb": 2.073,
       }
     `);
   });
@@ -159,7 +159,7 @@ describe('Worked example B: mid-sized professional services firm', () => {
         "monitoredAssets": 374,
         "retentionDays": 90,
         "scaleClass": "mid",
-        "storageTb": 1.299,
+        "storageTb": 1.33,
       }
     `);
   });
@@ -223,7 +223,7 @@ describe('Worked example C: large manufacturer with an OT estate', () => {
         "monitoredAssets": 2576,
         "retentionDays": 90,
         "scaleClass": "large",
-        "storageTb": 4.795,
+        "storageTb": 4.91,
       }
     `);
   });

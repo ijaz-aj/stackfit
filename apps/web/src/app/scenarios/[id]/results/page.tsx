@@ -132,6 +132,30 @@ export default async function ResultsPage({
         </div>
       </header>
 
+      {/*
+        The first thing on the page when there is nothing to protect.
+
+        The wizard's live readout has always said this; the results page, which
+        is the screen an analyst actually turns toward a client and the one the
+        exports are generated from, said nothing at all. A thirteen-product
+        stack and a three-year TCO for an estate of zero read exactly like a
+        recommendation.
+      */}
+      {!result.sizing.estateCaptured && (
+        <div className="border-warn/40 bg-warn/10 rounded-(--radius-card) border px-4 py-3">
+          <p className="text-warn text-sm font-medium">No estate has been captured yet.</p>
+          <p className="text-muted measure mt-1 text-sm leading-relaxed">
+            Every figure on this page is arithmetic on zero assets: the floor cost of owning these
+            tools rather than the cost of protecting anything. Nothing here is a recommendation
+            until the inventory is filled in.{' '}
+            <Link href={`/scenarios/${id}`} className="text-accent">
+              Go to the estate step
+            </Link>
+            .
+          </p>
+        </div>
+      )}
+
       {/* Two independent caps, so two independent shortfalls. Showing only the
           annual one sent the analyst back for a bigger annual budget when the
           implementation budget was what had run out. */}

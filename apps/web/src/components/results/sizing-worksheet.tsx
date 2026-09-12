@@ -116,7 +116,10 @@ export function SizingWorksheet({
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {overriddenCount > 0 ? (
-          <Badge tone="warn">{overriddenCount} assumption(s) overridden for this client</Badge>
+          <Badge tone="warn">
+            {overriddenCount} {overriddenCount === 1 ? 'assumption' : 'assumptions'} overridden for
+            this client
+          </Badge>
         ) : (
           <Badge>committed defaults</Badge>
         )}

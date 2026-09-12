@@ -198,8 +198,13 @@ Derives ingest volume and scale class from the asset inventory. This drives SIEM
 EPS_total   = Σ (assetCount[type] × eps_per_asset[type] × verbosity_factor)
 GB_per_day  = EPS_total × 86400 × avg_event_bytes / 1e9
 Licensed_GB = GB_per_day × peak_factor
-Storage_TB  = GB_per_day × retention_days × (1 - compression_ratio) / 1024
+Storage_TB  = GB_per_day × retention_days × (1 - compression_ratio) / 1000
 ```
+
+Both divisors are decimal. `GB_per_day` is bytes/1e9, so a TB is 1000 of them. The formula
+read `/1024` until 2026-09-13, which divided a decimal gigabyte by a binary thousand and
+produced a unit that is neither: 2.3% under a real TB and 7.4% over a real TiB. Storage is
+bought in decimal TB, so that is what this reports.
 
 All coefficients (`eps_per_asset`, `avg_event_bytes`, `peak_factor`, `compression_ratio`, `verbosity_factor`) live in `data/config/sizing-assumptions.yaml` with a comment on where each came from. They are **tunable in the UI** via an "advanced sizing" panel, because these defaults will be wrong for some clients and the analyst needs to override them.
 

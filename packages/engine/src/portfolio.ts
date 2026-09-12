@@ -1042,6 +1042,20 @@ function buildBundle(
 
   const rationale: string[] = [];
 
+  // First, and in every bundle, because everything after it is arithmetic on
+  // zero. The sizing stage has always known this and said so in its own
+  // rationale; nothing downstream could read prose, so a blank intake produced
+  // a thirteen-product recommendation and a three-year TCO with no hint that
+  // the estate it protects is empty.
+  if (!inputs.sizing.estateCaptured) {
+    rationale.push(
+      '⚠ No asset counts have been captured, so this is not a recommendation yet. Every figure ' +
+        'below is the floor cost of owning these tools, the minimum infrastructure and the people ' +
+        'to run them, against an estate of nothing. Capture the inventory before any of it is ' +
+        'read as advice.',
+    );
+  }
+
   // Said in every bundle, because a category vanishing from the quote without
   // explanation is a worse answer than quoting it twice. This line is also what
   // carries the fact into the proposal exports, which render the same rationale.

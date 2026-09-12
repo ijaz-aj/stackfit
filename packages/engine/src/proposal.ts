@@ -237,14 +237,41 @@ function executiveSummary(inputs: ProposalInputs): ProposalSection {
   const inScope = coverage.frameworks.filter((framework) => framework.inScope);
   const blocks: ProposalBlock[] = [];
 
+  /*
+   * Before anything else, and before the summary sentence can contradict
+   * itself.
+   *
+   * With a blank intake this section opened "operates an estate of 0 monitored
+   * assets ... This proposal recommends 13 security controls, costed over 3
+   * years": a three-year figure for protecting nothing, in the document that
+   * goes to a client, with no hint anywhere in it that the inventory was never
+   * filled in. The sizing stage knew, and said so in a rationale string this
+   * document does not render.
+   */
+  if (!sizing.estateCaptured) {
+    blocks.push({
+      kind: 'callout',
+      tone: 'warning',
+      text:
+        'No asset inventory was captured for this client, so every figure in this document is ' +
+        'arithmetic on an estate of zero: the floor cost of owning these tools rather than the ' +
+        'cost of protecting anything. This is an unfinished intake, not a proposal. Complete the ' +
+        'inventory and regenerate before it goes anywhere.',
+    });
+  }
+
   blocks.push({
     kind: 'paragraph',
-    text:
-      `${profile.orgName} operates an estate of ${plural(sizing.monitoredAssetCount, 'monitored asset')} ` +
-      `across ${plural(profile.employeeCount, 'member')} of staff, with ` +
-      `${profile.securityStaffFte} dedicated security FTE. This proposal recommends ` +
-      `${plural(recommended.selections.length, 'security control')}, costed over ` +
-      `${plural(profile.budget.horizonYears, 'year')}.`,
+    text: sizing.estateCaptured
+      ? `${profile.orgName} operates an estate of ${plural(sizing.monitoredAssetCount, 'monitored asset')} ` +
+        `across ${plural(profile.employeeCount, 'member')} of staff, with ` +
+        `${profile.securityStaffFte} dedicated security FTE. This proposal recommends ` +
+        `${plural(recommended.selections.length, 'security control')}, costed over ` +
+        `${plural(profile.budget.horizonYears, 'year')}.`
+      : `${profile.orgName} has ${plural(profile.employeeCount, 'member')} of staff and ` +
+        `${profile.securityStaffFte} dedicated security FTE on record. No estate has been ` +
+        'captured, so the stack below is what an organisation of this shape would typically ' +
+        'need rather than what this one does.',
   });
 
   const summary: string[] = [];

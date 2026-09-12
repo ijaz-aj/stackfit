@@ -29,8 +29,15 @@ describe('computeSizing: the §7.1 formulas', () => {
     expect(result.gbPerDay).toBe(0.864);
   });
 
-  it('derives storage from retention and compression', () => {
-    expect(result.storageTb).toBe(0.042);
+  it('derives storage from retention and compression, in decimal TB', () => {
+    // 0.864 GB/day x 100 days (the fixture's default retention) x 0.5 kept
+    // = 43.2 GB = 0.0432 TB, rounded to three places.
+    //
+    // Was 0.042, because TB was 1024 GB while GB was 1e9 bytes: a decimal
+    // gigabyte divided by a binary thousand, which is 2.3% under a real TB and
+    // 7.4% over a real TiB. Storage is bought in decimal TB, so that is the
+    // unit this reports.
+    expect(result.storageTb).toBe(0.043);
   });
 
   it('returns a per-class worksheet for every class with a count', () => {

@@ -23,6 +23,7 @@ import type { Money, ProductCategory, ScoringDimension } from '@stackfit/schema'
 
 import { moneyInWords } from './money';
 
+import { plural } from './labels';
 import type { Bundle, BundleSelection, Candidate } from './portfolio';
 import { CATEGORY_LABELS } from './proposal';
 import type { ProductScore } from './scoring';
@@ -262,8 +263,8 @@ function siblingTierVerdict(
   }
 
   return fitGap > 0
-    ? `Same product as ${sibling.tierName}: ${fitGap} point(s) better fit for ${money}.`
-    : `Same product as ${sibling.tierName}: ${-fitGap} point(s) worse fit, at ${money}.`;
+    ? `Same product as ${sibling.tierName}: ${plural(fitGap, 'point')} better fit for ${money}.`
+    : `Same product as ${sibling.tierName}: ${plural(-fitGap, 'point')} worse fit, at ${money}.`;
 }
 
 /**

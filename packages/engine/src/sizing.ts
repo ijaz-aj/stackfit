@@ -21,8 +21,27 @@ import { AssetClass as AssetClassEnum } from '@stackfit/schema';
 import { plural } from './labels';
 
 const SECONDS_PER_DAY = 86_400;
+
+/*
+ * Decimal, both of them, and that is a correction.
+ *
+ * GB has always been 1e9 here, which is right: it is the unit every SIEM
+ * vendor prices ingest in and every storage vendor sells capacity in. TB was
+ * 1024 GB, which is neither. A decimal gigabyte divided by 1024 produces a
+ * figure that is 2.3% under a real TB and 7.4% over a real TiB, so the storage
+ * line was quoted in a unit that does not exist.
+ *
+ * The error is small next to the coefficient it is built on (`averageEventBytes`
+ * is a 300 to 800 byte range, a factor of 2.7), which is exactly why it
+ * survived: it was never large enough to look wrong. It is still a client
+ * buying an array against a number in an invented unit.
+ *
+ * PROJECT_SPEC §7.1 wrote the formula with /1024 and the spec line has been
+ * corrected with it, because a spec and an implementation that disagree is a
+ * worse outcome than either one alone.
+ */
 const BYTES_PER_GB = 1e9;
-const GB_PER_TB = 1024;
+const GB_PER_TB = 1000;
 
 /** One row of the sizing worksheet. */
 export interface AssetClassSizing {
@@ -53,6 +72,22 @@ export interface SizingResult {
   readonly userSeatCount: number;
 
   readonly scaleClass: ScaleClass;
+  /**
+   * Whether any asset count was captured at all.
+   *
+   * Not the same question as "is the estate small", and the difference is the
+   * whole reason this field exists. `scaleClass` has to return one of four
+   * bands because products declare their support in those bands, so an empty
+   * inventory comes back as `small`: the same answer a real 250-asset business
+   * gets. The sizing rationale has always said so in prose ("an empty
+   * inventory, not a small environment") and nothing downstream could read
+   * prose, so every later stage treated a blank intake as a client.
+   *
+   * A blank intake is not a client with nothing to protect. It is an intake
+   * nobody has filled in yet, and every figure derived from it is arithmetic on
+   * zero rather than a finding.
+   */
+  readonly estateCaptured: boolean;
   readonly verbosityFactor: number;
   /** Every class with a non-zero count, in AssetClass declaration order. */
   readonly perAssetClass: readonly AssetClassSizing[];
@@ -224,7 +259,7 @@ export function computeSizing(
   const scaleClass = resolveScaleClass(monitoredAssetCount, assumptions);
 
   const rationale: string[] = [
-    `${fmt(epsTotal)} EPS across ${perAssetClass.length} asset class(es) at ${verbosityProfile} verbosity (×${assumptions.verbosityFactors[verbosityProfile]}).`,
+    `${fmt(epsTotal)} EPS across ${plural(perAssetClass.length, 'asset class', 'asset classes')} at ${verbosityProfile} verbosity (×${assumptions.verbosityFactors[verbosityProfile]}).`,
     `${fmt(gbPerDay, 3)} GB/day = ${fmt(epsTotal)} EPS × 86,400 s × ${assumptions.averageEventBytes} bytes/event.`,
     `${fmt(licensedGbPerDay, 3)} GB/day licensed, applying a peak factor of ${assumptions.peakFactor} to the daily average.`,
     `${fmt(storageTb, 3)} TB at rest = ${fmt(gbPerDay, 3)} GB/day × ${retentionDays} days × ${fmt(1 - assumptions.compressionRatio, 2)} after compression.`,
@@ -234,16 +269,19 @@ export function computeSizing(
     `${plural(monitoredAssetCount, 'monitored asset')} puts this environment in the ${scaleClass} scale class.`,
     privilegedAccountCountEstimated
       ? `Privileged accounts not captured; estimated ${privilegedAccountCount} from ${profile.itStaffCount} IT staff × ${assumptions.privilegedAccountsPerItStaff}. Confirm before sizing PAM.`
-      : `${privilegedAccountCount} privileged account(s) taken from the inventory as captured.`,
+      : `${plural(privilegedAccountCount, 'privileged account')} taken from the inventory as captured.`,
   ];
 
-  if (perAssetClass.length === 0) {
+  const estateCaptured = perAssetClass.length > 0;
+  if (!estateCaptured) {
     rationale.push(
-      'No asset counts were captured, so every derived figure is zero. This is an empty inventory, not a small environment.',
+      '⚠ No asset counts were captured, so every derived figure is zero. This is an empty ' +
+        'inventory, not a small environment, and nothing below it is a recommendation yet.',
     );
   }
 
   return {
+    estateCaptured,
     epsTotal: round(epsTotal, 2),
     gbPerDay: round(gbPerDay, 3),
     licensedGbPerDay: round(licensedGbPerDay, 3),
