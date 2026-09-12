@@ -1,0 +1,37 @@
+# Postgres for local work.
+#
+# The app is Postgres everywhere now (apps/web/prisma/schema.prisma says why),
+# so a local database is no longer optional. This is the zero-account way to get
+# one; a Neon branch is the other, and either works.
+#
+#   docker compose up -d
+#   cp apps/web/.env.example apps/web/.env.local     # then set DATABASE_URL
+#   pnpm --filter @stackfit/web db:push
+#   pnpm --filter @stackfit/web seed
+#
+# The URL for this container:
+#   DATABASE_URL="postgresql://postgres:devpass@localhost:55432/stackfit"
+#
+# Port 55432 rather than 5432 so it cannot collide with a Postgres already
+# installed on the machine. The password is a local development credential and
+# the container is disposable; nothing here is a secret worth protecting, which
+# is exactly why it must never be reused anywhere that is.
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: stackfit-postgres
+    environment:
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: stackfit
+    ports:
+      - '55432:5432'
+    volumes:
+      - stackfit-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  stackfit-pgdata:

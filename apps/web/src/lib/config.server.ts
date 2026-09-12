@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -34,10 +35,68 @@ import type {
  * file. This is the boundary that keeps that true (CONTRIBUTING.md architecture).
  */
 
-// data/ sits at the repo root, two levels above apps/web. Resolved from this
-// module's own URL rather than from process.cwd(), which differs between
-// `next dev`, `next build` and a test runner.
-const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', 'data');
+/*
+ * Where `data/` is, given that the answer differs between four layouts.
+ *
+ * This used to be one relative walk from `import.meta.url`, four segments up,
+ * which is correct for the *source* tree and for `next dev`. It is wrong for a
+ * deployed build, where this module is compiled into a chunk at a different
+ * depth and the same four segments land somewhere else entirely. A standalone
+ * build is the cheap way to see it: the bundle puts `data/` beside `apps/`, and
+ * the compiled chunk sits under `apps/web/.next/server/chunks/`.
+ *
+ * So rather than encode one layout, look for the tree by a file that is
+ * certainly in it, from both anchors that could be right: this module and the
+ * working directory. First hit wins, and the order is deliberate: the module is
+ * checked first because a test runner's cwd is the least trustworthy of the
+ * two.
+ *
+ * The alternative was to stop reading files at runtime and bake the data into
+ * the bundle at build time. That is a bigger change and a worse one: the tree
+ * is the thing an analyst is meant to edit and re-read, and it is validated by
+ * `pnpm catalog:validate` as files.
+ */
+const DATA_MARKER = join('config', 'sizing-assumptions.yaml');
+
+function resolveDataDir(): string {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const anchors = [here, process.cwd()];
+
+  const candidates: string[] = [];
+  for (const anchor of anchors) {
+    // Eight is past the deepest layout in play (a chunk nested inside
+    // `.next/server/chunks/ssr/`) and stops well short of the filesystem root.
+    let current = anchor;
+    for (let depth = 0; depth <= 8; depth += 1) {
+      candidates.push(join(current, 'data'));
+      const parent = dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (existsSync(join(candidate, DATA_MARKER))) return candidate;
+  }
+
+  /*
+   * Loudly, and with the list.
+   *
+   * The failure this replaces was a bare ENOENT on one YAML path, thrown from
+   * inside a loader three frames down, on a host where nobody can open a shell
+   * to go looking. Naming every place that was checked turns "file not found"
+   * into a deployment answer: the tree was not shipped, and `next.config.ts`
+   * says how it is meant to be.
+   */
+  throw new Error(
+    `Cannot find the data/ tree. Looked for ${DATA_MARKER} under:\n` +
+      candidates.map((candidate) => `  ${candidate}`).join('\n') +
+      '\nOn a deployment this means the tree was not traced into the bundle. See ' +
+      'outputFileTracingIncludes in apps/web/next.config.ts.',
+  );
+}
+
+const DATA_DIR = resolveDataDir();
 
 export interface EngineData {
   readonly catalog: readonly Product[];

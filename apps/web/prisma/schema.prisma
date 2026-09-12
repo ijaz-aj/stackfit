@@ -1,7 +1,17 @@
 // Persistence for saved scoping sessions (PROJECT_SPEC §2).
 //
-// SQLite for zero setup, and the schema is deliberately Postgres-portable: no
-// SQLite-only features, and every column type exists on both.
+// Postgres, on one provider for every environment. It was SQLite, chosen for
+// zero setup and written Postgres-portable from the start, and the move cost
+// exactly the two lines below because that promise held: no SQLite-only
+// features and every column type exists on both.
+//
+// Why not keep SQLite for local work and Postgres for the deployment. A
+// serverless host gives each invocation a fresh filesystem, so a SQLite file
+// there is not slow or awkward, it is gone: writes vanish between requests.
+// That forces Postgres for the deployment, and once the deployment is Postgres,
+// developing against a different engine means the database you test on is not
+// the one you ship on. Local now needs a `DATABASE_URL` too, which is a real
+// cost in setup and a smaller one than that drift.
 
 generator client {
   provider = "prisma-client"
@@ -10,7 +20,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 /// One saved scoping session: the client profile plus the inventory it was
@@ -23,10 +33,12 @@ model Scenario {
 
   /// ClientProfile as JSON text, Zod-parsed on the way in and on the way out.
   ///
-  /// Text rather than a Json column because Prisma has no Json scalar on
-  /// SQLite and this schema has to run unchanged on Postgres. The validation
-  /// that matters happens in Zod either way, a Json column would only buy
-  /// database-side syntax checking of a blob the database never queries.
+  /// Text rather than a Json column. It began as a portability constraint,
+  /// Prisma having no Json scalar on SQLite, and it stays on Postgres by
+  /// choice: the validation that matters happens in Zod, the database never
+  /// queries inside this blob, and `StoredClientProfile` migrates old shapes on
+  /// read. A jsonb column would buy database-side syntax checking of something
+  /// no query looks into.
   profile String
 
   /// AssetInventory as JSON text, same reasoning.

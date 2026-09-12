@@ -18,7 +18,7 @@ pnpm lint
 pnpm catalog:validate   # Zod-validate every YAML in data/
 pnpm catalog:staleness  # what needs re-checking and where; non-zero if anything is stale
 pnpm prices:refresh     # re-read machine-refreshable prices; --write applies drift
-pnpm db:push            # apply the Prisma schema to the local SQLite file
+pnpm db:push            # apply the Prisma schema to whatever DATABASE_URL points at
 pnpm db:generate        # regenerate the Prisma client (gitignored)
 ```
 
@@ -103,10 +103,28 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   extensions pointing at files that do not exist: tsc understands that, Turbopack does not,
   and `experimental.extensionAlias` is webpack-only. Nothing ever runs the emitted `dist/`.
 - **`prisma@latest` is an 8.0.0 release candidate.** The stable pair is `prisma@7.10.0` +
-  `@prisma/client@7.10.0`, both pinned. Prisma 7 is Rust-free, so SQLite needs the
-  `@prisma/adapter-better-sqlite3` driver adapter. It is not optional.
+  `@prisma/client@7.10.0`, both pinned. Prisma 7 is Rust-free, so Postgres needs the
+  `@prisma/adapter-pg` driver adapter. It is not optional.
+- **The database is Postgres in every environment, and `DATABASE_URL` has no default.** It
+  was SQLite with a file fallback, which was the right trade while there was nowhere to
+  deploy to. A serverless host discards its filesystem between invocations, so a fallback
+  there is not slow, it is silent data loss. `docker compose up -d` gives you a local one;
+  a Neon branch is the other way. See `docs/DEPLOY.md`.
+- **The Prisma client connects on first property access, not on import, and that is load
+  bearing.** `next build` imports every route to collect its configuration, so a client
+  built at module scope makes `DATABASE_URL` a *build-time* requirement and the build dies
+  with "Failed to collect configuration for /". Do not "simplify" the Proxy in
+  `apps/web/src/lib/db.ts` back into a plain `new PrismaClient()`.
+- **`data/` has to be traced into a deployment bundle explicitly.** It is read with
+  `readFileSync` at a runtime-assembled path, which a build tracer cannot see, so a
+  standalone build contained zero of the 35 YAML files until `outputFileTracingIncludes`
+  was set in `next.config.ts`. `next start` never catches this: it runs from a working copy
+  where the files are on disk anyway. `config.server.ts` searches for the tree from two
+  anchors and throws with every path it tried, because the failure this replaces was a bare
+  ENOENT on a host with no shell.
 - **The Prisma client is generated into `apps/web/src/generated/`** and gitignored. A fresh
-  clone needs `pnpm db:generate` before `pnpm dev`, and `pnpm db:push` to create the file.
+  clone needs `pnpm db:generate` before `pnpm dev`, and `pnpm db:push` to create the
+  schema.
 - **The web app's data loader is `@stackfit/data`**, the same one the scripts and the
   repo-root tests use. Import it only from server components and server actions: it reads the
   filesystem, which the engine still never does.
@@ -326,8 +344,10 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   results page was written, shipped and never once rendered. The layout that
   was being tuned was the stacked fallback. Check `innerWidth` in the browser
   before reaching past `lg:`, and treat `xl:` as a rule for external monitors.
-- **A `tsx scripts/…` run and a live `pnpm dev` are two SQLite connections, and
-  they will disagree about what the database contains.** The dev server caches
+- **A `tsx scripts/…` run and a live `pnpm dev` are two database connections, and
+  they disagreed about what the database contained.** Recorded from the SQLite
+  era; whether it survives the move to Postgres is untested, and Postgres has no
+  single-writer file handle for it to be about. The dev server caches
   its Prisma client on `globalThis` across hot reloads and holds its handle
   open; a CLI script opens its own. Running one while the other is live
   produced a script read of 11 rows when there were 17, with four seeded demo
