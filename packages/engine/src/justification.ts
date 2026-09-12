@@ -280,7 +280,10 @@ export function justifyBundle(
   return bundle.selections.map((selection) => justifyOne(selection, inputs));
 }
 
-function justifyOne(selection: BundleSelection, inputs: JustificationInputs): CategoryJustification {
+function justifyOne(
+  selection: BundleSelection,
+  inputs: JustificationInputs,
+): CategoryJustification {
   const inCategory = inputs.scores.filter((score) => score.category === selection.category);
 
   const winner =
@@ -293,9 +296,8 @@ function justifyOne(selection: BundleSelection, inputs: JustificationInputs): Ca
     inCategory.find((score) => score.productId === selection.productId);
 
   const costOf = (productId: string, tierId: string) =>
-    inputs.candidates.find(
-      (entry) => entry.productId === productId && entry.tierId === tierId,
-    )?.cost;
+    inputs.candidates.find((entry) => entry.productId === productId && entry.tierId === tierId)
+      ?.cost;
 
   const winnerAllIn = selection.cost.annualRecurring;
   const winnerSpend = selection.cost.procurementAnnual;

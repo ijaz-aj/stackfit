@@ -121,8 +121,17 @@ describe('computeProductCost — the honest TCO (hard rule 8)', () => {
       id: 'free-tool',
       licenceModel: 'open_source',
       pricing: [{ model: 'zero_licence' }],
-      opsBurden: { baseFte: 0.5, ftePerThousandAssets: 0.3, confidence: 'analyst_estimate' as const },
-      implementation: { effortDays: 20, skillLevel: 'security_engineer', typicalWeeks: 8, confidence: 'analyst_estimate' as const },
+      opsBurden: {
+        baseFte: 0.5,
+        ftePerThousandAssets: 0.3,
+        confidence: 'analyst_estimate' as const,
+      },
+      implementation: {
+        effortDays: 20,
+        skillLevel: 'security_engineer',
+        typicalWeeks: 8,
+        confidence: 'analyst_estimate' as const,
+      },
     });
 
     const cost = computeProductCost(wazuhLike, firstTier(wazuhLike), sizing, profile, inputs);
@@ -137,8 +146,17 @@ describe('computeProductCost — the honest TCO (hard rule 8)', () => {
     const wazuhLike = buildProduct({
       licenceModel: 'open_source',
       pricing: [{ model: 'zero_licence' }],
-      opsBurden: { baseFte: 0.5, ftePerThousandAssets: 0.3, confidence: 'analyst_estimate' as const },
-      implementation: { effortDays: 20, skillLevel: 'security_engineer', typicalWeeks: 8, confidence: 'analyst_estimate' as const },
+      opsBurden: {
+        baseFte: 0.5,
+        ftePerThousandAssets: 0.3,
+        confidence: 'analyst_estimate' as const,
+      },
+      implementation: {
+        effortDays: 20,
+        skillLevel: 'security_engineer',
+        typicalWeeks: 8,
+        confidence: 'analyst_estimate' as const,
+      },
     });
 
     const cost = computeProductCost(wazuhLike, firstTier(wazuhLike), sizing, profile, inputs);
@@ -157,8 +175,17 @@ describe('computeProductCost — the honest TCO (hard rule 8)', () => {
       id: 'oss-siem',
       licenceModel: 'open_source',
       pricing: [{ model: 'zero_licence' }],
-      opsBurden: { baseFte: 0.5, ftePerThousandAssets: 0.3, confidence: 'analyst_estimate' as const },
-      implementation: { effortDays: 20, skillLevel: 'security_engineer', typicalWeeks: 8, confidence: 'analyst_estimate' as const },
+      opsBurden: {
+        baseFte: 0.5,
+        ftePerThousandAssets: 0.3,
+        confidence: 'analyst_estimate' as const,
+      },
+      implementation: {
+        effortDays: 20,
+        skillLevel: 'security_engineer',
+        typicalWeeks: 8,
+        confidence: 'analyst_estimate' as const,
+      },
     });
 
     const commercial = buildProduct({
@@ -166,8 +193,17 @@ describe('computeProductCost — the honest TCO (hard rule 8)', () => {
       licenceModel: 'commercial',
       deploymentModes: ['cloud'],
       pricing: [{ model: 'per_endpoint_year', unitPrice: usd(6000) }],
-      opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0.1, confidence: 'analyst_estimate' as const },
-      implementation: { effortDays: 3, skillLevel: 'generalist', typicalWeeks: 2, confidence: 'analyst_estimate' as const },
+      opsBurden: {
+        baseFte: 0.1,
+        ftePerThousandAssets: 0.1,
+        confidence: 'analyst_estimate' as const,
+      },
+      implementation: {
+        effortDays: 3,
+        skillLevel: 'generalist',
+        typicalWeeks: 2,
+        confidence: 'analyst_estimate' as const,
+      },
     });
 
     const ossCost = computeProductCost(openSource, firstTier(openSource), sizing, profile, inputs);
@@ -188,7 +224,11 @@ describe('computeProductCost — the honest TCO (hard rule 8)', () => {
   it('scales ops FTE with the estate, not just the base figure', () => {
     const product = buildProduct({
       pricing: [{ model: 'zero_licence' }],
-      opsBurden: { baseFte: 0.5, ftePerThousandAssets: 0.3, confidence: 'analyst_estimate' as const },
+      opsBurden: {
+        baseFte: 0.5,
+        ftePerThousandAssets: 0.3,
+        confidence: 'analyst_estimate' as const,
+      },
     });
     const cost = computeProductCost(product, firstTier(product), sizing, profile, inputs);
 
@@ -260,11 +300,29 @@ describe('computeProductCost — the honest TCO (hard rule 8)', () => {
   it('says in the rationale which quantity it sized the infrastructure from', () => {
     // A number with no explanation does not ship (hard rule 5), and "4 vCPU"
     // means nothing without "to carry what".
-    const siem = { ...buildProduct({ pricing: [{ model: 'zero_licence' }], deploymentModes: ['on_prem'] }), category: 'siem' as const };
-    const decoy = { ...buildProduct({ pricing: [{ model: 'zero_licence' }], deploymentModes: ['on_prem'] }), category: 'deception' as const };
+    const siem = {
+      ...buildProduct({ pricing: [{ model: 'zero_licence' }], deploymentModes: ['on_prem'] }),
+      category: 'siem' as const,
+    };
+    const decoy = {
+      ...buildProduct({ pricing: [{ model: 'zero_licence' }], deploymentModes: ['on_prem'] }),
+      category: 'deception' as const,
+    };
 
-    const siemRationale = computeProductCost(siem, firstTier(siem), sizing, profile, inputs).rationale.join('\n');
-    const decoyRationale = computeProductCost(decoy, firstTier(decoy), sizing, profile, inputs).rationale.join('\n');
+    const siemRationale = computeProductCost(
+      siem,
+      firstTier(siem),
+      sizing,
+      profile,
+      inputs,
+    ).rationale.join('\n');
+    const decoyRationale = computeProductCost(
+      decoy,
+      firstTier(decoy),
+      sizing,
+      profile,
+      inputs,
+    ).rationale.join('\n');
 
     expect(siemRationale).toContain('GB/day of ingest');
     expect(siemRationale).toContain('log retention');
@@ -329,7 +387,12 @@ describe('computeProductCost — multi-year view', () => {
     pricing: [{ model: 'per_node_year', unitPrice: usd(1000) }],
     deploymentModes: ['cloud'],
     opsBurden: { baseFte: 0, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
-    implementation: { effortDays: 10, skillLevel: 'generalist', typicalWeeks: 2, confidence: 'analyst_estimate' as const },
+    implementation: {
+      effortDays: 10,
+      skillLevel: 'generalist',
+      typicalWeeks: 2,
+      confidence: 'analyst_estimate' as const,
+    },
   });
 
   const cost = computeProductCost(product, firstTier(product), sizing, profile, inputs);
@@ -378,7 +441,12 @@ describe('computeProductCost — currency', () => {
       pricing: [{ model: 'per_node_year', unitPrice: usd(10_000) }],
       deploymentModes: ['cloud'],
       opsBurden: { baseFte: 0, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
-      implementation: { effortDays: 0, skillLevel: 'generalist', typicalWeeks: 0, confidence: 'analyst_estimate' as const },
+      implementation: {
+        effortDays: 0,
+        skillLevel: 'generalist',
+        typicalWeeks: 0,
+        confidence: 'analyst_estimate' as const,
+      },
     });
 
     const usdCost = computeProductCost(product, firstTier(product), sizing, profile, inputs);

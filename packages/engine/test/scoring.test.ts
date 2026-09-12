@@ -100,7 +100,10 @@ describe('hard filters (§7.3 pass 1)', () => {
     // well, so this belongs in the score, not the filter — eliminating here
     // would remove every cloud-delivered product from every on-prem client.
     const base = buildProduct({ deploymentModes: ['cloud'] });
-    const cloudOnly = { ...base, supports: { ...base.supports, deviceClasses: ['server' as const] } };
+    const cloudOnly = {
+      ...base,
+      supports: { ...base.supports, deviceClasses: ['server' as const] },
+    };
     const inputs = buildInputs({
       profile: buildClientProfile({ securityStaffFte: 2, environment: 'on_prem' }),
     });
@@ -327,15 +330,21 @@ describe('compliance fit', () => {
 
 describe('ops fit — the dimension that stops "free" winning by default', () => {
   it('scores full marks for a tool the team can absorb', () => {
-    const light = { ...coveringProduct(), opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } };
+    const light = {
+      ...coveringProduct(),
+      opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
+    };
     const inputs = buildInputs({ profile: buildClientProfile({ securityStaffFte: 2 }) });
-    expect(scoreAtFirstTier(light, inputs).dimensions.find((d) => d.dimension === 'ops_fit')?.score).toBe(
-      100,
-    );
+    expect(
+      scoreAtFirstTier(light, inputs).dimensions.find((d) => d.dimension === 'ops_fit')?.score,
+    ).toBe(100);
   });
 
   it('scores zero for a tool that would need more than the whole team', () => {
-    const heavy = { ...coveringProduct(), opsBurden: { baseFte: 3, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } };
+    const heavy = {
+      ...coveringProduct(),
+      opsBurden: { baseFte: 3, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
+    };
     const inputs = buildInputs({ profile: buildClientProfile({ securityStaffFte: 2 }) });
     const fit = scoreAtFirstTier(heavy, inputs).dimensions.find((d) => d.dimension === 'ops_fit');
     expect(fit?.score).toBe(0);
@@ -382,7 +391,11 @@ describe('ops fit — the dimension that stops "free" winning by default', () =>
   it('degrades between comfortable and unusable rather than falling off a cliff', () => {
     const midweight = {
       ...coveringProduct(),
-      opsBurden: { baseFte: 1.55, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
+      opsBurden: {
+        baseFte: 1.55,
+        ftePerThousandAssets: 0,
+        confidence: 'analyst_estimate' as const,
+      },
     };
     // 1.55 of 2.0 FTE = 77.5% share, between 35% and 120%.
     const inputs = buildInputs({ profile: buildClientProfile({ securityStaffFte: 2 }) });
@@ -411,7 +424,9 @@ describe('deployment fit — what they asked for, or what they run', () => {
       }),
       ...(overrides.estateShape === undefined ? {} : { estateShape: overrides.estateShape }),
     });
-    return scoreAtFirstTier(product, inputs).dimensions.find((d) => d.dimension === 'deployment_fit');
+    return scoreAtFirstTier(product, inputs).dimensions.find(
+      (d) => d.dimension === 'deployment_fit',
+    );
   }
 
   describe('the environment the client runs is a fact, not a wish', () => {
@@ -514,8 +529,14 @@ describe('deployment fit — what they asked for, or what they run', () => {
     });
 
     it('is unmoved by the estate, because the client stated it', () => {
-      const inSaasEstate = deployment(['on_prem'], { environment: 'hybrid', estateShape: 'saas_centric' });
-      const inOnPremEstate = deployment(['on_prem'], { environment: 'hybrid', estateShape: 'on_prem_centric' });
+      const inSaasEstate = deployment(['on_prem'], {
+        environment: 'hybrid',
+        estateShape: 'saas_centric',
+      });
+      const inOnPremEstate = deployment(['on_prem'], {
+        environment: 'hybrid',
+        estateShape: 'on_prem_centric',
+      });
       expect(inSaasEstate?.score).toBe(inOnPremEstate?.score);
     });
   });
@@ -525,22 +546,34 @@ describe('procurement bias shifts the weights', () => {
   it('raises the ops-fit weight for an open-source-first buyer', () => {
     const weights = buildScoringWeights();
     const neutral = effectiveWeights(weights, buildClientProfile());
-    const oss = effectiveWeights(weights, buildClientProfile({ procurementBias: 'open_source_first' }));
+    const oss = effectiveWeights(
+      weights,
+      buildClientProfile({ procurementBias: 'open_source_first' }),
+    );
     expect(oss.get('ops_fit')).toBeGreaterThan(neutral.get('ops_fit') ?? 0);
   });
 
   it('renormalises to 100 so the score stays out of 100', () => {
     for (const bias of ['no_preference', 'open_source_first', 'commercial'] as const) {
-      const weights = effectiveWeights(buildScoringWeights(), buildClientProfile({ procurementBias: bias }));
+      const weights = effectiveWeights(
+        buildScoringWeights(),
+        buildClientProfile({ procurementBias: bias }),
+      );
       const total = [...weights.values()].reduce((sum, weight) => sum + weight, 0);
       expect(total).toBeCloseTo(100, 6);
     }
   });
 
   it('penalises an operationally heavy tool harder for an open-source-first buyer', () => {
-    const heavy = { ...coveringProduct(), opsBurden: { baseFte: 3, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } };
+    const heavy = {
+      ...coveringProduct(),
+      opsBurden: { baseFte: 3, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
+    };
     const profile = { securityStaffFte: 2 };
-    const neutral = scoreAtFirstTier(heavy, buildInputs({ profile: buildClientProfile(profile) })).score;
+    const neutral = scoreAtFirstTier(
+      heavy,
+      buildInputs({ profile: buildClientProfile(profile) }),
+    ).score;
     const oss = scoreAtFirstTier(
       heavy,
       buildInputs({
@@ -564,7 +597,9 @@ describe('the overall score', () => {
     const score = scoreAtFirstTier(coveringProduct(), buildInputs());
     expect(score.dimensions).toHaveLength(7);
     for (const dimension of score.dimensions) {
-      expect(dimension.rationale.length, `${dimension.dimension} has no rationale`).toBeGreaterThan(0);
+      expect(dimension.rationale.length, `${dimension.dimension} has no rationale`).toBeGreaterThan(
+        0,
+      );
     }
   });
 
@@ -577,7 +612,9 @@ describe('the overall score', () => {
 
   it('is deterministic', () => {
     const inputs = buildInputs();
-    expect(scoreAtFirstTier(coveringProduct(), inputs)).toEqual(scoreAtFirstTier(coveringProduct(), inputs));
+    expect(scoreAtFirstTier(coveringProduct(), inputs)).toEqual(
+      scoreAtFirstTier(coveringProduct(), inputs),
+    );
   });
 });
 
@@ -688,9 +725,7 @@ describe('tier limits — the conditions attached to a SKU, not to a product', (
 
   it('leaves a capped tier alone when the environment is inside the cap', () => {
     const inputs = buildInputs({ profile: buildClientProfile({ employeeCount: 8 }) });
-    const free = scoreProducts([cappedFreeTier()], inputs).find(
-      (score) => score.tierId === 'free',
-    );
+    const free = scoreProducts([cappedFreeTier()], inputs).find((score) => score.tierId === 'free');
     expect(free?.eliminated).toBe(false);
   });
 

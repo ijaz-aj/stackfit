@@ -141,7 +141,8 @@ function worstConfidence(rules: readonly PricingRule[]): PricingConfidence {
  */
 export function operationalFteFor(product: Product, monitoredAssetCount: number): number {
   return (
-    product.opsBurden.baseFte + (product.opsBurden.ftePerThousandAssets * monitoredAssetCount) / 1000
+    product.opsBurden.baseFte +
+    (product.opsBurden.ftePerThousandAssets * monitoredAssetCount) / 1000
   );
 }
 
@@ -318,7 +319,7 @@ function infraAnnualFor(
   const storageNote =
     storageTb > 0
       ? `, plus ${storageTb} TB of log retention at rest`
-      : ', and no log-retention storage — that is the SIEM\'s bill, not this one\'s';
+      : ", and no log-retention storage — that is the SIEM's bill, not this one's";
 
   return {
     amount: scaleMoney(monthly, MONTHS_PER_YEAR),

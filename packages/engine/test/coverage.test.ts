@@ -4,7 +4,13 @@
 // control no purchase can satisfy stays out of the denominator, and that having
 // the right kind of product is reported as partial rather than as coverage.
 
-import type { CoverageAssumptions, Framework, Money, Product, ProductCategory } from '@stackfit/schema';
+import type {
+  CoverageAssumptions,
+  Framework,
+  Money,
+  Product,
+  ProductCategory,
+} from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
 import { costCatalog } from '../src/cost';
@@ -52,7 +58,10 @@ function product(
   const base = buildProduct({
     id,
     pricing: [
-      { model: 'flat_tiered', tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(annualMinor) }] },
+      {
+        model: 'flat_tiered',
+        tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(annualMinor) }],
+      },
     ],
   });
   return {
@@ -336,9 +345,9 @@ describe('the coverage matrix', () => {
     expect(statusOf(result, 'pci-dss-4.0:5')).toBe('gap');
     // The gap list also carries partials, which are uncovered for a different
     // reason; this assertion is about the controls nothing addresses at all.
-    expect(
-      result.gaps.filter((gap) => gap.kind === 'gap').map((gap) => gap.controlId),
-    ).toEqual(['pci-dss-4.0:5']);
+    expect(result.gaps.filter((gap) => gap.kind === 'gap').map((gap) => gap.controlId)).toEqual([
+      'pci-dss-4.0:5',
+    ]);
   });
 
   it('says when a framework has no product mappings at all, rather than just 0%', () => {
@@ -367,7 +376,9 @@ describe('the coverage matrix', () => {
       buildInputs({ catalog, selected: [], frameworks: [pci], compliance: ['pci-dss-4.0'] }),
     );
 
-    expect(result.frameworks[0]!.rationale.join(' ')).toContain('secondary_sources');
+    // Spelled out, not the enum value: this sentence is printed verbatim into
+    // a proposal, and `secondary_sources` there reads as a leaked field.
+    expect(result.frameworks[0]!.rationale.join(' ')).toContain('graded secondary sources');
   });
 
   it('marks a framework the client did not select as a reference view only', () => {
@@ -731,7 +742,10 @@ describe('closing a gap with a SKU the client already owns', () => {
           name: 'Basic',
           controlsCovered: [],
           pricing: [
-            { ...tier.pricing[0]!, tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(100_000) }] },
+            {
+              ...tier.pricing[0]!,
+              tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(100_000) }],
+            },
           ],
         },
         {
@@ -740,7 +754,10 @@ describe('closing a gap with a SKU the client already owns', () => {
           name: 'Advanced',
           controlsCovered: ['pci-dss-4.0:11'],
           pricing: [
-            { ...tier.pricing[0]!, tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(150_000) }] },
+            {
+              ...tier.pricing[0]!,
+              tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(150_000) }],
+            },
           ],
         },
       ],

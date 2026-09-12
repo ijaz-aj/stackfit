@@ -22,6 +22,7 @@ import type {
 
 import { coverageDisclaimer, type CoverageResult } from './coverage';
 import type { CategoryJustification } from './justification';
+import { CATEGORY_LABELS, SERVICE_LEVEL_LABELS, formatCount, plural } from './labels';
 import type { Bundle, BundleSelection } from './portfolio';
 import type { SizingResult } from './sizing';
 
@@ -148,60 +149,21 @@ export interface ProposalInputs {
   readonly asOf: string;
 }
 
-/**
- * A count, grouped, for a sentence.
- *
- * The executive summary read "an estate of 3465 monitored asset(s) across 1400
- * staff" directly above a table rendering the same quantity as "3,465". One
- * document, one number, two formats — and the ungrouped one is the first line a
- * client reads.
- *
- * Digit grouping only, no locale currency or unit handling: that belongs at the
- * render boundary, and this is prose the engine has already committed to a
- * string.
- */
-const count = (value: number): string => value.toLocaleString('en-US');
-
-/**
- * "1 control" / "13 controls".
- *
- * "control(s)" is what a template writes when nobody has decided whether the
- * reader matters. This is a document that goes to a client under someone's
- * name.
- */
-const plural = (value: number, singular: string, pluralForm = `${singular}s`): string =>
-  `${count(value)} ${value === 1 ? singular : pluralForm}`;
+// `count` and `plural` used to be defined here. They now live in `labels.ts`
+// alongside the other things that turn a value into prose, because
+// `portfolio.ts` was growing its own copies of both — and "1260 endpoint(s)"
+// shipped out of the one that had not been fixed yet.
+const count = formatCount;
 
 const text = (value: string): ProposalCell => ({ kind: 'text', value });
 const money = (value: Money): ProposalCell => ({ kind: 'money', value });
 const number = (value: number, decimals = 0): ProposalCell => ({ kind: 'number', value, decimals });
 const percent = (value: number | null): ProposalCell => ({ kind: 'percent', value });
 
-/**
- * Service levels are enum values in the rate card and prose in a proposal.
- * "mdr" in the middle of a client-facing sentence reads as a typo.
- */
-const SERVICE_LEVEL_LABELS: Readonly<Record<string, string>> = {
-  monitoring: 'Monitoring',
-  mdr: 'Managed detection and response',
-  managed_security: 'Fully managed security',
-};
-
-export const CATEGORY_LABELS: Readonly<Record<ProductCategory, string>> = {
-  siem: 'SIEM',
-  edr: 'EDR',
-  ndr: 'Network detection',
-  pam: 'Privileged access',
-  iam: 'Identity',
-  vulnerability_management: 'Vulnerability management',
-  email_security: 'Email security',
-  soar: 'Automation',
-  backup: 'Backup and recovery',
-  ngfw: 'Firewall',
-  asset_discovery: 'Asset discovery',
-  deception: 'Deception',
-  mdr: 'Managed detection',
-};
+// Both label maps moved to `labels.ts`, which `portfolio.ts` can also import
+// without a cycle. Re-exported because this module's name is the one every
+// existing caller already reaches for.
+export { CATEGORY_LABELS };
 
 /** Mandatory first, then by category weight — the order the money was spent in. */
 function inDeliveryOrder(selections: readonly BundleSelection[]): BundleSelection[] {
@@ -437,7 +399,10 @@ function whyTheseProducts(inputs: ProposalInputs): ProposalSection {
   ];
 
   for (const justification of inputs.justifications) {
-    blocks.push({ kind: 'paragraph', text: `${justification.categoryLabel}. ${justification.headline}` });
+    blocks.push({
+      kind: 'paragraph',
+      text: `${justification.categoryLabel}. ${justification.headline}`,
+    });
 
     // Contenders only. The headline above already states how many were ruled
     // out before scoring, so nothing is concealed by leaving them out of the

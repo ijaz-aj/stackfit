@@ -33,7 +33,10 @@ function product(
   const base = buildProduct({
     id,
     pricing: [
-      { model: 'flat_tiered', tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(annualMinor) }] },
+      {
+        model: 'flat_tiered',
+        tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(annualMinor) }],
+      },
     ],
   });
   return {
@@ -100,10 +103,7 @@ describe('justifying a selection', () => {
   });
 
   it('gives every alternative a verdict, never a bare number', () => {
-    const result = run([
-      product('siem-a', 'siem', 100_00),
-      product('siem-b', 'siem', 900_00),
-    ]);
+    const result = run([product('siem-a', 'siem', 100_00), product('siem-b', 'siem', 900_00)]);
 
     const siem = justify(result).find((entry) => entry.category === 'siem');
     for (const alternative of siem?.alternatives ?? []) {
@@ -162,10 +162,9 @@ describe('justifying a selection', () => {
   });
 
   it('carries the hard filter’s own words for a product that never scored', () => {
-    const result = run(
-      [product('siem-a', 'siem', 100_00), product('siem-banned', 'siem', 50_00)],
-      { excludedProducts: ['siem-banned'] },
-    );
+    const result = run([product('siem-a', 'siem', 100_00), product('siem-banned', 'siem', 50_00)], {
+      excludedProducts: ['siem-banned'],
+    });
 
     const siem = justify(result).find((entry) => entry.category === 'siem');
     const banned = siem?.alternatives.find((entry) => entry.productId === 'siem-banned');

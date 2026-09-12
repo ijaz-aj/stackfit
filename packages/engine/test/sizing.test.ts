@@ -1,8 +1,4 @@
-import {
-  NO_SIZING_OVERRIDES,
-  type AssetInventory,
-  type SizingOverrides,
-} from '@stackfit/schema';
+import { NO_SIZING_OVERRIDES, type AssetInventory, type SizingOverrides } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
 import { applySizingOverrides, computeSizing } from '../src/index';

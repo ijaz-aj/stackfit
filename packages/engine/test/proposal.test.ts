@@ -45,9 +45,17 @@ function product(id: string, category: ProductCategory, annualMinor: number, typ
   const base = buildProduct({
     id,
     pricing: [
-      { model: 'flat_tiered', tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(annualMinor) }] },
+      {
+        model: 'flat_tiered',
+        tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(annualMinor) }],
+      },
     ],
-    implementation: { effortDays: 5, skillLevel: 'generalist', typicalWeeks, confidence: 'analyst_estimate' },
+    implementation: {
+      effortDays: 5,
+      skillLevel: 'generalist',
+      typicalWeeks,
+      confidence: 'analyst_estimate',
+    },
   });
   return {
     ...base,
@@ -143,7 +151,9 @@ describe('the mandated disclaimer', () => {
       (section) => section.heading === 'Assumptions and disclaimers',
     );
     const callouts = blocksOf(assumptions).filter((block) => block.kind === 'callout');
-    expect(callouts.some((block) => block.kind === 'callout' && block.text === document.disclaimer)).toBe(true);
+    expect(
+      callouts.some((block) => block.kind === 'callout' && block.text === document.disclaimer),
+    ).toBe(true);
   });
 
   it('names the date the figures were read, not the date the file was made', () => {
@@ -194,9 +204,7 @@ describe('the document model', () => {
       block.kind === 'table' ? block.rows : [],
     );
 
-    const named = rows
-      .map((row) => (row[0]?.kind === 'text' ? row[0].value : ''))
-      .join(' | ');
+    const named = rows.map((row) => (row[0]?.kind === 'text' ? row[0].value : '')).join(' | ');
     expect(named).not.toContain('dearer-siem');
 
     // The prose still accounts for it.
@@ -247,7 +255,9 @@ describe('the document model', () => {
     const document = buildProposal(proposalInputs());
     const cells = document.sections
       .flatMap((section) => section.blocks)
-      .flatMap((block) => (block.kind === 'table' ? [...block.rows.flat(), ...(block.total ?? [])] : []));
+      .flatMap((block) =>
+        block.kind === 'table' ? [...block.rows.flat(), ...(block.total ?? [])] : [],
+      );
 
     const moneyCells = cells.filter((cell) => cell.kind === 'money');
     expect(moneyCells.length).toBeGreaterThan(0);

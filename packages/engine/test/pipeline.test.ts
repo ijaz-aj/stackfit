@@ -158,9 +158,7 @@ describe('runPipeline', () => {
     } as AssetInventory;
 
     const onPrem = runPipeline(inputs({ products: [cloudOnly, onPremOnly] }));
-    const saas = runPipeline(
-      inputs({ products: [cloudOnly, onPremOnly], inventory: saasEstate }),
-    );
+    const saas = runPipeline(inputs({ products: [cloudOnly, onPremOnly], inventory: saasEstate }));
 
     expect(onPrem.infrastructure.shape).toBe('on_prem_centric');
     expect(saas.infrastructure.shape).toBe('saas_centric');

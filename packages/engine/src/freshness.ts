@@ -13,6 +13,8 @@ import type {
   ProductTier,
 } from '@stackfit/schema';
 
+import { PRICING_CONFIDENCE_LABELS, article } from './labels';
+
 export interface PriceFreshness {
   readonly status: FreshnessStatus;
   /** Most recent `asOf` across the rule's sources; undefined when unsourced. */
@@ -101,12 +103,26 @@ export function assessPriceFreshness(
   else if (ageDays >= warnAtDays) status = 'ageing';
   else status = 'fresh';
 
+  // "Priced 0 days ago" is what a subtraction says, not what a person says, and
+  // on a freshly refreshed catalog it was the opening words of eleven
+  // consecutive lines. The grade goes in lower case mid-sentence because it is
+  // being used as a noun phrase, not as a heading.
+  const priced =
+    ageDays === 0
+      ? 'Priced today'
+      : ageDays === 1
+        ? 'Priced yesterday'
+        : `Priced ${ageDays} days ago`;
+  const grade = PRICING_CONFIDENCE_LABELS[rule.pricingConfidence].toLowerCase();
+
+  const a = article(grade);
+
   const explanation =
     status === 'stale'
-      ? `Priced ${ageDays} days ago against a ${maxAgeDays}-day allowance for ${rule.pricingConfidence} pricing. Re-check before this reaches a client.`
+      ? `${priced}, against a ${maxAgeDays}-day allowance for ${a} ${grade}. Re-check before this reaches a client.`
       : status === 'ageing'
-        ? `Priced ${ageDays} days ago; the ${maxAgeDays}-day allowance for ${rule.pricingConfidence} pricing expires on ${recheckBy}.`
-        : `Priced ${ageDays} days ago, well inside the ${maxAgeDays}-day allowance for ${rule.pricingConfidence} pricing.`;
+        ? `${priced}; the ${maxAgeDays}-day allowance for ${a} ${grade} expires on ${recheckBy}.`
+        : `${priced}, well inside the ${maxAgeDays}-day allowance for ${a} ${grade}.`;
 
   return {
     status,

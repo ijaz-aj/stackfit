@@ -145,7 +145,10 @@ export function buildCostAssumptions(overrides: Partial<CostAssumptions> = {}): 
       // when an unrelated sizing coefficient changes.
       byCategory: ProductCategory.options.map((category) => ({
         category,
-        vcpuBasis: category === 'siem' || category === 'ndr' ? ('log_ingest' as const) : ('monitored_assets' as const),
+        vcpuBasis:
+          category === 'siem' || category === 'ndr'
+            ? ('log_ingest' as const)
+            : ('monitored_assets' as const),
         minimumVcpu: 4,
         vcpuPerThousandAssets: 0,
         chargesLogRetentionStorage: category === 'siem' || category === 'ndr',
@@ -271,7 +274,12 @@ export function buildPortfolioAssumptions(
       parallelWorkstreams: 2,
       phases: [
         { label: 'Immediate', horizon: 'First quarter', elapsedWeeks: 13, basis: 'test fixture' },
-        { label: 'Consolidate', horizon: 'Months four to nine', elapsedWeeks: 26, basis: 'test fixture' },
+        {
+          label: 'Consolidate',
+          horizon: 'Months four to nine',
+          elapsedWeeks: 26,
+          basis: 'test fixture',
+        },
         { label: 'Extend', horizon: 'Month ten onward', elapsedWeeks: null, basis: 'test fixture' },
       ],
       basis: 'test fixture',
@@ -385,7 +393,7 @@ export function buildScoringWeights(overrides: Partial<ScoringWeights> = {}): Sc
       statedMatch: 100,
       statedHybridFallback: 70,
       statedMismatch: 30,
-    statedSingleModeInHybrid: 85,
+      statedSingleModeInHybrid: 85,
       inferredMatch: 100,
       inferredHybridFallback: 85,
       inferredMismatch: 55,

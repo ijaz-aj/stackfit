@@ -8,6 +8,7 @@
 
 export const ENGINE_VERSION = '0.0.0';
 
+export * from './labels';
 export * from './sizing';
 export * from './money';
 export * from './freshness';

@@ -106,8 +106,17 @@ describe('determinism — cost', () => {
       },
     ],
     deploymentModes: ['on_prem', 'air_gapped'],
-    opsBurden: { baseFte: 0.37, ftePerThousandAssets: 0.23, confidence: 'analyst_estimate' as const },
-    implementation: { effortDays: 17, skillLevel: 'security_engineer', typicalWeeks: 7, confidence: 'analyst_estimate' as const },
+    opsBurden: {
+      baseFte: 0.37,
+      ftePerThousandAssets: 0.23,
+      confidence: 'analyst_estimate' as const,
+    },
+    implementation: {
+      effortDays: 17,
+      skillLevel: 'security_engineer',
+      typicalWeeks: 7,
+      confidence: 'analyst_estimate' as const,
+    },
   });
 
   const tier = product.tiers[0];

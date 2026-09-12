@@ -32,6 +32,7 @@ import {
 
 import { controlsClaimedBy } from './claims';
 import { operationalFteFor } from './cost';
+import { formatCount, skuName } from './labels';
 import type { SizingResult } from './sizing';
 
 export interface ScoringInputs {
@@ -127,8 +128,13 @@ function countOf(inventory: AssetInventory, assetClass: AssetClass): number {
  * Renormalising rather than letting the total drift keeps "out of 100" true,
  * which matters because §7.4 step 2 divides by this number.
  */
-export function effectiveWeights(weights: ScoringWeights, profile: ClientProfile): Map<ScoringDimension, number> {
-  const adjustment = weights.biasAdjustments.find((entry) => entry.bias === profile.procurementBias);
+export function effectiveWeights(
+  weights: ScoringWeights,
+  profile: ClientProfile,
+): Map<ScoringDimension, number> {
+  const adjustment = weights.biasAdjustments.find(
+    (entry) => entry.bias === profile.procurementBias,
+  );
   const deltas = new Map(adjustment?.deltas.map((delta) => [delta.dimension, delta.delta]) ?? []);
 
   const adjusted = new Map<ScoringDimension, number>();
@@ -385,10 +391,7 @@ function scaleFit(product: Product, sizing: SizingResult): { score: number; note
   };
 }
 
-function integrationFit(
-  product: Product,
-  profile: ClientProfile,
-): { score: number; note: string } {
+function integrationFit(product: Product, profile: ClientProfile): { score: number; note: string } {
   if (profile.retainedTools.length === 0) {
     return {
       score: 100,
@@ -603,8 +606,9 @@ export function tierLimitReasons(
     const have = unitsForCap(cap.unit, sizing, profile);
     if (have > cap.maxUnits) {
       reasons.push(
-        `${product.name} ${tier.name} is capped at ${cap.maxUnits} ${cap.unit.replace('_', ' ')} ` +
-          `and this environment has ${round(have, 0)}. ${cap.note}`,
+        `${skuName(product.name, tier.name)} is capped at ${formatCount(cap.maxUnits)} ` +
+          `${cap.unit.replace(/_/g, ' ')} and this environment has ${formatCount(round(have, 0))}. ` +
+          `${cap.note}`,
       );
     }
   }
@@ -615,7 +619,8 @@ export function tierLimitReasons(
     );
     if (!held) {
       reasons.push(
-        `${product.name} ${tier.name} requires ${prerequisite.description}, which this client is ` +
+        `${skuName(product.name, tier.name)} requires ${prerequisite.description}, which this ` +
+          `client is ` +
           `not recorded as holding. Add it to retainedTools if they do — otherwise this tier is ` +
           `not available to them at its stated price.`,
       );
@@ -664,7 +669,9 @@ export function scoreProduct(
     coverage.inRemit === 0
       ? `No assets in this category's remit were captured, so coverage is not a differentiator here and is scored neutral.`
       : `Reaches ${round(coverage.covered, 1)} of ${round(coverage.inRemit, 1)} weighted asset unit(s) in a ${product.category}'s remit` +
-        (coverage.missedClasses.length > 0 ? `; misses ${coverage.missedClasses.join(', ')}.` : '.');
+        (coverage.missedClasses.length > 0
+          ? `; misses ${coverage.missedClasses.join(', ')}.`
+          : '.');
 
   const compliance = complianceCoverage(product, tier, frameworks);
   const complianceScore =

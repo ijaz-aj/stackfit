@@ -40,6 +40,7 @@ import {
 } from './cost';
 import { controlsClaimedBy } from './claims';
 import type { CategoryRelevance } from './infrastructure';
+import { CATEGORY_LABELS, SERVICE_LEVEL_LABELS, listOf, plural } from './labels';
 import {
   addMoney,
   convertMoney,
@@ -360,12 +361,6 @@ function formatMinor(dearer: Money, cheaper: Money): string {
   });
 }
 
-/** "A", "A and B", "A, B and C" — how a person writes a list in a sentence. */
-function listOf(names: readonly string[]): string {
-  if (names.length <= 1) return names[0] ?? '';
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
-}
-
 function withinCap(amount: Money, cap: Money | null): boolean {
   return cap === null || amount.amountMinor <= cap.amountMinor;
 }
@@ -532,9 +527,7 @@ function select(
     for (const ranking of pass) {
       if (filledCategories.has(ranking.category)) continue;
 
-      const forCategory = candidates.filter(
-        (candidate) => candidate.category === ranking.category,
-      );
+      const forCategory = candidates.filter((candidate) => candidate.category === ranking.category);
       if (forCategory.length === 0) {
         if (ranking.mandatory) {
           unfundedMandatory.push(ranking.category);
@@ -646,8 +639,7 @@ function select(
       // Capacity is a constraint on the same footing as the caps, and it binds
       // per bundle: only Operable sets one.
       const withinCapacity = (entry: (typeof scored)[number]): boolean =>
-        options.fteCapacity === undefined ||
-        opsFte + entry.cost.opsFte <= options.fteCapacity;
+        options.fteCapacity === undefined || opsFte + entry.cost.opsFte <= options.fteCapacity;
 
       const picked = scored.find((entry) => {
         if (!withinCapacity(entry)) return false;
@@ -770,9 +762,9 @@ function select(
         rationale.push(
           profile.budget.annualCap === null
             ? 'Chosen as the cheapest acceptable option for this category, because this bundle is ' +
-              'the minimum defensible posture rather than the best available one.'
+                'the minimum defensible posture rather than the best available one.'
             : 'Chosen as the cheapest acceptable option for this category, so the stated budget ' +
-              'stretches to cover everything that has to be funded.',
+                'stretches to cover everything that has to be funded.',
         );
       }
 
@@ -865,9 +857,11 @@ export function msspAlternative(
   const totalAnnual = addMoney(annual, residualAnnual);
 
   const rationale: string[] = [
-    `Managed alternative at the "${serviceLevel}" service level, for a ${sizing.scaleClass} estate.`,
-    `Base platform fee, plus ${sizing.endpointCount} endpoint(s), ${sizing.serverCount} server(s) ` +
-      `and ${round(sizing.gbPerDay, 2)} GB/day of ingest, × ${multiplier} for the service level.`,
+    `Managed alternative at the ${SERVICE_LEVEL_LABELS[serviceLevel] ?? serviceLevel} service ` +
+      `level, for a ${sizing.scaleClass} estate.`,
+    `Base platform fee, plus ${plural(sizing.endpointCount, 'endpoint')}, ` +
+      `${plural(sizing.serverCount, 'server')} and ${round(sizing.gbPerDay, 2)} GB/day of ingest, ` +
+      `× ${multiplier} for the service level.`,
     monthly.amountMinor === floor.amountMinor
       ? 'The per-unit maths fell below the rate card minimum, so the minimum is quoted.'
       : 'Above the rate card minimum, so the per-unit figure stands.',
@@ -876,12 +870,13 @@ export function msspAlternative(
   if (selections.length > 0) {
     rationale.push(
       coversCategories.length > 0
-        ? `Replaces ${coversCategories.join(', ')} from this bundle.`
+        ? `Replaces ${listOf(coversCategories.map((category) => CATEGORY_LABELS[category]))} from this bundle.`
         : 'Replaces nothing in this bundle — none of its categories are delivered at this service level.',
     );
     if (uncoveredCategories.length > 0) {
       rationale.push(
-        `Does NOT cover ${uncoveredCategories.join(', ')}. Those stay the client's to buy and run, ` +
+        `Does not cover ${listOf(uncoveredCategories.map((category) => CATEGORY_LABELS[category]))}. ` +
+          `Those stay the client's to buy and run, ` +
           `at a residual ${moneyInWords(residualAnnual)} a year on top of the ` +
           'managed fee. Comparing the fee alone against the bundle would flatter the managed option.',
       );
@@ -889,7 +884,7 @@ export function msspAlternative(
     rationale.push(
       `Build ${moneyInWords(buildAnnual)}/yr against buy ` +
         `${moneyInWords(totalAnnual)}/yr (fee plus residual). ` +
-        'Neither figure includes the client\'s own staff time for the build option beyond the ' +
+        "Neither figure includes the client's own staff time for the build option beyond the " +
         'ops FTE already costed.',
     );
   }
@@ -930,10 +925,7 @@ function buildBundle(
   );
   // The selection carries the costing it was made on, tier included. Looking it
   // up by product id again is the Phase 4 finding-2 mistake in another form.
-  const totalOpsFte = result.selections.reduce(
-    (sum, selection) => sum + selection.cost.opsFte,
-    0,
-  );
+  const totalOpsFte = result.selections.reduce((sum, selection) => sum + selection.cost.opsFte, 0);
 
   // §7.4 step 7. What would it take to cover everything mandatory?
   const mandatoryCategories = rankings.filter((ranking) => ranking.mandatory);
@@ -979,8 +971,7 @@ function buildBundle(
     mandatoryOneTimeFloor.amountMinor > oneTimeCap.amountMinor &&
     mandatoryCategories.length > 0;
 
-  const capacityFte =
-    profile.securityStaffFte * inputs.assumptions.operableCapacity.utilisation;
+  const capacityFte = profile.securityStaffFte * inputs.assumptions.operableCapacity.utilisation;
 
   const rationale: string[] = [];
   switch (kind) {
@@ -1013,11 +1004,11 @@ function buildBundle(
         rationale.push(
           profile.securityStaffFte === 0
             ? '⚠ Nothing. This client has no security staff, so there is no tool they can operate ' +
-              'themselves — not the cheapest one, and not a free one. Every option in the ' +
-              'recommendation above assumes somebody runs it. For this client the managed ' +
-              'alternative is not a comparison, it is the only route.'
+                'themselves — not the cheapest one, and not a free one. Every option in the ' +
+                'recommendation above assumes somebody runs it. For this client the managed ' +
+                'alternative is not a comparison, it is the only route.'
             : `⚠ Nothing fits. Every candidate costs more than the ${round(capacityFte, 2)} FTE ` +
-              'this team has spare, so there is no stack they can run unaided.',
+                'this team has spare, so there is no stack they can run unaided.',
         );
       }
       rationale.push(
@@ -1040,7 +1031,7 @@ function buildBundle(
     rationale.push(
       `⚠ SHORTFALL: ${result.unfundedMandatory.join(', ')} ${result.unfundedMandatory.length === 1 ? 'is' : 'are'} ` +
         'required by the selected frameworks and could not be funded within this budget. This bundle ' +
-        'does not meet the client\'s compliance obligation, and has not been quietly downgraded to hide that.',
+        "does not meet the client's compliance obligation, and has not been quietly downgraded to hide that.",
     );
   }
   if (mandatoryUnaffordable) {
@@ -1144,7 +1135,8 @@ function buildBundle(
     withinOneTimeCap: withinCap(result.oneTime, profile.budget.oneTimeCap),
     unfundedMandatory: result.unfundedMandatory,
     unfundedReasons: result.unfundedReasons,
-    annualShortfall: mandatoryUnaffordable && cap !== null ? subtractMoney(mandatoryFloor, cap) : null,
+    annualShortfall:
+      mandatoryUnaffordable && cap !== null ? subtractMoney(mandatoryFloor, cap) : null,
     minimumViableAnnual: mandatoryCategories.length > 0 ? mandatoryFloor : null,
     oneTimeShortfall:
       mandatoryUnimplementable && oneTimeCap !== null
@@ -1265,8 +1257,7 @@ function buildRecommended(
   const CHEAPEST_RATIONALE =
     'Built from the cheapest acceptable option in each category rather than the highest value ' +
     'density: at this budget, ranking on value alone let one expensive product take the ' +
-    'money and leave whole categories unfunded. §7.4 step 3 calls for exactly this when the ' +
-    'budget is tight.';
+    'money and leave whole categories unfunded. Breadth beats depth when the budget is tight.';
 
   const WEIGHT_PER_COST_RATIONALE =
     'Categories were funded in order of risk-reduction per pound rather than risk-reduction ' +

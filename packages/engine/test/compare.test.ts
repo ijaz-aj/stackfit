@@ -4,7 +4,12 @@
 // two currencies must refuse to subtract, and flipping the two sides must tell
 // the same story rather than an inverted one about who changed what.
 
-import type { AssetInventory, ClientProfile, CurrencyCode, ProductCategory } from '@stackfit/schema';
+import type {
+  AssetInventory,
+  ClientProfile,
+  CurrencyCode,
+  ProductCategory,
+} from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
 import { compareScenarios, runPipeline, type ComparisonSide } from '../src/index';
@@ -33,7 +38,10 @@ function product(id: string, category: ProductCategory, annualMinor: number) {
   const base = buildProduct({
     id,
     pricing: [
-      { model: 'flat_tiered', tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(annualMinor) }] },
+      {
+        model: 'flat_tiered',
+        tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(annualMinor) }],
+      },
     ],
   });
   return {
@@ -211,7 +219,8 @@ describe('two currencies', () => {
     expect(comparison.currencyMismatch).toEqual({ left: 'USD', right: 'INR' });
     for (const change of comparison.headlines) {
       const isMoney = change.left?.kind === 'money';
-      if (isMoney) expect(change.delta, `${change.label} was subtracted across currencies`).toBeNull();
+      if (isMoney)
+        expect(change.delta, `${change.label} was subtracted across currencies`).toBeNull();
     }
   });
 

@@ -144,3 +144,63 @@ describe('assessTierFreshness', () => {
     expect(result.newestSourceDate).toBe('2025-01-01');
   });
 });
+
+describe('the explanation, which is printed to a client', () => {
+  // This sentence appears verbatim under every product on the results page and
+  // in every export. Thirteen copies of it were on screen at once, so each of
+  // these was thirteen visible defects rather than one.
+
+  it('says "today" rather than counting zero days', () => {
+    // "Priced 0 days ago" opened eleven consecutive lines on a freshly
+    // refreshed catalog. It is what a subtraction says, not what a person does.
+    const result = assessPriceFreshness(rule(), '2026-01-01', policy);
+    expect(result.ageDays).toBe(0);
+    expect(result.explanation).toContain('Priced today');
+    expect(result.explanation).not.toContain('0 days ago');
+  });
+
+  it('says "yesterday" for one day, and counts only past that', () => {
+    expect(assessPriceFreshness(rule(), '2026-01-02', policy).explanation).toContain(
+      'Priced yesterday',
+    );
+    expect(assessPriceFreshness(rule(), '2026-01-03', policy).explanation).toContain(
+      'Priced 2 days ago',
+    );
+  });
+
+  it('names the grade in words, never as its enum value', () => {
+    // `for ${rule.pricingConfidence} pricing` put "public_list" and
+    // "analyst_estimate" into a client-facing sentence.
+    const listPrice = assessPriceFreshness(rule(), '2026-01-31', policy).explanation;
+    expect(listPrice).toContain('public list price');
+    expect(listPrice).not.toContain('public_list');
+
+    const estimate = assessPriceFreshness(
+      rule({ pricingConfidence: 'analyst_estimate' }),
+      '2026-01-31',
+      policy,
+    ).explanation;
+    expect(estimate).toContain('analyst estimate');
+    expect(estimate).not.toContain('analyst_estimate');
+  });
+
+  it('takes the right indefinite article before the grade', () => {
+    // "for a analyst estimate" was on screen against every estimated price.
+    const estimate = assessPriceFreshness(
+      rule({ pricingConfidence: 'analyst_estimate' }),
+      '2026-01-31',
+      policy,
+    ).explanation;
+    expect(estimate).toContain('for an analyst estimate');
+    expect(estimate).not.toContain('for a analyst');
+  });
+
+  it('carries no underscore in any of its three branches', () => {
+    // fresh, ageing and stale each build the sentence separately, and only one
+    // of them was being read when this was last checked by eye.
+    for (const today of ['2026-01-31', '2026-03-09', '2026-06-01']) {
+      const result = assessPriceFreshness(rule(), today, policy);
+      expect(result.explanation, `${result.status} branch leaked an enum`).not.toMatch(/\w_\w/);
+    }
+  });
+});

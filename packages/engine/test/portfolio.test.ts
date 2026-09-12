@@ -66,12 +66,36 @@ function buildCategoryWeights(overrides: Record<ProductCategory, number> = {} as
     'mdr',
   ];
   const assetClasses = [
-    'windowsEndpoints','macosEndpoints','linuxEndpoints','windowsServers','windowsDomainControllers',
-    'linuxServers','hypervisors','containerNodes','routers','switches','wirelessControllers','firewalls',
-    'vpnConcentrators','loadBalancers','databases','fileServers','internalWebApps','publicWebApps',
-    'otIcsScadaDevices','iotCctvPosDevices','awsAccounts','azureSubscriptions','gcpProjects',
-    'cloudWorkloads','m365Seats','googleWorkspaceSeats','otherCriticalSaasApps','remoteUsers',
-    'privilegedAccounts','serviceAccounts',
+    'windowsEndpoints',
+    'macosEndpoints',
+    'linuxEndpoints',
+    'windowsServers',
+    'windowsDomainControllers',
+    'linuxServers',
+    'hypervisors',
+    'containerNodes',
+    'routers',
+    'switches',
+    'wirelessControllers',
+    'firewalls',
+    'vpnConcentrators',
+    'loadBalancers',
+    'databases',
+    'fileServers',
+    'internalWebApps',
+    'publicWebApps',
+    'otIcsScadaDevices',
+    'iotCctvPosDevices',
+    'awsAccounts',
+    'azureSubscriptions',
+    'gcpProjects',
+    'cloudWorkloads',
+    'm365Seats',
+    'googleWorkspaceSeats',
+    'otherCriticalSaasApps',
+    'remoteUsers',
+    'privilegedAccounts',
+    'serviceAccounts',
   ];
   return {
     materialSurfaceShare: 0.1,
@@ -108,9 +132,14 @@ const assumptions: PortfolioAssumptions = {
   roadmap: {
     parallelWorkstreams: 2,
     phases: [
-    { label: 'Immediate', horizon: 'First quarter', elapsedWeeks: 13, basis: 'test fixture' },
-    { label: 'Consolidate', horizon: 'Months four to nine', elapsedWeeks: 26, basis: 'test fixture' },
-    { label: 'Extend', horizon: 'Month ten onward', elapsedWeeks: null, basis: 'test fixture' },
+      { label: 'Immediate', horizon: 'First quarter', elapsedWeeks: 13, basis: 'test fixture' },
+      {
+        label: 'Consolidate',
+        horizon: 'Months four to nine',
+        elapsedWeeks: 26,
+        basis: 'test fixture',
+      },
+      { label: 'Extend', horizon: 'Month ten onward', elapsedWeeks: null, basis: 'test fixture' },
     ],
     basis: 'test fixture',
   },
@@ -132,9 +161,24 @@ const msspCard: MsspRateCard = {
   perServerMonthly: usd(2000),
   perGbDayMonthly: usd(5000),
   serviceLevels: [
-    { level: 'monitoring', multiplier: 1, coveredCategories: ['siem', 'mdr'], basis: 'test fixture' },
-    { level: 'mdr', multiplier: 1.5, coveredCategories: ['siem', 'mdr', 'edr', 'soar', 'ndr'], basis: 'test fixture' },
-    { level: 'managed_security', multiplier: 2, coveredCategories: ['siem', 'mdr', 'edr', 'soar', 'ndr', 'ngfw'], basis: 'test fixture' },
+    {
+      level: 'monitoring',
+      multiplier: 1,
+      coveredCategories: ['siem', 'mdr'],
+      basis: 'test fixture',
+    },
+    {
+      level: 'mdr',
+      multiplier: 1.5,
+      coveredCategories: ['siem', 'mdr', 'edr', 'soar', 'ndr'],
+      basis: 'test fixture',
+    },
+    {
+      level: 'managed_security',
+      multiplier: 2,
+      coveredCategories: ['siem', 'mdr', 'edr', 'soar', 'ndr', 'ngfw'],
+      basis: 'test fixture',
+    },
   ],
   minimumMonthly: usd(50_000),
 };
@@ -154,7 +198,12 @@ function buildInputs(scenario: Scenario): PortfolioInputs {
   const profile = buildClientProfile({
     securityStaffFte: scenario.securityStaffFte ?? 3,
     budget: {
-      annualCap: scenario.annualCap === undefined ? null : scenario.annualCap === null ? null : usd(scenario.annualCap),
+      annualCap:
+        scenario.annualCap === undefined
+          ? null
+          : scenario.annualCap === null
+            ? null
+            : usd(scenario.annualCap),
       oneTimeCap:
         scenario.oneTimeCap === undefined || scenario.oneTimeCap === null
           ? null
@@ -206,7 +255,12 @@ function product(
 ): Product {
   const base = buildProduct({
     id,
-    pricing: [{ model: 'flat_tiered', tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(annualMinor) }] }],
+    pricing: [
+      {
+        model: 'flat_tiered',
+        tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(annualMinor) }],
+      },
+    ],
   });
   return {
     ...base,
@@ -228,7 +282,10 @@ const pciMandatingSiem: Framework = buildFramework({
 describe('step 1 — category ranking', () => {
   it('marks a category mandatory when a selected framework requires it', () => {
     const { rankings } = buildPortfolio(
-      buildInputs({ products: [product('siem-a', 'siem', 100_000)], frameworks: [pciMandatingSiem] }),
+      buildInputs({
+        products: [product('siem-a', 'siem', 100_000)],
+        frameworks: [pciMandatingSiem],
+      }),
     );
     const siem = rankings.find((entry) => entry.category === 'siem');
     expect(siem?.mandatory).toBe(true);
@@ -259,7 +316,11 @@ describe('the Operable bundle — what this team can actually run', () => {
   it('never exceeds the capacity the client stated', () => {
     const { operable } = buildPortfolio(
       buildInputs({
-        products: [heavy('siem-a', 'siem', 0.8), heavy('edr-a', 'edr', 0.8), heavy('iam-a', 'iam', 0.8)],
+        products: [
+          heavy('siem-a', 'siem', 0.8),
+          heavy('edr-a', 'edr', 0.8),
+          heavy('iam-a', 'iam', 0.8),
+        ],
         securityStaffFte: 2,
         annualCap: 500_000_00,
       }),
@@ -273,7 +334,11 @@ describe('the Operable bundle — what this team can actually run', () => {
     // The whole point of a fourth bundle rather than a constraint. What the
     // estate warrants does not shrink because the client is short-handed.
     const inputs = buildInputs({
-      products: [heavy('siem-a', 'siem', 0.8), heavy('edr-a', 'edr', 0.8), heavy('iam-a', 'iam', 0.8)],
+      products: [
+        heavy('siem-a', 'siem', 0.8),
+        heavy('edr-a', 'edr', 0.8),
+        heavy('iam-a', 'iam', 0.8),
+      ],
       securityStaffFte: 2,
       annualCap: 500_000_00,
     });
@@ -325,7 +390,11 @@ describe('the Operable bundle — what this team can actually run', () => {
     // with no overlap. A bundle that constrains on that must not be read as a
     // measurement.
     const { operable } = buildPortfolio(
-      buildInputs({ products: [heavy('siem-a', 'siem', 0.5)], securityStaffFte: 2, annualCap: 500_000_00 }),
+      buildInputs({
+        products: [heavy('siem-a', 'siem', 0.5)],
+        securityStaffFte: 2,
+        annualCap: 500_000_00,
+      }),
     );
     const rationale = operable.rationale.join(' ');
     expect(rationale).toContain('analyst estimate');
@@ -604,8 +673,14 @@ describe('step 5 — the three bundles', () => {
 
   it('warns when a bundle needs more people than the client has', () => {
     const heavy = [
-      { ...product('siem-a', 'siem', 100_000), opsBurden: { baseFte: 2, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } },
-      { ...product('edr-a', 'edr', 100_000), opsBurden: { baseFte: 2, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const } },
+      {
+        ...product('siem-a', 'siem', 100_000),
+        opsBurden: { baseFte: 2, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
+      },
+      {
+        ...product('edr-a', 'edr', 100_000),
+        opsBurden: { baseFte: 2, ftePerThousandAssets: 0, confidence: 'analyst_estimate' as const },
+      },
     ];
     const { ideal } = buildPortfolio(buildInputs({ products: heavy, securityStaffFte: 1 }));
     expect(ideal.rationale.join(' ')).toContain('more people than the client has');
@@ -629,7 +704,10 @@ describe('tiers — the SKU is part of the recommendation', () => {
           name: 'Basic',
           controlsCovered: [],
           pricing: [
-            { ...tier.pricing[0]!, tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(10_000_00) }] },
+            {
+              ...tier.pricing[0]!,
+              tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(10_000_00) }],
+            },
           ],
         },
         {
@@ -638,7 +716,10 @@ describe('tiers — the SKU is part of the recommendation', () => {
           name: 'Advanced',
           controlsCovered: ['pci-dss-4.0:10'],
           pricing: [
-            { ...tier.pricing[0]!, tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(40_000_00) }] },
+            {
+              ...tier.pricing[0]!,
+              tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(40_000_00) }],
+            },
           ],
         },
       ],
@@ -710,7 +791,9 @@ describe('step 6 — the MSSP alternative', () => {
   });
 
   it('attaches an alternative to every bundle', () => {
-    const portfolio = buildPortfolio(buildInputs({ products: [product('siem-a', 'siem', 100_000)] }));
+    const portfolio = buildPortfolio(
+      buildInputs({ products: [product('siem-a', 'siem', 100_000)] }),
+    );
     for (const bundle of [portfolio.essential, portfolio.recommended, portfolio.ideal]) {
       expect(bundle.mssp.annual.amountMinor).toBeGreaterThan(0);
     }
@@ -719,10 +802,7 @@ describe('step 6 — the MSSP alternative', () => {
 
 describe('determinism', () => {
   it('gives an identical portfolio for the same input twice', () => {
-    const products = [
-      product('siem-a', 'siem', 10_000_00),
-      product('edr-a', 'edr', 10_000_00),
-    ];
+    const products = [product('siem-a', 'siem', 10_000_00), product('edr-a', 'edr', 10_000_00)];
     expect(buildPortfolio(buildInputs({ products }))).toEqual(
       buildPortfolio(buildInputs({ products })),
     );
@@ -754,8 +834,8 @@ describe('regressions', () => {
     const discounted = recommended.selections.find((s) => s.suiteDiscountApplied);
     expect(discounted).toBeDefined();
 
-    const undiscountedTco = costOfTier(inputs.costs, discounted!.productId, discounted!.tierId)!
-      .tco.amountMinor;
+    const undiscountedTco = costOfTier(inputs.costs, discounted!.productId, discounted!.tierId)!.tco
+      .amountMinor;
     expect(discounted!.tco.amountMinor).toBeLessThan(undiscountedTco);
 
     // And the bundle total must reflect it too.
@@ -812,10 +892,7 @@ describe('regressions', () => {
     // identically and the build-vs-buy comparison could not be right for both.
     // backup is not covered at the mdr service level, so it must show as residual.
     const inputs = buildInputs({
-      products: [
-        product('siem-a', 'siem', 10_000_00),
-        product('backup-a', 'backup', 10_000_00),
-      ],
+      products: [product('siem-a', 'siem', 10_000_00), product('backup-a', 'backup', 10_000_00)],
     });
     const { ideal } = buildPortfolio(inputs);
 
@@ -825,7 +902,9 @@ describe('regressions', () => {
     expect(ideal.mssp.totalAnnual.amountMinor).toBe(
       ideal.mssp.annual.amountMinor + ideal.mssp.residualAnnual.amountMinor,
     );
-    expect(ideal.mssp.rationale.join(' ')).toContain('Does NOT cover');
+    // The category is named in words, not as its enum value: this sentence is
+    // printed verbatim into a proposal, and "backup" there is a leaked field.
+    expect(ideal.mssp.rationale.join(' ')).toContain('Does not cover Backup and recovery');
   });
 
   it('does not buy less compliance with more budget when both strategies fund the same categories', () => {
@@ -859,7 +938,10 @@ describe('regressions', () => {
       ...buildProduct({
         id: 'broad-iam',
         pricing: [
-          { model: 'flat_tiered', tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(100_00) }] },
+          {
+            model: 'flat_tiered',
+            tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(100_00) }],
+          },
         ],
         opsBurden: { baseFte: 0.6, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
       }),
@@ -942,7 +1024,10 @@ describe('regressions', () => {
       ...buildProduct({
         id: 'cheap-iam',
         pricing: [
-          { model: 'flat_tiered', tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(100_00) }] },
+          {
+            model: 'flat_tiered',
+            tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(100_00) }],
+          },
         ],
         opsBurden: { baseFte: 0.6, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
       }),
@@ -975,7 +1060,10 @@ describe('regressions', () => {
       ...buildProduct({
         id: 'broad-iam',
         pricing: [
-          { model: 'flat_tiered', tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(100_00) }] },
+          {
+            model: 'flat_tiered',
+            tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(100_00) }],
+          },
         ],
         opsBurden: { baseFte: 0.6, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
       }),

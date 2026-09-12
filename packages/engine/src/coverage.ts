@@ -39,6 +39,7 @@ import type {
 import { controlsClaimedBy, tiersClaiming } from './claims';
 import { cheapestTierCost, costOfTier, type CostsByProduct, type ProductCost } from './cost';
 import type { CategoryRelevance } from './infrastructure';
+import { PRICING_CONFIDENCE_LABELS } from './labels';
 import { subtractMoney, sumMoney } from './money';
 import type { Bundle } from './portfolio';
 import type { ProductScore } from './scoring';
@@ -533,7 +534,8 @@ export function computeFrameworkCoverage(inputs: CoverageInputs): readonly Frame
     }
     if (framework.sourceQuality !== 'publisher_verified') {
       rationale.push(
-        `⚠ This framework's control list is graded ${framework.sourceQuality}, and any coverage ` +
+        `⚠ This framework's control list is graded ` +
+          `${framework.sourceQuality.replace(/_/g, ' ')}, and any coverage ` +
           'figure against it inherits that. ' +
           (framework.sourceQuality === 'provisional'
             ? 'Provisional means the exact control identifiers are unverified: usable for ' +
@@ -834,10 +836,7 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
   });
 
   const candidatesByControl = new Map<string, readonly GapCloser[]>(
-    graded.map((entry) => [
-      entry.control.controlId,
-      closersFor(entry.control, inputs, eliminated),
-    ]),
+    graded.map((entry) => [entry.control.controlId, closersFor(entry.control, inputs, eliminated)]),
   );
 
   const gaps: CoverageGap[] = [];
@@ -877,7 +876,8 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
       );
       if (best.needsRecheck) {
         rationale.push(
-          `⚠ ${best.productName}'s price is graded ${best.pricingConfidence} and is due a ` +
+          `⚠ ${best.productName}'s price is graded ` +
+            `${PRICING_CONFIDENCE_LABELS[best.pricingConfidence].toLowerCase()} and is due a ` +
             're-check; the fix cost above should not reach a client until it has been.',
         );
       }
@@ -984,7 +984,9 @@ export function computeCoverage(inputs: CoverageInputs): CoverageResult {
   const reportedGaps = gaps.map((gap): CoverageGap => {
     const productId = purchaseByControl.get(gap.controlId) ?? null;
     const displaced =
-      productId !== null && gap.cheapestCloser !== null && gap.cheapestCloser.productId !== productId;
+      productId !== null &&
+      gap.cheapestCloser !== null &&
+      gap.cheapestCloser.productId !== productId;
     return {
       ...gap,
       remediationProductId: productId,

@@ -94,7 +94,8 @@ const number = (value: number, decimals = 0): ProposalCell => ({ kind: 'number',
 const percent = (value: number | null): ProposalCell => ({ kind: 'percent', value });
 
 function kindOf(left: unknown, right: unknown): ChangeKind {
-  if (left === undefined || left === null) return right === undefined || right === null ? 'same' : 'only-right';
+  if (left === undefined || left === null)
+    return right === undefined || right === null ? 'same' : 'only-right';
   if (right === undefined || right === null) return 'only-left';
   return left === right ? 'same' : 'changed';
 }
@@ -131,7 +132,11 @@ function moneyChange(label: string, left: Money, right: Money, comparable: boole
 }
 
 /** Profile fields an analyst actually varies between two runs of the same client. */
-function profileChanges(left: ClientProfile, right: ClientProfile, comparable: boolean): ValueChange[] {
+function profileChanges(
+  left: ClientProfile,
+  right: ClientProfile,
+  comparable: boolean,
+): ValueChange[] {
   const changes: ValueChange[] = [
     textChange('Industry', left.industry, right.industry),
     textChange('Region', left.region, right.region),
@@ -163,7 +168,10 @@ function profileChanges(left: ClientProfile, right: ClientProfile, comparable: b
       left: leftCap === null ? text('none') : money(leftCap),
       right: rightCap === null ? text('none') : money(rightCap),
       delta:
-        comparable && leftCap !== null && rightCap !== null && leftCap.amountMinor !== rightCap.amountMinor
+        comparable &&
+        leftCap !== null &&
+        rightCap !== null &&
+        leftCap.amountMinor !== rightCap.amountMinor
           ? money(subtractMoney(rightCap, leftCap))
           : null,
       kind:
@@ -204,16 +212,29 @@ function inventoryChanges(left: AssetInventory, right: AssetInventory): ValueCha
   return changes;
 }
 
-function headlineChanges(left: ComparisonSide, right: ComparisonSide, comparable: boolean): ValueChange[] {
+function headlineChanges(
+  left: ComparisonSide,
+  right: ComparisonSide,
+  comparable: boolean,
+): ValueChange[] {
   return [
     numberChange('Controls funded', left.bundle.selections.length, right.bundle.selections.length),
     moneyChange('Annual spend', left.bundle.annualSpend, right.bundle.annualSpend, comparable),
-    moneyChange('Total annual cost', left.bundle.annualRecurring, right.bundle.annualRecurring, comparable),
+    moneyChange(
+      'Total annual cost',
+      left.bundle.annualRecurring,
+      right.bundle.annualRecurring,
+      comparable,
+    ),
     moneyChange('One-time', left.bundle.oneTime, right.bundle.oneTime, comparable),
     moneyChange('TCO over the horizon', left.bundle.tco, right.bundle.tco, comparable),
     numberChange('Operational FTE', left.bundle.totalOpsFte, right.bundle.totalOpsFte, 2),
     numberChange('Estimated GB/day', left.sizing.gbPerDay, right.sizing.gbPerDay, 2),
-    numberChange('Monitored assets', left.sizing.monitoredAssetCount, right.sizing.monitoredAssetCount),
+    numberChange(
+      'Monitored assets',
+      left.sizing.monitoredAssetCount,
+      right.sizing.monitoredAssetCount,
+    ),
   ];
 }
 
