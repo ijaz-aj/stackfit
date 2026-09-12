@@ -141,7 +141,8 @@ function profileChanges(left: ClientProfile, right: ClientProfile, comparable: b
     textChange('SOC posture', left.hasSoc, right.hasSoc),
     textChange('Risk tolerance', left.riskTolerance, right.riskTolerance),
     textChange('Data sensitivity', left.dataSensitivity, right.dataSensitivity),
-    textChange('Deployment preference', left.deploymentPreference, right.deploymentPreference),
+    textChange('Environment', left.environment, right.environment),
+    textChange('Deployment constraint', left.deploymentConstraint, right.deploymentConstraint),
     textChange('Procurement bias', left.procurementBias, right.procurementBias),
     textChange(
       'Compliance',

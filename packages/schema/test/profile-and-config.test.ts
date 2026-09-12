@@ -7,6 +7,7 @@ import {
   Framework,
   FX_RATE_SCALE,
   FxConfig,
+  StoredClientProfile,
 } from '../src/index';
 
 const usd = (amountMinor: number) => ({ amountMinor, currency: 'USD' as const });
@@ -68,7 +69,8 @@ describe('ClientProfile', () => {
     dataSensitivity: 'regulated',
     compliance: ['pci-dss-4.0'],
     budget: { annualCap: null, oneTimeCap: null, currency: 'INR' },
-    deploymentPreference: 'hybrid',
+    environment: 'not_asked',
+    deploymentConstraint: 'none',
     procurementBias: 'open_source_first',
   };
 
@@ -177,5 +179,58 @@ describe('Framework', () => {
       sources: [{ url: 'https://example.com/controls', asOf: '2026-09-09' }],
     });
     expect(framework.controls[0]?.mandatory).toBe(false);
+  });
+});
+
+describe('profiles saved before the environment split', () => {
+  // `deploymentPreference` carried two questions in one field, and `hybrid` was
+  // the wizard's own wording for "no strong preference". Stored scenarios have
+  // to keep meaning what they meant, and without this every saved row would
+  // read as unparseable the moment the schema changed.
+  const legacy = {
+    orgName: 'Acme Retail',
+    industry: 'retail',
+    region: 'in',
+    employeeCount: 60,
+    itStaffCount: 3,
+    securityStaffFte: 0,
+    hasSoc: 'none',
+    riskTolerance: 'medium',
+    dataSensitivity: 'regulated',
+    compliance: ['pci-dss-4.0'],
+    budget: { annualCap: null, oneTimeCap: null, currency: 'INR' },
+    procurementBias: 'open_source_first',
+  } as const;
+
+  it('reads a legacy "hybrid" as not_asked, because that is what it meant', () => {
+    // Mapping it to `hybrid` would silently change what the client said — from
+    // "we did not discuss it" into "we run both".
+    const parsed = StoredClientProfile.parse({ ...legacy, deploymentPreference: 'hybrid' });
+    expect((parsed as ClientProfile).environment).toBe('not_asked');
+  });
+
+  it('carries the other three values across unchanged', () => {
+    for (const mode of ['cloud', 'on_prem', 'air_gapped'] as const) {
+      const parsed = StoredClientProfile.parse({ ...legacy, deploymentPreference: mode });
+      expect((parsed as ClientProfile).environment).toBe(mode);
+    }
+  });
+
+  it('defaults the constraint rather than rejecting a row that predates it', () => {
+    const parsed = StoredClientProfile.parse({ ...legacy, deploymentPreference: 'cloud' });
+    expect((parsed as ClientProfile).deploymentConstraint).toBe('none');
+  });
+
+  it('refuses to guess at a legacy value it does not recognise', () => {
+    // Better an unreadable row the analyst is told about than an invented one.
+    const result = StoredClientProfile.safeParse({ ...legacy, deploymentPreference: 'on_a_boat' });
+    expect(result.success).toBe(false);
+  });
+
+  it('leaves a current profile completely alone', () => {
+    const current = { ...legacy, environment: 'hybrid', deploymentConstraint: 'saas_not_permitted' };
+    const parsed = StoredClientProfile.parse(current);
+    expect((parsed as ClientProfile).environment).toBe('hybrid');
+    expect((parsed as ClientProfile).deploymentConstraint).toBe('saas_not_permitted');
   });
 });

@@ -7,6 +7,7 @@
 
 import type {
   AssetInventory,
+  ClientEnvironment,
   DeploymentMode,
   EstateShape,
   Framework,
@@ -88,18 +89,75 @@ describe('hard filters (§7.3 pass 1)', () => {
     const base = buildProduct({ deploymentModes: ['cloud'] });
     const product = { ...base, supports: { ...base.supports, deviceClasses: ['server' as const] } };
     const inputs = buildInputs({
-      profile: buildClientProfile({ securityStaffFte: 2, deploymentPreference: 'air_gapped' }),
+      profile: buildClientProfile({ securityStaffFte: 2, environment: 'air_gapped' }),
     });
     expect(hardFilter(product, inputs).join(' ')).toContain('air-gapped');
   });
 
-  it('does not eliminate on a mere deployment preference', () => {
-    // A cloud product for an on-prem-preferring client is not what they asked
-    // for, but it is not unusable. That belongs in the score, not the filter.
+  it('does not eliminate a cloud product for an on-premises estate', () => {
+    // Where a client's assets live and how a tool is delivered are different
+    // questions. A cloud-delivered EDR protects on-premises endpoints perfectly
+    // well, so this belongs in the score, not the filter — eliminating here
+    // would remove every cloud-delivered product from every on-prem client.
+    const base = buildProduct({ deploymentModes: ['cloud'] });
+    const cloudOnly = { ...base, supports: { ...base.supports, deviceClasses: ['server' as const] } };
     const inputs = buildInputs({
-      profile: buildClientProfile({ securityStaffFte: 2, deploymentPreference: 'on_prem' }),
+      profile: buildClientProfile({ securityStaffFte: 2, environment: 'on_prem' }),
     });
+    expect(hardFilter(cloudOnly, inputs)).toEqual([]);
     expect(hardFilter(coveringProduct(), inputs)).toEqual([]);
+  });
+
+  describe('a procurement policy does eliminate, because it is a rule not a fit', () => {
+    function withModes(modes: DeploymentMode[]) {
+      const base = buildProduct({ deploymentModes: modes });
+      return { ...base, supports: { ...base.supports, deviceClasses: ['server' as const] } };
+    }
+
+    it('rules out a cloud-only product where SaaS is not permitted', () => {
+      const inputs = buildInputs({
+        profile: buildClientProfile({
+          securityStaffFte: 2,
+          environment: 'on_prem',
+          deploymentConstraint: 'saas_not_permitted',
+        }),
+      });
+      expect(hardFilter(withModes(['cloud']), inputs).join(' ')).toContain('cloud-only');
+    });
+
+    it('keeps a product that can also be self-hosted', () => {
+      // A hybrid mode satisfies the policy: it can be delivered the permitted way.
+      const inputs = buildInputs({
+        profile: buildClientProfile({
+          securityStaffFte: 2,
+          environment: 'on_prem',
+          deploymentConstraint: 'saas_not_permitted',
+        }),
+      });
+      expect(hardFilter(withModes(['cloud', 'hybrid']), inputs)).toEqual([]);
+      expect(hardFilter(withModes(['on_prem']), inputs)).toEqual([]);
+    });
+
+    it('rules out a self-hosted-only product for a client who will not self-host', () => {
+      const inputs = buildInputs({
+        profile: buildClientProfile({
+          securityStaffFte: 2,
+          environment: 'cloud',
+          deploymentConstraint: 'self_hosted_not_permitted',
+        }),
+      });
+      expect(hardFilter(withModes(['on_prem']), inputs).join(' ')).toContain('will not self-host');
+      expect(hardFilter(withModes(['cloud']), inputs)).toEqual([]);
+    });
+
+    it('eliminates nothing when no policy was stated', () => {
+      const inputs = buildInputs({
+        profile: buildClientProfile({ securityStaffFte: 2, environment: 'cloud' }),
+      });
+      for (const modes of [['cloud'], ['on_prem'], ['cloud', 'hybrid']] as DeploymentMode[][]) {
+        expect(hardFilter(withModes(modes), inputs)).toEqual([]);
+      }
+    });
   });
 
   it('eliminates above the scale ceiling and below the scale floor', () => {
@@ -339,7 +397,7 @@ describe('ops fit — the dimension that stops "free" winning by default', () =>
 describe('deployment fit — what they asked for, or what they run', () => {
   function deployment(
     modes: DeploymentMode[],
-    overrides: { preference?: DeploymentMode; estateShape?: EstateShape } = {},
+    overrides: { environment?: ClientEnvironment; estateShape?: EstateShape } = {},
   ) {
     const base = buildProduct({ deploymentModes: modes });
     const product: Product = {
@@ -349,42 +407,42 @@ describe('deployment fit — what they asked for, or what they run', () => {
     const inputs = buildInputs({
       profile: buildClientProfile({
         securityStaffFte: 2,
-        deploymentPreference: overrides.preference ?? 'hybrid',
+        environment: overrides.environment ?? 'not_asked',
       }),
       ...(overrides.estateShape === undefined ? {} : { estateShape: overrides.estateShape }),
     });
     return scoreAtFirstTier(product, inputs).dimensions.find((d) => d.dimension === 'deployment_fit');
   }
 
-  describe('a stated preference is a requirement the analyst heard', () => {
+  describe('the environment the client runs is a fact, not a wish', () => {
     it('gives full marks to a product that offers it natively', () => {
-      expect(deployment(['on_prem'], { preference: 'on_prem' })?.score).toBe(100);
+      expect(deployment(['on_prem'], { environment: 'on_prem' })?.score).toBe(100);
     });
 
     it('falls back to hybrid, which can usually be shaped to fit', () => {
-      expect(deployment(['cloud', 'hybrid'], { preference: 'on_prem' })?.score).toBe(70);
+      expect(deployment(['cloud', 'hybrid'], { environment: 'on_prem' })?.score).toBe(70);
     });
 
     it('marks down a product that offers neither', () => {
-      const fit = deployment(['cloud'], { preference: 'on_prem' });
+      const fit = deployment(['cloud'], { environment: 'on_prem' });
       expect(fit?.score).toBe(30);
-      expect(fit?.rationale).toContain('stated preference');
+      expect(fit?.rationale).toContain('environment the client');
     });
 
     it('ignores the estate: what the client said outranks what StackFit inferred', () => {
       // A cloud-only product in a cloud-native estate, for a client who asked
       // for on-prem. The estate agrees with the product and the client does not.
       expect(
-        deployment(['cloud'], { preference: 'on_prem', estateShape: 'cloud_native' })?.score,
+        deployment(['cloud'], { environment: 'on_prem', estateShape: 'cloud_native' })?.score,
       ).toBe(30);
     });
   });
 
-  describe('`hybrid` means no strong preference, so the estate decides', () => {
+  describe('`not_asked` is the only value that lets the estate decide', () => {
     it('gives full marks to a cloud product for a SaaS-centric estate', () => {
       const fit = deployment(['cloud'], { estateShape: 'saas_centric' });
       expect(fit?.score).toBe(100);
-      expect(fit?.rationale).toContain('No preference was stated');
+      expect(fit?.rationale).toContain('environment was not asked');
     });
 
     it('gives full marks to an on-prem product for an on-prem estate', () => {
@@ -417,6 +475,48 @@ describe('deployment fit — what they asked for, or what they run', () => {
 
     it('defaults to the same neutral result when the caller passes no estate shape', () => {
       expect(deployment(['cloud'])?.score).toBe(85);
+    });
+  });
+
+  describe('a hybrid client runs both, so both delivery models are native to them', () => {
+    // The defect this pins: `hybrid` used to be the wizard's wording for "no
+    // strong preference", so a client who genuinely ran both had their answer
+    // discarded, was scored by inference from asset counts, and was told in
+    // writing on a client-facing page that "no preference was stated".
+
+    it('gives full marks to a product that deploys either way', () => {
+      const fit = deployment(['cloud', 'hybrid'], { environment: 'hybrid' });
+      expect(fit?.score).toBe(100);
+      expect(fit?.rationale).toContain('covers both halves');
+    });
+
+    it('treats a cloud-only product as a real fit, not a mismatch', () => {
+      // 85, not 30. They run cloud — it is native to half their estate.
+      const fit = deployment(['cloud'], { environment: 'hybrid' });
+      expect(fit?.score).toBe(85);
+      expect(fit?.rationale).toContain('native to the cloud half');
+    });
+
+    it('treats an on-prem-only product the same way, from the other side', () => {
+      const fit = deployment(['on_prem'], { environment: 'hybrid' });
+      expect(fit?.score).toBe(85);
+      expect(fit?.rationale).toContain('native to the on-premises half');
+    });
+
+    it('never claims the client said nothing, and never reads the estate instead', () => {
+      // The sentence that reached a client-facing proposal for a client who
+      // had answered the question.
+      for (const modes of [['cloud'], ['on_prem'], ['cloud', 'hybrid']] as const) {
+        const fit = deployment([...modes], { environment: 'hybrid', estateShape: 'saas_centric' });
+        expect(fit?.rationale).not.toContain('not asked');
+        expect(fit?.rationale).not.toContain('StackFit reading the asset counts');
+      }
+    });
+
+    it('is unmoved by the estate, because the client stated it', () => {
+      const inSaasEstate = deployment(['on_prem'], { environment: 'hybrid', estateShape: 'saas_centric' });
+      const inOnPremEstate = deployment(['on_prem'], { environment: 'hybrid', estateShape: 'on_prem_centric' });
+      expect(inSaasEstate?.score).toBe(inOnPremEstate?.score);
     });
   });
 });
@@ -751,7 +851,7 @@ describe('regressions', () => {
   });
 
   it('does not treat "no preference" as a demand for a hybrid product', () => {
-    // Was: `deploymentPreference: 'hybrid'` is the wizard's wording for "no
+    // Was: `environment: 'not_asked'` is the wizard's wording for "no
     // strong preference", but scoring read it as a requirement — so a client
     // who had expressed no opinion scored every cloud-only and every
     // on-prem-only product 30 out of 100, marking down precisely the products
@@ -762,11 +862,11 @@ describe('regressions', () => {
       supports: { ...base.supports, deviceClasses: ['server', 'workstation'] },
     };
     const noPreference = buildInputs({
-      profile: buildClientProfile({ securityStaffFte: 2, deploymentPreference: 'hybrid' }),
+      profile: buildClientProfile({ securityStaffFte: 2, environment: 'not_asked' }),
       estateShape: 'saas_centric',
     });
     const stated = buildInputs({
-      profile: buildClientProfile({ securityStaffFte: 2, deploymentPreference: 'on_prem' }),
+      profile: buildClientProfile({ securityStaffFte: 2, environment: 'on_prem' }),
       estateShape: 'saas_centric',
     });
 

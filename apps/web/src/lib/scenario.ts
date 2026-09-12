@@ -2,6 +2,7 @@ import {
   AssetInventory,
   ClientProfile,
   NO_SIZING_OVERRIDES,
+  StoredClientProfile,
   SizingOverrides,
   Slug,
   type ScenarioPreset,
@@ -36,7 +37,8 @@ export const NEW_PROFILE: ClientProfile = {
   dataSensitivity: 'internal',
   compliance: [],
   budget: { annualCap: null, oneTimeCap: null, currency: 'INR', horizonYears: 3 },
-  deploymentPreference: 'hybrid',
+  environment: 'not_asked',
+    deploymentConstraint: 'none',
   procurementBias: 'no_preference',
   retainedTools: [],
   excludedProducts: [],
@@ -120,7 +122,9 @@ export function parseScenarioRow(row: ScenarioRow): ScenarioRecord | UnreadableS
     return { ...base, problem: `stored JSON is malformed: ${(error as Error).message}` };
   }
 
-  const profile = ClientProfile.safeParse(rawProfile);
+  // The stored shape, not the current one: a scenario saved before a schema
+  // change is migrated on read rather than reported as an unreadable row.
+  const profile = StoredClientProfile.safeParse(rawProfile);
   if (!profile.success) {
     return { ...base, problem: `profile does not match the current schema: ${issueOf(profile.error)}` };
   }

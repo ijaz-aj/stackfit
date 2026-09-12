@@ -197,7 +197,7 @@ describe('§12.3 — open-source-first, low budget, 2 security FTE', () => {
     itStaffCount: 12,
     securityStaffFte: 2,
     procurementBias: 'open_source_first',
-    deploymentPreference: 'on_prem',
+    environment: 'on_prem',
     // §12.3 says "low budget", and it has to actually be low: USD 8k/yr of
     // procurement spend for a 500-asset estate is a budget that cannot buy
     // commercial licences, which is the situation the scenario describes.
@@ -259,7 +259,7 @@ describe('§12.4 — air-gapped OT environment', () => {
     employeeCount: 250,
     itStaffCount: 6,
     securityStaffFte: 1,
-    deploymentPreference: 'air_gapped',
+    environment: 'air_gapped',
     budget: { annualCap: null, oneTimeCap: null, currency: 'USD', horizonYears: 3 },
   });
   const inventory = inventoryOf({
@@ -445,7 +445,7 @@ describe('regressions found by these scenarios', () => {
           employeeCount: 400,
           itStaffCount: 12,
           securityStaffFte: 2,
-          deploymentPreference: 'on_prem',
+          environment: 'on_prem',
           budget: { annualCap: usd(capMinor), oneTimeCap: null, currency: 'USD', horizonYears: 3 },
         }),
         inventory,

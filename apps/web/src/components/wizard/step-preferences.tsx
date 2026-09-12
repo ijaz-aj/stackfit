@@ -1,10 +1,21 @@
 'use client';
 
-import { DataSensitivity, DeploymentMode, ProcurementBias } from '@stackfit/schema';
+import {
+  ClientEnvironment,
+  DataSensitivity,
+  DeploymentConstraint,
+  ProcurementBias,
+} from '@stackfit/schema';
 
 import { Badge, Card, Field, Select } from '@/components/ui';
 
-import { BIAS_LABELS, CATEGORY_LABELS, DEPLOYMENT_LABELS, SENSITIVITY_LABELS } from './labels';
+import {
+  BIAS_LABELS,
+  CATEGORY_LABELS,
+  CONSTRAINT_LABELS,
+  ENVIRONMENT_LABELS,
+  SENSITIVITY_LABELS,
+} from './labels';
 import { useWizard } from './store';
 
 export interface ProductOption {
@@ -20,10 +31,16 @@ const optionsFrom = (values: readonly string[], labels: Readonly<Record<string, 
 /**
  * Constraints and preferences (PROJECT_SPEC §5.1, §7.3).
  *
- * `air_gapped` is the only deployment preference that eliminates products
- * outright — a SaaS tool in an air-gapped site cannot work at all, whereas an
- * on-premises tool for a cloud-preferring client is merely not what they asked
- * for, which is what the deployment-fit score is for.
+ * The environment is a *fact about the client*, not a wish: they already run
+ * something, and the recommendation follows from what that is. It used to be
+ * one field called "deployment preference" whose `hybrid` option secretly meant
+ * "no strong preference", so a client who genuinely ran both could not say so
+ * and was scored by inference from their asset counts instead.
+ *
+ * The constraint beside it is the separate question — what their procurement
+ * policy forbids. Only that, and an air-gapped environment, eliminate anything.
+ * A cloud-delivered tool still protects on-premises endpoints, so an on-prem
+ * estate marks cloud delivery down rather than ruling it out.
  */
 export function StepPreferences({ products }: { products: readonly ProductOption[] }) {
   const profile = useWizard((state) => state.profile);
@@ -50,17 +67,34 @@ export function StepPreferences({ products }: { products: readonly ProductOption
           </Field>
 
           <Field
-            label="Deployment preference"
-            htmlFor="deploymentPreference"
-            hint="Only air-gapped rules products out; the rest is scored, not filtered."
+            label="Environment they run"
+            htmlFor="environment"
+            hint="What the client already has, not what they would prefer. Hybrid means both, and is the common answer."
           >
             <Select
-              id="deploymentPreference"
-              value={profile.deploymentPreference}
-              options={optionsFrom(DeploymentMode.options, DEPLOYMENT_LABELS)}
+              id="environment"
+              value={profile.environment}
+              options={optionsFrom(ClientEnvironment.options, ENVIRONMENT_LABELS)}
               onChange={(event) =>
                 patchProfile({
-                  deploymentPreference: event.target.value as typeof profile.deploymentPreference,
+                  environment: event.target.value as typeof profile.environment,
+                })
+              }
+            />
+          </Field>
+
+          <Field
+            label="Delivery their policy forbids"
+            htmlFor="deploymentConstraint"
+            hint="A procurement rule, not a preference — this is the only thing here that rules products out."
+          >
+            <Select
+              id="deploymentConstraint"
+              value={profile.deploymentConstraint}
+              options={optionsFrom(DeploymentConstraint.options, CONSTRAINT_LABELS)}
+              onChange={(event) =>
+                patchProfile({
+                  deploymentConstraint: event.target.value as typeof profile.deploymentConstraint,
                 })
               }
             />

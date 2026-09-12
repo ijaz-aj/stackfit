@@ -43,7 +43,7 @@ presets:
         oneTimeCap: { amountMinor: 200000000, currency: INR } # INR 20,00,000
         currency: INR
         horizonYears: 3
-      deploymentPreference: hybrid
+      environment: hybrid
       procurementBias: no_preference
       retainedTools: []
       excludedProducts: []
@@ -93,7 +93,7 @@ presets:
         oneTimeCap: null
         currency: USD
         horizonYears: 3
-      deploymentPreference: cloud
+      environment: cloud
       procurementBias: no_preference
       retainedTools: []
       excludedProducts: []
@@ -139,7 +139,7 @@ presets:
         oneTimeCap: null
         currency: EUR
         horizonYears: 3
-      deploymentPreference: on_prem
+      environment: on_prem
       procurementBias: no_preference
       retainedTools: []
       excludedProducts: []
@@ -190,7 +190,7 @@ presets:
         oneTimeCap: null
         currency: USD
         horizonYears: 3
-      deploymentPreference: hybrid
+      environment: hybrid
       procurementBias: commercial
       retainedTools: []
       excludedProducts: []
@@ -242,7 +242,7 @@ presets:
         oneTimeCap: { amountMinor: 1000000000, currency: INR } # INR 1,00,00,000
         currency: INR
         horizonYears: 3
-      deploymentPreference: on_prem
+      environment: on_prem
       procurementBias: no_preference
       retainedTools: []
       excludedProducts: []
@@ -294,7 +294,7 @@ presets:
         oneTimeCap: null
         currency: USD
         horizonYears: 3
-      deploymentPreference: cloud
+      environment: cloud
       procurementBias: open_source_first
       retainedTools: []
       excludedProducts: []

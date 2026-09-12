@@ -32,7 +32,8 @@ function profileFor(overrides: Partial<ClientProfile>): ClientProfile {
     dataSensitivity: 'internal',
     compliance: [],
     budget: { annualCap: null, oneTimeCap: null, currency: 'INR', horizonYears: 3 },
-    deploymentPreference: 'hybrid',
+    environment: 'not_asked',
+    deploymentConstraint: 'none',
     procurementBias: 'no_preference',
     retainedTools: [],
     excludedProducts: [],
@@ -208,7 +209,7 @@ describe('Worked example C — large manufacturer with an OT estate', () => {
       itStaffCount: 30,
       securityStaffFte: 3,
       dataSensitivity: 'critical',
-      deploymentPreference: 'air_gapped',
+      environment: 'air_gapped',
     }),
     assumptions,
   );

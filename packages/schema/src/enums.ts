@@ -53,8 +53,47 @@ export const LicenceModel = z.enum([
 ]);
 export type LicenceModel = z.infer<typeof LicenceModel>;
 
+/** How a *product* can be delivered. A property of the product, not the client. */
 export const DeploymentMode = z.enum(['cloud', 'on_prem', 'hybrid', 'air_gapped']);
 export type DeploymentMode = z.infer<typeof DeploymentMode>;
+
+/**
+ * What the client actually runs. A fact about their estate, not a preference.
+ *
+ * This used to be `deploymentPreference: DeploymentMode`, where `hybrid` was
+ * quietly overloaded to mean "no strong preference" — so a client who genuinely
+ * runs both had no way to say so, was scored by inference from asset counts
+ * instead of by what they said, and was told in writing that "no preference was
+ * stated". Splitting the two apart is the fix: `hybrid` now means both, and the
+ * absent answer has a name of its own.
+ */
+export const ClientEnvironment = z.enum([
+  'cloud',
+  'on_prem',
+  'hybrid',
+  'air_gapped',
+  /** Not asked on the call. The estate is read from the inventory instead. */
+  'not_asked',
+]);
+export type ClientEnvironment = z.infer<typeof ClientEnvironment>;
+
+/**
+ * A procurement policy that rules a delivery model out entirely.
+ *
+ * Separate from the environment because they answer different questions. Where
+ * a client's assets live decides which tools *fit*; what delivery their policy
+ * permits decides which are *eligible*. A SaaS-delivered EDR manages on-premises
+ * endpoints perfectly well, so an on-prem estate must not eliminate it — but a
+ * data-residency rule forbidding SaaS genuinely does.
+ */
+export const DeploymentConstraint = z.enum([
+  'none',
+  /** Data residency, a regulator, or a board that will not approve SaaS. */
+  'saas_not_permitted',
+  /** No appetite or no staff to run anything themselves. */
+  'self_hosted_not_permitted',
+]);
+export type DeploymentConstraint = z.infer<typeof DeploymentConstraint>;
 
 export const OsFamily = z.enum(['windows', 'linux', 'macos', 'ios', 'android', 'network_os']);
 export type OsFamily = z.infer<typeof OsFamily>;

@@ -132,11 +132,25 @@ export const SENSITIVITY_LABELS: Readonly<Record<string, string>> = {
   critical: 'Critical / national interest',
 };
 
-export const DEPLOYMENT_LABELS: Readonly<Record<string, string>> = {
-  cloud: 'Cloud / SaaS preferred',
-  on_prem: 'On premises preferred',
-  hybrid: 'Hybrid — no strong preference',
-  air_gapped: 'Air-gapped — SaaS is not an option',
+/**
+ * What the client runs. Stated as a fact, because that is what it is — the
+ * previous wording ("… preferred", "Hybrid — no strong preference") invited the
+ * analyst to record an opinion and left a genuinely hybrid client unable to say
+ * so.
+ */
+export const ENVIRONMENT_LABELS: Readonly<Record<string, string>> = {
+  cloud: 'Cloud / SaaS — everything is in someone else’s cloud',
+  on_prem: 'On premises — they run their own infrastructure',
+  hybrid: 'Hybrid — materially both',
+  air_gapped: 'Air-gapped — no internet path at all',
+  not_asked: 'Not asked — infer it from the estate',
+};
+
+/** The separate question: what procurement will not sign off on. */
+export const CONSTRAINT_LABELS: Readonly<Record<string, string>> = {
+  none: 'No restriction',
+  saas_not_permitted: 'SaaS not permitted — data residency or a regulator',
+  self_hosted_not_permitted: 'Will not self-host — nobody to run it',
 };
 
 export const BIAS_LABELS: Readonly<Record<string, string>> = {

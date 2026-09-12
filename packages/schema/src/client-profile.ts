@@ -5,9 +5,10 @@ import { z } from 'zod';
 
 import { AssetInventory } from './asset-inventory';
 import {
+  ClientEnvironment,
   CurrencyCode,
   DataSensitivity,
-  DeploymentMode,
+  DeploymentConstraint,
   FrameworkId,
   Industry,
   ProcurementBias,
@@ -58,7 +59,14 @@ export const ClientProfile = z
     /** Ticked by the analyst. These are what promote a category to mandatory. */
     compliance: z.array(FrameworkId).default([]),
     budget: Budget,
-    deploymentPreference: DeploymentMode,
+    /**
+     * What the client runs today. A fact, captured on the call — not a wish.
+     * `not_asked` is the honest answer when it did not come up, and is the only
+     * value that lets the estate's asset counts speak instead.
+     */
+    environment: ClientEnvironment,
+    /** A delivery model their procurement policy forbids outright. */
+    deploymentConstraint: DeploymentConstraint.default('none'),
     procurementBias: ProcurementBias,
     /** Product ids they already own and will keep; scored for integration fit. */
     retainedTools: z.array(Slug).default([]),
@@ -74,7 +82,53 @@ export const ClientProfile = z
     excludedProducts: z.array(Slug).default([]),
   })
   .strict();
+
+/**
+ * Scoping sessions saved before the environment split still parse.
+ *
+ * They carry `deploymentPreference`, where `hybrid` *meant* "no strong
+ * preference" — that was the wizard's own wording for it. Mapping it to
+ * `hybrid` would silently change what those clients said, so it maps to
+ * `not_asked`, which is what it actually meant. The other three values carried
+ * their plain meaning and are kept.
+ *
+ * Without this every stored scenario would read as unparseable the moment the
+ * schema changed, and `parseScenarioRow` would report a database of unreadable
+ * rows rather than a migration nobody performed.
+ */
+const LEGACY_ENVIRONMENT: Readonly<Record<string, ClientEnvironment>> = {
+  cloud: 'cloud',
+  on_prem: 'on_prem',
+  air_gapped: 'air_gapped',
+  hybrid: 'not_asked',
+};
+
 export type ClientProfile = z.infer<typeof ClientProfile>;
+
+/**
+ * `ClientProfile`, but tolerant of the pre-split shape.
+ *
+ * Used only where a *persisted* profile is read back. Everything else — the
+ * wizard, the presets, the engine — speaks the current shape, so the migration
+ * lives at the one boundary that can encounter an old one rather than being
+ * spread across every parse in the repo.
+ */
+export const StoredClientProfile = z.preprocess((value) => {
+  if (typeof value !== 'object' || value === null) return value;
+  if (!('deploymentPreference' in value)) return value;
+
+  const { deploymentPreference, ...rest } = value as Record<string, unknown> & {
+    deploymentPreference: unknown;
+  };
+  // An unrecognised legacy value is left to fail validation rather than being
+  // guessed at: a profile nobody can read is safer than one silently invented.
+  const migrated =
+    typeof deploymentPreference === 'string'
+      ? LEGACY_ENVIRONMENT[deploymentPreference]
+      : undefined;
+
+  return migrated === undefined ? rest : { ...rest, environment: migrated };
+}, ClientProfile);
 
 /** One saved scoping session: the profile plus the inventory it was sized from. */
 export const Scenario = z

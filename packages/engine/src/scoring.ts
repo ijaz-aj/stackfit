@@ -258,16 +258,22 @@ function modeName(mode: DeploymentMode): string {
 }
 
 /**
- * Deployment fit (§7.3), from what the client asked for — or, when they asked
- * for nothing, from what they actually run.
+ * Deployment fit (§7.3), from the environment the client runs — or, when nobody
+ * asked, from what their asset counts imply.
  *
- * `hybrid` is how this tool spells "no strong preference"; it is the wording on
- * the wizard's own dropdown. Treating it as a *demand* for a hybrid product
- * scored every cloud-only and every on-prem-only tool 30 out of 100 for a
- * client who had expressed no opinion at all — marking down precisely the
- * products that suited their estate best. When nothing is stated, the estate
- * decides, and the note says which of the two happened so nobody mistakes
- * StackFit's reading of the asset counts for something the client said.
+ * The environment is a fact, so it is honoured rather than second-guessed. A
+ * `hybrid` client runs both, which means a cloud-delivered product and a
+ * self-hosted one are *both* things they can actually deploy; neither is the
+ * compromise the old scoring treated them as. Only `not_asked` reads the
+ * estate, and the note always says which of the two produced the number so
+ * nobody mistakes StackFit's reading of the asset counts for something the
+ * client said.
+ *
+ * ⚠ The catalog records how a product is *delivered*, not whether it needs the
+ * workload to live in the same place. A cloud-delivered EDR protects on-premises
+ * endpoints perfectly well, so an on-prem environment marks cloud delivery down
+ * rather than ruling it out. Ruling it out is what `deploymentConstraint` is
+ * for, and that is a policy the analyst states, not one inferred here.
  */
 function deploymentFit(
   product: Product,
@@ -276,25 +282,53 @@ function deploymentFit(
   policy: DeploymentFitPolicy,
 ): { score: number; note: string } {
   const modes = product.supports.deploymentModes;
-  const stated = profile.deploymentPreference;
+  const environment = profile.environment;
   const deploysAs = modes.map(modeName).join('/');
 
-  if (stated !== 'hybrid') {
-    if (modes.includes(stated)) {
+  // The client runs both halves, so both delivery models are native to them.
+  // A product that does either is something they can genuinely deploy.
+  if (environment === 'hybrid') {
+    if (modes.includes('hybrid')) {
       return {
         score: policy.statedMatch,
-        note: `Supports the client's preferred ${modeName(stated)} deployment directly.`,
+        note: 'The client runs a hybrid estate and this deploys either way, so one instance covers both halves.',
+      };
+    }
+    if (modes.includes('cloud') || modes.includes('on_prem')) {
+      const half = modes.includes('cloud') ? 'cloud' : 'on-premises';
+      const other = modes.includes('cloud') ? 'on-premises' : 'cloud';
+      return {
+        score: policy.statedSingleModeInHybrid,
+        note:
+          `The client runs a hybrid estate. This deploys ${deploysAs}, which is native to the ` +
+          `${half} half and reaches the ${other} half over a longer path. A real fit, not the whole answer.`,
+      };
+    }
+    return {
+      score: policy.statedMismatch,
+      note: `Deploys as ${deploysAs}, which suits neither half of a hybrid estate.`,
+    };
+  }
+
+  if (environment !== 'not_asked') {
+    if (modes.includes(environment)) {
+      return {
+        score: policy.statedMatch,
+        note: `Deploys into the ${modeName(environment)} environment the client runs.`,
       };
     }
     if (modes.includes('hybrid')) {
       return {
         score: policy.statedHybridFallback,
-        note: `No native ${modeName(stated)} mode, but a hybrid deployment can usually be shaped to fit.`,
+        note: `No native ${modeName(environment)} mode, but a hybrid deployment can usually be shaped to fit.`,
       };
     }
     return {
       score: policy.statedMismatch,
-      note: `Deploys as ${deploysAs}, against a stated preference for ${modeName(stated)}. Workable, but not what they asked for.`,
+      note:
+        `Deploys as ${deploysAs}, against the ${modeName(environment)} environment the client ` +
+        'runs. Workable — delivery is not the same question as where their assets live — but ' +
+        'not the shape of their estate.',
     };
   }
 
@@ -306,8 +340,8 @@ function deploymentFit(
       score: policy.noSignal,
       note:
         estateShape === 'unknown'
-          ? 'No deployment preference stated and no inventory captured, so this dimension is neutral for every product. An absent answer is not evidence against anything.'
-          : `No deployment preference stated, and ${ESTATE_PHRASE[estateShape]} does not imply one. Scored neutral.`,
+          ? 'The environment was not asked and no inventory was captured, so this dimension is neutral for every product. An absent answer is not evidence against anything.'
+          : `The environment was not asked, and ${ESTATE_PHRASE[estateShape]} does not imply one. Scored neutral.`,
     };
   }
 
@@ -315,18 +349,18 @@ function deploymentFit(
   if (matched !== undefined) {
     return {
       score: policy.inferredMatch,
-      note: `No preference was stated, so the estate decides: this is ${ESTATE_PHRASE[estateShape]}, and ${modeName(matched)} deployment suits it. ${affinity?.basis ?? ''}`.trim(),
+      note: `The environment was not asked, so the estate decides: this is ${ESTATE_PHRASE[estateShape]}, and ${modeName(matched)} deployment suits it. ${affinity?.basis ?? ''}`.trim(),
     };
   }
   if (modes.includes('hybrid')) {
     return {
       score: policy.inferredHybridFallback,
-      note: `No preference was stated. This deploys hybrid, which fits ${ESTATE_PHRASE[estateShape]} well enough without being the obvious shape for it.`,
+      note: `The environment was not asked. This deploys hybrid, which fits ${ESTATE_PHRASE[estateShape]} well enough without being the obvious shape for it.`,
     };
   }
   return {
     score: policy.inferredMismatch,
-    note: `No preference was stated, and ${ESTATE_PHRASE[estateShape]} points at ${prefers.map(modeName).join(' or ')} rather than ${deploysAs}. Marked down, not ruled out — this is StackFit reading the asset counts, not something the client said.`,
+    note: `The environment was not asked, and ${ESTATE_PHRASE[estateShape]} points at ${prefers.map(modeName).join(' or ')} rather than ${deploysAs}. Marked down, not ruled out — this is StackFit reading the asset counts, not something the client said.`,
   };
 }
 
@@ -437,11 +471,15 @@ function opsFit(
  * eliminate; everything else is a score, because a hard filter is invisible to
  * the analyst in a way a low score is not.
  *
- * In particular `deploymentPreference` only eliminates when it is `air_gapped`,
- * which is a requirement rather than a preference — a SaaS product in an
- * air-gapped site cannot work at all, whereas an on-prem product for a
- * cloud-preferring client is merely not what they wanted, and that is what the
- * deployment-fit dimension is for.
+ * In particular the client's `environment` never eliminates on its own, except
+ * when it is `air_gapped`: a SaaS product in an air-gapped site cannot work at
+ * all, whereas a cloud-delivered product for an on-premises estate works fine —
+ * delivery is not the same question as where the assets live. That is a score,
+ * not a filter.
+ *
+ * What does eliminate is `deploymentConstraint`, because that is a procurement
+ * policy the analyst heard stated: "the regulator will not let us put this in
+ * someone else's cloud" rules a SaaS-only product out however well it fits.
  */
 export function hardFilter(product: Product, inputs: ScoringInputs): string[] {
   const { profile, inventory, sizing, weights, categoryWeights } = inputs;
@@ -451,10 +489,35 @@ export function hardFilter(product: Product, inputs: ScoringInputs): string[] {
     reasons.push('Excluded by the analyst for this client.');
   }
 
-  if (profile.deploymentPreference === 'air_gapped' && !product.supports.airGapCapable) {
+  if (profile.environment === 'air_gapped' && !product.supports.airGapCapable) {
     reasons.push(
       `This environment is air-gapped and ${product.name} cannot run air-gapped ` +
         `(supports ${product.supports.deploymentModes.join('/')}).`,
+    );
+  }
+
+  // A `hybrid` mode satisfies either policy: a product that can be delivered
+  // both ways can be delivered the permitted way.
+  const modes = product.supports.deploymentModes;
+  if (
+    profile.deploymentConstraint === 'saas_not_permitted' &&
+    !modes.includes('on_prem') &&
+    !modes.includes('hybrid') &&
+    !modes.includes('air_gapped')
+  ) {
+    reasons.push(
+      `SaaS delivery is not permitted for this client and ${product.name} is cloud-only ` +
+        `(supports ${modes.join('/')}).`,
+    );
+  }
+  if (
+    profile.deploymentConstraint === 'self_hosted_not_permitted' &&
+    !modes.includes('cloud') &&
+    !modes.includes('hybrid')
+  ) {
+    reasons.push(
+      `This client will not self-host and ${product.name} has no delivered option ` +
+        `(supports ${modes.join('/')}).`,
     );
   }
 

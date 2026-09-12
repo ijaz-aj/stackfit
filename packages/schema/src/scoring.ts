@@ -125,15 +125,18 @@ export type EstateDeploymentAffinity = z.infer<typeof EstateDeploymentAffinity>;
 /**
  * How deployment fit is scored (§7.3).
  *
- * Two different questions wear one field. When the analyst states a preference
- * — `on_prem`, `cloud`, `air_gapped` — a product that does not offer it is
- * genuinely not what the client asked for. When they state `hybrid`, which is
- * how this tool spells "no strong preference", there is nothing to miss: the
- * question becomes what the estate they actually run implies, and a weaker
- * signal deserves a gentler penalty than a stated one.
+ * The client's environment is a fact they stated, so a product that cannot be
+ * delivered into it is genuinely not what they can buy. Only `not_asked` — the
+ * question never came up — falls back to reading the estate's asset counts, and
+ * that weaker signal gets the gentler `inferred*` bands so a guess tilts a
+ * ranking without overturning it.
  *
- * Before this existed, "no preference" scored every cloud-only and every
- * on-prem-only product 30 out of 100, as though the client had demanded hybrid.
+ * Two historical mistakes this encodes against. First, `hybrid` used to mean
+ * "no strong preference", so every cloud-only and on-prem-only product scored 30
+ * out of 100 for a client who had demanded nothing — marking down precisely the
+ * products that suited their estate. Second, once that was patched, a client who
+ * genuinely ran both still had their answer discarded and inferred from asset
+ * counts instead, and was told so in writing on a client-facing page.
  */
 export const DeploymentFitPolicy = z
   .object({
@@ -143,6 +146,15 @@ export const DeploymentFitPolicy = z
     statedHybridFallback: z.number().min(0).max(100),
     /** Workable, but not what they asked for. */
     statedMismatch: z.number().min(0).max(100),
+    /**
+     * A single-mode product for a client who runs both.
+     *
+     * Not a mismatch: a cloud-only SIEM still ingests from on-premises, and an
+     * on-premises one still pulls from cloud. It serves the half it targets
+     * natively and the other half through a longer path, which is a real fit
+     * and not the whole answer — so it sits between a match and a miss.
+     */
+    statedSingleModeInHybrid: z.number().min(0).max(100),
     /** The product suits the estate the client actually runs. */
     inferredMatch: z.number().min(0).max(100),
     inferredHybridFallback: z.number().min(0).max(100),

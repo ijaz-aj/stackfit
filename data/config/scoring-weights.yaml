@@ -212,6 +212,11 @@ deploymentFit:
   statedHybridFallback: 70
   statedMismatch: 30
 
+  # The client runs both, and this product offers one of the two. It serves the
+  # half it targets natively and the other half through a longer path — real
+  # fit, not the whole answer. A hybrid-capable product still scores 100.
+  statedSingleModeInHybrid: 85
+
   # An inferred preference is StackFit's own reading of the asset counts. It is
   # a weaker claim, so it tilts the ranking rather than deciding it: the gap
   # between a match and a mismatch is 45 points here against 70 above.
