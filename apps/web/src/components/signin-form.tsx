@@ -19,8 +19,8 @@ export function SignInForm({ providers }: { providers: readonly string[] }) {
   if (providers.length === 0) {
     return (
       <p className="text-warn mt-6 text-sm leading-snug">
-        No sign-in provider is configured on this instance, so there is no way in from here.
-        Whoever administers it needs to set one.
+        No sign-in provider is configured on this instance, so there is no way in from here. Whoever
+        administers it needs to set one.
       </p>
     );
   }

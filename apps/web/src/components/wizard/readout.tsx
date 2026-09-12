@@ -2,7 +2,7 @@
 
 import type { SizingResult, UnfundedCategory } from '@stackfit/engine';
 
-import { Badge, Stat } from '@/components/ui';
+import { Badge, RationaleList, Stat } from '@/components/ui';
 import type { EstimateSummary } from '@/lib/estimate';
 import { formatMoney, formatNumber } from '@/lib/format';
 
@@ -166,11 +166,7 @@ export function LiveReadout({
       {estimate !== null && estimate.warnings.length > 0 && (
         <section className="border-line flex flex-col gap-2 border-t pt-4">
           <h3 className="text-warn text-2xs tracking-wide uppercase">Before this ships</h3>
-          <ul className="text-muted flex flex-col gap-1 text-xs leading-snug">
-            {estimate.warnings.map((warning) => (
-              <li key={warning}>— {warning}</li>
-            ))}
-          </ul>
+          <RationaleList lines={estimate.warnings} />
         </section>
       )}
     </aside>

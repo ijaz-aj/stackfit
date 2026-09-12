@@ -145,7 +145,11 @@ export function StepPreferences({ products }: { products: readonly ProductOption
                         checked={retained}
                         onChange={(event) =>
                           patchProfile({
-                            retainedTools: toggle(profile.retainedTools, product.id, event.target.checked),
+                            retainedTools: toggle(
+                              profile.retainedTools,
+                              product.id,
+                              event.target.checked,
+                            ),
                             ...(event.target.checked
                               ? {
                                   excludedProducts: profile.excludedProducts.filter(
@@ -189,9 +193,9 @@ export function StepPreferences({ products }: { products: readonly ProductOption
           </div>
         )}
         <p className="text-faint mt-3 text-xs leading-snug">
-          Ruling a product out is a judgement about this client — a failed proof of concept, a vendor
-          the board will not approve. It does not remove the product from the catalog for anyone
-          else.
+          Ruling a product out is a judgement about this client — a failed proof of concept, a
+          vendor the board will not approve. It does not remove the product from the catalog for
+          anyone else.
         </p>
       </Card>
     </div>

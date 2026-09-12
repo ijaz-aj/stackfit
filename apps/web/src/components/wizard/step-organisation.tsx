@@ -19,7 +19,10 @@ export function StepOrganisation() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card title="Organisation" hint="Who they are, and how many people are available to run any of this.">
+      <Card
+        title="Organisation"
+        hint="Who they are, and how many people are available to run any of this."
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Client name" htmlFor="orgName" className="sm:col-span-2">
             <TextInput
@@ -50,7 +53,9 @@ export function StepOrganisation() {
               id="region"
               value={profile.region}
               options={optionsFrom(Region.options, REGION_LABELS)}
-              onChange={(event) => patchProfile({ region: event.target.value as typeof profile.region })}
+              onChange={(event) =>
+                patchProfile({ region: event.target.value as typeof profile.region })
+              }
             />
           </Field>
 
@@ -93,7 +98,9 @@ export function StepOrganisation() {
               id="hasSoc"
               value={profile.hasSoc}
               options={optionsFrom(SocPosture.options, SOC_LABELS)}
-              onChange={(event) => patchProfile({ hasSoc: event.target.value as typeof profile.hasSoc })}
+              onChange={(event) =>
+                patchProfile({ hasSoc: event.target.value as typeof profile.hasSoc })
+              }
             />
           </Field>
 

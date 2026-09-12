@@ -25,13 +25,7 @@ export function SkeletonLine({ className }: { className?: string }) {
 }
 
 /** A card with a heading and some rows, matching the real `Card`'s geometry. */
-export function SkeletonCard({
-  rows = 3,
-  className,
-}: {
-  rows?: number;
-  className?: string;
-}) {
+export function SkeletonCard({ rows = 3, className }: { rows?: number; className?: string }) {
   return (
     <section aria-hidden className={cn('border-line bg-panel rounded border', className)}>
       <header className="border-line border-b px-4 py-3">

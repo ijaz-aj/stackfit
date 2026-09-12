@@ -41,9 +41,7 @@ function ChangeRow({ change }: { change: ValueChange }) {
       <td className="tabular py-2 pr-3 text-right">
         {change.right === null ? <span className="text-faint">—</span> : renderCell(change.right)}
       </td>
-      <td
-        className={`tabular py-2 text-right ${changed ? 'text-accent' : 'text-faint'}`}
-      >
+      <td className={`tabular py-2 text-right ${changed ? 'text-accent' : 'text-faint'}`}>
         {change.delta === null ? (changed ? 'changed' : '—') : renderCell(change.delta)}
       </td>
     </tr>
@@ -218,15 +216,18 @@ export default async function ComparePage({
       {comparison.currencyMismatch !== null && (
         <div className="border-bad/40 bg-bad/10 rounded border px-3 py-2">
           <p className="text-bad text-sm leading-snug">
-            These scenarios are priced in different currencies —{' '}
-            {comparison.currencyMismatch.left} against {comparison.currencyMismatch.right}. Every
-            money figure is shown in its own currency and no difference is calculated, because
-            subtracting one from the other would produce a number that looks like an answer.
+            These scenarios are priced in different currencies — {comparison.currencyMismatch.left}{' '}
+            against {comparison.currencyMismatch.right}. Every money figure is shown in its own
+            currency and no difference is calculated, because subtracting one from the other would
+            produce a number that looks like an answer.
           </p>
         </div>
       )}
 
-      <Card title="What changed" hint="Stated, not interpreted. What it means is the analyst's call.">
+      <Card
+        title="What changed"
+        hint="Stated, not interpreted. What it means is the analyst's call."
+      >
         <ul className="flex flex-col gap-1">
           {comparison.summary.map((line) => (
             <li key={line} className="text-muted text-sm leading-snug">
@@ -259,7 +260,10 @@ export default async function ComparePage({
           />
         </Card>
 
-        <Card title="What it cost" hint="Spend is procurement. Total annual cost includes the people.">
+        <Card
+          title="What it cost"
+          hint="Spend is procurement. Total annual cost includes the people."
+        >
           <ChangeTable
             rows={comparison.headlines}
             leftName={comparison.leftName}

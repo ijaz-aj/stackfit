@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { ASSET_LABELS } from '@/components/wizard/labels';
-import { Badge, Button, Card, NumberInput, Stat } from '@/components/ui';
+import { Badge, Button, Card, NumberInput, RationaleList, Stat } from '@/components/ui';
 import { saveSizingOverrides } from '@/lib/actions';
 import { formatNumber } from '@/lib/format';
 
@@ -247,11 +247,7 @@ export function SizingWorksheet({
         </div>
       )}
 
-      <ul className="text-faint mt-3 flex flex-col gap-1 text-xs leading-snug">
-        {sizing.rationale.map((line) => (
-          <li key={line}>— {line}</li>
-        ))}
-      </ul>
+      <RationaleList lines={sizing.rationale} className="text-faint mt-3" />
     </Card>
   );
 }

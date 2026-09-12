@@ -119,7 +119,9 @@ export default async function ResultsPage({
                 {' '}
                 Annual shortfall {formatMoney(bundle.annualShortfall)}/yr
                 {bundle.minimumViableAnnual !== null && (
-                  <>; the minimum viable annual budget is {formatMoney(bundle.minimumViableAnnual)}</>
+                  <>
+                    ; the minimum viable annual budget is {formatMoney(bundle.minimumViableAnnual)}
+                  </>
                 )}
                 .
               </>

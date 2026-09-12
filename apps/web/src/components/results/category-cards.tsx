@@ -7,7 +7,7 @@ import {
   type ProductScore,
 } from '@stackfit/engine';
 
-import { Badge, Card } from '@/components/ui';
+import { Badge, Card, RationaleList } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { formatMoney, formatNumber } from '@/lib/format';
 import { ASSET_LABELS, CATEGORY_LABELS, DIMENSION_LABELS } from '@/components/wizard/labels';
@@ -78,7 +78,9 @@ function AlternativeRow({ alternative }: { alternative: AlternativeVerdict }) {
           ) : (
             <>
               fit {formatNumber(alternative.fitScore, 1)}
-              {alternative.annualSpend !== null && <> · {formatMoney(alternative.annualSpend)}/yr</>}
+              {alternative.annualSpend !== null && (
+                <> · {formatMoney(alternative.annualSpend)}/yr</>
+              )}
               {' · '}
               {formatNumber(alternative.opsFte, 2)} FTE
             </>
@@ -151,7 +153,11 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
   );
 
   return (
-    <div className="grid gap-4 xl:grid-cols-2">
+    // `lg`, not `xl`. Tailwind's breakpoints are CSS pixels and a scaled
+    // display reports fewer of them than its panel has — 1254 on a 1568px
+    // screen at 125%. `xl:` (1280) therefore never fired on the machine this
+    // was designed on, and these cards had only ever been seen one-up.
+    <div className="grid gap-4 lg:grid-cols-2">
       {bundle.selections.map((selection) => {
         const score = scoreBySku.get(`${selection.productId}::${selection.tierId}`);
         const justification = justificationByCategory.get(selection.category);
@@ -263,11 +269,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
               </p>
             )}
 
-            <ul className="text-faint mt-2 flex flex-col gap-1 text-xs leading-snug">
-              {selection.rationale.map((line) => (
-                <li key={line}>— {line}</li>
-              ))}
-            </ul>
+            <RationaleList lines={selection.rationale} className="text-faint mt-2" />
 
             {score !== undefined && <FitBreakdown score={score} />}
 

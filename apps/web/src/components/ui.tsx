@@ -1,4 +1,9 @@
-import type { ReactNode, SelectHTMLAttributes, InputHTMLAttributes, ButtonHTMLAttributes } from 'react';
+import type {
+  ReactNode,
+  SelectHTMLAttributes,
+  InputHTMLAttributes,
+  ButtonHTMLAttributes,
+} from 'react';
 
 import { cn } from '@/lib/cn';
 
@@ -174,7 +179,9 @@ export function Checkbox({
       />
       <span className="flex-1">
         <span className="text-ink block text-base leading-tight">{label}</span>
-        {hint !== undefined && <span className="text-faint block text-xs leading-snug">{hint}</span>}
+        {hint !== undefined && (
+          <span className="text-faint block text-xs leading-snug">{hint}</span>
+        )}
       </span>
     </label>
   );
@@ -205,6 +212,129 @@ export function Badge({
         className,
       )}
     >
+      {children}
+    </span>
+  );
+}
+
+/**
+ * The engine's `rationale: string[]`, rendered.
+ *
+ * Eight components were each writing `<li>— {line}</li>`, which put the dash in
+ * the content: a wrapped line ran back under it and the list lost its left
+ * edge. `.rationale` (globals.css) hangs the marker instead, and `.measure`
+ * stops the sentences running 190 characters wide.
+ */
+export function RationaleList({
+  lines,
+  className,
+}: {
+  lines: readonly string[];
+  className?: string;
+}) {
+  if (lines.length === 0) return null;
+
+  // `text-sm`, not `text-xs`. These are the sentences that explain every figure
+  // on the page, and they were being set at 11.5px — smaller than the table
+  // rows they justify, which inverts the importance. 12.5px is this scale's
+  // stated workhorse, and at that size 76ch is also a wider box, so the column
+  // stops looking stranded in a full-width card.
+  return (
+    <ul
+      className={cn(
+        'rationale measure text-muted flex flex-col gap-1.5 text-sm leading-relaxed',
+        className,
+      )}
+    >
+      {lines.map((line) => {
+        /*
+          A leading ⚠ is the engine's own convention for "this line is the one
+          that matters" — `cost.ts`, `coverage.ts` and `compare.ts` all emit it.
+          Rendered as plain text it was a glyph in the middle of six
+          identically-grey bullets, which is the opposite of a warning: "this
+          bundle needs more people than the client has" sat unhighlighted
+          between two notes about budget arithmetic.
+
+          `.warned` (globals.css) replaces the em-dash marker with the symbol
+          and lifts the text to the warning colour, so the list stays one list
+          and the exception still reads as one.
+        */
+        const warning = line.startsWith('⚠');
+        return (
+          <li key={line} className={cn(warning && 'warned text-warn')}>
+            {warning ? line.replace(/^⚠\s*/, '') : line}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/**
+ * A section inside a card: what it is on the left, what it says on the right.
+ *
+ * The assumptions panel had six sections and gave every one the same 11px
+ * uppercase heading, with no rule, no spacing difference and no way to tell
+ * where one ended. At 1,900 pixels tall that is not a document, it is a scroll.
+ *
+ * The two-column rail is what makes the width work. Prose has to stay near 75
+ * characters to be readable, so in a 1,350px card a single column of text is a
+ * narrow ribbon stranded against 900px of empty panel — which reads as a
+ * layout bug even though the measure is correct. Putting the heading and its
+ * one-line summary in a fixed rail spends that width on structure instead:
+ * the reader can scan six headings down the left edge without reading a word
+ * of the right, which is exactly how this panel gets used in a call.
+ *
+ * It collapses to one column below `lg`, where there is no width to spend.
+ */
+export function CardSection({
+  title,
+  hint,
+  children,
+  className,
+}: {
+  title: string;
+  hint?: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={cn(
+        'border-line grid gap-x-10 gap-y-3 border-t pt-6 first:border-t-0 first:pt-0 lg:grid-cols-[13rem_minmax(0,1fr)]',
+        className,
+      )}
+    >
+      <div className="lg:sticky lg:top-20 lg:self-start">
+        <h3 className="text-ink text-base font-semibold">{title}</h3>
+        {hint !== undefined && <p className="text-faint mt-1.5 text-xs leading-relaxed">{hint}</p>}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </section>
+  );
+}
+
+/**
+ * A grade, as a dot and a word.
+ *
+ * The assumptions panel showed 26 amber `Badge`s in one section — every
+ * effort figure in the bundle is an analyst estimate, so every pill was the
+ * warning colour. A warning that appears 26 times consecutively is not a
+ * warning, it is a texture, and it drowned the two rows that genuinely needed
+ * attention. A pill is for the exception; this is for a column where every row
+ * carries one.
+ */
+const GRADE_DOTS = {
+  good: 'bg-good',
+  warn: 'bg-warn',
+  bad: 'bg-bad',
+  neutral: 'bg-line-control',
+} as const;
+
+export function Grade({ tone, children }: { tone: keyof typeof GRADE_DOTS; children: ReactNode }) {
+  return (
+    <span className="text-muted inline-flex items-center gap-1.5 text-xs whitespace-nowrap">
+      <span aria-hidden className={cn('h-1.5 w-1.5 shrink-0 rounded-full', GRADE_DOTS[tone])} />
       {children}
     </span>
   );

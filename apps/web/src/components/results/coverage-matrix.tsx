@@ -5,7 +5,7 @@ import {
   type FrameworkCoverage,
 } from '@stackfit/engine';
 
-import { Badge, Card } from '@/components/ui';
+import { Badge, Card, RationaleList } from '@/components/ui';
 import { cn } from '@/lib/cn';
 
 /**
@@ -37,10 +37,7 @@ function ControlCell({ control }: { control: ControlCoverage }) {
 
   return (
     <li
-      className={cn(
-        'flex items-center gap-2 rounded border px-2 py-1 text-xs',
-        cell.tone,
-      )}
+      className={cn('flex items-center gap-2 rounded border px-2 py-1 text-xs', cell.tone)}
       title={`${control.localId} ${control.title}: ${cell.label}${covered}`}
     >
       <span aria-hidden className="tabular w-3 shrink-0 text-center font-semibold">
@@ -71,11 +68,7 @@ function FrameworkBlock({ framework }: { framework: FrameworkCoverage }) {
         <h3 className="text-ink text-base font-semibold">
           {framework.name} <span className="text-faint font-normal">{framework.version}</span>
         </h3>
-        {framework.inScope ? (
-          <Badge tone="accent">in scope</Badge>
-        ) : (
-          <Badge>reference view</Badge>
-        )}
+        {framework.inScope ? <Badge tone="accent">in scope</Badge> : <Badge>reference view</Badge>}
         <Badge tone={framework.sourceQuality === 'publisher_verified' ? 'good' : 'warn'}>
           {framework.sourceQuality.replace(/_/g, ' ')}
         </Badge>
@@ -90,7 +83,10 @@ function FrameworkBlock({ framework }: { framework: FrameworkCoverage }) {
           {group.title !== '' && (
             <h4 className="text-faint text-2xs tracking-wide uppercase">{group.title}</h4>
           )}
-          <ul className="grid gap-1 md:grid-cols-2 xl:grid-cols-3">
+          {/* `lg`, not `xl`: Tailwind breakpoints are CSS pixels, and a display
+              at 125% scaling reports 1254 of them on a 1568px panel, so the
+              third column had never appeared on the machine this was tuned on. */}
+          <ul className="grid gap-1 md:grid-cols-2 lg:grid-cols-3">
             {group.controls.map((control) => (
               <ControlCell key={control.controlId} control={control} />
             ))}
@@ -98,11 +94,7 @@ function FrameworkBlock({ framework }: { framework: FrameworkCoverage }) {
         </div>
       ))}
 
-      <ul className="text-faint flex flex-col gap-1 text-xs leading-snug">
-        {framework.rationale.map((line) => (
-          <li key={line}>— {line}</li>
-        ))}
-      </ul>
+      <RationaleList lines={framework.rationale} className="text-faint" />
     </section>
   );
 }
@@ -124,10 +116,7 @@ export function CoverageMatrix({ coverage }: { coverage: CoverageResult }) {
       </p>
       <div className="mb-3 flex flex-wrap gap-2">
         {Object.entries(CELL).map(([status, cell]) => (
-          <span
-            key={status}
-            className={cn('rounded border px-2 py-1 text-2xs', cell.tone)}
-          >
+          <span key={status} className={cn('rounded border px-2 py-1 text-2xs', cell.tone)}>
             {cell.mark} {cell.label}
           </span>
         ))}

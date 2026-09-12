@@ -22,7 +22,7 @@ export default function ResultsLoading() {
 
       <SkeletonCard rows={4} />
 
-      <div className="grid gap-3 xl:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2">
         <SkeletonCard rows={5} />
         <SkeletonCard rows={5} />
       </div>

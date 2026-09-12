@@ -12,7 +12,7 @@ export default function CompareLoading() {
       </header>
 
       <SkeletonCard rows={3} />
-      <div className="grid gap-3 xl:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2">
         <SkeletonCard rows={4} />
         <SkeletonCard rows={4} />
       </div>

@@ -42,9 +42,14 @@ export function MoneyWithRupees({
   }
 
   return (
-    <span className={cn('flex flex-col', align === 'right' ? 'items-end' : 'items-start', className)}>
+    <span
+      className={cn('flex flex-col', align === 'right' ? 'items-end' : 'items-start', className)}
+    >
       <span className="tabular">{primary}</span>
-      <span className="tabular text-faint text-2xs" title="Converted at the rate in the assumptions panel">
+      <span
+        className="tabular text-faint text-2xs"
+        title="Converted at the rate in the assumptions panel"
+      >
         ≈ {formatMoney(convertMoney(money, 'INR', fx), { compact: true })}
       </span>
     </span>

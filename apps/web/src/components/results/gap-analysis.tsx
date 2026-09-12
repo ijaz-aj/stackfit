@@ -1,6 +1,6 @@
 import type { CoverageResult } from '@stackfit/engine';
 
-import { Badge, Card } from '@/components/ui';
+import { Badge, Card, RationaleList } from '@/components/ui';
 import { CATEGORY_LABELS } from '@/components/wizard/labels';
 import { formatMoney, formatNumber } from '@/lib/format';
 
@@ -134,11 +134,7 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
                     {formatNumber(option.opsFte, 2)} FTE
                   </span>
                 </div>
-                <ul className="text-faint mt-1 flex flex-col gap-1 text-xs leading-snug">
-                  {option.rationale.map((line) => (
-                    <li key={line}>— {line}</li>
-                  ))}
-                </ul>
+                <RationaleList lines={option.rationale} className="text-faint mt-1" />
               </li>
             ))}
           </ul>

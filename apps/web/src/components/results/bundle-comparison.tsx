@@ -126,15 +126,15 @@ export function BundleComparison({
                   // the page's primary state — everything below it changes
                   // with it. The left marker carries the signal; the tint only
                   // supports it.
-                  bundle.kind === selectedKind
-                    ? 'bg-accent/[0.07]'
-                    : 'hover:bg-panel-raised/50',
+                  bundle.kind === selectedKind ? 'bg-accent/[0.07]' : 'hover:bg-panel-raised/50',
                 )}
               >
                 <td
                   className={cn(
                     'py-2 pr-3 align-top border-l-2',
-                    bundle.kind === selectedKind ? 'border-l-accent pl-3' : 'border-l-transparent pl-3',
+                    bundle.kind === selectedKind
+                      ? 'border-l-accent pl-3'
+                      : 'border-l-transparent pl-3',
                   )}
                 >
                   <Link
@@ -208,13 +208,12 @@ export function BundleComparison({
 
       <ul className="text-faint mt-3 flex flex-col gap-1 text-xs leading-snug">
         <li>
-          — Procurement is licence, support and infrastructure. All-in adds the operational FTE,
-          and so does the TCO: hard rule 8, and the reason an open-source stack is never free
-          here.
+          — Procurement is licence, support and infrastructure. All-in adds the operational FTE, and
+          so does the TCO: hard rule 8, and the reason an open-source stack is never free here.
         </li>
         <li>
-          — The managed figure is the fee plus the residual cost of whatever the service level
-          does not operate. Comparing a fee against a whole stack would flatter it.
+          — The managed figure is the fee plus the residual cost of whatever the service level does
+          not operate. Comparing a fee against a whole stack would flatter it.
         </li>
       </ul>
     </Card>

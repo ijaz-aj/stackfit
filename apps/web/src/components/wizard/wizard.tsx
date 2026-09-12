@@ -190,7 +190,11 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
           {step === 5 && <StepReview sizing={sizing} estimate={estimate} />}
 
           <div className="flex items-center justify-between gap-2">
-            <Button variant="ghost" disabled={step === 0} onClick={() => setStep(Math.max(0, step - 1))}>
+            <Button
+              variant="ghost"
+              disabled={step === 0}
+              onClick={() => setStep(Math.max(0, step - 1))}
+            >
               ← Back
             </Button>
             <span className="text-faint hidden text-xs sm:block">
@@ -209,9 +213,7 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
         <div className="lg:sticky lg:top-16 lg:self-start">
           <LiveReadout sizing={sizing} estimate={estimate} estimating={estimating} />
           {estimateProblem !== null && (
-            <p className="text-bad mt-2 text-xs leading-snug">
-              Estimate failed: {estimateProblem}
-            </p>
+            <p className="text-bad mt-2 text-xs leading-snug">Estimate failed: {estimateProblem}</p>
           )}
         </div>
       </div>

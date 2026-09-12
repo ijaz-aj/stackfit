@@ -108,10 +108,8 @@
    * it reads as the surface catching light from above. It is the cheapest trick
    * in dark UI and the one most often skipped.
    */
-  --shadow-surface:
-    inset 0 1px 0 rgb(255 255 255 / 0.035), 0 1px 2px rgb(0 0 0 / 0.35);
-  --shadow-lifted:
-    inset 0 1px 0 rgb(255 255 255 / 0.05), 0 6px 16px -4px rgb(0 0 0 / 0.5);
+  --shadow-surface: inset 0 1px 0 rgb(255 255 255 / 0.035), 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-lifted: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 6px 16px -4px rgb(0 0 0 / 0.5);
 
   /*
    * 4px everywhere reads as a form from 2014. A card wants more curvature than
@@ -269,6 +267,60 @@ body {
   background-size: 200% 100%;
   animation: skeleton-sweep 1.6s var(--ease-out-quick) infinite;
   border-radius: 3px;
+}
+
+/*
+ * Measure — the one typographic rule this interface was breaking everywhere.
+ *
+ * The assumptions panel ran its prose the full width of a 1352px card, which is
+ * roughly 190 characters a line. Every study of reading since Tinker puts the
+ * comfortable range at 45–75, and the reason is mechanical rather than
+ * aesthetic: past about 80 characters the eye loses the start of the next line
+ * on the return sweep and the reader re-reads one they have already done.
+ *
+ * That, more than any colour or radius, is what made those panels look like a
+ * log dump rather than a document. Tables and charts still take the full width;
+ * running prose does not.
+ */
+.measure {
+  max-width: 76ch;
+}
+
+/*
+ * A rationale list.
+ *
+ * The engine emits `rationale: string[]` and eight components rendered it as
+ * `<li>— {line}</li>` — the dash typed into the content. On any line that wrapped,
+ * the continuation ran back underneath the dash, so the left edge of the text
+ * broke on every multi-line item and the list stopped reading as a list.
+ *
+ * The marker belongs to the list, not the sentence: absolutely positioned in a
+ * hanging indent, quieter than the text it introduces, and invisible to a
+ * screen reader, which announces list items without help.
+ */
+.rationale {
+  list-style: none;
+}
+.rationale > li {
+  position: relative;
+  padding-left: 1.15em;
+}
+.rationale > li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--color-line-control);
+}
+
+/*
+ * The engine prefixes a rationale line with ⚠ when it is the one that matters.
+ * The marker becomes the symbol rather than the dash, so the line still sits in
+ * the same list and the same left edge — a warning that breaks the alignment
+ * would read as a different kind of content rather than an important one.
+ */
+.rationale > li.warned::before {
+  content: '⚠';
+  color: var(--color-warn);
 }
 
 /*

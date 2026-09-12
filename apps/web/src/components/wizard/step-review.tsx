@@ -9,7 +9,15 @@ import { formatMoney, formatNumber } from '@/lib/format';
 import { CATEGORY_LABELS } from './labels';
 import { useWizard } from './store';
 
-function BundleColumn({ bundle, label, hint }: { bundle: BundleSummary; label: string; hint: string }) {
+function BundleColumn({
+  bundle,
+  label,
+  hint,
+}: {
+  bundle: BundleSummary;
+  label: string;
+  hint: string;
+}) {
   return (
     <div className="border-line flex flex-col gap-2 rounded border p-3">
       <header>
@@ -153,8 +161,8 @@ export function StepReview({
                   {estimate.scopeQuestions
                     .map((category) => CATEGORY_LABELS[category] ?? category)
                     .join(', ')}
-                  , but the estate as captured has nothing for it to protect. Worth asking before the
-                  proposal goes out.
+                  , but the estate as captured has nothing for it to protect. Worth asking before
+                  the proposal goes out.
                 </p>
               )}
               {estimate.ruledOutCategories.length > 0 && (
