@@ -1,5 +1,5 @@
 import { SignInForm } from '@/components/signin-form';
-import { authEnabled } from '@/lib/auth';
+import { authEnabled, configuredProviderIds } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
 /**
@@ -40,7 +40,7 @@ export default async function SignInPage({
         </div>
       )}
 
-      <SignInForm />
+      <SignInForm providers={configuredProviderIds()} />
     </main>
   );
 }

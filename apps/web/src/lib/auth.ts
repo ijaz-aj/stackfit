@@ -104,3 +104,23 @@ export const authOptions: NextAuthOptions = {
 export function authEnabled(): boolean {
   return isAuthConfigured(process.env) && allowlist.length > 0;
 }
+
+/**
+ * Which providers this deployment can actually complete a sign-in with.
+ *
+ * The sign-in page offered both buttons unconditionally. On an instance
+ * configured with only one of them, the other was a dead control: it started an
+ * OAuth flow that could not finish, and the visitor got an error page for doing
+ * exactly what the screen invited them to do. A button that cannot work should
+ * not be drawn.
+ */
+export function configuredProviderIds(): readonly ('google' | 'github')[] {
+  const ids: ('google' | 'github')[] = [];
+  if ((process.env.GOOGLE_CLIENT_ID ?? '') !== '' && (process.env.GOOGLE_CLIENT_SECRET ?? '') !== '') {
+    ids.push('google');
+  }
+  if ((process.env.GITHUB_CLIENT_ID ?? '') !== '' && (process.env.GITHUB_CLIENT_SECRET ?? '') !== '') {
+    ids.push('github');
+  }
+  return ids;
+}
