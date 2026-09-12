@@ -532,9 +532,8 @@ products:
         capabilities:
           - Centralised ingestion, analysis and management of security data
           - Prebuilt and customisable detection rules that alert when events match
+          - The Security app interface and Kibana dashboards
           - Timeline for investigating events and alerts
-          - Case management for collecting and sharing information about security issues
-          - Elastic Defend for endpoint threat detection and prevention
         pricing:
           - model: zero_licence
             pricingConfidence: public_list
@@ -543,9 +542,10 @@ products:
               checkUrl: https://www.elastic.co/subscriptions
               note: >-
                 ⚠ READ THE SUBSCRIPTIONS PAGE FIRST, not the licence. The
-                licensing is settled; what is not settled in this entry is which
-                of the capabilities above are in the free Basic tier and which
-                need a paid subscription. See the product notes.
+                licensing is settled; the Basic-versus-paid split is the thing
+                that moves, it decides whether this tier is worth anything at
+                zero, and Elastic's own page does not state it plainly. See the
+                product notes.
             sources:
               - url: https://github.com/elastic/elasticsearch/blob/main/LICENSE.txt
                 asOf: '2026-09-12'
@@ -583,23 +583,22 @@ products:
     integrations: [syslog, cef, otel, zeek, suricata, elasticsearch]
 
     controlsCovered:
-      # Held to the capabilities Elastic's own overview states, and no further.
-      # The Basic-versus-paid split could not be verified this session, so these
-      # are the claims that hold if the client ends up on a paid tier; see the
-      # notes before relying on any of them at zero cost.
+      # Narrowed to what the free tier actually ships. Detection rules and the
+      # Security app are in Basic, so logging, monitoring and adverse-event
+      # analysis hold. Case management and Elastic Defend are not, so the
+      # incident-response controls that lean on them — CSF RS.AN, ISO A.5.25
+      # and rbi-csf:incident-response — are deliberately absent. They were
+      # claimed here until the tier split was checked.
       - cis-v8:8
       - cis-v8:13
       - nist-csf-2.0:DE.CM
       - nist-csf-2.0:DE.AE
-      - nist-csf-2.0:RS.AN
       - iso-27001-2022:A.8.15
       - iso-27001-2022:A.8.16
-      - iso-27001-2022:A.5.25
       - pci-dss-4.0:10
       - hipaa:164.312.b
       - soc-2:CC7
       - rbi-csf:audit-logs
-      - rbi-csf:incident-response
       - dpdp-2023:rule-6-logging
 
     opsBurden:
@@ -613,13 +612,13 @@ products:
       confidence: analyst_estimate
 
     strengths:
-      - Detection content is the strongest of any self-hostable option here, and it ships maintained
-      - SIEM and endpoint in one platform, so the endpoint agent feeds the SIEM with nothing to build
+      - Prebuilt detection rules in the free tier, maintained by Elastic — the strongest free detection content here
+      - SIEM and endpoint in one platform if the client pays for it, with nothing to build between them
       - Self-managed and air-gappable, which the commercial SaaS SIEMs are not
     weaknesses:
       - 'Elastic License 2.0, not open source: an MSP cannot run it as a service for clients'
       - Operating an Elastic cluster at security log volumes is a standing engineering job
-      - 'The free-versus-paid line moves, and it is where the value is: this is the licensing question to settle first'
+      - 'The free tier stops short of the things a SOC needs: no endpoint agent, no case management, no machine-learning detections'
     bestFor:
       - Clients who want commercial-grade detection content without a per-GB SIEM bill
       - Estates already running Elastic for observability
@@ -633,14 +632,20 @@ products:
       - url: https://github.com/elastic/elasticsearch/blob/main/LICENSE.txt
         asOf: '2026-09-12'
     notes: >-
-      ⚠ THE LICENCE IS VERIFIED AND THE FREE-TIER FEATURE SPLIT IS NOT.
-      elastic.co/subscriptions returned HTTP 502 throughout the session it was
-      catalogued, so which of the listed capabilities sit in the free Basic tier
-      and which need Platinum or Enterprise could not be confirmed. The
-      capabilities above are taken verbatim from Elastic's own Security
-      overview, which describes the solution as a whole.
+      ⚠ THE TIER SPLIT IS CORROBORATED, NOT VENDOR-STATED. Elastic's own
+      subscriptions page does not set out plainly which Security capabilities
+      sit in Basic, and its docs describe permissions rather than tiers.
+      Independent sources agree on the shape: Basic carries log ingestion,
+      Kibana dashboards, the Security app and prebuilt detection rules;
+      machine-learning anomaly detection needs Platinum; Elastic Defend and case
+      management need a paid tier.
 
-      This matters more here than it would elsewhere, because the tier is priced
-      at zero. Confirm the Basic feature set before putting this in front of a
-      client as a free option — and if it turns out detection rules or case
-      management are gated, the control claims above need narrowing with it.
+      This entry was corrected once already on the strength of that. It
+      originally listed Elastic Defend and case management as Basic capabilities
+      and claimed the incident-response controls that lean on them — which would
+      have offered a client endpoint protection and a case workflow at zero
+      cost, and credited them with response capability they had not bought.
+
+      Confirm the split with Elastic before this reaches a proposal. The number
+      that matters is not the licence, which is settled, but where the line
+      falls — and it is where all the value is.

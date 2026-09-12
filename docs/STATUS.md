@@ -1029,12 +1029,19 @@ its sources and says NOT VENDOR-PUBLISHED in its own notes.
   Done. `deception` landed with five, and `siem`, `edr` and
   `vulnerability_management` were topped up to five each.
 
-  One caveat carried forward: **Elastic Security's free-tier feature split is
-  unverified.** `elastic.co/subscriptions` returned HTTP 502 throughout, so
-  which capabilities sit in the free Basic tier and which need a paid
-  subscription could not be confirmed. The licence is verified; the tier is
-  priced at zero; the entry flags both. Confirm before offering it to a client
-  as a free option.
+  The caveat this carried — Elastic Security's unverified free-tier split — was
+  chased down on 2026-09-12 and **the entry was wrong**. It listed Elastic
+  Defend and case management as Basic capabilities and claimed the
+  incident-response controls that lean on them, which would have offered a
+  client endpoint protection and a case workflow at zero cost. Corrected:
+  prebuilt detection rules and the Security app are in Basic and are still
+  claimed; Defend, case management and machine-learning detections are not, and
+  CSF RS.AN, ISO A.5.25 and rbi-csf:incident-response came off with them.
+
+  ⚠ Still corroborated rather than vendor-stated. Elastic's subscriptions page
+  does not set the Security split out plainly and its docs describe permissions
+  rather than tiers, so this rests on independent sources agreeing. Confirm with
+  Elastic before it reaches a proposal.
 
 Still unverified rather than unanswered:
 - **The dashboard has never been looked at in a browser, and the charts cannot
