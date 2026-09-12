@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 7 — catalog expansion (in progress, see the phase log)
+**Current phase:** 7 — catalog expansion (in review)
 **Last updated:** 2026-09-12
 
 ## Phase log
@@ -18,7 +18,7 @@
 | 4b `coverage.ts` (**inserted**) | in review | The §7.5 stage: coverage matrix per framework, CSF Function roll-up, risk-graded gap list, costed fix plan. `coverage-assumptions.yaml`. The engine pipeline is now complete end to end. 299 tests green. |
 | 5 Intake wizard UI | in review | Next 16 + React 19 + Tailwind v4 + Prisma 7/SQLite. Six steps, presets, continuous save, live readout. `runPipeline` + `@stackfit/data` extracted so the app and the tests share one path. 325 tests green; `pnpm audit` clean. |
 | 6 Results dashboard | in review | All seven parts of §8, server-rendered off one pipeline run. Recharts cost + cash-flow charts on a validated palette. Sizing assumptions are editable per scenario. **Reviewed; six defects found and fixed** — deployment fit read "no preference" as a demand, the fit score was rendered with no working shown, a control was credited to a tier that does not sell it, Ideal optimised for value rather than fit, a partial control had no route to being closed, and the fix list offered purchases that closed nothing. Both pre-Phase-7 open questions closed; the SKU is now part of the recommendation. 368 tests green. |
-| 7 Catalog expansion (≥5 per category) | **in progress** | 9 new categories landed at 5 products each — iam, backup, email_security, pam, ngfw, ndr, soar, mdr, asset_discovery — plus SentinelOne into edr. 54 products across 12 files, 90 catalog prices, all fresh, no placeholders. **Three engine defects found and fixed**, each pinned by a regression: a bigger budget could buy less compliance, a mandated control was outranked by one more funded category, and ops fit returned a flat score for every product when the client had no security staff. **`ProductTier.limits` added**, closing the one design question the phase raised — five vendor limits now enforced exactly, two previously undeliverable free tiers back in the catalog. **Outstanding: deception (0 of 5), siem (3 of 5), edr (4 of 5), vulnerability_management (2 of 5)** — 12 products. Stopped because web research hit a session rate limit, and hard rule 2 forbids writing a price from memory. 372 tests green. |
+| 7 Catalog expansion (≥5 per category) | in review | **65 products across all 13 categories**, up from 8 across 3. Every category holds at least five. 106 catalog prices, all fresh, no placeholders. **Three engine defects found and fixed**, each pinned by a regression: a bigger budget could buy less compliance, a mandated control was outranked by one more funded category, and ops fit returned a flat score for every product when the client had no security staff. **`ProductTier.limits` added**, closing the design question the phase raised — five vendor limits now enforced exactly, two previously undeliverable free tiers back in the catalog. Both §12.1 and §12.2 acceptance assertions tightened to what the spec actually asks for. 377 tests green. |
 | 8 Export (DOCX/PDF/XLSX) | not started | |
 | 9 Scenario save / clone / compare | not started | |
 | 10 Polish + demo scenarios + README | not started | Pick + document the free hosting target (Vercel Hobby + Neon/Supabase free Postgres). |
@@ -880,10 +880,14 @@ uncovered controls, 9 genuinely unclosable, and one purchase that closes two.
 
 ### Phase 7
 
-Nine categories researched and written on 2026-09-12. Every price is read from a
-vendor page or an authoritative feed on that date; nothing was written from
-memory. The phase is unfinished — see the phase log — but what landed raised
-more design questions than any phase since 4.
+Ten new categories and three top-ups, researched and written on 2026-09-12. The
+catalog went from 8 products across 3 categories to **65 across all 13**. Every
+price is read from a vendor page or an authoritative feed on that date; nothing
+was written from memory, and where a vendor publishes nothing the entry says so
+rather than inventing a number.
+
+It raised more design questions than any phase since 4, and answered one of them
+with a schema change.
 
 **Decisions.**
 
@@ -1002,22 +1006,35 @@ markets will give you a number and which will not.
 | soar | 1 of 5 paid | Free tiers are real; paid tiers are quote-only. |
 | mdr | 2 of 5 | The category that most needs a number and least gives one. |
 | asset_discovery | 2 of 5 | runZero's paid platform is "Starts at $5,000", which is not a price. |
+| deception | 4 of 5 free | Thinkst publishes no rate; reported figures vary by 2×. |
+| siem | 4 of 5 | Splunk Enterprise Security is quote-only; Graylog publishes a floor, not a rate. |
+| edr | 3 of 5 | ESET, Sophos and Bitdefender all answer "price available on request". |
+| vulnerability_management | 4 of 5 | Rapid7 and Qualys are quote-only; Tenable publishes a worked example. |
+
+Across the whole catalog: **106 prices, none a placeholder, 16 of them
+`analyst_estimate`** — roughly one in seven. Every one of those sixteen names
+its sources and says NOT VENDOR-PUBLISHED in its own notes.
 
 ## Open questions
 
-**Nothing blocking except the remaining products.** The one design decision this
-section carried was answered and implemented on 2026-09-12.
+**Nothing blocking Phase 8.** Everything this section carried was closed on
+2026-09-12.
 
 - ~~**Should a `ProductTier` gain a `limits` block?**~~ Asked and answered on
   2026-09-12: yes, and it is done. Five of the seven limits are now enforced
   exactly, one remains approximated, and the two tiers that had been dropped
   from the catalog are back. See "Tier limits" in the Phase 7 section.
 
-- **The remaining 12 products need a session with web research available.**
-  `deception` has no products at all, and `siem`, `edr` and
-  `vulnerability_management` are short of five. Research stopped mid-phase on a
-  rate limit; hard rule 2 forbids writing a price from memory, so nothing was
-  guessed to finish the count.
+- ~~**The remaining 12 products need a session with web research available.**~~
+  Done. `deception` landed with five, and `siem`, `edr` and
+  `vulnerability_management` were topped up to five each.
+
+  One caveat carried forward: **Elastic Security's free-tier feature split is
+  unverified.** `elastic.co/subscriptions` returned HTTP 502 throughout, so
+  which capabilities sit in the free Basic tier and which need a paid
+  subscription could not be confirmed. The licence is verified; the tier is
+  priced at zero; the entry flags both. Confirm before offering it to a client
+  as a free option.
 
 Still unverified rather than unanswered:
 - **The dashboard has never been looked at in a browser.** Verified by rendering
@@ -1033,7 +1050,7 @@ Still unverified rather than unanswered:
 <!-- `pnpm catalog:validate` prints this list; keep it in sync -->
 
 **No `placeholder`-confidence prices anywhere in the catalog**, and none has
-ever shipped. ⚠ But `analyst_estimate` is now 13 pricing rules across 7
+ever shipped. ⚠ But `analyst_estimate` is now 16 pricing rules across 9
 products, up from 2 before Phase 7, because whole categories publish nothing.
 Each is flagged NOT VENDOR-PUBLISHED in its own notes and carries corroborating
 sources; each will show a confidence warning wherever it is costed. In order of
@@ -1048,6 +1065,8 @@ how much they could be wrong by:
 | `crowdstrike-falcon-complete` | 1 | CrowdStrike publishes Falcon Go and nothing above it. |
 | `veeam-data-platform` | 3 | VUL per workload, corroborated across two independent licensing sources. Veeam raised list prices in January of both 2025 and 2026, so this ages faster than a normal list price. |
 | `microsoft-defender-for-endpoint` | 2 | Phase 1. Microsoft publishes no standalone per-plan price, only the bundled Defender Suite. |
+| `thinkst-canary` | 1 | No published rate, and reported figures vary by a factor of two. Its single price band does not scale with decoy count, which is why scaleCeiling is "mid". |
+| `bitdefender-gravityzone` | 2 | ESET, Sophos and Bitdefender all answer "price available on request". The reporting source states its figures "are estimates, not quotes". |
 
 The two Phase 1 placeholders were closed by research on 2026-09-09:
 
