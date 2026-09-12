@@ -48,7 +48,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     ).toMatchInlineSnapshot(`
       [
         "pci-dss-4.0 | in scope true | covered 8/8 of 12 | partial 0 | gaps 0 | 100%",
-        "nist-csf-2.0 | in scope false | covered 12/13 of 22 | partial 1 | gaps 0 | 92.3%",
+        "nist-csf-2.0 | in scope false | covered 13/13 of 22 | partial 0 | gaps 0 | 100%",
       ]
     `);
   });
@@ -71,7 +71,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
         "Identify 2/2 = 100",
         "Protect 4/4 = 100",
         "Detect 2/2 = 100",
-        "Respond 3/4 = 75",
+        "Respond 4/4 = 100",
         "Recover 1/1 = 100",
       ]
     `);
@@ -106,30 +106,23 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
   });
 
   it('says plainly which gaps the catalog cannot close yet, and closes the rest', () => {
-    // ⚠ CATALOG LIMITATION: GONE, for this scenario. It was nine unclosable
-    // gaps out of eleven when Phase 7 started, because the catalog stocked
-    // three categories. It is now zero: every remaining gap has a product in
-    // the catalog that would close it, and the fix list has a price.
+    // ⚠ CATALOG LIMITATION: GONE, for this scenario, and so is the gap list.
+    // It was nine unclosable gaps out of eleven when Phase 7 started, because
+    // the catalog stocked three categories. It is now zero of zero: the
+    // recommended bundle for a 60-staff PCI retailer at USD 25k/yr covers every
+    // control in scope that a purchase could satisfy.
     //
-    // Keep the assertion as an equality rather than a bound. If a later
-    // catalog or engine change reintroduces an unclosable gap here, that is
-    // worth going red over.
+    // Keep these as equalities rather than bounds. If a later catalog or engine
+    // change reintroduces a gap here, that is worth going red over.
     expect(coverage.unclosableGaps).toEqual([]);
-    expect(coverage.gaps.length).toBe(1);
-
-    // The one that remains is a partial — the stack has a SIEM and nothing in
-    // it claims CSF incident analysis — and it has a route: TheHive. Before
-    // partials entered this list the client was shown a coverage percentage
-    // with no way to improve it at all.
-    const closable = coverage.gaps.filter((gap) => gap.cheapestCloser !== null);
-    expect(closable.map((gap) => gap.controlId)).toEqual(['nist-csf-2.0:RS.AN']);
-    expect(closable.every((gap) => gap.kind === 'partial')).toBe(true);
+    expect(coverage.gaps).toEqual([]);
+    expect(coverage.remediation).toEqual([]);
 
     // PCI requirement 7 is worth watching across Phase 7 as a measure of what
     // the catalog is for. Before the phase it was an unclosable critical gap:
     // the client was failing a PCI mandate and StackFit had nothing to sell
     // them. After iam it became a closable one, fixable by upgrading a tier of
-    // a product already in the bundle. After pam it is simply covered.
+    // a product already in the bundle. After pam it was simply covered.
     expect(coverage.gaps.map((gap) => gap.controlId)).not.toContain('pci-dss-4.0:7');
 
     // And every purchase on the list must actually achieve something. A
@@ -201,11 +194,11 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
     ).toMatchInlineSnapshot(`
       [
         "greenbone-openvas (vulnerability_management) | 2450.04 USD/yr | 0.33 FTE | closes 6",
-        "passbolt (pam) | 2450.04 USD/yr | 0.16 FTE | closes 3",
-        "crowdstrike-falcon-go (edr) | 11998 USD/yr | 0.12 FTE | closes 1",
+        "huntress (mdr) | 10800 USD/yr | 0.11 FTE | closes 4",
+        "passbolt (pam) | 2450.04 USD/yr | 0.16 FTE | closes 1",
         "azure-backup (backup) | 2640 USD/yr | 0.11 FTE | closes 4",
-        "security-onion (ndr) | 2450.04 USD/yr | 0.57 FTE | closes 3",
-        "opnsense (ngfw) | 2450.04 USD/yr | 0.22 FTE | closes 1",
+        "opnsense (ngfw) | 2450.04 USD/yr | 0.22 FTE | closes 2",
+        "graylog-open (siem) | 2450.04 USD/yr | 0.46 FTE | closes 1",
         "proxmox-mail-gateway (email_security) | 2450.04 USD/yr | 0.26 FTE | closes 1",
       ]
     `);

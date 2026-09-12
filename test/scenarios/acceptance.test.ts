@@ -18,7 +18,6 @@ import { describe, expect, it } from 'vitest';
 import { cheapestTierCost } from '@stackfit/engine';
 
 import {
-  CATALOG_CATEGORIES,
   allRationale,
   inventoryOf,
   profileOf,
@@ -136,12 +135,38 @@ describe('§12.2 — zero security staff, 300 endpoints', () => {
     }
   });
 
-  it('offers the managed alternative as the answer for a team that cannot operate a stack', () => {
-    // The "MDR outranks self-hosted SIEM" half of §12.2 cannot be asserted
-    // against the catalog: there is no MDR product to outrank anything. What is
-    // assertable is that the managed route is costed and presented, and that
-    // the bundle admits it needs people the client does not have.
-    expect(CATALOG_CATEGORIES.has('mdr')).toBe(false); // ← delete when Phase 7 lands
+  it('ranks managed options above self-hosted ones on operability', () => {
+    // TIGHTENED IN PHASE 7. This used to assert only that the MSSP alternative
+    // was costed and presented, because there was no mdr product in the catalog
+    // for "MDR outranks self-hosted SIEM" to be true of. There are five now.
+    //
+    // The comparison is on ops fit rather than on total score, because fit is
+    // scored against each category's own remit and is not comparable across
+    // categories. Operability is the dimension §12.2 actually names.
+    const opsFitOf = (productId: string) =>
+      result.scores
+        .find((score) => score.productId === productId)
+        ?.dimensions.find((dimension) => dimension.dimension === 'ops_fit')?.score ?? -1;
+
+    const managed = ['huntress', 'blumira', 'sophos-mdr', 'arctic-wolf'];
+    const selfHosted = ['wazuh', 'graylog-open', 'security-onion', 'greenbone-openvas'];
+
+    for (const service of managed) {
+      for (const platform of selfHosted) {
+        expect(
+          opsFitOf(service),
+          `${service} ops fit must beat ${platform} for a client with no security staff`,
+        ).toBeGreaterThan(opsFitOf(platform));
+      }
+    }
+
+    // And an MDR product is actually in the recommended stack, not merely
+    // scored well and then left out.
+    const categories = result.recommended.selections.map((selection) => selection.category);
+    expect(categories).toContain('mdr');
+
+    // The generic managed alternative is still costed and presented alongside
+    // it — they answer different questions, and both should be on the table.
     expect(result.recommended.mssp.annual.amountMinor).toBeGreaterThan(0);
     expect(allRationale(result.recommended)).toContain('managed');
   });

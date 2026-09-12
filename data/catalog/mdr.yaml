@@ -1,0 +1,696 @@
+# MDR — managed detection and response, bought as a service.
+#
+# Prices are in minor units (hard rule 1).
+#
+# ⚠ TWO OF FIVE PUBLISH A PRICE. Huntress and Blumira do. Sophos MDR, Arctic
+# Wolf, Rapid7 MDR, Expel, Red Canary, eSentire, Microsoft Defender Experts for
+# XDR and CrowdStrike Falcon Complete were all checked on 2026-09-12 and every
+# one answers "contact sales". The three entries below on analyst-estimated
+# pricing are flagged as such and will show a confidence warning wherever they
+# are costed.
+#
+# That ratio is the finding. MDR is the category a client with no security
+# staff most needs and the one where a defensible budget number is hardest to
+# obtain, which is exactly why the SMB-focused vendors who do publish have an
+# advantage worth naming on the call.
+#
+# ⚠ RELATIONSHIP TO THE MSSP RATE CARD. data/config/mssp-rate-card.yaml models
+# the generic "buy it as a service instead" alternative that every bundle
+# carries. This file is different: these are named products the portfolio can
+# select into a bundle like any other. A scenario can end up with both — an
+# MDR product in the stack and an MSSP alternative quoted beside it — and that
+# is correct, because they answer different questions.
+#
+# ⚠ OPS BURDEN IS NOT ZERO. Buying MDR does not remove the client's side of the
+# work: someone still has to action what the provider escalates, own the
+# endpoints the agent runs on, and maintain the relationship. The baseFte
+# figures below are deliberately non-zero for that reason, and they are the
+# numbers most worth arguing with in this file.
+
+category: mdr
+
+products:
+  - id: huntress
+    name: Huntress
+    vendor: Huntress Labs
+    category: mdr
+    subcategory: SMB-focused managed detection with a 24/7 SOC
+    licenceModel: managed_service
+    maturity: established
+
+    tiers:
+      - id: managed-edr
+        name: Managed EDR
+        capabilities:
+          - 24/7 human SOC triage included at no extra charge
+          - Managed endpoint detection and response
+          - Persistent foothold and ransomware detection
+          - Guided remediation with written incident reports
+          - Host isolation
+        pricing:
+          - model: per_endpoint_year
+            unitPrice:
+              amountMinor: 9588
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.huntress.com/pricing
+              note: >-
+                Read the per-endpoint-per-month figure and multiply by 12.
+                Huntress quotes an example at 100 units and states that the
+                per-unit cost falls at higher volumes, so re-check the volume
+                the example is anchored on as well as the rate.
+            sources:
+              - url: https://www.huntress.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 7.99 per endpoint per month at the published 100-endpoint
+              example, so USD 95.88 per endpoint per year. Huntress states the
+              per-unit cost decreases at higher volumes, so this rate overstates
+              for a large estate — the safe direction for a pre-sales budget,
+              but say so.
+
+      - id: managed-itdr
+        name: Managed ITDR
+        capabilities:
+          - Managed identity threat detection for Microsoft 365 and Entra ID
+          - Session hijacking and business email compromise detection
+          - Automated malicious-session termination
+          - 24/7 SOC triage
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 4320
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.huntress.com/pricing
+              note: Read the per-identity-per-month figure and multiply by 12.
+            sources:
+              - url: https://www.huntress.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 3.60 per licensed identity per month at the published
+              100-identity example, so USD 43.20 per identity per year. Billed
+              here against headcount, which is the closest available proxy for
+              licensed identities.
+        controlsCovered:
+          - cis-v8:6
+          - nist-csf-2.0:PR.AA
+          - iso-27001-2022:A.5.16
+          - iso-27001-2022:A.8.16
+
+    supports:
+      os: [windows, macos, linux]
+      deviceClasses: [workstation, server, identity, saas_tenant]
+      cloudPlatforms: [m365]
+      deploymentModes: [cloud]
+      scaleFloor: small
+      scaleCeiling: mid
+      airGapCapable: false
+
+    integrations: [microsoft-entra-id, m365, syslog]
+
+    controlsCovered:
+      - cis-v8:10
+      - cis-v8:17
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:DE.AE
+      - nist-csf-2.0:RS.AN
+      - nist-csf-2.0:RS.MA
+      - nist-csf-2.0:RS.MI
+      - iso-27001-2022:A.5.24
+      - iso-27001-2022:A.5.25
+      - iso-27001-2022:A.5.26
+      - iso-27001-2022:A.8.7
+      - iso-27001-2022:A.8.16
+      - pci-dss-4.0:5
+      - soc-2:CC7
+      - nis2:21.2.b
+      - rbi-csf:incident-response
+      - rbi-csf:soc
+
+    opsBurden:
+      baseFte: 0.1
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 3
+      skillLevel: generalist
+      typicalWeeks: 2
+      confidence: analyst_estimate
+
+    strengths:
+      - Publishes a price, which two thirds of this category refuses to do
+      - The SOC is included rather than an upsell, so the quoted rate is close to the real one
+      - Lowest barrier in the category — deployable by an IT generalist in days
+    weaknesses:
+      - Deliberately narrower than a full XDR — it does a few things well rather than everything
+      - Aimed at SMB and lower mid-market; large estates outgrow the model
+      - SaaS-only, with no air-gapped option
+    bestFor:
+      - Clients with zero or near-zero security staff, which is the §12.2 scenario exactly
+      - Estates under a few thousand endpoints wanting 24/7 cover without building a SOC
+    avoidWhen:
+      - The environment is air-gapped
+      - The client needs coverage across network, OT and bespoke applications
+
+    sources:
+      - url: https://www.huntress.com/pricing
+        asOf: '2026-09-12'
+    notes: >-
+      Managed SIEM (USD 3.50 per source per month) and Managed Security
+      Awareness Training (USD 1.75 per learner per month) are also published and
+      are not catalogued as tiers: "per source" and "per learner" are billable
+      units the cost engine has no sizing figure for. Quote them by hand.
+
+  - id: blumira
+    name: Blumira
+    vendor: Blumira
+    category: mdr
+    subcategory: detection and response platform with SOC support
+    licenceModel: managed_service
+    maturity: established
+
+    tiers:
+      - id: detect
+        name: Detect
+        capabilities:
+          - Log collection and managed detection across cloud and on-premises sources
+          - Prioritised findings with written response playbooks
+          - One year of log retention
+          - Security operations support
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 14400
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.blumira.com/pricing
+              note: >-
+                Read the per-employee-per-month figure and multiply by 12. Also
+                re-read Blumira's definition of "employee" — it counts knowledge
+                workers with a corporate email address and a device, not total
+                headcount, and that definition is what decides the bill.
+            sources:
+              - url: https://www.blumira.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 12 per employee per month, so USD 144 per employee per year,
+              on an annual contract. A one-time onboarding fee of USD 500
+              applies to this edition and is not modelled — the cost engine's
+              one-off line is implementation services, and a vendor onboarding
+              fee is neither that nor a licence.
+
+      - id: respond
+        name: Respond
+        capabilities:
+          - Everything in Detect
+          - 24/7 SecOps support with an urgent-priority phone line
+          - Automated host isolation
+          - Threat hunting
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 19200
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.blumira.com/pricing
+              note: Read the per-employee-per-month figure and multiply by 12.
+            sources:
+              - url: https://www.blumira.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 16 per employee per month, so USD 192 per employee per year.
+              A one-time onboarding fee of USD 250 applies and is not modelled.
+        controlsCovered:
+          - nist-csf-2.0:RS.MI
+          - iso-27001-2022:A.5.26
+
+      - id: automate
+        name: Automate
+        capabilities:
+          - Everything in Respond
+          - Automated response workflows
+          - Extended retention
+          - Onboarding included
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 25200
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.blumira.com/pricing
+              note: Read the per-employee-per-month figure and multiply by 12.
+            sources:
+              - url: https://www.blumira.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 21 per employee per month, so USD 252 per employee per year.
+              Onboarding is included at this edition.
+        controlsCovered:
+          - nist-csf-2.0:RS.MI
+          - nist-csf-2.0:RS.CO
+          - iso-27001-2022:A.5.26
+          - cis-v8:17
+
+    supports:
+      os: [windows, macos, linux]
+      deviceClasses: [workstation, server, identity, saas_tenant, cloud_workload, firewall]
+      cloudPlatforms: [aws, azure, gcp, m365, google_workspace]
+      deploymentModes: [cloud, hybrid]
+      scaleFloor: small
+      scaleCeiling: mid
+      airGapCapable: false
+
+    integrations: [microsoft-entra-id, m365, syslog, opnsense, pfsense, crowdstrike-falcon-go]
+
+    controlsCovered:
+      - cis-v8:8
+      - cis-v8:13
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:DE.AE
+      - nist-csf-2.0:RS.AN
+      - nist-csf-2.0:RS.MA
+      - iso-27001-2022:A.5.24
+      - iso-27001-2022:A.5.25
+      - iso-27001-2022:A.8.15
+      - iso-27001-2022:A.8.16
+      - pci-dss-4.0:10
+      - soc-2:CC7
+      - nis2:21.2.b
+      - rbi-csf:incident-response
+      - rbi-csf:soc
+      - rbi-csf:audit-logs
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 5
+      skillLevel: generalist
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - Covers the log-management obligation and the detection obligation in one subscription
+      - Priced per employee rather than per endpoint, which suits an estate with more devices than people
+      - Published price list including the onboarding fees, which is unusually candid
+    weaknesses:
+      - Per-employee pricing punishes a people-heavy, device-light client
+      - Narrower detection content than the large MDR providers
+      - SaaS-only
+    bestFor:
+      - Clients who need both a SIEM obligation met and someone watching it
+      - Small teams with a compliance-driven log retention requirement
+    avoidWhen:
+      - The environment is air-gapped
+      - Headcount is large relative to the estate being protected
+
+    sources:
+      - url: https://www.blumira.com/pricing
+        asOf: '2026-09-12'
+    notes: >-
+      Blumira's one-time onboarding fees (USD 500 for Detect, USD 250 for
+      Respond, included for Automate) are published and deliberately not
+      modelled. The cost engine's only one-off lines are implementation services
+      and training, and a vendor onboarding fee is neither. Add it by hand —
+      it changes the year-one figure and nothing else.
+
+  - id: sophos-mdr
+    name: Sophos MDR
+    vendor: Sophos
+    category: mdr
+    subcategory: full-service managed detection and response
+    licenceModel: managed_service
+    maturity: established
+
+    tiers:
+      - id: essentials
+        name: MDR Essentials
+        capabilities:
+          - 24/7 threat detection and response by the Sophos SOC
+          - Threat containment on the client's behalf
+          - Weekly and monthly reporting
+          - Integration with Sophos Endpoint
+        pricing:
+          - model: per_endpoint_year
+            unitPrice:
+              amountMinor: 18000
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.sophos.com/en-us/products/managed-detection-and-response
+              note: >-
+                Check first whether Sophos has started publishing a rate; if it
+                has, regrade to public_list. Otherwise get a partner quote —
+                Sophos MDR is sold partner-led, and partner pricing for this
+                product is known to diverge from any published benchmark.
+            sources:
+              - url: https://www.sophos.com/en-us/products/managed-detection-and-response
+                asOf: '2026-09-12'
+              - url: https://mdrcost.com/sophos-mdr-pricing
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED. Sophos offers only "Get Pricing" and
+              "Contact Us"; the product is sold partner-led. USD 15 per endpoint
+              per month, so USD 180 per year, sits in the middle of the
+              USD 7–25 per endpoint per month band that independent MDR pricing
+              trackers report for the mid-market. It is a benchmark, not a
+              quote.
+
+      - id: complete
+        name: MDR Complete
+        capabilities:
+          - Everything in Essentials
+          - Full-scale incident response with no cap on remediation hours
+          - A named threat response lead
+          - A breach protection warranty
+        pricing:
+          - model: per_endpoint_year
+            unitPrice:
+              amountMinor: 30000
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.sophos.com/en-us/products/managed-detection-and-response
+              note: See the Essentials tier — the whole product is on estimated pricing.
+            sources:
+              - url: https://www.sophos.com/en-us/products/managed-detection-and-response
+                asOf: '2026-09-12'
+              - url: https://mdrcost.com/sophos-mdr-pricing
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED. USD 25 per endpoint per month, so USD 300
+              per year, at the top of the reported mid-market band. See the
+              Essentials tier.
+        controlsCovered:
+          - nist-csf-2.0:RC.RP
+          - iso-27001-2022:A.5.27
+
+    supports:
+      os: [windows, macos, linux]
+      deviceClasses: [workstation, server, cloud_workload, firewall, identity, saas_tenant]
+      cloudPlatforms: [aws, azure, gcp, m365]
+      deploymentModes: [cloud, hybrid]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [microsoft-entra-id, m365, syslog, microsoft-defender-for-endpoint]
+
+    controlsCovered:
+      - cis-v8:10
+      - cis-v8:13
+      - cis-v8:17
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:DE.AE
+      - nist-csf-2.0:RS.AN
+      - nist-csf-2.0:RS.MA
+      - nist-csf-2.0:RS.MI
+      - iso-27001-2022:A.5.24
+      - iso-27001-2022:A.5.25
+      - iso-27001-2022:A.5.26
+      - iso-27001-2022:A.8.7
+      - iso-27001-2022:A.8.16
+      - pci-dss-4.0:5
+      - soc-2:CC7
+      - nis2:21.2.b
+      - rbi-csf:incident-response
+      - rbi-csf:soc
+
+    opsBurden:
+      baseFte: 0.1
+      ftePerThousandAssets: 0.03
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 5
+      skillLevel: generalist
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - Takes response actions on the client's behalf rather than escalating and waiting
+      - Ingests telemetry from third-party tools, so it does not require a full Sophos estate
+      - The Complete tier's uncapped incident response is a genuine risk transfer
+    weaknesses:
+      - 'No published price at all: both tiers here are benchmarks, not quotes'
+      - Partner-led sales means the price depends on which partner is asked
+      - SaaS-only
+    bestFor:
+      - Clients with no security staff who need someone empowered to act, not just alert
+      - Estates already running Sophos endpoint or firewall
+    avoidWhen:
+      - Budget certainty matters and a partner quote cannot be obtained in time
+      - The environment is air-gapped
+
+    sources:
+      - url: https://www.sophos.com/en-us/products/managed-detection-and-response
+        asOf: '2026-09-12'
+    notes: >-
+      Both tiers carry analyst-estimated pricing and will show a confidence
+      warning wherever they are costed. The warning is correct — treat these
+      figures as a budget placeholder pending a partner quote.
+
+  - id: crowdstrike-falcon-complete
+    name: CrowdStrike Falcon Complete
+    vendor: CrowdStrike
+    category: mdr
+    subcategory: fully managed detection and response on the Falcon platform
+    licenceModel: managed_service
+    maturity: established
+
+    tiers:
+      - id: complete
+        name: Falcon Complete
+        capabilities:
+          - 24/7 managed detection, investigation and response by CrowdStrike analysts
+          - Hands-on remediation performed by the provider
+          - Managed threat hunting
+          - A breach prevention warranty
+          - Full Falcon endpoint protection included
+        pricing:
+          - model: per_endpoint_year
+            unitPrice:
+              amountMinor: 42000
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.crowdstrike.com/products/bundles/falcon-complete/
+              note: >-
+                CrowdStrike publishes Falcon Go openly and nothing above it, so
+                check whether Complete has joined the published bundles. If not,
+                get a quote — the reported band is wide and the volume
+                sensitivity is high.
+            sources:
+              - url: https://www.crowdstrike.com/products/bundles/falcon-complete/
+                asOf: '2026-09-12'
+              - url: https://mdrcost.com/
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED. CrowdStrike publishes a price for Falcon
+              Go and not for Complete. USD 35 per endpoint per month, so USD 420
+              per year, is the middle of the USD 25–45 per endpoint per month
+              band independent trackers report. Treat as a budget placeholder,
+              not a quote.
+
+    supports:
+      os: [windows, macos, linux]
+      deviceClasses: [workstation, server, cloud_workload, container_node, identity]
+      cloudPlatforms: [aws, azure, gcp, m365]
+      deploymentModes: [cloud]
+      scaleFloor: mid
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [crowdstrike-falcon-go, microsoft-sentinel, syslog, microsoft-entra-id]
+
+    controlsCovered:
+      - cis-v8:2
+      - cis-v8:10
+      - cis-v8:13
+      - cis-v8:17
+      - nist-csf-2.0:PR.PS
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:DE.AE
+      - nist-csf-2.0:RS.AN
+      - nist-csf-2.0:RS.MA
+      - nist-csf-2.0:RS.MI
+      - iso-27001-2022:A.5.7
+      - iso-27001-2022:A.5.24
+      - iso-27001-2022:A.5.25
+      - iso-27001-2022:A.5.26
+      - iso-27001-2022:A.8.7
+      - iso-27001-2022:A.8.16
+      - pci-dss-4.0:5
+      - soc-2:CC7
+      - nis2:21.2.b
+      - rbi-csf:incident-response
+      - rbi-csf:soc
+      - rbi-csf:anti-malware
+
+    opsBurden:
+      baseFte: 0.1
+      ftePerThousandAssets: 0.02
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 5
+      skillLevel: generalist
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - The provider performs remediation rather than recommending it, which is the whole point of MDR
+      - Best-in-class endpoint telemetry underneath the service
+      - Managed threat hunting included rather than sold separately
+    weaknesses:
+      - 'The most expensive option here by a distance, and unpriced: the figure above is a benchmark'
+      - Endpoint-centric — network and OT coverage needs other modules
+      - SaaS-only, so air-gapped scopes eliminate it
+    bestFor:
+      - Clients who can fund a premium service and want the response obligation transferred
+      - Estates where a breach would be existential
+    avoidWhen:
+      - Budget is the binding constraint
+      - The environment is air-gapped
+
+    sources:
+      - url: https://www.crowdstrike.com/products/bundles/falcon-complete/
+        asOf: '2026-09-12'
+    notes: >-
+      scaleFloor is "mid" deliberately. A twenty-person company will not get a
+      Falcon Complete quote worth having, and offering it would waste everyone's
+      time.
+
+  - id: arctic-wolf
+    name: Arctic Wolf Managed Detection and Response
+    vendor: Arctic Wolf Networks
+    category: mdr
+    subcategory: concierge security operations
+    licenceModel: managed_service
+    maturity: established
+
+    tiers:
+      - id: mdr
+        name: Managed Detection and Response
+        capabilities:
+          - 24/7 monitoring by a named Concierge Security Team
+          - Log ingestion from the client's existing tools with no per-GB charge
+          - Guided remediation and regular posture reviews
+          - Vulnerability and configuration findings alongside detections
+        pricing:
+          - model: per_user_year
+            unitPrice:
+              amountMinor: 24000
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://arcticwolf.com/solutions/managed-detection-and-response/
+              note: >-
+                Arctic Wolf is quote-only and prices by environment rather than
+                by a single unit, which is why this entry is a per-user
+                approximation. Get a quote; do not refine the estimate.
+            sources:
+              - url: https://arcticwolf.com/solutions/managed-detection-and-response/
+                asOf: '2026-09-12'
+              - url: https://mdrproviders.io/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED, AND THE BILLING UNIT IS AN
+              APPROXIMATION. Arctic Wolf publishes no rate and prices on the
+              shape of the environment — users, sensors, log sources and cloud
+              accounts together — rather than on any single unit this catalog
+              holds. USD 20 per user per month, so USD 240 per year, is a
+              mid-market benchmark from independent MDR pricing trackers,
+              expressed per user because that is the closest sizing figure
+              available.
+
+              This is the weakest price in the catalog. It is here because a
+              managed-services shortlist without Arctic Wolf on it would
+              misrepresent the mid-market, not because the number is good.
+
+    supports:
+      os: [windows, macos, linux]
+      deviceClasses: [workstation, server, cloud_workload, firewall, identity, saas_tenant, network_device]
+      cloudPlatforms: [aws, azure, gcp, m365, google_workspace]
+      deploymentModes: [cloud, hybrid]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [microsoft-entra-id, m365, syslog, opnsense, pfsense, crowdstrike-falcon-go]
+
+    controlsCovered:
+      - cis-v8:8
+      - cis-v8:13
+      - cis-v8:17
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:DE.AE
+      - nist-csf-2.0:RS.AN
+      - nist-csf-2.0:RS.MA
+      - nist-csf-2.0:ID.RA
+      - iso-27001-2022:A.5.24
+      - iso-27001-2022:A.5.25
+      - iso-27001-2022:A.8.15
+      - iso-27001-2022:A.8.16
+      - pci-dss-4.0:10
+      - soc-2:CC7
+      - nis2:21.2.b
+      - rbi-csf:incident-response
+      - rbi-csf:soc
+      - rbi-csf:audit-logs
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.03
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 8
+      skillLevel: generalist
+      typicalWeeks: 5
+      confidence: analyst_estimate
+
+    strengths:
+      - A named team that learns the client's environment, which is what "concierge" actually buys
+      - No per-GB log charge, so a noisy estate does not create a cost cliff
+      - Covers detection, vulnerability findings and posture in one relationship
+    weaknesses:
+      - 'Guided remediation, not performed remediation: the client still has to do the work'
+      - Quote-only, and priced on environment shape rather than a single unit
+      - Long contracts are the norm, so the commitment outlasts the budget cycle
+    bestFor:
+      - Mid-market clients with an IT team but no security team
+      - Estates with heterogeneous tooling that needs one pane of glass over it
+    avoidWhen:
+      - The client needs someone to take the remediation action, not describe it
+      - The environment is air-gapped
+
+    sources:
+      - url: https://arcticwolf.com/solutions/managed-detection-and-response/
+        asOf: '2026-09-12'
+    notes: >-
+      The weakest-priced entry in the catalog, and labelled as such on the
+      pricing rule. It exists so the shortlist is representative; the number
+      exists only so the entry can be costed at all.
