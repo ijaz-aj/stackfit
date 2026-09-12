@@ -1037,12 +1037,26 @@ its sources and says NOT VENDOR-PUBLISHED in its own notes.
   as a free option.
 
 Still unverified rather than unanswered:
-- **The dashboard has never been looked at in a browser.** Verified by rendering
-  its HTML and driving its server actions over HTTP across three sessions now;
-  the Recharts charts have been validated for colour and written to spec but
-  never seen. Worth ten minutes with `pnpm dev` — and it is now more worth it
-  than before, because the catalog went from 8 products to 54 and the dashboard
-  has never rendered a shortlist that long.
+- **The dashboard has never been looked at in a browser, and the charts cannot
+  be checked any other way.** Verified again on 2026-09-12 against the finished
+  65-product catalog: `pnpm dev` starts clean, the home page, wizard and results
+  pages all return 200, the dev server logs zero errors or warnings, and the
+  results page renders every one of the seven §8 sections with all thirteen
+  categories recommended. Application code took ~700 ms for the full pipeline
+  run, so the 8× catalog growth did not hurt render time. Pricing-confidence
+  badges render correctly on real selections — Elastic Security "public list",
+  Sophos MDR "analyst estimate".
+
+  ⚠ What HTTP verification can never cover is the charts, and now we know
+  exactly why: Recharts' `ResponsiveContainer` needs a measured width, so the
+  server HTML contains the container div and **zero `<svg>` elements**. The
+  charts exist only after client-side hydration. Four sessions of HTTP checking
+  have therefore proven nothing at all about them.
+
+  Browser automation has been unavailable in all four sessions — the Claude
+  in Chrome extension reports as not connected. Until someone opens
+  `http://localhost:3000` by hand, the two Recharts figures in §8 are the only
+  part of this application that has never been observed working.
 
 ## Known placeholders
 
