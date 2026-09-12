@@ -43,7 +43,8 @@ const DEMO_SESSIONS: readonly DemoSession[] = [
   {
     id: 'demo-bank-60-branches',
     presetId: 'bank-60-branches',
-    shows: 'three frameworks at once, priced in INR, compare it with the hospital to see the currency guard',
+    shows:
+      'three frameworks at once, priced in INR, compare it with the hospital to see the currency guard',
   },
   {
     id: 'demo-retail-40-stores',
@@ -59,7 +60,8 @@ const DEMO_SESSIONS: readonly DemoSession[] = [
     // two thirds of the annual budget was going unspent. INR 30,00,000 is the
     // smallest round figure that visibly changes the answer rather than a
     // number picked to flatter the tool.
-    shows: 'the same client with a larger implementation budget, the other half of the compare demo',
+    shows:
+      'the same client with a larger implementation budget, the other half of the compare demo',
     amend: (profile) => ({
       ...profile,
       budget: {
@@ -107,7 +109,37 @@ async function main(): Promise<void> {
     console.log(`  ${profile.orgName}\n    ${session.shows}`);
   }
 
-  console.log(`\n${DEMO_SESSIONS.length} demo sessions ready. Start the app with \`pnpm dev\`.`);
+  /*
+   * Read back what was just written, from a fresh query, and fail loudly if it
+   * is not there.
+   *
+   * This ran once, reported four sessions ready, and they were readable over
+   * HTTP a moment later. Some minutes afterwards all four were gone from the
+   * file while every other row survived, and the only reason anyone noticed was
+   * a 404 on a page nobody was looking for. The mechanism is still open (see
+   * docs/STATUS.md); what is not open is that a seed which cannot prove its own
+   * work is a seed that lies.
+   *
+   * Cheap, and it turns a silent class of failure into an exit code.
+   */
+  const ids = DEMO_SESSIONS.map((session) => session.id);
+  const written = await prisma.scenario.findMany({
+    where: { id: { in: ids } },
+    select: { id: true },
+  });
+  const missing = ids.filter((id) => !written.some((row) => row.id === id));
+
+  if (missing.length > 0) {
+    throw new Error(
+      `seed wrote ${ids.length} sessions but only ${written.length} read back. ` +
+        `Missing: ${missing.join(', ')}. Stop the dev server and run this again: a second ` +
+        'connection to the same SQLite file is the suspect.',
+    );
+  }
+
+  console.log(
+    `\n${DEMO_SESSIONS.length} demo sessions written and read back. Start the app with \`pnpm dev\`.`,
+  );
 }
 
 main()

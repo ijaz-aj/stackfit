@@ -88,6 +88,15 @@ export interface SizingResult {
    * zero rather than a finding.
    */
   readonly estateCaptured: boolean;
+  /**
+   * Where the ingest figures came from.
+   *
+   * `derived` is the per-asset arithmetic. `measured` means the client stated
+   * their own EPS or GB/day and it replaced that arithmetic, which is the
+   * stronger answer and has to be labelled as such: a coefficient-derived 40
+   * GB/day and a metered 40 GB/day are the same number and not the same claim.
+   */
+  readonly ingestSource: 'derived' | 'measured';
   readonly verbosityFactor: number;
   /** Every class with a non-zero count, in AssetClass declaration order. */
   readonly perAssetClass: readonly AssetClassSizing[];
@@ -199,10 +208,26 @@ function resolveScaleClass(
  * order, so the floating-point sum is associative in practice. The same input
  * produces a byte-identical result.
  */
+/**
+ * What the client measured, where they measured anything.
+ *
+ * Separate from `SizingAssumptions` on purpose: an assumption is a coefficient
+ * this tool chose and a measurement is a fact the client supplied, and folding
+ * the second into the first would lose the distinction the whole feature
+ * exists to make.
+ */
+export interface MeasuredIngest {
+  /** Events per second, as metered by the client's own collector. */
+  readonly eps?: number | undefined;
+  /** GB/day, as billed by the client's current SIEM licence. */
+  readonly gbPerDay?: number | undefined;
+}
+
 export function computeSizing(
   inventory: AssetInventory,
   profile: ClientProfile,
   assumptions: SizingAssumptions,
+  measured: MeasuredIngest = {},
 ): SizingResult {
   const { factor: verbosityFactor, profile: verbosityProfile } = resolveVerbosityFactor(
     inventory,
@@ -238,8 +263,28 @@ export function computeSizing(
     });
   }
 
-  const gbPerDay = (epsTotal * SECONDS_PER_DAY * assumptions.averageEventBytes) / BYTES_PER_GB;
+  /*
+   * A measurement replaces the arithmetic it would have produced.
+   *
+   * EPS feeds volume feeds licence and storage, so the chain can be pinned at
+   * either link. A client who meters events pins the first; one who reads their
+   * SIEM bill pins the second; one who knows both pins both, and the ratio
+   * between their two figures is that estate's real average event size rather
+   * than this file's 500-byte assumption.
+   *
+   * Zero is a legitimate measurement ("we forward nothing today") and is
+   * therefore distinguished from "not stated", which is why these are
+   * `undefined` checks and not truthiness.
+   */
+  const derivedEps = epsTotal;
+  if (measured.eps !== undefined) epsTotal = measured.eps;
+
+  const derivedGbPerDay =
+    (epsTotal * SECONDS_PER_DAY * assumptions.averageEventBytes) / BYTES_PER_GB;
+  const gbPerDay = measured.gbPerDay ?? derivedGbPerDay;
   const licensedGbPerDay = gbPerDay * assumptions.peakFactor;
+  const ingestSource: 'derived' | 'measured' =
+    measured.eps === undefined && measured.gbPerDay === undefined ? 'derived' : 'measured';
 
   const { days: retentionDays, drivenBy: retentionDrivenBy } = resolveRetentionDays(
     profile,
@@ -272,6 +317,23 @@ export function computeSizing(
       : `${plural(privilegedAccountCount, 'privileged account')} taken from the inventory as captured.`,
   ];
 
+  if (measured.eps !== undefined) {
+    rationale.push(
+      `Events per second is ${fmt(measured.eps)} because the client measured it, not because the ` +
+        `asset counts imply it. The per-asset arithmetic would have given ${fmt(derivedEps)}; a ` +
+        'measurement from the estate outranks a coefficient chosen for estates in general.',
+    );
+  }
+  if (measured.gbPerDay !== undefined) {
+    rationale.push(
+      `Volume is ${fmt(measured.gbPerDay, 3)} GB/day because the client stated it. The ` +
+        `${assumptions.averageEventBytes}-byte average would have given ${fmt(derivedGbPerDay, 3)} ` +
+        'from this event rate, so their real average event size is ' +
+        `${fmt(epsTotal > 0 ? (measured.gbPerDay * BYTES_PER_GB) / (epsTotal * SECONDS_PER_DAY) : 0)} ` +
+        'bytes. Licence and storage follow from the measured figure.',
+    );
+  }
+
   const estateCaptured = perAssetClass.length > 0;
   if (!estateCaptured) {
     rationale.push(
@@ -282,6 +344,7 @@ export function computeSizing(
 
   return {
     estateCaptured,
+    ingestSource,
     epsTotal: round(epsTotal, 2),
     gbPerDay: round(gbPerDay, 3),
     licensedGbPerDay: round(licensedGbPerDay, 3),

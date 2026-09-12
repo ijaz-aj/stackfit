@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { ASSET_LABELS } from '@/components/wizard/labels';
-import { Badge, Button, Card, NumberInput, RationaleList, Stat } from '@/components/ui';
+import { Badge, Button, Card, Field, NumberInput, RationaleList, Stat } from '@/components/ui';
+import { cn } from '@/lib/cn';
 import { saveSizingOverrides } from '@/lib/actions';
 import { formatNumber } from '@/lib/format';
 
@@ -90,7 +91,13 @@ export function SizingWorksheet({
   };
 
   const setKnob = (
-    key: 'averageEventBytes' | 'peakFactor' | 'compressionRatio' | 'retentionDays',
+    key:
+      | 'averageEventBytes'
+      | 'peakFactor'
+      | 'compressionRatio'
+      | 'retentionDays'
+      | 'measuredEps'
+      | 'measuredGbPerDay',
     value: string,
   ) => {
     update((current) => {
@@ -103,17 +110,76 @@ export function SizingWorksheet({
 
   const overriddenCount =
     Object.keys(draft.eventsPerSecond ?? {}).length +
-    (['averageEventBytes', 'peakFactor', 'compressionRatio', 'retentionDays'] as const).filter(
-      (key) => draft[key] !== undefined,
-    ).length;
+    (
+      [
+        'averageEventBytes',
+        'peakFactor',
+        'compressionRatio',
+        'retentionDays',
+        'measuredEps',
+        'measuredGbPerDay',
+      ] as const
+    ).filter((key) => draft[key] !== undefined).length;
 
   const share = (eps: number) => (sizing.epsTotal === 0 ? 0 : (eps / sizing.epsTotal) * 100);
+
+  const measured = sizing.ingestSource === 'measured';
 
   return (
     <Card
       title="Sizing worksheet"
       hint="Analyst estimates. Correct any of them and the whole page re-derives."
     >
+      {/*
+        Measured ingest, above the coefficients, because it replaces them.
+
+        The per-asset EPS figures below are the standard first-pass method and
+        every vendor calculator uses them, but published values for one device
+        class disagree by more than an order of magnitude: a Windows workstation
+        is quoted at 1, 2, 5 and 10 to 50 EPS by four different sources. They
+        are not disagreeing about the device. They are disagreeing about audit
+        policy and about what an estate forwards, which is a fact about this
+        client's configuration and not about their hardware.
+
+        So a client who knows their own number outranks all of it. Anyone
+        running a SIEM today knows their GB/day, because that is what the
+        licence bills on.
+      */}
+      <div
+        className={cn(
+          'mb-4 rounded-(--radius-control) border px-3 py-3',
+          measured ? 'border-good/40 bg-good/5' : 'border-line',
+        )}
+      >
+        <p className="text-ink text-sm font-medium">
+          Measured ingest {measured && <span className="text-good">· in use</span>}
+        </p>
+        <p className="text-faint measure mt-1 text-xs leading-relaxed">
+          If the client already runs a SIEM they know these. A stated figure replaces the arithmetic
+          below entirely, for this client only.
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Field label="Measured events/sec" htmlFor="measuredEps">
+            <NumberInput
+              id="measuredEps"
+              min={0}
+              value={draft.measuredEps ?? ''}
+              placeholder="not measured"
+              onChange={(event) => setKnob('measuredEps', event.target.value)}
+            />
+          </Field>
+          <Field label="Measured GB/day" htmlFor="measuredGbPerDay">
+            <NumberInput
+              id="measuredGbPerDay"
+              min={0}
+              step={0.1}
+              value={draft.measuredGbPerDay ?? ''}
+              placeholder="not measured"
+              onChange={(event) => setKnob('measuredGbPerDay', event.target.value)}
+            />
+          </Field>
+        </div>
+      </div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {overriddenCount > 0 ? (
           <Badge tone="warn">

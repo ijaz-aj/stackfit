@@ -313,3 +313,87 @@ describe('sizing overrides (§8.6)', () => {
     expect(tuned.licensedGbPerDay).toBeCloseTo(tuned.gbPerDay * 3, 6);
   });
 });
+
+describe('measured ingest, which outranks every coefficient here', () => {
+  // The per-asset EPS figures are the standard first-pass method and every
+  // vendor calculator uses them. They also disagree with each other by more
+  // than an order of magnitude for the same device class: a Windows workstation
+  // is published at 1, 2, 5 and 10 to 50 EPS by four different sources, and a
+  // domain controller at 100 to 500. Those sources are not disagreeing about
+  // the hardware. They are disagreeing about audit policy and about what an
+  // estate forwards, which is a fact about a client's configuration.
+  //
+  // So a client who measured their own is right and this file is a guess.
+
+  const inventory = {
+    windowsEndpoints: { count: 500 },
+    windowsServers: { count: 40 },
+    networkVendors: [],
+  } as never;
+
+  const assumptions = buildSizingAssumptions();
+  const profile = buildClientProfile();
+  const derived = computeSizing(inventory, profile, assumptions);
+
+  it('replaces the derived event rate, and everything that follows from it', () => {
+    const measured = computeSizing(inventory, profile, assumptions, { eps: 4_000 });
+
+    expect(derived.epsTotal).not.toBe(4_000);
+    expect(measured.epsTotal).toBe(4_000);
+    // Volume, licence and storage all hang off EPS, so all three move.
+    expect(measured.gbPerDay).toBeGreaterThan(derived.gbPerDay);
+    expect(measured.licensedGbPerDay).toBeCloseTo(measured.gbPerDay * assumptions.peakFactor, 6);
+    expect(measured.storageTb).toBeGreaterThan(derived.storageTb);
+  });
+
+  it('replaces the volume directly, whatever the event rate implies', () => {
+    // The commoner case. An organisation running a SIEM knows its GB/day,
+    // because that is the number the licence bills on.
+    const measured = computeSizing(inventory, profile, assumptions, { gbPerDay: 42 });
+
+    expect(measured.gbPerDay).toBe(42);
+    expect(measured.licensedGbPerDay).toBeCloseTo(42 * assumptions.peakFactor, 6);
+    // EPS is untouched: they measured volume, not rate.
+    expect(measured.epsTotal).toBe(derived.epsTotal);
+  });
+
+  it('accepts both, and reports the estate’s real event size', () => {
+    // Measuring both is legitimate and useful: the ratio between them is this
+    // client's actual average event size rather than this file's assumption.
+    const measured = computeSizing(inventory, profile, assumptions, {
+      eps: 1_000,
+      gbPerDay: 8.64,
+    });
+    expect(measured.epsTotal).toBe(1_000);
+    expect(measured.gbPerDay).toBe(8.64);
+    // 8.64 GB/day at 1,000 EPS is 100 bytes an event.
+    expect(measured.rationale.join(' ')).toContain('100 bytes');
+  });
+
+  it('treats a measured zero as a measurement, not as an absence', () => {
+    // "We forward nothing today" is a real answer and a common one on a first
+    // call. It must not fall back to the coefficients.
+    const measured = computeSizing(inventory, profile, assumptions, { eps: 0 });
+    expect(measured.epsTotal).toBe(0);
+    expect(measured.gbPerDay).toBe(0);
+    expect(measured.ingestSource).toBe('measured');
+  });
+
+  it('labels which of the two it is', () => {
+    // A coefficient-derived 40 GB/day and a metered 40 GB/day are the same
+    // number and not the same claim.
+    expect(derived.ingestSource).toBe('derived');
+    expect(computeSizing(inventory, profile, assumptions, { gbPerDay: 40 }).ingestSource).toBe(
+      'measured',
+    );
+  });
+
+  it('says in the rationale what it did and what it would have said', () => {
+    const measured = computeSizing(inventory, profile, assumptions, { eps: 4_000 });
+    const said = measured.rationale.join(' ');
+    expect(said).toContain('because the client measured it');
+    // The derived figure is still reported, so the gap between the estimate and
+    // the measurement is visible rather than quietly discarded.
+    expect(said).toContain('would have given');
+  });
+});

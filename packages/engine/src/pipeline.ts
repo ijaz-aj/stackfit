@@ -136,7 +136,13 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
     sizingOverrides === undefined
       ? sizingAssumptions
       : applySizingOverrides(sizingAssumptions, sizingOverrides);
-  const sizing = computeSizing(inventory, profile, effectiveAssumptions);
+  // A measurement is not a coefficient, so it travels beside the assumptions
+  // rather than inside them. `applySizingOverrides` folds in the tunable
+  // numbers; these two replace the arithmetic those numbers would produce.
+  const sizing = computeSizing(inventory, profile, effectiveAssumptions, {
+    eps: sizingOverrides?.measuredEps,
+    gbPerDay: sizingOverrides?.measuredGbPerDay,
+  });
   const inScope = selectedFrameworks(profile, frameworks);
 
   // Every tier of every product, not just the cheapest one.

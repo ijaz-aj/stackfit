@@ -1539,6 +1539,53 @@ What follows is the honest scorecard, including where the sources are weak.
   acceptance test pins storage.
   Worth noting why it survived: at 2.3% it was never large enough to look wrong
   next to `averageEventBytes`, which is a 300 to 800 byte range.
+- **A client can now state their measured ingest, and it outranks every
+  coefficient.** Raised 2026-09-13: "all this depends on the endpoints and
+  servers value we give ... it all depends on the infra or the client should
+  provide the data." Correct, and the research backs it. Per-asset EPS is the
+  standard first-pass method and every vendor calculator uses it, but published
+  figures for one device class disagree by more than an order of magnitude: a
+  Windows workstation is quoted at 1, 2, 5 and 10 to 50 EPS by four sources, and
+  a domain controller at 100, 300 and 500. Those sources are not disagreeing
+  about the hardware. They are disagreeing about audit policy and about what an
+  estate forwards, which is a fact about the client's configuration. One
+  published note puts "tens of thousands of events a day" on a single server
+  from event ID 4688 alone.
+  `SizingOverrides.measuredEps` and `.measuredGbPerDay` pin the chain at either
+  link: EPS feeds volume feeds licence and storage, so a client who meters
+  events pins the first and one who reads their SIEM bill pins the second.
+  Giving both is legitimate and the ratio between them is that estate's real
+  average event size. `SizingResult.ingestSource` labels which it was, because a
+  derived 40 GB/day and a metered 40 GB/day are the same number and not the same
+  claim. Entered at the top of the sizing worksheet, above the coefficients it
+  replaces.
+- ⚠ **Three EPS coefficients sit outside every published range, all low.**
+  Measured against four independent sources: `windowsEndpoints` is 0.2 where the
+  lowest published figure is 1 (a factor of 5 to 25); `windowsDomainControllers`
+  is 25 where the lowest is 100 (4 to 20); `firewalls` is 100 where the lowest
+  is 200 and a gateway is described as "thousands". Others check out:
+  `routers` 2 and `switches` 1 match exactly, `databases` 3 against a published
+  5. **Not changed yet**, because correcting them multiplies ingest for every
+  preset and every acceptance scenario, and because the honest correction is to
+  the bottom of the published range rather than the middle: this tool should not
+  inflate a client's bill. Needs the reviewer.
+  Related and partly cancelling: `averageEventBytes` is 500, and sources range
+  from 100 (implied by the common "1,000 EPS is 8.6 GB/day" rule) to 700. The
+  two errors run in opposite directions, which is why the GB/day figures have
+  always looked plausible while the EPS figure was wrong.
+- ⚠ **`pnpm seed` wrote four sessions, proved they were there, and lost them.**
+  2026-09-13. The seed reported four demo sessions written and all four were
+  readable over HTTP immediately afterwards; some minutes later all four were
+  gone from the file while every other row survived. The database is in rollback
+  journal mode, not WAL, and the dev server holds a connection open for the life
+  of the process while a `tsx scripts/…` run opens its own. **The mechanism is
+  not established.** SQLite is ACID across processes and a concurrent write
+  should not lose data, so "two connections" is a suspect and not a diagnosis.
+  What is fixed is that the seed now reads back what it wrote and exits non-zero
+  if it is not there, so this class of failure cannot be silent again. WAL was
+  investigated and not applied: the adapter exposes no pragma option, setting it
+  needs a direct `better-sqlite3` dependency, and adding one on an unproven
+  hypothesis is not a fix.
 - ⚠ **Domain-controller and workstation EPS look understated.** Published
   rules of thumb cite 300–500 EPS for a domain controller and 1–5 for a
   workstation, against our 25 and 0.2. Some of the gap closes against our
