@@ -1,5 +1,6 @@
 import {
   buildProposal,
+  justifyBundle,
   type PipelineResult,
   type ProposalCell,
   type ProposalDocument,
@@ -27,6 +28,16 @@ export function proposalFor(profile: ClientProfile, result: PipelineResult): Pro
     essential: result.essential,
     ideal: result.ideal,
     coverage: result.coverage,
+    justifications: justifyBundle(result.recommended, {
+      scores: result.scores,
+      candidates: result.candidates,
+      productNames: new Map(
+        result.products.map((product) => [
+          product.id,
+          { name: product.name, vendor: product.vendor },
+        ]),
+      ),
+    }),
     assumptions: engineData().portfolioAssumptions,
     asOf: today(),
   });

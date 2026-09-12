@@ -9,7 +9,7 @@
 // requires every export to carry the disclaimer, and an export is exactly where
 // a client stops seeing the badges the dashboard shows them.
 
-import { buildProposal, runPipeline } from '@stackfit/engine';
+import { buildProposal, justifyBundle, runPipeline } from '@stackfit/engine';
 import type { ClientProfile } from '@stackfit/schema';
 import { XMLParser } from 'fast-xml-parser';
 import JSZip from 'jszip';
@@ -67,6 +67,13 @@ function documentFor() {
     sizing: result.sizing,
     products: result.products,
     recommended: result.recommended,
+    justifications: justifyBundle(result.recommended, {
+      scores: result.scores,
+      candidates: result.candidates,
+      productNames: new Map(
+        result.products.map((entry) => [entry.id, { name: entry.name, vendor: entry.vendor }]),
+      ),
+    }),
     essential: result.essential,
     ideal: result.ideal,
     coverage: result.coverage,

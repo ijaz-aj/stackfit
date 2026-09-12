@@ -1,0 +1,282 @@
+// Why this product and not the others (PROJECT_SPEC §8.2).
+//
+// The results dashboard showed one runner-up as three bare numbers and left the
+// analyst to explain the decision out loud. With five candidates in every
+// category that hid three of them, and a recommendation nobody can defend in
+// the room is not a recommendation.
+//
+// Every SKU that was considered appears here, ranked, each with the one thing
+// that actually decided it. Nothing is asserted that the pipeline did not
+// compute: a loser on fit is told which dimension lost it and by how much, a
+// loser on price is shown both prices, and a product that never reached scoring
+// carries the hard filter's own words.
+//
+// Pure: no fs, no clock, no randomness.
+
+import type { Money, ProductCategory, ScoringDimension } from '@stackfit/schema';
+
+import type { Bundle, BundleSelection, Candidate } from './portfolio';
+import { CATEGORY_LABELS } from './proposal';
+import type { ProductScore } from './scoring';
+
+/** Why one alternative lost, in the terms the pipeline actually decided it. */
+export type VerdictKind =
+  /** Never reached scoring: a §7.3 hard filter removed it. */
+  | 'eliminated'
+  /** Scored lower overall; `decidingDimension` names where it lost most. */
+  | 'lower_fit'
+  /** Scored as well or better, but costs more for it. */
+  | 'costs_more'
+  /** Scored and priced comparably; only one product per category is funded. */
+  | 'not_preferred';
+
+export interface AlternativeVerdict {
+  readonly productId: string;
+  readonly productName: string;
+  readonly vendor: string;
+  readonly tierId: string;
+  readonly tierName: string;
+  readonly kind: VerdictKind;
+  readonly fitScore: number;
+  /** Null when the product was eliminated, because nothing eliminated is costed. */
+  readonly annualSpend: Money | null;
+  /**
+   * Procurement plus the people to run it. Null for the same reason.
+   *
+   * Carried beside `annualSpend` because a comparison on procurement alone is
+   * how an open-source tool looks 80 times cheaper than a commercial one it is
+   * actually level with — the operational FTE is most of its cost and the whole
+   * point of hard rule 8.
+   */
+  readonly annualRecurring: Money | null;
+  readonly opsFte: number;
+  /** The scoring dimension the winner led by most. Null unless `lower_fit`. */
+  readonly decidingDimension: ScoringDimension | null;
+  /** One sentence an analyst can read aloud without adding to it. */
+  readonly verdict: string;
+}
+
+export interface CategoryJustification {
+  readonly category: ProductCategory;
+  readonly categoryLabel: string;
+  readonly selectedProductId: string;
+  readonly selectedTierId: string;
+  readonly selectedProductName: string;
+  readonly selectedFitScore: number;
+  /** How many SKUs were weighed, the winner included. */
+  readonly consideredCount: number;
+  readonly headline: string;
+  /** Every other SKU in the category, best first. */
+  readonly alternatives: readonly AlternativeVerdict[];
+}
+
+/** The numbers this module needs, from one pipeline run. */
+export interface JustificationInputs {
+  readonly scores: readonly ProductScore[];
+  readonly candidates: readonly Candidate[];
+  readonly productNames: ReadonlyMap<string, { readonly name: string; readonly vendor: string }>;
+}
+
+function dimensionName(dimension: ScoringDimension): string {
+  return dimension.replace(/_/g, ' ');
+}
+
+function round(value: number, decimals: number): number {
+  const factor = 10 ** decimals;
+  const scaled = value * factor;
+  return (scaled < 0 ? -Math.round(-scaled) : Math.round(scaled)) / factor;
+}
+
+/**
+ * The dimension the winner beat this alternative by most.
+ *
+ * Compared on `contribution` rather than raw score, because a 20-point lead on
+ * a dimension weighted 5 decides less than a 6-point lead on one weighted 25 —
+ * and the contribution is what actually moved the total.
+ */
+function decidingDimension(
+  winner: ProductScore,
+  loser: ProductScore,
+): { dimension: ScoringDimension; gap: number } | null {
+  let best: { dimension: ScoringDimension; gap: number } | null = null;
+
+  for (const dimension of winner.dimensions) {
+    const rival = loser.dimensions.find((entry) => entry.dimension === dimension.dimension);
+    if (rival === undefined) continue;
+    const gap = dimension.contribution - rival.contribution;
+    if (gap > 0 && (best === null || gap > best.gap)) {
+      best = { dimension: dimension.dimension, gap };
+    }
+  }
+
+  return best;
+}
+
+function verdictFor(
+  winner: ProductScore,
+  winnerAllIn: Money,
+  loser: ProductScore,
+  loserSpend: Money | null,
+  loserAllIn: Money | null,
+  loserName: string,
+): { kind: VerdictKind; decidingDimension: ScoringDimension | null; verdict: string } {
+  if (loser.eliminated) {
+    return {
+      kind: 'eliminated',
+      decidingDimension: null,
+      verdict:
+        loser.eliminationReasons.length > 0
+          ? `Ruled out before scoring: ${loser.eliminationReasons.join(' ')}`
+          : 'Ruled out before scoring.',
+    };
+  }
+
+  const fitGap = round(winner.score - loser.score, 1);
+
+  if (fitGap > 0) {
+    const deciding = decidingDimension(winner, loser);
+    const where =
+      deciding === null
+        ? ''
+        : ` The gap is widest on ${dimensionName(deciding.dimension)}, worth ` +
+          `${round(deciding.gap, 1)} of those points.`;
+    return {
+      kind: 'lower_fit',
+      decidingDimension: deciding === null ? null : deciding.dimension,
+      verdict: `Scores ${round(loser.score, 1)} against ${round(winner.score, 1)}.${where}`,
+    };
+  }
+
+  // It scored at least as well, so the decision was cost. Stated on the basis
+  // the bundle actually decided on — total annual cost, people included.
+  //
+  // Procurement alone would be a lie by omission here: a self-hosted tool at
+  // $1,080 against a commercial one at $42,840 is "40 times the price" on
+  // licence and within a tenth of it once the FTE to run each is counted. The
+  // second number is the one a client can act on.
+  if (
+    loserAllIn !== null &&
+    winnerAllIn.amountMinor > 0 &&
+    loserAllIn.amountMinor > winnerAllIn.amountMinor
+  ) {
+    const multiple = round(loserAllIn.amountMinor / winnerAllIn.amountMinor, 1);
+    const licence =
+      loserSpend === null
+        ? ''
+        : ' Licence and support alone understate the gap in the other direction, because most ' +
+          'of the selection’s cost is the people who run it.';
+    return {
+      kind: 'costs_more',
+      decidingDimension: null,
+      verdict:
+        `Scores ${round(loser.score, 1)}, level with or above the selection, but costs ` +
+        `${multiple} times as much a year once the people to run each are counted.${licence}`,
+    };
+  }
+
+  return {
+    kind: 'not_preferred',
+    decidingDimension: null,
+    verdict:
+      `Scores ${round(loser.score, 1)} and prices comparably. Only one product per category is ` +
+      `funded, and ${loserName} did not win the ranking on value density.`,
+  };
+}
+
+/**
+ * One justification per funded category.
+ *
+ * Every scored SKU in the category appears except the winning one, eliminated
+ * products included — "we looked at it, and here is why it could not be used" is
+ * an answer, and silence is not.
+ */
+export function justifyBundle(
+  bundle: Bundle,
+  inputs: JustificationInputs,
+): readonly CategoryJustification[] {
+  return bundle.selections.map((selection) => justifyOne(selection, inputs));
+}
+
+function justifyOne(selection: BundleSelection, inputs: JustificationInputs): CategoryJustification {
+  const inCategory = inputs.scores.filter((score) => score.category === selection.category);
+
+  const winner =
+    inCategory.find(
+      (score) => score.productId === selection.productId && score.tierId === selection.tierId,
+    ) ??
+    // An eliminated product yields one score at its first tier, so a selected
+    // SKU should always be found. Falling back on the product keeps a missing
+    // tier from throwing on a client-facing page.
+    inCategory.find((score) => score.productId === selection.productId);
+
+  const costOf = (productId: string, tierId: string) =>
+    inputs.candidates.find(
+      (entry) => entry.productId === productId && entry.tierId === tierId,
+    )?.cost;
+
+  const winnerAllIn = selection.cost.annualRecurring;
+
+  const alternatives = inCategory
+    .filter(
+      (score) => !(score.productId === selection.productId && score.tierId === selection.tierId),
+    )
+    .map((score): AlternativeVerdict => {
+      const named = inputs.productNames.get(score.productId);
+      const name = named === undefined ? score.productId : named.name;
+      const cost = score.eliminated ? undefined : costOf(score.productId, score.tierId);
+      const spend = cost === undefined ? null : cost.procurementAnnual;
+      const allIn = cost === undefined ? null : cost.annualRecurring;
+      const decided =
+        winner === undefined
+          ? { kind: 'not_preferred' as const, decidingDimension: null, verdict: 'Not selected.' }
+          : verdictFor(winner, winnerAllIn, score, spend, allIn, name);
+
+      return {
+        productId: score.productId,
+        productName: name,
+        vendor: named === undefined ? '' : named.vendor,
+        tierId: score.tierId,
+        tierName: score.tierName,
+        kind: decided.kind,
+        fitScore: round(score.score, 1),
+        annualSpend: spend,
+        annualRecurring: allIn,
+        opsFte: round(score.opsFte, 2),
+        decidingDimension: decided.decidingDimension,
+        verdict: decided.verdict,
+      };
+    })
+    // Eliminated last: they are context, not contenders. Otherwise best first,
+    // and the product id breaks a tie so the order never wobbles between runs.
+    .sort(
+      (a, b) =>
+        Number(a.kind === 'eliminated') - Number(b.kind === 'eliminated') ||
+        b.fitScore - a.fitScore ||
+        a.productId.localeCompare(b.productId),
+    );
+
+  const contenders = alternatives.filter((entry) => entry.kind !== 'eliminated').length;
+  const ruledOut = alternatives.length - contenders;
+  const named = inputs.productNames.get(selection.productId);
+  const selectedName = named === undefined ? selection.productId : named.name;
+
+  const headline =
+    alternatives.length === 0
+      ? `${selectedName} was the only option in this category for this client.`
+      : `${selectedName} (${selection.tierName}) was chosen from ${alternatives.length + 1} SKUs ` +
+        `considered: ${contenders} scored against it` +
+        (ruledOut === 0 ? '' : `, and ${ruledOut} ruled out before scoring`) +
+        '.';
+
+  return {
+    category: selection.category,
+    categoryLabel: CATEGORY_LABELS[selection.category],
+    selectedProductId: selection.productId,
+    selectedTierId: selection.tierId,
+    selectedProductName: selectedName,
+    selectedFitScore: round(winner === undefined ? selection.fitScore : winner.score, 1),
+    consideredCount: alternatives.length + 1,
+    headline,
+    alternatives,
+  };
+}

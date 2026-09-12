@@ -1,4 +1,11 @@
-import type { Bundle, PipelineResult, ProductScore } from '@stackfit/engine';
+import {
+  justifyBundle,
+  type AlternativeVerdict,
+  type Bundle,
+  type CategoryJustification,
+  type PipelineResult,
+  type ProductScore,
+} from '@stackfit/engine';
 
 import { Badge, Card } from '@/components/ui';
 import { formatMoney, formatNumber } from '@/lib/format';
@@ -53,6 +60,73 @@ function FitBreakdown({ score }: { score: ProductScore }) {
   );
 }
 
+/** A shortlisted product that did not win, and the one reason it did not. */
+function AlternativeRow({ alternative }: { alternative: AlternativeVerdict }) {
+  const ruledOut = alternative.kind === 'eliminated';
+
+  return (
+    <li className="border-line border-t pt-1.5 text-[11px] leading-snug">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+        <span className={ruledOut ? 'text-faint' : 'text-muted'}>
+          {alternative.productName}
+          <span className="text-faint"> — {alternative.tierName}</span>
+        </span>
+        <span className="tabular text-faint shrink-0">
+          {ruledOut ? (
+            'ruled out'
+          ) : (
+            <>
+              fit {formatNumber(alternative.fitScore, 1)}
+              {alternative.annualSpend !== null && <> · {formatMoney(alternative.annualSpend)}/yr</>}
+              {' · '}
+              {formatNumber(alternative.opsFte, 2)} FTE
+            </>
+          )}
+        </span>
+      </div>
+      <p className="text-faint mt-0.5">{alternative.verdict}</p>
+    </li>
+  );
+}
+
+/**
+ * Every product weighed in this category, and why each one lost.
+ *
+ * This used to be a single runner-up rendered as three bare numbers, which hid
+ * three of the five candidates and left the analyst to justify the choice out
+ * loud. A pre-sales tool whose recommendation needs a verbal footnote has not
+ * finished the job.
+ *
+ * Open by default, unlike the fit breakdown above it: "what else did you look
+ * at" is the first question a client asks, not the last.
+ */
+function WhyNotTheOthers({ justification }: { justification: CategoryJustification }) {
+  if (justification.alternatives.length === 0) {
+    return (
+      <p className="border-line text-faint mt-3 border-t pt-2 text-[11px] leading-snug">
+        {justification.headline}
+      </p>
+    );
+  }
+
+  return (
+    <details open className="border-line mt-3 border-t pt-2">
+      <summary className="text-faint cursor-pointer text-[11px] select-none">
+        Why not the other {justification.alternatives.length}
+      </summary>
+      <p className="text-faint mt-1.5 text-[11px] leading-snug">{justification.headline}</p>
+      <ul className="mt-1.5 flex flex-col gap-1.5">
+        {justification.alternatives.map((alternative) => (
+          <AlternativeRow
+            key={`${alternative.productId}::${alternative.tierId}`}
+            alternative={alternative}
+          />
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 export function CategoryCards({ result, bundle }: { result: PipelineResult; bundle: Bundle }) {
   // Keyed on the SKU: scoring produces one row per tier, and looking up by
   // product id alone would show the entry tier's working under the tier the
@@ -61,21 +135,26 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
     result.scores.map((score) => [`${score.productId}::${score.tierId}`, score]),
   );
 
+  // The comparison is the engine's, not this component's (hard rule 4). All
+  // this does is lay it out.
+  const justificationByCategory = new Map(
+    justifyBundle(bundle, {
+      scores: result.scores,
+      candidates: result.candidates,
+      productNames: new Map(
+        result.products.map((product) => [
+          product.id,
+          { name: product.name, vendor: product.vendor },
+        ]),
+      ),
+    }).map((entry) => [entry.category, entry]),
+  );
+
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       {bundle.selections.map((selection) => {
         const score = scoreBySku.get(`${selection.productId}::${selection.tierId}`);
-        // A different product, deliberately. "Why this tier and not the one next
-        // to it" is answered in the selection's own rationale; this slot
-        // answers "what else did you look at", and spending it on the same
-        // product's other SKU would stop it doing that.
-        const runnerUp = result.candidates
-          .filter(
-            (candidate) =>
-              candidate.category === selection.category &&
-              candidate.productId !== selection.productId,
-          )
-          .sort((a, b) => b.valueDensity - a.valueDensity)[0];
+        const justification = justificationByCategory.get(selection.category);
 
         const cost = selection.cost;
 
@@ -154,22 +233,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
 
             {score !== undefined && <FitBreakdown score={score} />}
 
-            <p className="border-line text-faint mt-3 border-t pt-2 text-[11px] leading-snug">
-              {runnerUp === undefined ? (
-                <>No other product in this category survived scoring for this client.</>
-              ) : (
-                <>
-                  Runner-up:{' '}
-                  <span className="text-muted">
-                    {result.products.find((product) => product.id === runnerUp.productId)?.name ??
-                      runnerUp.productId}
-                    <span className="text-faint"> — {runnerUp.tierName}</span>
-                  </span>{' '}
-                  — fit {formatNumber(runnerUp.fitScore, 1)}, {formatMoney(runnerUp.cost.procurementAnnual)}
-                  /yr procurement, {formatNumber(runnerUp.cost.opsFte, 2)} FTE.
-                </>
-              )}
-            </p>
+            {justification !== undefined && <WhyNotTheOthers justification={justification} />}
           </Card>
         );
       })}

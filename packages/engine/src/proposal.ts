@@ -21,6 +21,7 @@ import type {
 } from '@stackfit/schema';
 
 import type { CoverageResult } from './coverage';
+import type { CategoryJustification } from './justification';
 import type { Bundle, BundleSelection } from './portfolio';
 import type { SizingResult } from './sizing';
 
@@ -134,6 +135,14 @@ export interface ProposalInputs {
   readonly essential: Bundle;
   readonly ideal: Bundle;
   readonly coverage: CoverageResult;
+  /**
+   * Why each selection beat the alternatives, from `justifyBundle`.
+   *
+   * Passed in rather than computed here: `justification.ts` already depends on
+   * this module for its category labels, and the proposal calling it back would
+   * make the two circular. Empty is valid and simply omits the section.
+   */
+  readonly justifications: readonly CategoryJustification[];
   readonly assumptions: PortfolioAssumptions;
   /** The date the figures were read. Passed in — the engine has no clock. */
   readonly asOf: string;
@@ -364,6 +373,51 @@ function recommendedStack(inputs: ProposalInputs): ProposalSection {
       },
     ],
   };
+}
+
+/**
+ * Why each product, and not the ones beside it (§8.2).
+ *
+ * A proposal that lists what was chosen invites exactly one question, and
+ * answering it in the room is not the same as answering it in the document. One
+ * row per rejected SKU, carrying the reason the engine actually decided on.
+ */
+function whyTheseProducts(inputs: ProposalInputs): ProposalSection {
+  const blocks: ProposalBlock[] = [
+    {
+      kind: 'paragraph',
+      text:
+        'Every product in the catalogue that could serve each category was scored against this ' +
+        'client’s own environment, not in the abstract. The tables below name what else was ' +
+        'considered and why it was not selected, so the choice can be checked rather than taken ' +
+        'on trust.',
+    },
+  ];
+
+  for (const justification of inputs.justifications) {
+    blocks.push({ kind: 'paragraph', text: `${justification.categoryLabel}. ${justification.headline}` });
+
+    if (justification.alternatives.length === 0) continue;
+
+    blocks.push({
+      kind: 'table',
+      columns: [
+        { heading: 'Considered', align: 'left' },
+        { heading: 'Fit', align: 'right' },
+        { heading: 'Annual spend', align: 'right' },
+        { heading: 'Why not selected', align: 'left' },
+      ],
+      rows: justification.alternatives.map((alternative) => [
+        text(`${alternative.productName} — ${alternative.tierName}`),
+        number(alternative.fitScore, 1),
+        // A ruled-out product was never costed, so a price here would be invented.
+        alternative.annualSpend === null ? text('not costed') : money(alternative.annualSpend),
+        text(alternative.verdict),
+      ]),
+    });
+  }
+
+  return { heading: 'Why these products', blocks };
 }
 
 function costs(inputs: ProposalInputs): ProposalSection {
@@ -653,6 +707,7 @@ export function buildProposal(inputs: ProposalInputs): ProposalDocument {
       executiveSummary(inputs),
       currentState(inputs),
       recommendedStack(inputs),
+      whyTheseProducts(inputs),
       costs(inputs),
       coverageSection(inputs),
       roadmapSection(inputs, roadmap),

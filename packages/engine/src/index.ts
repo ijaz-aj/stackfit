@@ -18,5 +18,6 @@ export * from './scoring';
 export * from './portfolio';
 export * from './coverage';
 export * from './proposal';
+export * from './justification';
 export * from './compare';
 export * from './pipeline';

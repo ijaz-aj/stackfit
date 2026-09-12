@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildProposal,
   buildRoadmap,
+  justifyBundle,
   proposalDisclaimer,
   runPipeline,
   type ProposalBlock,
@@ -92,6 +93,13 @@ function proposalInputs(
     sizing: result.sizing,
     products,
     recommended: result.recommended,
+    justifications: justifyBundle(result.recommended, {
+      scores: result.scores,
+      candidates: result.candidates,
+      productNames: new Map(
+        products.map((entry) => [entry.id, { name: entry.name, vendor: entry.vendor }]),
+      ),
+    }),
     essential: result.essential,
     ideal: result.ideal,
     coverage: result.coverage,
@@ -147,17 +155,51 @@ describe('the mandated disclaimer', () => {
 });
 
 describe('the document model', () => {
-  it('carries all six sections §8 asks for', () => {
+  it('carries every section §8 asks for, plus the one it does not', () => {
+    // "Why these products" is an addition, not one of §8's own. §8.2 asks the
+    // dashboard for a runner-up; a client reading the exported document has the
+    // same question and nobody in the room to answer it, so every rejected SKU
+    // and the reason it lost are stated here too.
     const headings = buildProposal(proposalInputs()).sections.map((section) => section.heading);
     expect(headings).toEqual([
       'Executive summary',
       'Current state',
       'Recommended stack',
+      'Why these products',
       'Costs',
       'Compliance coverage',
       'Roadmap',
       'Assumptions and disclaimers',
     ]);
+  });
+
+  it('names what else was considered, and why each one lost', () => {
+    // The default fixture has one product per category, so there is genuinely
+    // nothing to compare. Give the SIEM category a rival and the section fills.
+    const document = buildProposal(
+      proposalInputs({
+        products: [
+          product('quick-edr', 'edr', 1_000_00, 2),
+          product('slow-siem', 'siem', 2_000_00, 20),
+          product('dearer-siem', 'siem', 9_000_00, 20),
+          product('mid-iam', 'iam', 500_00, 8),
+        ],
+      }),
+    );
+    const section = document.sections.find((entry) => entry.heading === 'Why these products');
+    const tables = section?.blocks.filter((block) => block.kind === 'table') ?? [];
+
+    expect(section).toBeDefined();
+    expect(tables.length).toBeGreaterThan(0);
+    // Every row carries a verdict, never a bare score the reader has to interpret.
+    for (const table of tables) {
+      if (table.kind !== 'table') continue;
+      for (const row of table.rows) {
+        const verdict = row[row.length - 1];
+        expect(verdict?.kind).toBe('text');
+        expect(verdict?.kind === 'text' ? verdict.value.length : 0).toBeGreaterThan(10);
+      }
+    }
   });
 
   it('keeps money as money, so no renderer inherits a rounded string', () => {
