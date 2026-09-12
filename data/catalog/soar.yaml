@@ -1,0 +1,580 @@
+# SOAR — orchestration, automation and case management.
+#
+# Prices are in minor units (hard rule 1).
+#
+# ⚠ THE PAID TIER OF THIS CATEGORY IS ALMOST ENTIRELY QUOTE-ONLY. Palo Alto
+# XSOAR, Splunk SOAR, Swimlane, Torq, Tines and StrangeBee's TheHive Gold and
+# Platinum were all checked on 2026-09-12 and none publishes a rate. What is
+# catalogued here is therefore the free and self-hosted half of the market plus
+# one published cloud price list.
+#
+# ⚠ THREE ENTRIES CARRY A VENDOR LIMIT THE SCHEMA CANNOT EXPRESS. Tines Free
+# allows three live workflows, TheHive Community two users and one
+# organisation, and n8n's cloud plans meter workflow executions. None of those
+# is a headcount or an asset count, so none can be enforced by scaleFloor or
+# scaleCeiling honestly. Where a limit plainly means "small team only" the
+# scale ceiling is set to reflect that and the entry says it is an
+# approximation; the execution metering is simply named in the notes. This is
+# the same gap Duo Free, Entra ID Free and Sublime Platform hit, and it is the
+# strongest recurring argument in Phase 7 for a `limits` block on a tier.
+#
+# ⚠ SOAR IS NOT A STARTER PURCHASE. Every entry here automates a process the
+# client must already have. A client with no SIEM, no EDR and no runbook does
+# not need orchestration, and the ops burden below assumes an analyst who will
+# write and maintain the automations.
+
+category: soar
+
+products:
+  - id: shuffle
+    name: Shuffle
+    vendor: Shuffle AS
+    category: soar
+    subcategory: open-source security orchestration and automation
+    licenceModel: open_source
+    maturity: emerging
+
+    tiers:
+      - id: self-hosted
+        name: Self-hosted
+        capabilities:
+          - Visual workflow editor for security automation
+          - App integrations generated from OpenAPI specifications
+          - Pre-built apps for common security tools
+          - Organisation controls and resource sharing
+          - Webhook, schedule and alert triggers
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/Shuffle/Shuffle
+              note: >-
+                Re-read the licensing paragraph in the README. Shuffle splits
+                its licence — AGPLv3 for the platform, MIT for apps and the SDK
+                — and a change to the platform half is what would matter.
+            sources:
+              - url: https://github.com/Shuffle/Shuffle
+                asOf: '2026-09-12'
+            notes: >-
+              Shuffle states "All modular information related to Shuffle will be
+              under MIT (anyone can use it for whatever purpose), with Shuffle
+              itself using AGPLv3." Self-hosting is free with no stated limit.
+              Shuffle's hosted cloud is a separate commercial offering and is
+              not catalogued.
+
+    supports:
+      os: [linux]
+      deviceClasses: [server, saas_tenant]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [wazuh, thehive, microsoft-sentinel, syslog, virustotal, misp]
+
+    controlsCovered:
+      - cis-v8:17
+      - nist-csf-2.0:RS.MA
+      - nist-csf-2.0:RS.CO
+      - nist-csf-2.0:RS.MI
+      - iso-27001-2022:A.5.24
+      - iso-27001-2022:A.5.26
+      - soc-2:CC7
+      - nis2:21.2.b
+      - rbi-csf:incident-response
+      - gdpr:art-33
+      - dpdp-2023:s-8-6
+
+    opsBurden:
+      baseFte: 0.3
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 10
+      skillLevel: security_engineer
+      typicalWeeks: 5
+      confidence: analyst_estimate
+
+    strengths:
+      - Genuinely free and self-hostable with no workflow or user cap, which nothing else in this category offers
+      - Purpose-built for security rather than adapted from general automation
+      - Runs air-gapped, which no commercial SOAR does
+    weaknesses:
+      - Youngest and smallest vendor in this file, with the continuity risk that implies
+      - Integration quality varies — the OpenAPI-generated apps are only as good as the spec behind them
+      - No case management of its own; it orchestrates, and something else has to hold the case
+    bestFor:
+      - Teams who have runbooks written down and want to stop executing them by hand
+      - Air-gapped environments with an automation requirement
+    avoidWhen:
+      - There are no documented processes to automate yet
+      - Vendor stability is a procurement requirement
+
+    sources:
+      - url: https://github.com/Shuffle/Shuffle
+        asOf: '2026-09-12'
+    notes: >-
+      Deliberately claims no case-management control. Shuffle runs workflows; a
+      case lives in TheHive or a ticketing system, and crediting it with
+      incident record-keeping would overstate what it does.
+
+  - id: stackstorm
+    name: StackStorm
+    vendor: The StackStorm Authors
+    category: soar
+    subcategory: open-source event-driven automation
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: StackStorm (self-hosted)
+        capabilities:
+          - Rules engine reacting to events from any integrated system
+          - Workflows composed from over 6,000 actions across 160 integration packs
+          - Auto-remediation for infrastructure and security events
+          - ChatOps integration
+          - Full audit trail of every automated action
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/StackStorm/st2
+              note: >-
+                Apache 2.0 and community-governed since Extreme Networks stepped
+                back. What is worth re-checking is release activity rather than
+                the licence — a community-run project's real risk is going
+                quiet, not changing terms.
+            sources:
+              - url: https://github.com/StackStorm/st2
+                asOf: '2026-09-12'
+            notes: >-
+              Apache License 2.0. No licence fee, no user or workflow cap.
+              Community-governed; the commercial Extreme Workflow Composer
+              product is discontinued, so there is no paid tier to fall back on.
+
+    supports:
+      os: [linux]
+      deviceClasses: [server, network_device, cloud_workload, saas_tenant]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: mid
+      scaleCeiling: enterprise
+      airGapCapable: true
+
+    integrations: [syslog, ansible, kubernetes, jira, slack]
+
+    controlsCovered:
+      - cis-v8:17
+      - nist-csf-2.0:RS.MA
+      - nist-csf-2.0:RS.MI
+      - iso-27001-2022:A.5.26
+      - soc-2:CC7
+      - nis2:21.2.b
+      - rbi-csf:incident-response
+
+    opsBurden:
+      baseFte: 0.4
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 15
+      skillLevel: specialist
+      typicalWeeks: 8
+      confidence: analyst_estimate
+
+    strengths:
+      - The largest integration library of anything here, and the actions are ordinary Python
+      - Equally useful for infrastructure auto-remediation, so the platform earns its keep outside security
+      - Genuinely proven at scale over a decade
+    weaknesses:
+      - 'Infrastructure automation adapted to security, not built for it: no case management, no analyst UI worth the name'
+      - Community-governed with no commercial support option, which some procurement functions will refuse
+      - Heavyweight to install and operate — this is a platform, not a tool
+    bestFor:
+      - Organisations already running it for operations who want to extend it to security
+      - Teams with Python capability and a real automation backlog
+    avoidWhen:
+      - Vendor support is a procurement requirement
+      - The team wants an analyst-facing SOAR console rather than an automation engine
+
+    sources:
+      - url: https://github.com/StackStorm/st2
+        asOf: '2026-09-12'
+    notes: >-
+      scaleFloor is "mid" deliberately. Below that size the install and
+      maintenance cost exceeds anything the automation saves, and recommending
+      it to a small client would be recommending a project.
+
+  - id: thehive
+    name: TheHive
+    vendor: StrangeBee
+    category: soar
+    subcategory: security incident response case management
+    licenceModel: open_core
+    maturity: established
+
+    tiers:
+      - id: community
+        name: Community Edition
+        capabilities:
+          - Case and task management for security incidents
+          - Observable management with tagging and TLP
+          - Cortex analyser and responder integration
+          - MISP synchronisation
+          - Alert triage into cases
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.strangebee.com/pricing/
+              note: >-
+                Re-read the Community Edition limits, not the price. The price
+                is zero and will stay zero; what moves is how many users and
+                organisations it allows, and that is what decides whether a
+                client can use it.
+            sources:
+              - url: https://www.strangebee.com/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              StrangeBee publishes the Community Edition as "Free for: 2 users,
+              1 organization".
+
+              ⚠ TWO USERS IS A HARD VENDOR LIMIT AND THE SCHEMA CANNOT EXPRESS
+              IT. scaleCeiling is set to "small" as the closest available
+              approximation, which hard-filters this entry out of estates above
+              250 monitored assets — but a 200-asset client with three analysts
+              is already over the limit and this entry will not know. Check the
+              analyst headcount by hand before shortlisting it.
+
+              Gold and Platinum start at five users and one organisation and are
+              quote-only; StrangeBee publishes no rate for either, so neither is
+              catalogued.
+
+    supports:
+      os: [linux]
+      deviceClasses: [server, saas_tenant]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: small
+      airGapCapable: true
+
+    integrations: [cortex, misp, shuffle, wazuh, graylog-open, microsoft-sentinel]
+
+    controlsCovered:
+      # Case management, not orchestration. TheHive records, assigns and tracks
+      # an incident; it does not act on the estate, so the mitigation control is
+      # deliberately absent and the reporting and record-keeping ones are not.
+      - cis-v8:17
+      - nist-csf-2.0:RS.MA
+      - nist-csf-2.0:RS.CO
+      - nist-csf-2.0:RS.AN
+      - iso-27001-2022:A.5.24
+      - iso-27001-2022:A.5.25
+      - iso-27001-2022:A.5.27
+      - iso-27001-2022:A.5.28
+      - soc-2:CC7
+      - nis2:21.2.b
+      - rbi-csf:incident-response
+      - gdpr:art-33
+      - dpdp-2023:s-8-6
+
+    opsBurden:
+      baseFte: 0.2
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 8
+      skillLevel: security_engineer
+      typicalWeeks: 4
+      confidence: analyst_estimate
+
+    strengths:
+      - The de facto open case-management tool for incident response, and the one auditors recognise
+      - Cortex analysers turn observable enrichment into a single click
+      - Produces the incident record that GDPR Article 33 and DPDP breach notification actually require
+    weaknesses:
+      - 'The free edition is two users: for most teams that is a trial, not a deployment'
+      - Orchestration is thin — it holds the case and relies on Cortex or Shuffle to act
+      - StrangeBee's paid tiers are quote-only, so the upgrade path has no visible price
+    bestFor:
+      - Teams with a real incident-response process and nowhere to record it
+      - Clients with a breach-notification obligation needing a defensible timeline
+    avoidWhen:
+      - More than two analysts will use it and there is no budget for Gold
+      - The requirement is automation rather than record-keeping
+
+    sources:
+      - url: https://www.strangebee.com/pricing/
+        asOf: '2026-09-12'
+    notes: >-
+      Pairs naturally with Shuffle — TheHive holds the case, Shuffle does the
+      work — and the integrations list on both entries says so.
+
+  - id: tines
+    name: Tines
+    vendor: Tines
+    category: soar
+    subcategory: no-code security automation
+    licenceModel: freemium
+    maturity: established
+
+    tiers:
+      - id: free
+        name: Free Edition
+        capabilities:
+          - Unlimited users, spaces and connectors
+          - Three live workflows
+          - No-code story builder
+          - A one-time USD 50 AI allowance
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.tines.com/pricing/
+              note: >-
+                Re-read the live-workflow allowance, which is the only thing
+                that matters about this tier, and check whether Tines has
+                started publishing a rate for the paid editions.
+            sources:
+              - url: https://www.tines.com/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              Tines publishes the Free Edition as unlimited users, spaces and
+              connectors with three live workflows and a one-time USD 50 AI
+              allowance.
+
+              ⚠ THREE LIVE WORKFLOWS IS A HARD VENDOR LIMIT AND THE SCHEMA
+              CANNOT EXPRESS IT. It is not a headcount or an asset count, so
+              scaleCeiling cannot enforce it directly. It is set to "small", the
+              same approximation used for TheHive Community and for Sublime
+              Platform in email-security.yaml: three live workflows is a
+              small-team allowance, and any larger estate exceeds it almost
+              immediately.
+
+              That ceiling is doing real work. Catalogued at "mid" this tier was
+              selected as the automation answer for an explicitly
+              open-source-first 400-person client, over Shuffle — because a
+              free-as-in-beer proprietary SaaS beats AGPLv3 software on cost
+              every time, and "open source first" is a statement about the
+              licence, not about the invoice.
+
+              The paid editions offer unlimited workflows and flexible
+              deployment and are quote-only. Tines publishes no rate, so no paid
+              tier is catalogued.
+
+    supports:
+      os: [linux, windows, macos]
+      deviceClasses: [saas_tenant, server, identity]
+      cloudPlatforms: [aws, azure, gcp, m365, google_workspace]
+      deploymentModes: [cloud, hybrid]
+      scaleFloor: small
+      scaleCeiling: small
+      airGapCapable: false
+
+    integrations: [microsoft-sentinel, crowdstrike-falcon-go, jira, slack, okta-workforce-identity]
+
+    controlsCovered:
+      - cis-v8:17
+      - nist-csf-2.0:RS.MA
+      - nist-csf-2.0:RS.CO
+      - nist-csf-2.0:RS.MI
+      - iso-27001-2022:A.5.24
+      - iso-27001-2022:A.5.26
+      - soc-2:CC7
+      - nis2:21.2.b
+      - rbi-csf:incident-response
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 5
+      skillLevel: security_engineer
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - By far the lowest barrier in this category — a useful workflow in an afternoon, not a sprint
+      - No-code builder that a competent analyst can use without being an engineer
+      - The free tier is genuinely usable for a first automation rather than a trial
+    weaknesses:
+      - 'Three live workflows is a low ceiling: this tier is a way in, not a destination'
+      - No published price for the paid editions, so the upgrade is a sales conversation
+      - SaaS-first, with no air-gapped option
+    bestFor:
+      - Small teams automating their first two or three high-volume processes
+      - Clients who want to prove the value of automation before funding it
+    avoidWhen:
+      - The environment is air-gapped
+      - More than a handful of automations is the plan and there is no budget for the paid tier
+
+    sources:
+      - url: https://www.tines.com/pricing/
+        asOf: '2026-09-12'
+    notes: >-
+      Catalogued for its free tier only, which makes this entry an honest
+      starting point and a dishonest destination. Say so — a client who adopts
+      it and grows past three workflows is in an unpriced negotiation.
+
+  - id: n8n
+    name: n8n
+    vendor: n8n GmbH
+    category: soar
+    subcategory: general-purpose workflow automation used for security orchestration
+    licenceModel: open_core
+    maturity: established
+
+    tiers:
+      - id: community-self-hosted
+        name: Community Edition (self-hosted)
+        capabilities:
+          - Visual workflow builder with over a thousand integrations
+          - Custom code steps in JavaScript and Python
+          - Webhook, schedule and polling triggers
+          - Self-hosted with no execution metering
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://n8n.io/pricing/
+              note: >-
+                ⚠ Re-read the licence terms, not just the price. n8n uses a
+                Sustainable Use Licence — fair-code, not open source — which
+                restricts commercial redistribution and hosting for third
+                parties. That restriction is what an MSP needs to know about.
+            sources:
+              - url: https://n8n.io/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              n8n's self-hosted Community Edition is free of charge under n8n's
+              fair-code Sustainable Use Licence. Fair-code is not open source:
+              internal business use is permitted, hosting it as a service for
+              others is not.
+
+      - id: cloud-starter
+        name: Cloud Starter
+        capabilities:
+          - Everything in the Community Edition, hosted by n8n
+          - 2,500 workflow executions per month
+          - Managed upgrades and backups
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 24000
+                  currency: EUR
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://n8n.io/pricing/
+              note: >-
+                Read the monthly billed-annually figure and multiply by 12. Also
+                re-read the included execution count, because n8n reprices by
+                changing the allowance more often than the rate.
+            sources:
+              - url: https://n8n.io/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              EUR 20 per month billed annually, so EUR 240 per year, including
+              2,500 workflow executions a month.
+
+              ⚠ Execution metering is the real price and the cost model cannot
+              see it. A busy security automation burns executions far faster
+              than a business workflow does, and the overage is what decides the
+              bill. Estimate the execution volume before quoting this.
+
+      - id: cloud-pro
+        name: Cloud Pro
+        capabilities:
+          - Everything in Starter
+          - 10,000 workflow executions per month
+          - Higher concurrency and longer execution history
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 60000
+                  currency: EUR
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://n8n.io/pricing/
+              note: Read the monthly billed-annually figure and multiply by 12.
+            sources:
+              - url: https://n8n.io/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              EUR 50 per month billed annually, so EUR 600 per year, including
+              10,000 workflow executions a month. See the Starter tier on
+              execution metering.
+
+    supports:
+      os: [linux]
+      deviceClasses: [server, saas_tenant, cloud_workload]
+      cloudPlatforms: [aws, azure, gcp, m365, google_workspace]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [syslog, jira, slack, microsoft-sentinel, virustotal]
+
+    controlsCovered:
+      # General automation, not security automation. It can execute a response
+      # and it has no security case model, no observable handling and no
+      # analyst workflow, so only the mitigation and management controls are
+      # claimed.
+      - cis-v8:17
+      - nist-csf-2.0:RS.MI
+      - nist-csf-2.0:RS.MA
+      - iso-27001-2022:A.5.26
+      - soc-2:CC7
+      - nis2:21.2.b
+
+    opsBurden:
+      baseFte: 0.2
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 6
+      skillLevel: security_engineer
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - A published price list, which almost nothing else in this category has
+      - Enormous integration library, because it is not limited to security tools
+      - Self-hosted and cloud from the same product, so a client can start free and move
+    weaknesses:
+      - 'Not a security tool: no case management, no observables, no analyst console, no security content'
+      - 'Fair-code, not open source: an MSP cannot host it for clients'
+      - Cloud plans meter executions, which is the cost that actually bites
+    bestFor:
+      - Clients already running n8n elsewhere in the business
+      - Teams who need glue between security tools rather than a SOC platform
+    avoidWhen:
+      - An analyst-facing incident console is the requirement
+      - The client is an MSP intending to run it on behalf of others
+
+    sources:
+      - url: https://n8n.io/pricing/
+        asOf: '2026-09-12'
+    notes: >-
+      Catalogued because it is what small teams actually reach for, and graded
+      honestly for what it is not. A client choosing this over Shuffle is
+      choosing integration breadth over security fit, and should be told so.

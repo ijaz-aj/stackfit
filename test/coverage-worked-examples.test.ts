@@ -48,7 +48,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     ).toMatchInlineSnapshot(`
       [
         "pci-dss-4.0 | in scope true | covered 8/8 of 12 | partial 0 | gaps 0 | 100%",
-        "nist-csf-2.0 | in scope false | covered 9/13 of 22 | partial 3 | gaps 1 | 69.2%",
+        "nist-csf-2.0 | in scope false | covered 12/13 of 22 | partial 1 | gaps 0 | 92.3%",
       ]
     `);
   });
@@ -71,7 +71,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
         "Identify 2/2 = 100",
         "Protect 4/4 = 100",
         "Detect 2/2 = 100",
-        "Respond 0/4 = 0",
+        "Respond 3/4 = 75",
         "Recover 1/1 = 100",
       ]
     `);
@@ -106,24 +106,23 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
   });
 
   it('says plainly which gaps the catalog cannot close yet, and closes the rest', () => {
-    // ⚠ CATALOG LIMITATION, nearly gone for this scenario. Was nine of eleven
-    // before Phase 7. Everything still open is a NIST CSF Respond control, and
-    // CSF is a reference lens here rather than an obligation — the client
-    // selected PCI DSS, which is now fully covered. The two that cannot be
-    // closed at all need a soar or mdr product, neither of which the catalog
-    // stocks yet.
-    expect(coverage.unclosableGaps.length).toBe(2);
-    expect(coverage.gaps.length).toBe(4);
+    // ⚠ CATALOG LIMITATION: GONE, for this scenario. It was nine unclosable
+    // gaps out of eleven when Phase 7 started, because the catalog stocked
+    // three categories. It is now zero: every remaining gap has a product in
+    // the catalog that would close it, and the fix list has a price.
+    //
+    // Keep the assertion as an equality rather than a bound. If a later
+    // catalog or engine change reintroduces an unclosable gap here, that is
+    // worth going red over.
+    expect(coverage.unclosableGaps).toEqual([]);
+    expect(coverage.gaps.length).toBe(1);
 
-    // The other two are partials — the stack has the right kind of tool and
-    // nothing in it claims the control — and those do have a route. Before
+    // The one that remains is a partial — the stack has a SIEM and nothing in
+    // it claims CSF incident analysis — and it has a route: TheHive. Before
     // partials entered this list the client was shown a coverage percentage
     // with no way to improve it at all.
     const closable = coverage.gaps.filter((gap) => gap.cheapestCloser !== null);
-    expect(closable.map((gap) => gap.controlId)).toEqual([
-      'nist-csf-2.0:RS.MI',
-      'nist-csf-2.0:RS.AN',
-    ]);
+    expect(closable.map((gap) => gap.controlId)).toEqual(['nist-csf-2.0:RS.AN']);
     expect(closable.every((gap) => gap.kind === 'partial')).toBe(true);
 
     // PCI requirement 7 is worth watching across Phase 7 as a measure of what
@@ -140,7 +139,10 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     for (const option of coverage.remediation) {
       expect(option.closesControls.length).toBeGreaterThan(0);
     }
-    expect(coverage.rationale.join(' ')).toContain('a gap in StackFit, not in the client');
+    // And the converse: with nothing unclosable, the bundle must NOT be
+    // telling the client that StackFit has a gap. That wording is still pinned,
+    // on a fixture that genuinely has one, in packages/engine/test/coverage.test.ts.
+    expect(coverage.rationale.join(' ')).not.toContain('a gap in StackFit');
   });
 
   it('covers more as the bundle gets richer', () => {
@@ -201,11 +203,10 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
         "greenbone-openvas (vulnerability_management) | 2450.04 USD/yr | 0.33 FTE | closes 6",
         "passbolt (pam) | 2450.04 USD/yr | 0.16 FTE | closes 3",
         "crowdstrike-falcon-go (edr) | 11998 USD/yr | 0.12 FTE | closes 1",
-        "security-onion (ndr) | 2450.04 USD/yr | 0.57 FTE | closes 4",
         "azure-backup (backup) | 2640 USD/yr | 0.11 FTE | closes 4",
+        "security-onion (ndr) | 2450.04 USD/yr | 0.57 FTE | closes 3",
         "opnsense (ngfw) | 2450.04 USD/yr | 0.22 FTE | closes 1",
         "proxmox-mail-gateway (email_security) | 2450.04 USD/yr | 0.26 FTE | closes 1",
-        "graylog-open (siem) | 2450.04 USD/yr | 0.46 FTE | closes 0",
       ]
     `);
 
