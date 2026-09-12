@@ -1,8 +1,8 @@
-import type { Bundle, PipelineResult } from '@stackfit/engine';
+import type { Bundle, PipelineResult, ProductScore } from '@stackfit/engine';
 
 import { Badge, Card } from '@/components/ui';
 import { formatMoney, formatNumber } from '@/lib/format';
-import { ASSET_LABELS, CATEGORY_LABELS } from '@/components/wizard/labels';
+import { ASSET_LABELS, CATEGORY_LABELS, DIMENSION_LABELS } from '@/components/wizard/labels';
 
 /**
  * §8.2 — one card per category: what was chosen, what came second, why, what it
@@ -12,6 +12,47 @@ import { ASSET_LABELS, CATEGORY_LABELS } from '@/components/wizard/labels';
  * "Covers 38 Windows servers and 40 POS terminals" is a sentence a client can
  * check; "asset coverage 82" is not.
  */
+/**
+ * The working behind the fit badge.
+ *
+ * §9: "if you cannot render a rationale for a number, do not render the
+ * number." The badge above is a number, and every dimension behind it has had a
+ * sentence attached since Phase 4 — this is the first thing that shows them.
+ * Folded away by default because the card is read on a call and seven rows of
+ * reasoning is not the first thing anyone needs.
+ *
+ * The weight shown is the one actually used, after any procurement-bias
+ * adjustment, so a client whose bias raised the operability weight can see that
+ * it did.
+ */
+function FitBreakdown({ score }: { score: ProductScore }) {
+  return (
+    <details className="border-line mt-3 border-t pt-2">
+      <summary className="text-faint cursor-pointer text-[11px] select-none">
+        Why this scored {formatNumber(score.score, 1)}
+      </summary>
+      <ul className="mt-2 flex flex-col gap-1.5">
+        {score.dimensions.map((dimension) => (
+          <li key={dimension.dimension} className="text-[11px] leading-snug">
+            <div className="flex items-baseline gap-2">
+              <span className="text-muted w-32 shrink-0">
+                {DIMENSION_LABELS[dimension.dimension] ?? dimension.dimension}
+              </span>
+              <span className="tabular text-ink w-10 shrink-0 text-right">
+                {formatNumber(dimension.score, 0)}
+              </span>
+              <span className="tabular text-faint w-24 shrink-0">
+                x {formatNumber(dimension.weight, 0)}% = {formatNumber(dimension.contribution, 1)}
+              </span>
+            </div>
+            <p className="text-faint mt-0.5 pl-2">{dimension.rationale}</p>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 export function CategoryCards({ result, bundle }: { result: PipelineResult; bundle: Bundle }) {
   const scoreById = new Map(result.scores.map((score) => [score.productId, score]));
 
@@ -101,6 +142,8 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
                 <li key={line}>— {line}</li>
               ))}
             </ul>
+
+            {score !== undefined && <FitBreakdown score={score} />}
 
             <p className="border-line text-faint mt-3 border-t pt-2 text-[11px] leading-snug">
               {runnerUp === undefined ? (

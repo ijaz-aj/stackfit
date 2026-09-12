@@ -1,4 +1,4 @@
-import type { AssetClass } from '@stackfit/schema';
+import type { AssetClass, ScoringDimension } from '@stackfit/schema';
 
 /**
  * What the analyst reads on screen. Presentation only — the engine's vocabulary
@@ -165,4 +165,14 @@ export const CATEGORY_LABELS: Readonly<Record<string, string>> = {
   asset_discovery: 'Asset discovery',
   deception: 'Deception',
   mdr: 'MDR',
+};
+
+export const DIMENSION_LABELS: Readonly<Record<ScoringDimension, string>> = {
+  asset_coverage: 'Asset coverage',
+  compliance_fit: 'Compliance fit',
+  ops_fit: 'Operability',
+  deployment_fit: 'Deployment fit',
+  integration_fit: 'Integration fit',
+  scale_fit: 'Scale fit',
+  maturity: 'Maturity',
 };
