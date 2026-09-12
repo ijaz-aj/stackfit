@@ -1,0 +1,504 @@
+# NDR — network detection, traffic analysis and packet capture.
+#
+# Prices are in minor units (hard rule 1).
+#
+# ⚠ THE COMMERCIAL HALF OF THIS MARKET IS UNPRICEABLE AND THEREFORE ABSENT.
+# Darktrace, Vectra AI, ExtraHop and Corelight were all checked on 2026-09-12.
+# None publishes a list price and none quotes a rate publicly; the only figures
+# available are third-party ranges so wide they cannot be a number — one source
+# put a 100–500 device Darktrace deployment anywhere between USD 50,000 and
+# USD 150,000 a year. A 3× spread is not a price, and inventing a point inside
+# it would be exactly the fabrication hard rule 2 forbids.
+#
+# So this file is the open and source-available half of the category, which is
+# also the half a mid-market client can actually buy. Say on the call that the
+# commercial NDR tier exists, starts around five figures a year, and needs a
+# vendor conversation before it can appear in a proposal.
+#
+# ⚠ NOTE THE OPS BURDEN, NOT THE LICENCE. Four of these five have no licence
+# fee and all five are expensive. NDR is the category where hard rule 8 bites
+# hardest: a network sensor produces nothing of value until somebody tunes it,
+# reads it and acts on it, and the FTE figures below are what a client is
+# really buying.
+
+category: ndr
+
+products:
+  - id: suricata
+    name: Suricata
+    vendor: Open Information Security Foundation
+    category: ndr
+    subcategory: open-source IDS, IPS and network security monitoring engine
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: Suricata (self-hosted)
+        capabilities:
+          - Signature-based intrusion detection and prevention
+          - Protocol identification and anomaly detection
+          - TLS, HTTP, DNS and SMB transaction logging
+          - File extraction and hashing from the wire
+          - EVE JSON output for downstream analysis
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/OISF/suricata
+              note: >-
+                OISF is a non-profit foundation, which makes a licence change
+                very unlikely. Re-check instead which rule sets the client is
+                relying on — Emerging Threats Open is free, ET Pro is not, and
+                that is where the real cost decision sits.
+            sources:
+              - url: https://github.com/OISF/suricata
+                asOf: '2026-09-12'
+            notes: >-
+              GPL-2.0. No licence fee. The paid item most clients end up needing
+              is a commercial rule set (Emerging Threats Pro or similar), which
+              is a separate subscription and is not costed here.
+
+    supports:
+      os: [linux, windows, network_os]
+      deviceClasses: [network_device, firewall, server]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: true
+
+    integrations: [syslog, opnsense, pfsense, security-onion, wazuh, graylog-open]
+
+    controlsCovered:
+      - cis-v8:13
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.8.16
+      - iso-27001-2022:A.8.20
+      - pci-dss-4.0:11
+      - soc-2:CC7
+      - rbi-csf:network-management
+
+    opsBurden:
+      baseFte: 0.35
+      ftePerThousandAssets: 0.2
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 10
+      skillLevel: security_engineer
+      typicalWeeks: 5
+      confidence: analyst_estimate
+
+    strengths:
+      - The detection engine inside most commercial NDR and NGFW products, available directly
+      - Rules are portable text, so detection content is never locked to a vendor
+      - Already present in OPNsense and pfSense, so an existing firewall may make this nearly free to start
+    weaknesses:
+      - 'An engine, not a product: no console, no case management, no retention story of its own'
+      - Signature-based at heart, so it finds known attacks and not novel behaviour
+      - Untuned, it produces an alert volume nobody will read, which is worse than no sensor
+    bestFor:
+      - Clients who already run OPNsense, pfSense or Security Onion
+      - Segments where a known-bad signature is the requirement, such as a PCI cardholder data environment
+    avoidWhen:
+      - There is nobody to tune rules and triage alerts
+      - Behavioural detection of unknown threats is the stated requirement
+
+    sources:
+      - url: https://github.com/OISF/suricata
+        asOf: '2026-09-12'
+    notes: >-
+      Catalogued as an engine rather than a platform. Most clients should deploy
+      it through Security Onion or a firewall rather than on its own, and the
+      ops burden here assumes a standalone sensor.
+
+  - id: zeek
+    name: Zeek
+    vendor: Zeek project
+    category: ndr
+    subcategory: open-source network traffic analysis framework
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: Zeek (self-hosted)
+        capabilities:
+          - Application-layer protocol analysis with per-connection logs
+          - Rich network metadata — connections, files, certificates, DNS, HTTP, SSH
+          - A scripting language for site-specific detection policy
+          - File extraction and hashing
+          - Long-retention metadata at a fraction of full packet capture volume
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/zeek/zeek
+              note: >-
+                Zeek states its BSD licence allows "free use with virtually no
+                restrictions". Worth re-checking only the relationship with
+                Corelight, which employs much of the core team and sells a
+                commercial Zeek distribution.
+            sources:
+              - url: https://github.com/zeek/zeek
+                asOf: '2026-09-12'
+            notes: >-
+              BSD licence. No licence fee. Corelight sells a commercial Zeek
+              appliance; that is a different product and is quote-only.
+
+    supports:
+      os: [linux]
+      deviceClasses: [network_device, firewall, server]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: mid
+      scaleCeiling: enterprise
+      airGapCapable: true
+
+    integrations: [syslog, security-onion, arkime, wazuh, graylog-open, microsoft-sentinel]
+
+    controlsCovered:
+      - cis-v8:13
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:DE.AE
+      - nist-csf-2.0:RS.AN
+      - iso-27001-2022:A.5.7
+      - iso-27001-2022:A.8.16
+      - iso-27001-2022:A.8.20
+      - pci-dss-4.0:11
+      - soc-2:CC7
+      - rbi-csf:network-management
+      - rbi-csf:forensics
+
+    opsBurden:
+      baseFte: 0.5
+      ftePerThousandAssets: 0.25
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 15
+      skillLevel: specialist
+      typicalWeeks: 8
+      confidence: analyst_estimate
+
+    strengths:
+      - Produces the single most useful network evidence set there is, and keeps months of it cheaply
+      - Detects by behaviour and protocol anomaly rather than by signature, so it sees things Suricata cannot
+      - The scripting language makes site-specific detection genuinely possible
+    weaknesses:
+      - 'Specialist tooling: writing Zeek script is a skill, and without it the logs are just logs'
+      - No alerts out of the box worth the name — it describes the network, it does not judge it
+      - Highest ops burden in this file, which is saying something
+    bestFor:
+      - Clients with a real incident-response capability who need evidence, not alerts
+      - Environments where full packet capture is unaffordable but months of metadata is not
+    avoidWhen:
+      - Security staffing is thin — this is the fastest way to buy a system nobody uses
+      - The client wants an appliance that tells them what is wrong
+
+    sources:
+      - url: https://github.com/zeek/zeek
+        asOf: '2026-09-12'
+    notes: >-
+      scaleFloor is deliberately "mid". A small estate with one engineer will get
+      more from an EDR than from Zeek, and recommending it below that size would
+      be recommending a project rather than a control.
+
+  - id: security-onion
+    name: Security Onion
+    vendor: Security Onion Solutions, LLC
+    category: ndr
+    subcategory: network security monitoring platform
+    licenceModel: open_core
+    maturity: established
+
+    tiers:
+      - id: free
+        name: Security Onion (free download)
+        capabilities:
+          - Suricata and Zeek deployed, configured and managed together
+          - Alerting, hunting and dashboards over network and host telemetry
+          - Full packet capture with retrieval from an alert
+          - Built-in case management
+          - Elasticsearch-backed search across the estate
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/Security-Onion-Solutions/securityonion
+              note: >-
+                ⚠ Re-read the LICENSE file specifically, not the README. The
+                project describes itself as "free and open", and the licence is
+                Elastic License 2.0, which is source-available rather than open
+                source. If that tightens further it changes what a client is
+                allowed to do with it.
+            sources:
+              - url: https://github.com/Security-Onion-Solutions/securityonion
+                asOf: '2026-09-12'
+              - url: https://github.com/Security-Onion-Solutions/securityonion/blob/2.4/main/LICENSE
+                asOf: '2026-09-12'
+            notes: >-
+              Elastic License 2.0. Free to download and run, including
+              commercially, but ELv2 is source-available rather than OSI open
+              source — it forbids offering the software to third parties as a
+              managed service. That matters for an MSP and not for an end
+              client. Security Onion Solutions sells appliances, training and
+              support separately, all quote-only.
+
+    supports:
+      os: [linux]
+      deviceClasses: [network_device, firewall, server, workstation]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [suricata, zeek, elasticsearch, syslog, wazuh]
+
+    controlsCovered:
+      - cis-v8:8
+      - cis-v8:13
+      - cis-v8:17
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:DE.AE
+      - nist-csf-2.0:RS.AN
+      - iso-27001-2022:A.5.7
+      - iso-27001-2022:A.8.15
+      - iso-27001-2022:A.8.16
+      - iso-27001-2022:A.8.20
+      - pci-dss-4.0:10
+      - pci-dss-4.0:11
+      - soc-2:CC7
+      - rbi-csf:network-management
+      - rbi-csf:forensics
+      - rbi-csf:audit-logs
+
+    opsBurden:
+      baseFte: 0.5
+      ftePerThousandAssets: 0.3
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 15
+      skillLevel: security_engineer
+      typicalWeeks: 6
+      confidence: analyst_estimate
+
+    strengths:
+      - Turns Suricata and Zeek from components into a working monitoring platform, which is most of the work
+      - Packet capture, alerting, hunting and case management in one free download
+      - Air-gapped deployment is supported and documented, which commercial NDR rarely is
+    weaknesses:
+      - 'Elastic License 2.0, not open source: an MSP cannot resell it as a service'
+      - Storage-hungry — full packet capture retention is the cost nobody budgets for
+      - Still needs an analyst; it surfaces alerts rather than resolving them
+    bestFor:
+      - Clients who want real network visibility and cannot fund a commercial NDR
+      - Air-gapped and OT environments
+      - Teams with an engineer who will live in it
+    avoidWhen:
+      - The client is an MSP intending to run it on behalf of others
+      - Nobody will look at the console between incidents
+
+    sources:
+      - url: https://github.com/Security-Onion-Solutions/securityonion
+        asOf: '2026-09-12'
+    notes: >-
+      licenceModel is open_core rather than open_source, deliberately. ELv2 is
+      source-available; calling it open source would misstate what the client
+      may do with it, and for an MSP-shaped client that distinction is the whole
+      decision.
+
+  - id: arkime
+    name: Arkime
+    vendor: Arkime project
+    category: ndr
+    subcategory: open-source full packet capture and session search
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: Arkime (self-hosted)
+        capabilities:
+          - Full packet capture written as standard PCAP to local disk
+          - Session metadata indexed into OpenSearch or Elasticsearch
+          - Fast indexed search, browsing and export of sessions
+          - Scales to tens of gigabits per second
+          - Retention entirely under the client's control
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/arkime/arkime
+              note: >-
+                Apache 2.0 and community-governed; a licence change is unlikely.
+                What is worth re-checking is the OpenSearch/Elasticsearch
+                dependency, because that is where a licence change would
+                actually reach this product.
+            sources:
+              - url: https://github.com/arkime/arkime
+                asOf: '2026-09-12'
+            notes: >-
+              Apache 2.0. No licence fee. The cost is entirely storage: full
+              packet capture at any useful retention is the most
+              infrastructure-hungry thing in this catalog.
+
+    supports:
+      os: [linux]
+      deviceClasses: [network_device, firewall, server]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: mid
+      scaleCeiling: enterprise
+      airGapCapable: true
+
+    integrations: [zeek, suricata, security-onion, elasticsearch, syslog]
+
+    controlsCovered:
+      # Evidence, not detection. Arkime records and retrieves; it raises no
+      # alerts of its own, so the continuous-monitoring controls are absent and
+      # the forensic and evidence ones are claimed.
+      - cis-v8:13
+      - nist-csf-2.0:RS.AN
+      - iso-27001-2022:A.5.28
+      - iso-27001-2022:A.8.20
+      - pci-dss-4.0:11
+      - soc-2:CC7
+      - rbi-csf:forensics
+
+    opsBurden:
+      baseFte: 0.4
+      ftePerThousandAssets: 0.2
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 12
+      skillLevel: security_engineer
+      typicalWeeks: 6
+      confidence: analyst_estimate
+
+    strengths:
+      - The only thing that answers "what actually left the network" after the fact
+      - Standard PCAP on disk, so the evidence outlives the tool
+      - Proven at very high throughput
+    weaknesses:
+      - 'Storage cost dominates everything else: days of retention at a gigabit is terabytes'
+      - Raises no alerts — it is a recorder, and it needs something else to tell it where to look
+      - Full packet capture has privacy and data-protection consequences that need answering before deployment
+    bestFor:
+      - Clients with a regulatory or contractual forensic-readiness obligation
+      - Environments where an incident must be reconstructible in detail
+    avoidWhen:
+      - Storage budget is the constraint
+      - There is no detection capability to point it at
+
+    sources:
+      - url: https://github.com/arkime/arkime
+        asOf: '2026-09-12'
+    notes: >-
+      Worth raising the privacy question early. Recording every packet means
+      recording employee traffic, and in a GDPR or DPDP scope that needs a
+      lawful basis and a retention policy before it needs a server.
+
+  - id: ntopng
+    name: ntopng
+    vendor: ntop
+    category: ndr
+    subcategory: network traffic monitoring and flow analysis
+    licenceModel: open_core
+    maturity: established
+
+    tiers:
+      - id: community
+        name: Community Edition
+        capabilities:
+          - Real-time traffic monitoring by host, protocol and application
+          - NetFlow, sFlow and IPFIX collection
+          - Traffic behaviour alerting
+          - Historical traffic reporting
+          - Deep packet inspection via nDPI
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/ntop/ntopng
+              note: >-
+                Confirm the Community Edition is still GPLv3 and still carries
+                the alerting features — ntop moves capability between Community
+                and Pro between major versions, and that is what changes here,
+                not the licence.
+            sources:
+              - url: https://github.com/ntop/ntopng
+                asOf: '2026-09-12'
+            notes: >-
+              GPLv3. ntop describes ntopng as "a web-based network traffic
+              monitoring application released under GPLv3". No licence fee.
+
+              The paid editions are real and are NOT catalogued as tiers,
+              because the cost model cannot express them. ntop's shop publishes
+              perpetual licences with one year of maintenance included —
+              ntopng Pro EUR 299.95, Enterprise M EUR 699.95, Enterprise L
+              EUR 899.95, Enterprise XL EUR 1,499.95, each per system. A
+              perpetual licence is capex followed by a maintenance renewal, the
+              cost engine models annual recurring spend only, and ntop does not
+              publish the renewal rate. Quote those by hand.
+
+    supports:
+      os: [linux, windows, macos]
+      deviceClasses: [network_device, firewall, server, iot]
+      cloudPlatforms: []
+      deploymentModes: [on_prem, hybrid, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [syslog, netflow, sflow, ipfix, suricata]
+
+    controlsCovered:
+      - cis-v8:13
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.8.16
+      - iso-27001-2022:A.8.20
+      - soc-2:CC7
+      - rbi-csf:network-management
+
+    opsBurden:
+      baseFte: 0.2
+      ftePerThousandAssets: 0.1
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 5
+      skillLevel: generalist
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - By far the lowest operational burden in this file, and operable by a network admin rather than a security specialist
+      - Flow-based, so it works from existing switch and router exports with no tap or SPAN port
+      - Gives useful answers in days rather than months
+    weaknesses:
+      - 'Traffic visibility rather than threat detection: it shows what is happening, not what is malicious'
+      - Community Edition alerting is basic, and the useful features drift toward the paid editions
+      - No packet capture, no file extraction, no detection content
+    bestFor:
+      - Clients with no network visibility at all, where anything is a step up
+      - Estates whose switches already export NetFlow
+      - Teams without a security engineer
+    avoidWhen:
+      - The requirement is detection of an active intrusion
+      - A compliance obligation names intrusion detection specifically
+
+    sources:
+      - url: https://github.com/ntop/ntopng
+        asOf: '2026-09-12'
+      - url: https://shop.ntop.org/
+        asOf: '2026-09-12'
+    notes: >-
+      Deliberately claims no incident-analysis or threat-intelligence control.
+      ntopng describes traffic; attributing an intrusion to it would credit the
+      client with detection they have not bought. It is catalogued as the entry
+      point to this category, not as a competitor to Zeek or Security Onion.

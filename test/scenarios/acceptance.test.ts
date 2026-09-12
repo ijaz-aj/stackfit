@@ -63,16 +63,25 @@ describe('§12.1 — small retail client, PCI DSS, USD 25k/yr cap', () => {
     expect(categories).toContain('siem');
   });
 
-  it('warns rather than hides when a mandated category has no product to buy', () => {
-    // PCI mandates ngfw, iam and pam, none of which the catalog stocks. The
-    // bundle must say so — this is exactly the §7.4 step 7 behaviour, and it is
-    // the honest answer until Phase 7 fills those categories.
-    const unmet = result.recommended.unfundedMandatory;
-    expect(unmet.length).toBeGreaterThan(0);
-    for (const category of unmet) {
-      expect(CATALOG_CATEGORIES.has(category)).toBe(false);
+  it('funds every category PCI mandates, now the catalog stocks them', () => {
+    // TIGHTENED IN PHASE 7, as the header of this file said it must be. This
+    // assertion used to require unfundedMandatory to be non-empty: PCI mandates
+    // ngfw, iam and pam, the catalog stocked none of them, and reporting the
+    // shortfall was the honest answer. All three now exist, all three are
+    // funded inside the same USD 25k/yr cap, and there is nothing to warn about.
+    //
+    // §7.4 step 7 itself is still pinned, by §12.5 below (HIPAA at USD 3k/yr,
+    // which genuinely cannot be met) and by a unit test in
+    // packages/engine/test/portfolio.test.ts.
+    expect(result.recommended.unfundedMandatory).toEqual([]);
+    expect(allRationale(result.recommended)).not.toContain('SHORTFALL');
+
+    const funded = new Set(result.recommended.selections.map((selection) => selection.category));
+    for (const category of ['siem', 'edr', 'vulnerability_management', 'iam', 'pam', 'ngfw']) {
+      expect(funded.has(category as never), `${category} is mandated by PCI and unfunded`).toBe(
+        true,
+      );
     }
-    expect(allRationale(result.recommended)).toContain('SHORTFALL');
   });
 
   it('flags any placeholder-priced product in the mandatory set', () => {

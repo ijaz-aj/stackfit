@@ -201,10 +201,11 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
         "greenbone-openvas (vulnerability_management) | 2450.04 USD/yr | 0.33 FTE | closes 6",
         "passbolt (pam) | 2450.04 USD/yr | 0.16 FTE | closes 3",
         "crowdstrike-falcon-go (edr) | 11998 USD/yr | 0.12 FTE | closes 1",
+        "security-onion (ndr) | 2450.04 USD/yr | 0.57 FTE | closes 4",
         "azure-backup (backup) | 2640 USD/yr | 0.11 FTE | closes 4",
-        "wazuh (siem) | 2450.04 USD/yr | 0.57 FTE | closes 3",
         "opnsense (ngfw) | 2450.04 USD/yr | 0.22 FTE | closes 1",
         "proxmox-mail-gateway (email_security) | 2450.04 USD/yr | 0.26 FTE | closes 1",
+        "graylog-open (siem) | 2450.04 USD/yr | 0.46 FTE | closes 0",
       ]
     `);
 
