@@ -582,6 +582,118 @@ describe('regressions', () => {
     expect(ideal.mssp.rationale.join(' ')).toContain('Does NOT cover');
   });
 
+  it('does not buy less compliance with more budget when both strategies fund the same categories', () => {
+    // Was: buildRecommended compared the two strategies on weighted need alone.
+    // They optimise different denominators — cheapest ranks on what a product
+    // costs to buy, value density on fit per unit of what it costs to own — so
+    // they can fund exactly the same categories with different products. That
+    // tied, density won by default, and the stack satisfied fewer mandated
+    // controls than a smaller budget would have bought.
+    //
+    // Found when the iam category landed: at a USD 20,000 cap identity was
+    // Keycloak, claiming CIS Controls 5 and 6; at USD 50,000 it became Duo
+    // Essentials — dearer to buy, far cheaper to own, and deliberately claiming
+    // only Control 6 because it is not a directory.
+    const twoIamControls = buildFramework({
+      id: 'cis-v8',
+      name: 'CIS Controls',
+      sourceQuality: 'secondary_sources',
+      version: '8',
+      controls: [
+        { id: '5', title: 'Account Management', satisfiedBy: ['iam'], mandatory: true },
+        { id: '6', title: 'Access Control Management', satisfiedBy: ['iam'], mandatory: true },
+      ],
+    });
+
+    // Cheap to buy, expensive to own, closes both controls — the directory.
+    const broad: Product = {
+      ...buildProduct({
+        id: 'broad-iam',
+        pricing: [
+          { model: 'flat_tiered', tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(100_00) }] },
+        ],
+        opsBurden: { baseFte: 0.6, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+      }),
+      category: 'iam',
+      vendor: 'Broad Inc.',
+      controlsCovered: ['cis-v8:5', 'cis-v8:6'],
+      supports: { ...buildProduct().supports, deviceClasses: ['server', 'workstation'] },
+    };
+
+    // Dearer to buy, almost free to own, closes one control — the MFA bolt-on.
+    const narrow: Product = {
+      ...buildProduct({
+        id: 'narrow-iam',
+        pricing: [
+          {
+            model: 'flat_tiered',
+            tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(3_000_00) }],
+          },
+        ],
+        opsBurden: { baseFte: 0.01, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+      }),
+      category: 'iam',
+      vendor: 'Narrow Inc.',
+      controlsCovered: ['cis-v8:6'],
+      supports: { ...buildProduct().supports, deviceClasses: ['server', 'workstation'] },
+    };
+
+    const inputs = buildInputs({
+      products: [broad, narrow],
+      frameworks: [twoIamControls],
+      annualCap: 10_000_00,
+    });
+
+    // The pathology only exists if density really does prefer the narrow one:
+    // without that this test would pass for the wrong reason.
+    const { candidates, recommended } = buildPortfolio(inputs);
+    const densityOf = (id: string) =>
+      candidates.find((candidate) => candidate.productId === id)!.valueDensity;
+    expect(densityOf('narrow-iam')).toBeGreaterThan(densityOf('broad-iam'));
+
+    expect(recommended.selections.map((selection) => selection.productId)).toEqual(['broad-iam']);
+    expect(recommended.rationale.join(' ')).toContain('Spending more must not cover less');
+  });
+
+  it('leaves the density winner alone when no framework is selected', () => {
+    // The tie-break above must not fire for an unregulated client: with nothing
+    // ticked both control counts are zero, and density keeps the better product.
+    const broad: Product = {
+      ...buildProduct({
+        id: 'broad-iam',
+        pricing: [
+          { model: 'flat_tiered', tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(100_00) }] },
+        ],
+        opsBurden: { baseFte: 0.6, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+      }),
+      category: 'iam',
+      vendor: 'Broad Inc.',
+      controlsCovered: ['cis-v8:5', 'cis-v8:6'],
+      supports: { ...buildProduct().supports, deviceClasses: ['server', 'workstation'] },
+    };
+    const narrow: Product = {
+      ...buildProduct({
+        id: 'narrow-iam',
+        pricing: [
+          {
+            model: 'flat_tiered',
+            tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(3_000_00) }],
+          },
+        ],
+        opsBurden: { baseFte: 0.01, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+      }),
+      category: 'iam',
+      vendor: 'Narrow Inc.',
+      controlsCovered: ['cis-v8:6'],
+      supports: { ...buildProduct().supports, deviceClasses: ['server', 'workstation'] },
+    };
+
+    const { recommended } = buildPortfolio(
+      buildInputs({ products: [broad, narrow], annualCap: 10_000_00 }),
+    );
+    expect(recommended.selections.map((selection) => selection.productId)).toEqual(['narrow-iam']);
+  });
+
   it('quotes an empty bundle no residual', () => {
     const inputs = buildInputs({ products: [] });
     const { recommended } = buildPortfolio(inputs);

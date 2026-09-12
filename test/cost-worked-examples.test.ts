@@ -103,13 +103,25 @@ describe('Costing the real catalog for a 60-staff PCI DSS retailer (US, USD)', (
   it('produces an indicative 3-year TCO for every catalogued tier', () => {
     expect(costs.map(summarise)).toMatchInlineSnapshot(`
       [
+        "cisco-duo/essentials | licence/yr 2,160 | ops FTE 0.05 | year1 20,317 | 3yr TCO 42,880 | USD",
+        "cisco-duo/advantage | licence/yr 4,320 | ops FTE 0.05 | year1 22,477 | 3yr TCO 49,690 | USD",
+        "cisco-duo/premier | licence/yr 6,480 | ops FTE 0.05 | year1 24,637 | 3yr TCO 56,499 | USD",
         "crowdstrike-falcon-go/go | licence/yr 2,700 | ops FTE 0.11 | year1 28,190 | 3yr TCO 71,180 | USD",
+        "microsoft-entra-id/p1 | licence/yr 5,040 | ops FTE 0.15 | year1 49,635 | 3yr TCO 112,874 | USD",
+        "jumpcloud/device-management | licence/yr 6,480 | ops FTE 0.16 | year1 51,582 | 3yr TCO 118,934 | USD",
+        "microsoft-entra-id/p2 | licence/yr 7,200 | ops FTE 0.15 | year1 51,795 | 3yr TCO 119,683 | USD",
+        "jumpcloud/sso | licence/yr 7,920 | ops FTE 0.16 | year1 53,022 | 3yr TCO 123,474 | USD",
+        "jumpcloud/device-identity-management | licence/yr 9,360 | ops FTE 0.16 | year1 54,462 | 3yr TCO 128,013 | USD",
         "tenable-nessus-professional/professional | licence/yr 4,790 | ops FTE 0.23 | year1 52,434 | 3yr TCO 144,232 | USD",
+        "okta-workforce-identity/starter | licence/yr 4,320 | ops FTE 0.21 | year1 73,972 | 3yr TCO 153,575 | USD",
         "microsoft-defender-for-endpoint/plan-1 | licence/yr 2,160 | ops FTE 0.27 | year1 69,945 | 3yr TCO 164,164 | USD",
         "greenbone-openvas/free | licence/yr 0 | ops FTE 0.29 | year1 64,684 | 3yr TCO 166,452 | USD",
         "microsoft-defender-for-endpoint/plan-2 | licence/yr 3,744 | ops FTE 0.27 | year1 71,529 | 3yr TCO 169,158 | USD",
+        "okta-workforce-identity/core-essentials | licence/yr 10,080 | ops FTE 0.21 | year1 79,732 | 3yr TCO 171,733 | USD",
         "greenbone-openvas/basic | licence/yr 2,934 | ops FTE 0.29 | year1 67,618 | 3yr TCO 175,701 | USD",
+        "okta-workforce-identity/essentials | licence/yr 12,240 | ops FTE 0.21 | year1 81,892 | 3yr TCO 178,543 | USD",
         "velociraptor/open | licence/yr 0 | ops FTE 0.42 | year1 92,099 | 3yr TCO 239,497 | USD",
+        "keycloak/open | licence/yr 0 | ops FTE 0.41 | year1 106,509 | 3yr TCO 250,527 | USD",
         "graylog-open/open | licence/yr 0 | ops FTE 0.43 | year1 102,144 | 3yr TCO 251,232 | USD",
         "microsoft-sentinel/pay-as-you-go | licence/yr 17,833 | ops FTE 0.32 | year1 106,413 | 3yr TCO 252,957 | USD",
         "wazuh/open | licence/yr 0 | ops FTE 0.53 | year1 138,289 | 3yr TCO 322,867 | USD",
@@ -143,15 +155,27 @@ describe('The same retailer priced in India (INR)', () => {
   it('produces the same shortlist at Indian labour rates', () => {
     expect(costs.map(summarise)).toMatchInlineSnapshot(`
       [
+        "cisco-duo/essentials | licence/yr 204,861 | ops FTE 0.05 | year1 437,146 | 3yr TCO 1,020,680 | INR",
         "crowdstrike-falcon-go/go | licence/yr 256,034 | ops FTE 0.11 | year1 524,734 | 3yr TCO 1,371,747 | INR",
+        "cisco-duo/advantage | licence/yr 409,722 | ops FTE 0.05 | year1 642,007 | 3yr TCO 1,666,505 | INR",
         "microsoft-defender-for-endpoint/plan-1 | licence/yr 204,861 | ops FTE 0.27 | year1 963,786 | 3yr TCO 2,117,600 | INR",
         "greenbone-openvas/free | licence/yr 0 | ops FTE 0.29 | year1 882,700 | 3yr TCO 2,165,099 | INR",
+        "cisco-duo/premier | licence/yr 614,584 | ops FTE 0.05 | year1 846,869 | 3yr TCO 2,312,330 | INR",
+        "microsoft-entra-id/p1 | licence/yr 478,010 | ops FTE 0.15 | year1 1,008,485 | 3yr TCO 2,454,350 | INR",
         "microsoft-defender-for-endpoint/plan-2 | licence/yr 355,093 | ops FTE 0.27 | year1 1,114,018 | 3yr TCO 2,591,205 | INR",
+        "okta-workforce-identity/starter | licence/yr 409,722 | ops FTE 0.21 | year1 1,293,232 | 3yr TCO 2,734,680 | INR",
         "velociraptor/open | licence/yr 0 | ops FTE 0.42 | year1 1,144,775 | 3yr TCO 2,790,324 | INR",
+        "jumpcloud/device-management | licence/yr 614,584 | ops FTE 0.16 | year1 1,149,094 | 3yr TCO 2,897,005 | INR",
         "graylog-open/open | licence/yr 0 | ops FTE 0.43 | year1 1,312,500 | 3yr TCO 2,971,499 | INR",
+        "keycloak/open | licence/yr 0 | ops FTE 0.41 | year1 1,413,075 | 3yr TCO 3,031,724 | INR",
         "greenbone-openvas/basic | licence/yr 278,263 | ops FTE 0.29 | year1 1,160,963 | 3yr TCO 3,042,325 | INR",
+        "microsoft-entra-id/p2 | licence/yr 682,871 | ops FTE 0.15 | year1 1,213,346 | 3yr TCO 3,100,175 | INR",
         "tenable-nessus-professional/professional | licence/yr 454,299 | ops FTE 0.23 | year1 1,135,549 | 3yr TCO 3,234,426 | INR",
+        "jumpcloud/sso | licence/yr 751,158 | ops FTE 0.16 | year1 1,285,668 | 3yr TCO 3,327,555 | INR",
         "wazuh/open | licence/yr 0 | ops FTE 0.53 | year1 1,775,725 | 3yr TCO 3,717,174 | INR",
+        "jumpcloud/device-identity-management | licence/yr 887,732 | ops FTE 0.16 | year1 1,422,242 | 3yr TCO 3,758,105 | INR",
+        "okta-workforce-identity/core-essentials | licence/yr 956,019 | ops FTE 0.21 | year1 1,839,529 | 3yr TCO 4,456,880 | INR",
+        "okta-workforce-identity/essentials | licence/yr 1,160,880 | ops FTE 0.21 | year1 2,044,390 | 3yr TCO 5,102,705 | INR",
         "microsoft-sentinel/pay-as-you-go | licence/yr 1,691,306 | ops FTE 0.32 | year1 2,725,456 | 3yr TCO 7,226,792 | INR",
       ]
     `);

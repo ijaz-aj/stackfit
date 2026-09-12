@@ -47,8 +47,8 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
       ),
     ).toMatchInlineSnapshot(`
       [
-        "pci-dss-4.0 | in scope true | covered 5/8 of 12 | partial 0 | gaps 3 | 62.5%",
-        "nist-csf-2.0 | in scope false | covered 5/13 of 22 | partial 3 | gaps 5 | 38.5%",
+        "pci-dss-4.0 | in scope true | covered 6/8 of 12 | partial 1 | gaps 1 | 75%",
+        "nist-csf-2.0 | in scope false | covered 6/13 of 22 | partial 3 | gaps 4 | 46.2%",
       ]
     `);
   });
@@ -69,7 +69,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
       [
         "Govern 0/0 = null",
         "Identify 2/2 = 100",
-        "Protect 1/4 = 25",
+        "Protect 2/4 = 50",
         "Detect 2/2 = 100",
         "Respond 0/4 = 0",
         "Recover 0/1 = 0",
@@ -93,7 +93,6 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
       [
         "pci-dss-4.0:1",
         "pci-dss-4.0:7",
-        "pci-dss-4.0:8",
       ]
     `);
     for (const gap of critical) {
@@ -104,30 +103,40 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
   });
 
   it('says plainly which gaps the catalog cannot close yet, and closes the rest', () => {
-    // ⚠ CATALOG LIMITATION. Nine of the eleven uncovered controls need iam,
-    // pam, ngfw, backup or email_security, none of which the catalog stocks.
-    // The honest output for those is "StackFit cannot fix this", not a silent
-    // empty fix list. Phase 7 is what changes this number.
-    expect(coverage.unclosableGaps.length).toBe(9);
-    expect(coverage.gaps.length).toBe(11);
+    // ⚠ CATALOG LIMITATION, shrinking. Was nine of eleven before Phase 7; the
+    // iam category closed three of them. The remainder need pam, ngfw, backup
+    // or email_security, none of which the catalog stocks yet. The honest
+    // output for those is "StackFit cannot fix this", not a silent empty fix
+    // list, and this number should keep falling as Phase 7 lands categories.
+    expect(coverage.unclosableGaps.length).toBe(6);
+    expect(coverage.gaps.length).toBe(9);
 
-    // The other two are partials — the stack has the right kind of tool and
+    // The other three are partials — the stack has the right kind of tool and
     // nothing in it claims the control — and those do have a route. Before
     // partials entered this list the client was shown a coverage percentage
     // with no way to improve it at all.
     const closable = coverage.gaps.filter((gap) => gap.cheapestCloser !== null);
     expect(closable.map((gap) => gap.controlId)).toEqual([
+      'pci-dss-4.0:7',
       'nist-csf-2.0:RS.MI',
       'nist-csf-2.0:RS.AN',
     ]);
     expect(closable.every((gap) => gap.kind === 'partial')).toBe(true);
 
+    // PCI requirement 7 is the Phase 7 addition and the best single output on
+    // this page. At USD 25k/yr the bundle now buys Duo Essentials for identity,
+    // which does not claim requirement 7 — so the client is told they are still
+    // failing a PCI mandate, and the fix is not a second product but the next
+    // tier of one they are already buying. That is the Phase 6 upgrade path
+    // firing on real catalog data for the first time.
+    const requirementSeven = closable.find((gap) => gap.controlId === 'pci-dss-4.0:7');
+    expect(requirementSeven?.residualRisk).toBe('critical');
+    expect(requirementSeven?.cheapestCloser?.productId).toBe('cisco-duo');
+
     // And every purchase on the list must actually achieve something. A
     // product that merely belongs to the right category cannot move a control
     // that is already partial, so offering one would be recommending a
     // purchase that buys nothing.
-    expect(coverage.remediation).toHaveLength(1);
-    expect(coverage.remediation[0]?.productId).toBe('velociraptor');
     for (const option of coverage.remediation) {
       expect(option.closesControls.length).toBeGreaterThan(0);
     }
@@ -139,7 +148,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     const recommended = coverage.summary.coveragePercent ?? 0;
     const ideal = coverageOf(retail, retail.ideal).summary.coveragePercent ?? 0;
 
-    expect(`essential ${essential} → recommended ${recommended} → ideal ${ideal}`).toMatchInlineSnapshot(`"essential 50 → recommended 62.5 → ideal 62.5"`);
+    expect(`essential ${essential} → recommended ${recommended} → ideal ${ideal}`).toMatchInlineSnapshot(`"essential 62.5 → recommended 75 → ideal 87.5"`);
     expect(recommended).toBeGreaterThanOrEqual(essential);
     expect(ideal).toBeGreaterThanOrEqual(recommended);
   });
@@ -190,6 +199,7 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
     ).toMatchInlineSnapshot(`
       [
         "greenbone-openvas (vulnerability_management) | 2450.04 USD/yr | 0.33 FTE | closes 6",
+        "keycloak (iam) | 2450.04 USD/yr | 0.42 FTE | closes 3",
         "crowdstrike-falcon-go (edr) | 11998 USD/yr | 0.12 FTE | closes 1",
         "wazuh (siem) | 2450.04 USD/yr | 0.57 FTE | closes 3",
       ]

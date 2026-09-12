@@ -38,6 +38,7 @@ import {
   type CostsByProduct,
   type ProductCost,
 } from './cost';
+import { controlsClaimedBy } from './claims';
 import type { CategoryRelevance } from './infrastructure';
 import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money';
 import type { ProductScore } from './scoring';
@@ -835,6 +836,26 @@ function buildBundle(
  * is tight" — so the fix is to run that strategy too and keep whichever covers
  * more of the estate's weighted need. Density still wins ties, so an
  * unconstrained budget is unaffected and still gets the better products.
+ *
+ * ⚠ Weighted need is not the only thing that can go backwards, and comparing on
+ * it alone left a second version of the same pathology alive. The two
+ * strategies optimise different denominators — `cheapest` ranks on what a thing
+ * costs to *buy*, `value_density` on fit per unit of what it costs to *own* —
+ * so they can fund exactly the same categories with different products. When
+ * they do, weighted need ties, density wins by default, and the client can be
+ * shown a stack that satisfies fewer of their mandated controls than the one a
+ * smaller budget would have bought.
+ *
+ * Observed once the iam category landed: at a USD 20,000 cap the identity pick
+ * was Keycloak, which claims both CIS Controls 5 and 6; at USD 50,000 it became
+ * Duo Essentials, which is dearer to buy, far cheaper to own, and deliberately
+ * claims only Control 6 because it is not a directory. Same categories funded,
+ * more money spent, one control fewer covered.
+ *
+ * So a bundle that satisfies more of the selected frameworks' controls wins
+ * before density gets to break the tie. With no frameworks ticked both counts
+ * are zero and the old behaviour stands unchanged, which is the common case for
+ * an unregulated client.
  */
 function buildRecommended(
   inputs: PortfolioInputs,
@@ -863,6 +884,26 @@ function buildRecommended(
   const coveredWeight = (bundle: Bundle): number =>
     bundle.selections.reduce((sum, selection) => sum + selection.categoryWeight, 0);
 
+  const productById = new Map(inputs.products.map((product) => [product.id, product]));
+  const inScopeControls = new Set(
+    inputs.frameworks.flatMap((framework) =>
+      framework.controls.map((control) => `${framework.id}:${control.id}`),
+    ),
+  );
+
+  /** Distinct in-scope controls this bundle's selections claim, at the tiers chosen. */
+  const mandatedControlsMet = (bundle: Bundle): number => {
+    const met = new Set<string>();
+    for (const selection of bundle.selections) {
+      const product = productById.get(selection.productId);
+      if (product === undefined) continue;
+      for (const controlId of controlsClaimedBy(product, selection.cost.tierId)) {
+        if (inScopeControls.has(controlId)) met.add(controlId);
+      }
+    }
+    return met.size;
+  };
+
   // Strictly more, so density keeps ties and the better-product bias.
   if (coveredWeight(byCheapest) > coveredWeight(byDensity)) {
     return {
@@ -875,6 +916,26 @@ function buildRecommended(
           'budget is tight.',
       ],
     };
+  }
+
+  // Same categories funded either way. Compliance breaks the tie before value
+  // does, so a larger budget can never buy a stack that meets fewer of the
+  // obligations the analyst actually ticked.
+  if (coveredWeight(byCheapest) === coveredWeight(byDensity)) {
+    const cheapestControls = mandatedControlsMet(byCheapest);
+    const densityControls = mandatedControlsMet(byDensity);
+    if (cheapestControls > densityControls) {
+      return {
+        ...byCheapest,
+        rationale: [
+          ...byCheapest.rationale,
+          `Both strategies fund the same categories, so the one satisfying more of the selected ` +
+            `frameworks won: the cheapest acceptable option in each category claims ` +
+            `${cheapestControls} of the in-scope control(s) against ${densityControls} for the ` +
+            `highest-value-density option. Spending more must not cover less.`,
+        ],
+      };
+    }
   }
 
   return byDensity;
