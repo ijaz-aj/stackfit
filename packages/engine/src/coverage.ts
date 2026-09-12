@@ -393,12 +393,37 @@ function rollUpGroups(
   });
 }
 
+/**
+ * What a product claims when bought at a given tier.
+ *
+ * Capabilities are sold by tier and control claims were not, so the cheapest
+ * tier of a product inherited every claim the top tier made. Tier claims are
+ * additive to the product-level list, so passing no tier returns the claims
+ * common to every tier — the conservative answer, which is the right one for a
+ * caller that has not chosen a tier yet.
+ */
+export function controlsClaimedBy(
+  product: Product,
+  tierId: string | undefined,
+): ReadonlySet<string> {
+  const tier = tierId === undefined ? undefined : product.tiers.find((entry) => entry.id === tierId);
+  return new Set([...product.controlsCovered, ...(tier?.controlsCovered ?? [])]);
+}
+
 /** The matrix: every control of every supplied framework, with its status. */
 export function computeFrameworkCoverage(inputs: CoverageInputs): readonly FrameworkCoverage[] {
   const { bundle, frameworks, products, profile } = inputs;
 
+  // Keyed on the tier the bundle actually selected: a product costed at its
+  // cheapest tier must not be credited with what only its top tier delivers.
+  const tierByProduct = new Map(
+    bundle.selections.map((selection) => [selection.productId, selection.tierId]),
+  );
   const claimsByProduct = new Map<string, ReadonlySet<string>>(
-    products.map((product) => [product.id, new Set(product.controlsCovered)]),
+    products.map((product) => [
+      product.id,
+      controlsClaimedBy(product, tierByProduct.get(product.id)),
+    ]),
   );
   const categoryByProduct = new Map(products.map((product) => [product.id, product.category]));
   const selectedProductIds = bundle.selections.map((selection) => selection.productId);
@@ -518,7 +543,7 @@ function closersFor(
           productName: product.name,
           vendor: product.vendor,
           category: product.category,
-          closesFully: product.controlsCovered.includes(control.controlId),
+          closesFully: controlsClaimedBy(product, cost.tierId).has(control.controlId),
           annualSpend: cost.procurementAnnual,
           oneTime: cost.implementationOneTime,
           tco: cost.tco,

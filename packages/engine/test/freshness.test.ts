@@ -132,6 +132,7 @@ describe('assessTierFreshness', () => {
       id: 'standard',
       name: 'Standard',
       capabilities: [],
+      controlsCovered: [],
       pricing: [
         rule({ sources: [{ url: 'https://example.com/a', asOf: '2026-01-01' }] }),
         rule({ sources: [{ url: 'https://example.com/b', asOf: '2025-01-01' }] }),

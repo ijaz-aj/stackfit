@@ -68,7 +68,9 @@ function product(
  * A bundle holding exactly these products. Built by hand rather than through
  * `buildPortfolio`, so a coverage assertion fails for coverage reasons only.
  */
-function bundleOf(selections: readonly { id: string; category: ProductCategory }[]): Bundle {
+function bundleOf(
+  selections: readonly { id: string; category: ProductCategory; tierId?: string }[],
+): Bundle {
   // Coverage never reads the cost breakdown; it is here because a selection
   // carries the costing it was made on, and a fixture that lied about the
   // shape is how the last fixture bug got in.
@@ -110,12 +112,16 @@ function bundleOf(selections: readonly { id: string; category: ProductCategory }
     rationale: [],
   };
 
-  const selection = (entry: { id: string; category: ProductCategory }): BundleSelection => ({
+  const selection = (entry: {
+    id: string;
+    category: ProductCategory;
+    tierId?: string;
+  }): BundleSelection => ({
     category: entry.category,
     productId: entry.id,
     productName: entry.id,
     vendor: 'Example Inc.',
-    tierId: 'standard',
+    tierId: entry.tierId ?? 'standard',
     fitScore: 80,
     categoryWeight: 90,
     mandatory: false,
@@ -125,7 +131,7 @@ function bundleOf(selections: readonly { id: string; category: ProductCategory }
     oneTime: zero,
     tco: zero,
     suiteDiscountApplied: false,
-    cost: { ...costShape, productId: entry.id },
+    cost: { ...costShape, productId: entry.id, tierId: entry.tierId ?? 'standard' },
     rationale: [],
   });
 
@@ -161,7 +167,7 @@ function bundleOf(selections: readonly { id: string; category: ProductCategory }
 
 interface Scenario {
   readonly catalog: readonly Product[];
-  readonly selected: readonly { id: string; category: ProductCategory }[];
+  readonly selected: readonly { id: string; category: ProductCategory; tierId?: string }[];
   readonly frameworks: readonly Framework[];
   /** Framework ids the client actually ticked. */
   readonly compliance?: readonly string[];
@@ -652,6 +658,56 @@ describe('what it would cost to fix', () => {
     expect(option?.opsFte).toBeGreaterThan(0);
     expect(result.remediationOpsFte).toBeGreaterThan(0);
     expect(result.rationale.join(' ')).toContain('salary is not procurement');
+  });
+});
+
+describe('a claim belongs to the tier that was bought', () => {
+  /** Control 11 is sold only in the upper tier; control 5 comes with both. */
+  function tieredEdr(): Product {
+    const base = product('tiered-edr', 'edr', 300_000, ['pci-dss-4.0:5']);
+    const tier = base.tiers[0]!;
+    return {
+      ...base,
+      tiers: [
+        { ...tier, id: 'plan-1', controlsCovered: [] },
+        { ...tier, id: 'plan-2', controlsCovered: ['pci-dss-4.0:11'] },
+      ],
+    };
+  }
+
+  function statusOf(tierId: string, controlId: string): string {
+    const edr = tieredEdr();
+    const result = computeCoverage(
+      buildInputs({
+        catalog: [edr],
+        selected: [{ id: 'tiered-edr', category: 'edr', tierId }],
+        frameworks: [{ ...pci, controls: pci.controls.map(asEdrControl) }],
+        compliance: ['pci-dss-4.0'],
+      }),
+    );
+    return (
+      result.frameworks[0]!.controls.find((control) => control.controlId === controlId)?.status ??
+      'missing'
+    );
+  }
+
+  /** Both controls have to be addressable by an EDR for this to test anything. */
+  const asEdrControl = (control: Framework['controls'][number]) =>
+    control.satisfiedBy.length === 0 ? control : { ...control, satisfiedBy: ['edr' as const] };
+
+  it('does not credit the cheap tier with what only the expensive one delivers', () => {
+    // Was: `controlsCovered` was product-level while capabilities are sold by
+    // tier, so Defender Plan 1 was credited with CIS 7 continuous
+    // vulnerability management — which the same catalog entry's own tier list
+    // puts in Plan 2. A bundle must not claim coverage the selected tier does
+    // not buy.
+    expect(statusOf('plan-1', 'pci-dss-4.0:11')).toBe('partial');
+    expect(statusOf('plan-2', 'pci-dss-4.0:11')).toBe('covered');
+  });
+
+  it('still credits every tier with the product-level claims', () => {
+    expect(statusOf('plan-1', 'pci-dss-4.0:5')).toBe('covered');
+    expect(statusOf('plan-2', 'pci-dss-4.0:5')).toBe('covered');
   });
 });
 

@@ -52,6 +52,21 @@ export const ProductTier = z
      * once (a platform fee plus a per-endpoint rate, say).
      */
     pricing: z.array(PricingRule).min(1),
+    /**
+     * Controls this tier claims *on top of* the product-level list.
+     *
+     * Capabilities are sold by tier and control claims were not, so a product
+     * whose cheapest tier was selected could be credited with a control only
+     * its top tier delivers — Defender Plan 1 was being credited with CIS 7
+     * continuous vulnerability management while the same entry's own tier list
+     * put that in Plan 2.
+     *
+     * Additive, never subtractive: the product-level list is what every tier
+     * does, so a stage that has not picked a tier yet under-credits rather than
+     * over-credits, and the client-facing coverage figure uses the tier
+     * actually selected.
+     */
+    controlsCovered: z.array(ControlId).default([]),
   })
   .strict();
 export type ProductTier = z.infer<typeof ProductTier>;
