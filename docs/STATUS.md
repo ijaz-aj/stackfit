@@ -1376,6 +1376,79 @@ rather than a budget cap, and says no budget increase closes it. Money is
 checked first, so capacity is only named as the cause when something in the
 category could actually have been bought.
 
+### External validation, 2026-09-12
+
+The reviewer asked, before any further implementation, whether these decisions
+are standard practice or a blind spot. Researched against published sources.
+What follows is the honest scorecard, including where the sources are weak.
+
+**Confirmed standard.**
+
+- **The scoring model is Simple Additive Weighting** — each dimension scored
+  0–100, multiplied by a weight, summed — with hard filters that eliminate a
+  product regardless of its total. That is textbook multi-criteria decision
+  analysis and matches published vendor-selection guidance, including its
+  advice to fix the weights *before* evaluating so enthusiasm for a product
+  cannot reshape the criteria. Ours live in `data/config` and are fixed.
+- **Personnel belongs in TCO.** Gartner's definition covers acquisition,
+  "management and support", training and productivity losses. Hard rule 8 is
+  aligned with the standard rather than an opinion of ours.
+- **Conservative coverage counting** — covered only where a product *claims*
+  the control — is more conservative than published framework mappings, which
+  is the right direction to be wrong in.
+- **Windows server ingest is calibrated.** Microsoft quotes roughly 1–3 GB per
+  month for a typical VM; our coefficient computes to about 86 MB/day, inside
+  that band.
+
+**Fixed as a result.**
+
+- 2026-09-12 — **Coverage is not compliance, and nothing said so.** The largest
+  client-facing liability in the product. The proposal explained the counting
+  *method* but never stated that a tool **supports** a control rather than
+  **satisfies** it. "PCI DSS 100% covered" invites a reader to conclude the
+  audit is handled. `coverageDisclaimer()` is now verbatim on the dashboard, in
+  the DOCX, the PDF and the analyst's XLSX, each pinned by a test — the same
+  treatment §6 rule 4 gets, and for the same reason: an export is where the
+  reader stops seeing the page that qualified the number.
+- 2026-09-12 — **`opsBurden` conflated tool administration with security
+  operations.** Published benchmarks put in-house 24/7 SIEM operation at
+  several analysts across shifts; our figures are a fraction of that, and were
+  never labelled. They are the effort to *administer* a tool — deploy, tune,
+  maintain, upgrade — which is a legitimate and different quantity. Now stated
+  in the schema, in each product's cost rationale, in the Operable bundle's
+  rationale and on the XLSX assumptions sheet. A client reading 0.6 FTE for a
+  SIEM as "what it takes to get value from a SIEM" would have been misled; one
+  reading it as "what it takes to keep it running" is not.
+
+**Open, and deliberately not acted on yet.**
+
+- ⚠ **Preset security staffing is far below published benchmarks.** IANS
+  Research's 2025 data puts security headcount at about 1.5 FTE per 100
+  employees below $50M revenue and 0.9 per 100 at $600M–$1B. The hospital
+  preset states 2 FTE for 1,400 staff — 0.14 per 100, six to ten times below
+  benchmark. Healthcare genuinely is understaffed and the preset may be
+  realistic, but it is currently an unexamined assumption rather than a sourced
+  one. Deciding this needs the reviewer: it changes every preset's Operable
+  bundle.
+- ⚠ **Domain-controller and workstation EPS look understated.** Published
+  rules of thumb cite 300–500 EPS for a domain controller and 1–5 for a
+  workstation, against our 25 and 0.2. Some of the gap closes against our
+  500-byte event size — the same sources imply 100–150 bytes — but a residual
+  factor of roughly four to six on domain controllers looks real. Understated
+  ingest means understated SIEM licence cost, and Sentinel bills per GB.
+  **Not changed**, because the sources for this one are SEO-optimised sizing
+  calculators run by vendors who benefit from large numbers. This needs one
+  measured environment, not another search.
+- **TCO is missing three Gartner components**: hardware (already recorded
+  below), communications and bandwidth, and the opportunity cost of downtime.
+
+**On source quality.** The compliance-mapping and TCO findings rest on primary
+sources — CIS, Gartner, Microsoft. The FTE benchmarks come partly from an MSSP
+vendor's own content, which has an obvious interest in making self-management
+look expensive: the direction is almost certainly right, the magnitude is
+indicative only. The EPS figures are the weakest of the lot, which is why they
+are recorded rather than applied.
+
 ## Open defects
 
 Found on 2026-09-12 while fixing the charts. Neither is a chart bug; both are

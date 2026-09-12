@@ -257,3 +257,16 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   number here and must not be allowed to shrink what the estate demonstrably
   needs. An empty Operable bundle is a correct answer, not a bug: a client with
   zero security staff cannot operate a free tool either.
+- **`opsBurden` is administration effort, not SOC staffing.** Deploy, tune,
+  maintain, upgrade — not staffing continuous monitoring, which published
+  benchmarks put at several analysts across shifts for in-house 24/7 SIEM
+  operation. The two differ by an order of magnitude and are trivially
+  conflated, so every surface that shows an FTE figure states which one it is.
+  Do not "correct" these coefficients upward to match 24/7 benchmarks; that
+  would be answering a different question.
+- **`coverageDisclaimer()` is verbatim on every surface that shows a coverage
+  percentage**, exactly like the §6 rule 4 pricing disclaimer, and for the same
+  reason. A tool *supports* a control; it does not *satisfy* one — policy,
+  process, evidence and an assessor decide that. "PCI DSS 100% covered" read as
+  "the audit is handled" is the single largest client-facing liability this
+  product has. Tests in the engine and in all three export formats pin it.
