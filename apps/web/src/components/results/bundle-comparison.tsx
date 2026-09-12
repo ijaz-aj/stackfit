@@ -83,10 +83,19 @@ export function BundleComparison({
       hint="Four ways to answer the same brief. Click a tier to read its detail below. Operable against Recommended is the staffing gap."
     >
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] border-collapse text-sm">
+        {/*
+          The label column is capped rather than left to `w-full`'s devices. On
+          a 1400px results page the browser gave the text column everything the
+          numbers did not ask for, which left roughly 225px of dead space
+          between a tier's name and its first figure — the eye had to travel it
+          on every row to connect the two. 42ch is the width at which every
+          tier hint fits on two lines, so the rows stay the same height and the
+          figures still sit next to what they describe.
+        */}
+        <table className="w-full min-w-[720px] table-fixed border-collapse text-sm">
           <thead>
             <tr className="text-faint text-left text-2xs tracking-wide uppercase">
-              <th className="py-1.5 pr-3 font-medium">Tier</th>
+              <th className="w-[42ch] py-1.5 pr-3 font-medium">Tier</th>
               <th className="py-1.5 pr-3 text-right font-medium">Year 1</th>
               <th className="py-1.5 pr-3 text-right font-medium">Procurement / yr</th>
               <th className="py-1.5 pr-3 text-right font-medium">All-in / yr</th>
@@ -104,17 +113,34 @@ export function BundleComparison({
               <tr
                 key={bundle.kind}
                 className={cn(
-                  'border-line border-t',
-                  bundle.kind === selectedKind && 'bg-accent/5',
+                  'border-line group border-t transition-colors',
+                  // A 5% tint on a dark ground is invisible, and this row is
+                  // the page's primary state — everything below it changes
+                  // with it. The left marker carries the signal; the tint only
+                  // supports it.
+                  bundle.kind === selectedKind
+                    ? 'bg-accent/[0.07]'
+                    : 'hover:bg-panel-raised/50',
                 )}
               >
-                <td className="py-2 pr-3 align-top">
+                <td
+                  className={cn(
+                    'py-2 pr-3 align-top border-l-2',
+                    bundle.kind === selectedKind ? 'border-l-accent pl-3' : 'border-l-transparent pl-3',
+                  )}
+                >
                   <Link
                     href={`/scenarios/${scenarioId}/results?bundle=${bundle.kind}`}
+                    // `after:absolute inset-0` would need a positioned row,
+                    // which a <tr> cannot reliably be. The cell is the target,
+                    // and the group hover above tells the pointer so.
                     className={cn(
-                      'text-base font-medium',
-                      bundle.kind === selectedKind ? 'text-accent' : 'text-ink hover:text-accent',
+                      'text-base font-medium transition-colors',
+                      bundle.kind === selectedKind
+                        ? 'text-accent'
+                        : 'text-ink group-hover:text-accent',
                     )}
+                    aria-current={bundle.kind === selectedKind ? 'true' : undefined}
                   >
                     {label[bundle.kind]}
                   </Link>
