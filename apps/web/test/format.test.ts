@@ -85,3 +85,36 @@ describe('formatMoney', () => {
     }
   });
 });
+
+describe('each currency in its own reading convention', () => {
+  // India is this tool's primary region, and rupees were being grouped the
+  // Western way: ₹20,389,840 for a figure an Indian reader parses as
+  // ₹2,03,89,840. The common case was rendered in the foreign convention.
+  it('groups rupees in lakh and crore', () => {
+    // 2,038,984,000 minor = ₹20,389,840, which an Indian reader writes
+    // ₹2,03,89,840 — two crore, three lakh, eighty-nine thousand.
+    expect(formatMoney({ amountMinor: 2_038_984_000, currency: 'INR' })).toBe('₹2,03,89,840');
+    expect(formatMoney({ amountMinor: 203_898_400, currency: 'INR' })).toBe('₹20,38,984');
+  });
+
+  it('expresses rupee magnitudes in crore, not millions', () => {
+    // ₹164M is not a quantity anyone in India states out loud.
+    expect(formatMoney({ amountMinor: 16_40_00_000_00, currency: 'INR' }, { compact: true })).toBe(
+      '₹16.4Cr',
+    );
+  });
+
+  it('leaves the other currencies in theirs', () => {
+    expect(formatMoney({ amountMinor: 1_642_766_00, currency: 'USD' })).toBe('$1,642,766');
+    expect(formatMoney({ amountMinor: 1_642_766_00, currency: 'USD' }, { compact: true })).toBe(
+      '$1.6M',
+    );
+  });
+
+  it('keys off the currency, never the reader', () => {
+    // A figure is a fact about the client's money, not about who is looking.
+    // Two analysts opening one proposal must see identical numbers.
+    const once = formatMoney({ amountMinor: 20_38_984_00, currency: 'INR' });
+    expect(formatMoney({ amountMinor: 20_38_984_00, currency: 'INR' })).toBe(once);
+  });
+});

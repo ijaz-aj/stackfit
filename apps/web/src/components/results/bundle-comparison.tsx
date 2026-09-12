@@ -1,8 +1,10 @@
 import type { Bundle, PipelineResult } from '@stackfit/engine';
+import type { FxConfig } from '@stackfit/schema';
 import { coverageOfBundle } from '@stackfit/engine';
 import type { PricingConfidence } from '@stackfit/schema';
 import Link from 'next/link';
 
+import { MoneyWithRupees } from '@/components/money';
 import { Badge, Card } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { formatMoney, formatNumber } from '@/lib/format';
@@ -28,10 +30,12 @@ export function BundleComparison({
   result,
   selectedKind,
   scenarioId,
+  fx,
 }: {
   result: PipelineResult;
   selectedKind: Bundle['kind'];
   scenarioId: string;
+  fx: FxConfig;
 }) {
   // Operable sits next to Recommended rather than at the end: the two are read
   // against each other, and the distance between them is the point.
@@ -154,16 +158,18 @@ export function BundleComparison({
                   {formatMoney({ amountMinor: year1, currency: bundle.currency })}
                 </td>
                 <td className="tabular py-2 pr-3 text-right align-top">
-                  {formatMoney(bundle.annualSpend)}
+                  <MoneyWithRupees money={bundle.annualSpend} fx={fx} />
                   {!bundle.withinAnnualCap && (
                     <span className="text-bad block text-2xs">over cap</span>
                   )}
                 </td>
                 <td className="tabular py-2 pr-3 text-right align-top">
-                  {formatMoney(bundle.annualRecurring)}
+                  <MoneyWithRupees money={bundle.annualRecurring} fx={fx} />
                   <span className="text-faint block text-2xs">incl. people</span>
                 </td>
-                <td className="tabular py-2 pr-3 text-right align-top">{formatMoney(bundle.tco)}</td>
+                <td className="py-2 pr-3 text-right align-top">
+                  <MoneyWithRupees money={bundle.tco} fx={fx} />
+                </td>
                 <td className="tabular py-2 pr-3 text-right align-top">
                   {formatNumber(bundle.totalOpsFte, 2)}
                   <span className="text-faint block text-2xs">FTE</span>

@@ -1,6 +1,25 @@
 import { CURRENCY_MINOR_UNIT_EXPONENT, type CurrencyCode, type Money } from '@stackfit/schema';
 
 /**
+ * The locale a currency is read in, not the reader's.
+ *
+ * Rupees group in lakh and crore: ₹2,03,89,840, and ₹16.4Cr rather than
+ * ₹164M. Formatting INR with Western grouping produced ₹20,389,840, which is
+ * a number no Indian reader parses at a glance — and India is this tool's
+ * primary region, so that was the common case rendered in the foreign
+ * convention.
+ *
+ * Keyed off the *currency* rather than the browser, deliberately. A figure is
+ * a fact about the client's money, not about who happens to be looking, and
+ * two analysts reading one proposal must see identical numbers.
+ */
+const LOCALE_FOR: Readonly<Record<CurrencyCode, string>> = {
+  INR: 'en-IN',
+  USD: 'en-US',
+  EUR: 'en-IE',
+};
+
+/**
  * The render boundary (CONTRIBUTING.md hard rule 1). Money is an integer in minor
  * units everywhere else in this repo; this file is the only place it is allowed
  * to become a string with a decimal point in it.
@@ -23,7 +42,7 @@ export function formatMoney(
     // tick set distinct. `format.test.ts` sweeps 900+ tick sets across four
     // decades of magnitude asserting exactly that, rather than trusting the
     // reasoning behind it.
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(LOCALE_FOR[money.currency], {
       style: 'currency',
       currency: money.currency,
       notation: 'compact',
@@ -33,7 +52,7 @@ export function formatMoney(
   }
 
   const decimals = options.decimals ?? 0;
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat(LOCALE_FOR[money.currency], {
     style: 'currency',
     currency: money.currency,
     minimumFractionDigits: decimals,

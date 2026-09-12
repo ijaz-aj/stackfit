@@ -109,7 +109,9 @@ describe('money in a rationale sentence', () => {
   // and "$411,903" are the same money — in a document about budgets.
   it('writes money the way the interface does', () => {
     expect(moneyInWords({ amountMinor: 411_903_00, currency: 'USD' })).toBe('$411,903');
-    expect(moneyInWords({ amountMinor: 2_038_984_00, currency: 'INR' })).toBe('₹2,038,984');
+    // Lakh grouping, not Western. India is this tool's primary region, so
+    // ₹20,389,840 was the common case rendered in the foreign convention.
+    expect(moneyInWords({ amountMinor: 2_038_984_00, currency: 'INR' })).toBe('₹20,38,984');
     expect(moneyInWords({ amountMinor: 85_222_00, currency: 'EUR' })).toBe('€85,222');
   });
 

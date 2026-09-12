@@ -123,9 +123,15 @@ export function isIdentityBaseRate(fx: FxConfig): boolean {
  * output by environment — two people opening one scenario must see one
  * sentence.
  */
+const PROSE_LOCALE: Readonly<Record<string, string>> = {
+  INR: 'en-IN',
+  USD: 'en-US',
+  EUR: 'en-IE',
+};
+
 export function moneyInWords(amount: Money): string {
   const exponent = CURRENCY_MINOR_UNIT_EXPONENT[amount.currency];
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat(PROSE_LOCALE[amount.currency] ?? 'en-US', {
     style: 'currency',
     currency: amount.currency,
     minimumFractionDigits: 0,

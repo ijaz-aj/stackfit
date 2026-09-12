@@ -144,7 +144,7 @@ export default async function ResultsPage({
         </div>
       )}
 
-      <BundleComparison result={result} selectedKind={kind} scenarioId={id} />
+      <BundleComparison result={result} selectedKind={kind} scenarioId={id} fx={data.fx} />
 
       <CategoryCards result={result} bundle={bundle} />
 
