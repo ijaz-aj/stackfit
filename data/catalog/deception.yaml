@@ -1,0 +1,481 @@
+# Deception — decoys, honeypots and tripwires.
+#
+# Prices are in minor units (hard rule 1).
+#
+# ⚠ READ THE CATEGORY WEIGHT BEFORE READING THE PRODUCTS. `category-weights.yaml`
+# scores deception at 25, the lowest base risk-reduction of any category, and
+# calls it "a supplement, never a foundation". Nothing here detects an attack
+# the client's other controls would otherwise miss *in general*; what it does is
+# detect the specific attacker who is already inside and looking around, with a
+# false-positive rate close to zero. Sell it as the second thing, never the
+# first.
+#
+# ⚠ THE CONTROL CLAIMS ARE DELIBERATELY NARROW. Only three controls in the whole
+# framework library name `deception` in their `satisfiedBy` list — CIS Control
+# 13, CSF DE.CM and ISO A.8.16 — and no product here claims more than those.
+# That is the honest answer and it is worth saying out loud: deception is bought
+# on risk, not on compliance, and an analyst who pitches it as a compliance
+# control will be caught out.
+#
+# ⚠ THE COMMERCIAL TIER IS ALMOST UNPRICEABLE. Thinkst Canary, the category
+# leader, publishes no rate; Tracebit, CounterCraft and the identity-deception
+# products folded into larger platforms are all quote-only. Four of the five
+# below are free, which is genuinely the shape of this market outside large
+# enterprises — a competent engineer with OpenCanary and a weekend gets most of
+# the value.
+
+category: deception
+
+products:
+  - id: canarytokens
+    name: Canarytokens
+    vendor: Thinkst Applied Research
+    category: deception
+    subcategory: free tripwire tokens for files, credentials and cloud keys
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: free
+        name: Canarytokens (hosted or self-hosted)
+        capabilities:
+          - Tripwire tokens embedded in documents, folders and spreadsheets
+          - Fake AWS, Azure and cloud API keys that alert on use
+          - Web bug, DNS and unique URL tokens
+          - Cloned-website and QR tokens
+          - Alerting by email or webhook on any interaction
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/thinkst/canarytokens/blob/master/LICENSE
+              note: >-
+                ⚠ Read the licence file itself. Thinkst adds clarifications and
+                exceptions on top of GPLv3, including provisions for alternative
+                commercial licensing, and those additions are the thing that
+                could change rather than the base licence.
+            sources:
+              - url: https://github.com/thinkst/canarytokens/blob/master/LICENSE
+                asOf: '2026-09-12'
+              - url: https://github.com/thinkst/canarytokens
+                asOf: '2026-09-12'
+            notes: >-
+              GPLv3, with Thinkst's own added terms on derivative works and
+              commercial licensing. No licence fee. Thinkst also runs a free
+              hosted service, and the repository documents a Docker
+              self-hosting path for clients who will not send token alerts to a
+              third party.
+
+    supports:
+      os: [windows, linux, macos]
+      deviceClasses: [server, identity, network_device]
+      cloudPlatforms: [aws, azure, gcp, m365]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: true
+
+    integrations: [syslog, slack, webhook]
+
+    controlsCovered:
+      - cis-v8:13
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.8.16
+
+    opsBurden:
+      baseFte: 0.05
+      ftePerThousandAssets: 0.02
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 2
+      skillLevel: generalist
+      typicalWeeks: 1
+      confidence: analyst_estimate
+
+    strengths:
+      - The highest ratio of detection value to effort anywhere in this catalog — an afternoon's work
+      - Catches the things nothing else does, such as a stolen document opened outside the estate
+      - Fake cloud credentials in a repository are the single best tripwire for a leaked secret
+    weaknesses:
+      - 'Detects nothing on its own: a token only fires when an attacker touches it'
+      - The free hosted service means alert data leaves the estate, which some clients will refuse
+      - Coverage depends entirely on where a human decided to put tokens
+    bestFor:
+      - Every client, as a cheap supplement — there is almost no scenario where this is a bad idea
+      - Detecting document exfiltration and leaked cloud credentials
+    avoidWhen:
+      - It is being proposed as a primary detection control
+      - Nobody will own placing and refreshing the tokens
+
+    sources:
+      - url: https://github.com/thinkst/canarytokens
+        asOf: '2026-09-12'
+    notes: >-
+      The one entry in this catalog that is worth recommending almost
+      unconditionally, precisely because it costs nothing and asks for nothing.
+      It is also the one most likely to be forgotten after deployment — tokens
+      placed once and never reviewed decay as the estate changes.
+
+  - id: opencanary
+    name: OpenCanary
+    vendor: Thinkst Applied Research
+    category: deception
+    subcategory: open-source multi-protocol network honeypot daemon
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: OpenCanary (self-hosted)
+        capabilities:
+          - Emulates network-accessible services for attackers to interact with
+          - SMB and Windows file share decoys
+          - SNMP and port-scan detection
+          - Lightweight daemon deployable on an existing host or a small VM
+          - Alerting on any interaction, with no legitimate traffic to filter out
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/thinkst/opencanary
+              note: >-
+                BSD-3-Clause and stable. Worth re-checking release activity
+                rather than the licence — Thinkst's commercial attention is on
+                the Canary appliance, and this is the free sibling.
+            sources:
+              - url: https://github.com/thinkst/opencanary
+                asOf: '2026-09-12'
+            notes: >-
+              BSD-3-Clause. No licence fee. This is the open-source engine
+              behind the commercial Canary appliance; what the paid product adds
+              is the hardware, the hosted console and the support, not the
+              detection idea.
+
+    supports:
+      os: [linux, windows]
+      deviceClasses: [server, network_device, domain_controller]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [syslog, wazuh, graylog-open, microsoft-sentinel]
+
+    controlsCovered:
+      - cis-v8:13
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.8.16
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 4
+      skillLevel: security_engineer
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - The commercial product's detection logic, free, for a client willing to run it themselves
+      - Any alert is real by construction — nothing legitimate talks to a decoy
+      - Small enough to sit on infrastructure that already exists
+    weaknesses:
+      - 'No console: alerts go to a log or a webhook and something else has to be watching'
+      - Placement is a design exercise — a decoy in the wrong VLAN detects nothing
+      - Fewer emulated services than a purpose-built appliance, so a careful attacker may fingerprint it
+    bestFor:
+      - Clients with an engineer, a flat network and no budget for Canary
+      - Segmented or OT networks where an unexplained connection is unambiguously hostile
+    avoidWhen:
+      - Nobody is watching the log the alerts land in
+      - The client wants an appliance to plug in rather than a service to deploy
+
+    sources:
+      - url: https://github.com/thinkst/opencanary
+        asOf: '2026-09-12'
+    notes: >-
+      The ops burden is not deployment, it is placement and review. Budget the
+      engineer's judgement about where a decoy is plausible, not the hour it
+      takes to install.
+
+  - id: cowrie
+    name: Cowrie
+    vendor: Cowrie project
+    category: deception
+    subcategory: SSH and Telnet honeypot with session recording
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: Cowrie (self-hosted)
+        capabilities:
+          - Medium-interaction emulated UNIX shell over SSH and Telnet
+          - High-interaction proxy mode in front of a real system
+          - Full session logging in a replayable format
+          - Capture of files downloaded by wget or curl and uploaded over SFTP or SCP
+          - A fake filesystem with customisable contents
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/cowrie/cowrie/blob/master/LICENSE.rst
+              note: >-
+                BSD-3-Clause and community-governed. The interesting change to
+                watch is feature direction — Cowrie has added an experimental
+                LLM mode for generating attacker responses, which has data
+                handling implications worth checking before deployment.
+            sources:
+              - url: https://github.com/cowrie/cowrie/blob/master/LICENSE.rst
+                asOf: '2026-09-12'
+              - url: https://github.com/cowrie/cowrie
+                asOf: '2026-09-12'
+            notes: >-
+              BSD 3-Clause. No licence fee. An experimental mode uses large
+              language models to generate responses to attacker commands; if
+              that is enabled, attacker input leaves the estate, which is a
+              question to settle before deployment rather than after.
+
+    supports:
+      os: [linux]
+      deviceClasses: [server, network_device]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: mid
+      airGapCapable: true
+
+    integrations: [syslog, wazuh, graylog-open, elasticsearch]
+
+    controlsCovered:
+      - cis-v8:13
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.8.16
+
+    opsBurden:
+      baseFte: 0.2
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 4
+      skillLevel: security_engineer
+      typicalWeeks: 2
+      confidence: analyst_estimate
+
+    strengths:
+      - Records what the attacker actually typed, which is worth more than knowing that they connected
+      - Captures the malware they tried to pull down, ready for analysis
+      - The best-understood honeypot there is, with a decade of deployment experience behind it
+    weaknesses:
+      - 'SSH and Telnet only: narrow next to a multi-protocol decoy'
+      - Internet-facing deployment collects enormous volumes of untargeted noise that nobody reads
+      - Emulation is fingerprintable, so a careful attacker will notice
+    bestFor:
+      - Clients who want evidence of attacker behaviour, not just an alert
+      - Internal segments where an SSH attempt is by definition suspicious
+    avoidWhen:
+      - The requirement is broad decoy coverage across many protocols
+      - It would be placed on the internet with nobody triaging the results
+
+    sources:
+      - url: https://github.com/cowrie/cowrie
+        asOf: '2026-09-12'
+    notes: >-
+      scaleCeiling is "mid" deliberately. Cowrie scales fine technically; what
+      does not scale is anyone reading the output, and a large estate needs a
+      platform rather than a single honeypot.
+
+  - id: t-pot
+    name: T-Pot
+    vendor: Deutsche Telekom Security
+    category: deception
+    subcategory: multi-honeypot platform with dashboards
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: T-Pot (self-hosted)
+        capabilities:
+          - Over twenty honeypots deployed and orchestrated together, including Cowrie, Dionaea and Conpot
+          - Elastic Stack storage, search and dashboards over every event
+          - Animated attack map
+          - Suricata, P0f and Fatt for network fingerprinting alongside the decoys
+          - Optional distributed deployment across sites
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/telekom-security/tpotce
+              note: >-
+                GPL-3.0 for the platform, but it bundles twenty-plus components
+                under GPLv2, Apache 2.0, MIT and others. If the client's legal
+                function cares about licence provenance, that bundle is the
+                thing to review, not the top-level licence.
+            sources:
+              - url: https://github.com/telekom-security/tpotce
+                asOf: '2026-09-12'
+            notes: >-
+              GPL-3.0. No licence fee. Backed by Deutsche Telekom Security
+              rather than a lone maintainer, which is unusual for a free
+              honeypot platform and worth mentioning on a call.
+
+    supports:
+      os: [linux]
+      deviceClasses: [server, network_device, ot_ics, domain_controller]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: mid
+      scaleCeiling: enterprise
+      airGapCapable: true
+
+    integrations: [suricata, elasticsearch, syslog, cowrie]
+
+    controlsCovered:
+      - cis-v8:13
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.8.16
+
+    opsBurden:
+      baseFte: 0.35
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 8
+      skillLevel: security_engineer
+      typicalWeeks: 4
+      confidence: analyst_estimate
+
+    strengths:
+      - Twenty-plus honeypots and a working analytics stack from one install
+      - Includes Conpot, so it covers OT and ICS protocols that nothing else free here touches
+      - A real organisation behind it, which matters to procurement
+    weaknesses:
+      - 'Heaviest thing in this file by a distance: it is an Elastic stack plus twenty containers'
+      - Designed for research and threat intelligence as much as for defence, so much of the output is noise for an enterprise
+      - Needs a dedicated host and real resources
+    bestFor:
+      - Clients with OT or ICS segments, where Conpot's protocol coverage is hard to replace
+      - Organisations that want their own threat intelligence rather than just alerts
+    avoidWhen:
+      - The client wants a decoy, not a platform
+      - There is no dedicated host and no appetite to run Elasticsearch
+
+    sources:
+      - url: https://github.com/telekom-security/tpotce
+        asOf: '2026-09-12'
+    notes: >-
+      scaleFloor is "mid" deliberately. For a small estate this is far more
+      machinery than the problem justifies, and OpenCanary or Canarytokens gets
+      most of the value for a fraction of the effort.
+
+  - id: thinkst-canary
+    name: Thinkst Canary
+    vendor: Thinkst Applied Research
+    category: deception
+    subcategory: commercial decoy appliances with a hosted console
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: subscription
+        name: Canary subscription
+        capabilities:
+          - Physical, virtual and cloud decoys that impersonate real systems convincingly
+          - Hosted console with alerting by email, SMS, webhook and syslog
+          - Canarytokens included and managed from the same console
+          - Deployment in minutes, with no tuning and effectively no false positives
+          - Support and maintenance included
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 1000000
+                  currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://canary.tools/
+              note: >-
+                Check first whether Thinkst has started publishing a rate; if it
+                has, regrade to public_list. Otherwise ask Thinkst directly —
+                they are unusually willing to quote quickly, and the reported
+                figures below vary enough that a real quote is worth the email.
+            sources:
+              - url: https://canary.tools/
+                asOf: '2026-09-12'
+              - url: https://www.vendr.com/marketplace/thinkst-canary
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED, AND THE BAND DOES NOT SCALE. Thinkst
+              publishes no rate. USD 10,000 per year is the reported entry
+              subscription for five Canaries with a dedicated hosted console and
+              support; a smaller two-decoy deployment was reported around USD
+              5,000. Both are third-party figures.
+
+              The single open band is deliberate rather than lazy. A Canary
+              subscription is priced on the number of decoys, the catalog has no
+              field for "how many decoys does this estate need", and inventing a
+              second band would mean inventing a price Thinkst has not
+              published. So this entry quotes the five-decoy figure at every
+              size and `scaleCeiling` is set to "mid" to stop it being offered
+              where that figure is meaningless.
+
+    supports:
+      os: [windows, linux]
+      deviceClasses: [server, network_device, domain_controller, ot_ics, identity]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud]
+      scaleFloor: small
+      scaleCeiling: mid
+      airGapCapable: false
+
+    integrations: [syslog, microsoft-sentinel, slack, webhook]
+
+    controlsCovered:
+      - cis-v8:13
+      - nist-csf-2.0:DE.CM
+      - iso-27001-2022:A.8.16
+
+    opsBurden:
+      baseFte: 0.05
+      ftePerThousandAssets: 0.02
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 2
+      skillLevel: generalist
+      typicalWeeks: 2
+      confidence: analyst_estimate
+
+    strengths:
+      - The lowest operational burden of any detection control in this catalog — deploy and forget
+      - Decoys are convincing enough to survive an attacker's inspection, which the free tools are not
+      - Alerts are so reliably real that a client with no SOC can still act on them
+    weaknesses:
+      - 'No published price, and the reported figures vary by a factor of two'
+      - Covers little on its own — the category weight of 25 is the honest assessment
+      - The hosted console means alert data leaves the estate, and there is no air-gapped option
+    bestFor:
+      - Clients with no security staff who need at least one alert they can trust
+      - Estates where a breach must be caught in the reconnaissance phase
+    avoidWhen:
+      - The environment is air-gapped
+      - The budget is better spent on a control that covers more ground first
+
+    sources:
+      - url: https://canary.tools/
+        asOf: '2026-09-12'
+    notes: >-
+      Worth positioning honestly: this is the best-executed product in the
+      category and it is still a supplement. A client without EDR or MFA should
+      buy those first, and this second — which is what the category weight of 25
+      in category-weights.yaml is there to enforce.
