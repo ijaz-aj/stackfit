@@ -98,9 +98,23 @@ export function StepEstate() {
           </span>
         </div>
 
-        <div className="grid gap-x-8 gap-y-6 lg:grid-cols-2">
+        {/*
+          Columns that flow, not a grid.
+
+          These groups are wildly different lengths — Endpoints has three rows,
+          Network has eight — and a two-column *grid* aligns them in rows, so a
+          short group beside a tall one leaves a hole the height of the
+          difference. On this step that was most of a screen of empty space
+          next to the Servers column.
+
+          Multi-column flow packs them instead: each group falls into whichever
+          column has room. `break-inside-avoid` is what stops a group being
+          split across the two, which is the one way this layout can look worse
+          than the grid it replaces.
+        */}
+        <div className="gap-x-8 lg:columns-2">
           {ASSET_GROUPS.map((group) => (
-            <section key={group.title} className="flex flex-col gap-2">
+            <section key={group.title} className="mb-6 flex break-inside-avoid flex-col gap-2">
               <header>
                 <h3 className="text-muted text-xs font-semibold tracking-wide uppercase">
                   {group.title}
@@ -162,7 +176,9 @@ export function StepEstate() {
                 patchInventory(
                   event.target.value === ''
                     ? { verbosityOverride: undefined }
-                    : { verbosityOverride: event.target.value as typeof inventory.verbosityOverride },
+                    : {
+                        verbosityOverride: event.target.value as typeof inventory.verbosityOverride,
+                      },
                 )
               }
             />
