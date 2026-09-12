@@ -1338,14 +1338,43 @@ option often does not fit the procurement cap, so categories go unfunded. A
 fourth strategy, `lowest_tco`, was added instead and the existing comparison
 decides between them.
 
-**Open question, for the reviewer.** On the hospital, `cheapest` still wins,
-because it funds all thirteen categories and `lowest_tco` funds fewer. The
-resulting stack asks a two-person security team for **8.58 FTE**. The engine
-says so plainly and offers the managed alternative, and coverage-first is a
-deliberate, documented priority — but a stack nobody can operate is arguably
-not a recommendation. Whether operational capacity should *constrain*
-selection rather than only warn is a product decision and has not been made.
-It is the single biggest open judgement in the engine.
+**The open question, answered 2026-09-12.** On the hospital, `cheapest` wins
+the strategy comparison because it funds all thirteen categories, and the
+resulting stack asks a two-person security team for **8.58 FTE**. Three
+options were put to the reviewer — warn only, constrain selection, or add a
+bundle — and the third was chosen.
+
+**Operable** is now a fourth bundle: same budget, plus a ceiling of
+`securityStaffFte × operableCapacity.utilisation`, ranked on total cost of
+ownership rather than licence price, because a team at the limit of its
+capacity is exactly who cannot absorb a cheap tool that eats an engineer.
+
+| Client | Recommended | Operable |
+|---|---|---|
+| Hospital, 2 FTE | 13 categories, 8.58 FTE, 77.8% | 4 categories, 1.99 FTE, 33.3% |
+| Bank, 4 FTE | 13 categories, 7.08 FTE, 76.7% | 6 categories, 3.98 FTE, 30.0% |
+| Professional services, 0 FTE | 13 categories, 2.82 FTE, 100% | nothing at all |
+
+That last row is the one worth having on a call. A client with no security
+staff cannot operate a free tool either, and the bundle says so rather than
+rendering an empty table.
+
+**Why a bundle and not a constraint**, which was the more obvious answer:
+every `opsBurden` in the catalog is an `analyst_estimate` — 65 of 65, none
+vendor-stated, none measured — and effort is summed across products with no
+overlap, so a thirteen-tool total overstates what one team really carries.
+Constraining the headline recommendation on the least-grounded figure in the
+repo would be over-trusting it, and would shrink what the estate
+demonstrably needs because the client happens to be short-handed. The two
+questions stay separate; the distance between them is the hiring, or the
+managed service, that the recommendation assumes. The bundle states its own
+softness in its rationale, because a planning aid read as a measurement is
+worse than no bundle at all.
+
+An affordable but unstaffable mandatory category reports `ops_capacity`
+rather than a budget cap, and says no budget increase closes it. Money is
+checked first, so capacity is only named as the cause when something in the
+category could actually have been bought.
 
 ## Open defects
 

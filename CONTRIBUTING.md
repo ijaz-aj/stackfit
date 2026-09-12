@@ -249,3 +249,11 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   separate strategies for exactly this reason; do not merge them, and do not
   "fix" `cheapest` to rank on TCO. That breaks budget monotonicity, because at a
   tight cap the lowest-TCO option frequently does not fit the procurement cap.
+- **There are four bundles, not three.** `operable` is the stack the client's
+  own team can run: Recommended's budget plus a ceiling of `securityStaffFte ×
+  operableCapacity.utilisation`, ranked `lowest_tco`. It is deliberately *not* a
+  constraint on Recommended — every `opsBurden` in the catalog is an
+  `analyst_estimate` and FTE is summed with no overlap, so it is the softest
+  number here and must not be allowed to shrink what the estate demonstrably
+  needs. An empty Operable bundle is a correct answer, not a bug: a client with
+  zero security staff cannot operate a free tool either.
