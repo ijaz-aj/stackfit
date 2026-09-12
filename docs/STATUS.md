@@ -1616,3 +1616,24 @@ how much they move the answer:
     `scripts/`) typechecks under `verbatimModuleSyntax`.
 - **Re-run `pnpm audit` before every phase.** This tree will drift; treat a dirty audit as
   a build break (hard rule 10).
+
+## Licensing
+
+**No LICENSE file, deliberately.** Decided 2026-09-12, before the repository was
+made public.
+
+The default position under copyright is that all rights are reserved: the code
+is readable on GitHub and nobody has the right to copy, modify or redistribute
+it. That is the intended position, not an oversight — the catalog is 106 sourced
+prices, the sizing coefficients and the scoring weights, which is the commercial
+substance of the tool rather than the code around it.
+
+The cost is real and accepted: no licence discourages forks, contributions and
+any commercial evaluation, because a company's legal review will not clear a
+dependency it has no right to use. Adding a permissive licence later is a
+one-commit change; withdrawing one is not, which is the asymmetry this rests on.
+
+If that changes, AGPL-3.0 is the option to weigh first — it keeps the work open
+while requiring anyone running a modified version as a service to publish their
+source, which is the only common licence that actually discourages a competitor
+productising the pricing research.
