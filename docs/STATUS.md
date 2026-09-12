@@ -1072,11 +1072,10 @@ Still unverified rather than unanswered:
   charts exist only after client-side hydration. Four sessions of HTTP checking
   have therefore proven nothing at all about them.
 
-  Browser automation has been unavailable in all five sessions — the Claude
-  in Chrome extension reports as not connected, tried again on 2026-09-12
-  during Phase 10. Until someone opens `http://localhost:3000` by hand, the two
-  Recharts figures in §8 are the only part of this application that has never
-  been observed working.
+  Headless browser automation has been unavailable throughout, most recently on
+  2026-09-12 during Phase 10. Until someone opens `http://localhost:3000` by
+  hand, the two Recharts figures in §8 are the only part of this application
+  that has never been observed working.
 
   Phase 10 narrowed what is left to check by eye rather than closing it. The
   cold start was performed from a fresh clone and every page, every export and

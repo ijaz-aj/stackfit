@@ -1,10 +1,12 @@
 # PROJECT SPEC — "StackFit": Security Solution Advisor & Budget Portal
 
-> **How to use this file with Claude Code**
-> 1. `mkdir stackfit && cd stackfit && git init`
-> 2. Save this file as `PROJECT_SPEC.md` in the repo root.
-> 3. Start Claude Code and paste: *"Read PROJECT_SPEC.md. Then answer Section 13 questions back to me, propose a Phase 0 plan, and wait for my approval before writing code."*
-> 4. Work phase by phase (Section 11). Do not let it build all phases in one shot.
+> **How to use this file**
+> 1. It is the requirement, and it is the arbiter when an implementation and an
+>    assumption disagree.
+> 2. Section 13 lists the questions that had to be answered before any code was
+>    written. Section 11 is the phase plan.
+> 3. Work one phase at a time. Building several at once is how a phase ships
+>    without the tests that were supposed to gate it.
 
 ---
 
@@ -335,11 +337,11 @@ Complete one phase, show me the diff and the test output, and **wait for approva
 
 ---
 
-## 14. Standing guardrails for you (Claude Code)
+## 14. Standing guardrails
 
 - Do not fabricate pricing, vendor capabilities, or compliance mappings. Mark unknowns and move on.
 - Do not put business logic in React components. If it computes money or scores, it belongs in `packages/engine`.
 - Do not add a dependency without saying why in the commit message.
-- Do not skip tests for the engine, even when I am rushing you.
-- When the spec is ambiguous, ask one focused question rather than guessing across five files.
+- Do not skip tests for the engine, however tight the deadline is.
+- When the spec is ambiguous, settle it with one focused question rather than guessing across five files.
 - Prefer boring, readable code. This tool will be maintained by a security person, not a full-time frontend engineer.
