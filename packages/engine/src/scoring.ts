@@ -13,6 +13,7 @@ import type {
   CategoryWeights,
   ClientProfile,
   DeploymentFitPolicy,
+  DeploymentMode,
   DeviceClass,
   EstateShape,
   Framework,
@@ -211,6 +212,28 @@ function complianceCoverage(
 }
 
 /**
+ * How each estate shape reads in a sentence.
+ *
+ * The enum value is StackFit's vocabulary, not English — `on_prem_centric` with
+ * its underscores swapped produces "a on prem centric estate". These strings are
+ * wording rather than a tunable assumption, so they stay in code; nothing here
+ * changes a number.
+ */
+const ESTATE_PHRASE: Readonly<Record<EstateShape, string>> = {
+  saas_centric: 'a SaaS-centric estate',
+  cloud_native: 'a cloud-native estate',
+  on_prem_centric: 'a self-hosted estate',
+  hybrid: 'an estate split between owned infrastructure and cloud',
+  ot_heavy: 'an OT-heavy estate',
+  unknown: 'an estate nobody has described yet',
+};
+
+/** `on_prem` reads as `on-prem`, `air_gapped` as `air-gapped`. */
+function modeName(mode: DeploymentMode): string {
+  return mode.replace(/_/g, '-');
+}
+
+/**
  * Deployment fit (§7.3), from what the client asked for — or, when they asked
  * for nothing, from what they actually run.
  *
@@ -230,24 +253,24 @@ function deploymentFit(
 ): { score: number; note: string } {
   const modes = product.supports.deploymentModes;
   const stated = profile.deploymentPreference;
-  const deploysAs = modes.join('/');
+  const deploysAs = modes.map(modeName).join('/');
 
   if (stated !== 'hybrid') {
     if (modes.includes(stated)) {
       return {
         score: policy.statedMatch,
-        note: `Supports the client's preferred ${stated} deployment directly.`,
+        note: `Supports the client's preferred ${modeName(stated)} deployment directly.`,
       };
     }
     if (modes.includes('hybrid')) {
       return {
         score: policy.statedHybridFallback,
-        note: `No native ${stated} mode, but a hybrid deployment can usually be shaped to fit.`,
+        note: `No native ${modeName(stated)} mode, but a hybrid deployment can usually be shaped to fit.`,
       };
     }
     return {
       score: policy.statedMismatch,
-      note: `Deploys as ${deploysAs}, against a stated preference for ${stated}. Workable, but not what they asked for.`,
+      note: `Deploys as ${deploysAs}, against a stated preference for ${modeName(stated)}. Workable, but not what they asked for.`,
     };
   }
 
@@ -260,7 +283,7 @@ function deploymentFit(
       note:
         estateShape === 'unknown'
           ? 'No deployment preference stated and no inventory captured, so this dimension is neutral for every product. An absent answer is not evidence against anything.'
-          : `No deployment preference stated, and a ${estateShape.replace(/_/g, ' ')} estate does not imply one. Scored neutral.`,
+          : `No deployment preference stated, and ${ESTATE_PHRASE[estateShape]} does not imply one. Scored neutral.`,
     };
   }
 
@@ -268,18 +291,18 @@ function deploymentFit(
   if (matched !== undefined) {
     return {
       score: policy.inferredMatch,
-      note: `No preference was stated, so the estate decides: this is a ${estateShape.replace(/_/g, ' ')} environment, and ${matched.replace(/_/g, '-')} deployment suits it. ${affinity?.basis ?? ''}`.trim(),
+      note: `No preference was stated, so the estate decides: this is ${ESTATE_PHRASE[estateShape]}, and ${modeName(matched)} deployment suits it. ${affinity?.basis ?? ''}`.trim(),
     };
   }
   if (modes.includes('hybrid')) {
     return {
       score: policy.inferredHybridFallback,
-      note: `No preference was stated. This deploys hybrid, which fits a ${estateShape.replace(/_/g, ' ')} estate well enough without being the obvious shape for it.`,
+      note: `No preference was stated. This deploys hybrid, which fits ${ESTATE_PHRASE[estateShape]} well enough without being the obvious shape for it.`,
     };
   }
   return {
     score: policy.inferredMismatch,
-    note: `No preference was stated, and a ${estateShape.replace(/_/g, ' ')} estate points at ${prefers.join(' or ').replace(/_/g, '-')} rather than ${deploysAs}. Marked down, not ruled out — this is StackFit reading the asset counts, not something the client said.`,
+    note: `No preference was stated, and ${ESTATE_PHRASE[estateShape]} points at ${prefers.map(modeName).join(' or ')} rather than ${deploysAs}. Marked down, not ruled out — this is StackFit reading the asset counts, not something the client said.`,
   };
 }
 
