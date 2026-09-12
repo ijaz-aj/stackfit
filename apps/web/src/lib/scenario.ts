@@ -187,3 +187,39 @@ export function withCurrency(profile: ClientProfile, currency: ClientProfile['bu
     },
   };
 }
+
+/**
+ * A session name nothing else in the list is already using.
+ *
+ * Two sessions created from the same preset were both called "Retail chain, 40
+ * stores", and two clones of one session were both "… (copy)". The list shows a
+ * name, an industry, a headcount and a currency — every one of which is
+ * identical for same-preset sessions — so the only thing telling them apart was
+ * a timestamp, and the row beside them is a Delete button.
+ *
+ * Numbered rather than dated or hashed: "(2)" is what a person would write, it
+ * stays stable when the list is re-sorted, and it is short enough not to push
+ * the name out of its column. The first one keeps the plain name, so nothing is
+ * renamed retroactively and the common case — one session per client — never
+ * sees a suffix at all.
+ *
+ * Pure, because it is the kind of thing that is easy to get subtly wrong at the
+ * boundaries and tedious to reproduce through the UI.
+ */
+export function uniqueScenarioName(desired: string, taken: readonly string[]): string {
+  const used = new Set(taken.map((name) => name.trim().toLowerCase()));
+  const base = desired.trim();
+
+  if (!used.has(base.toLowerCase())) return base;
+
+  // Starts at 2: the existing one is implicitly 1, which is how a person
+  // numbers a second copy of something.
+  for (let suffix = 2; suffix < 1000; suffix += 1) {
+    const candidate = `${base} (${suffix})`;
+    if (!used.has(candidate.toLowerCase())) return candidate;
+  }
+
+  // A thousand sessions sharing one name is not a case worth a cleverer
+  // scheme, but it must not loop forever or return a duplicate either.
+  return `${base} (${Date.now()})`;
+}

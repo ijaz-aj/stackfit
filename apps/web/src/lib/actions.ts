@@ -16,6 +16,7 @@ import {
   ScenarioId,
   SizingOverrideInput,
   profileFromPreset,
+  uniqueScenarioName,
 } from './scenario';
 
 /**
@@ -57,9 +58,17 @@ export async function createScenario(formData: FormData): Promise<void> {
   const profile = preset === undefined ? NEW_PROFILE : profileFromPreset(preset);
   const inventory = preset === undefined ? NEW_INVENTORY : preset.inventory;
 
+  // Two sessions from the same preset were both called "Retail chain, 40
+  // stores", and the list shows nothing else that differs between them.
+  const taken = await prisma.scenario.findMany({ select: { name: true } });
+  const name = uniqueScenarioName(
+    profile.orgName,
+    taken.map((row) => row.name),
+  );
+
   const created = await prisma.scenario.create({
     data: {
-      name: profile.orgName,
+      name,
       profile: JSON.stringify(profile),
       inventory: JSON.stringify(inventory),
       // Null on a local install with no auth, which is the column's documented
@@ -134,9 +143,14 @@ export async function cloneScenario(formData: FormData): Promise<void> {
   const source = await prisma.scenario.findUnique({ where: { id: parsed.data.id } });
   if (source === null) throw new Error('scenario not found');
 
+  const takenNames = await prisma.scenario.findMany({ select: { name: true } });
+
   const created = await prisma.scenario.create({
     data: {
-      name: `${source.name} (copy)`,
+      name: uniqueScenarioName(
+        `${source.name} (copy)`,
+        takenNames.map((row) => row.name),
+      ),
       profile: source.profile,
       inventory: source.inventory,
       overrides: source.overrides,
