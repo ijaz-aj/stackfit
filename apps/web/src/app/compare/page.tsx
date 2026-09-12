@@ -1,7 +1,7 @@
 import { compareScenarios, type ChangeKind, type ValueChange } from '@stackfit/engine';
 import Link from 'next/link';
 
-import { Badge, Card } from '@/components/ui';
+import { Badge, Card, RationaleList } from '@/components/ui';
 import { prisma } from '@/lib/db';
 import { requireAnalyst } from '@/lib/session.server';
 import { renderCell } from '@/lib/proposal.server';
@@ -225,13 +225,15 @@ export default async function ComparePage({
         title="What changed"
         hint="Stated, not interpreted. What it means is the analyst's call."
       >
-        <ul className="flex flex-col gap-1">
-          {comparison.summary.map((line) => (
-            <li key={line} className="text-muted text-sm leading-snug">
-              {line}
-            </li>
-          ))}
-        </ul>
+        {/*
+          `RationaleList`, not a bare list, for the same reason it is used on
+          the results page: two of these lines carry the engine's leading
+          warning glyph and say a bundle leaves a compliance obligation
+          unfunded. Rendered as plain grey text they sat among six notes about
+          product swaps, which is the wrong weight for the most consequential
+          sentence on the page.
+        */}
+        <RationaleList lines={comparison.summary} />
       </Card>
 
       {/*
