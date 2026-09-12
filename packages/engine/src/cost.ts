@@ -253,11 +253,19 @@ function selectDiscount(
 }
 
 /**
- * Infrastructure to self-host a product, sized from ingest volume and storage.
+ * Infrastructure to self-host a product, sized from what that *category*
+ * actually runs on.
  *
  * Deliberately crude — the point is that the line is non-zero for a self-hosted
  * tool, not that it is accurate to the vCPU. Cloud-delivered products carry no
  * infrastructure cost because the vendor is already charging for theirs.
+ *
+ * ⚠ It used to be sized from `sizing.gbPerDay` for every self-hostable product
+ * in the catalog, whatever it was, and charged every one of them the SIEM's
+ * log-retention storage. A honeypot and a SIEM came out at the same number, and
+ * a bundle with eleven self-hosted products counted one log-volume figure
+ * eleven times. `infra.byCategory` in cost-assumptions.yaml is what each
+ * category is sized on now, and every entry carries its reasoning.
  */
 function infraAnnualFor(
   product: Product,
@@ -275,19 +283,47 @@ function infraAnnualFor(
     return { amount: zeroMoney(currency), vcpu: 0, explanation: undefined };
   }
 
-  const vcpu = Math.max(infra.minimumVcpu, Math.ceil(sizing.gbPerDay / infra.gbPerDayPerVcpu));
+  // The schema requires an entry per category, so a miss here means the config
+  // and the enum have diverged. Falling back to the log-platform sizing is what
+  // this change exists to stop, so fall back to the floor instead.
+  const footprint = infra.byCategory.find((entry) => entry.category === product.category);
+  const minimumVcpu = footprint?.minimumVcpu ?? infra.minimumVcpu;
+
+  const scaled =
+    footprint === undefined
+      ? 0
+      : footprint.vcpuBasis === 'log_ingest'
+        ? sizing.gbPerDay / infra.gbPerDayPerVcpu
+        : (sizing.monitoredAssetCount / 1000) * footprint.vcpuPerThousandAssets;
+
+  const vcpu = Math.max(minimumVcpu, Math.ceil(scaled));
   const ramGb = vcpu * infra.ramGbPerVcpu;
+
+  // Only the platforms that actually hold the logs pay for holding them.
+  const storageTb = footprint?.chargesLogRetentionStorage === true ? sizing.storageTb : 0;
 
   const monthly = sumMoney(currency, [
     scaleMoney(infra.vcpuMonth, vcpu),
     scaleMoney(infra.ramGbMonth, ramGb),
-    scaleMoney(infra.storageTbMonth, sizing.storageTb),
+    scaleMoney(infra.storageTbMonth, storageTb),
   ]);
+
+  const driver =
+    footprint?.vcpuBasis === 'log_ingest'
+      ? `to carry ${sizing.gbPerDay} GB/day of ingest`
+      : footprint !== undefined && footprint.vcpuPerThousandAssets > 0
+        ? `for ${sizing.monitoredAssetCount} monitored asset(s)`
+        : `as a flat ${product.category} footprint, which does not scale with the estate`;
+
+  const storageNote =
+    storageTb > 0
+      ? `, plus ${storageTb} TB of log retention at rest`
+      : ', and no log-retention storage — that is the SIEM\'s bill, not this one\'s';
 
   return {
     amount: scaleMoney(monthly, MONTHS_PER_YEAR),
     vcpu,
-    explanation: `${vcpu} vCPU and ${ramGb} GB RAM to carry ${sizing.gbPerDay} GB/day, plus ${sizing.storageTb} TB at rest.`,
+    explanation: `${vcpu} vCPU and ${ramGb} GB RAM ${driver}${storageNote}.`,
   };
 }
 

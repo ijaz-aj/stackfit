@@ -6,7 +6,7 @@
 
 import { z } from 'zod';
 
-import { Region } from './enums';
+import { ProductCategory, Region } from './enums';
 import { NonNegativeMoney } from './money';
 import { IsoDate, Source } from './pricing';
 
@@ -44,6 +44,57 @@ export type LabourRates = z.infer<typeof LabourRates>;
  * is not the point — the point is that self-hosting is not free, and that the
  * infrastructure line appears next to the zero licence fee.
  */
+/**
+ * What a self-hosted product's compute scales with.
+ *
+ * `log_ingest` is the log-platform shape: vCPU follows GB/day of ingest,
+ * because indexing and search is the work. `monitored_assets` is everything
+ * else: a management server whose load follows the number of things it manages,
+ * not the volume of logs somebody else is collecting.
+ */
+export const InfraVcpuBasis = z.enum(['log_ingest', 'monitored_assets']);
+export type InfraVcpuBasis = z.infer<typeof InfraVcpuBasis>;
+
+/**
+ * The self-hosted footprint of one product category.
+ *
+ * This exists because infrastructure used to be sized from `sizing.gbPerDay`
+ * for every self-hostable product in the catalog, whatever it was. A honeypot,
+ * a credential vault and a SIEM were each charged for four vCPU sized from the
+ * whole estate's log volume, so a bundle with eleven self-hosted products
+ * counted one log-volume figure eleven times. That was defensible when a bundle
+ * held three or four log platforms and stopped being defensible at thirteen
+ * categories.
+ */
+export const InfraCategoryFootprint = z
+  .object({
+    category: ProductCategory,
+    vcpuBasis: InfraVcpuBasis,
+    /**
+     * Floor, however small the estate. Also the whole answer for a category
+     * whose load does not scale with the estate at all — set
+     * `vcpuPerThousandAssets` to 0 and this is the footprint.
+     */
+    minimumVcpu: z.number().int().positive(),
+    /**
+     * Additional vCPU per 1,000 monitored assets, for the `monitored_assets`
+     * basis. Zero means a flat footprint. Ignored for `log_ingest`, which
+     * derives vCPU from ingest instead.
+     */
+    vcpuPerThousandAssets: z.number().nonnegative(),
+    /**
+     * Whether this category pays for the log-retention storage the sizing stage
+     * derives. True for the platforms that actually hold the logs; false for
+     * everything else, because charging a firewall for a SIEM's retention was
+     * the other half of the same error.
+     */
+    chargesLogRetentionStorage: z.boolean(),
+    /** Why these numbers. Mandatory, like every other coefficient in this repo. */
+    basis: z.string().min(1),
+  })
+  .strict();
+export type InfraCategoryFootprint = z.infer<typeof InfraCategoryFootprint>;
+
 export const InfraRates = z
   .object({
     asOf: IsoDate,
@@ -54,11 +105,46 @@ export const InfraRates = z
     gbPerDayPerVcpu: z.number().positive(),
     /** RAM provisioned per vCPU. */
     ramGbPerVcpu: z.number().positive(),
-    /** Minimum footprint for a self-hosted tool, however small the estate. */
+    /**
+     * Fallback floor, used only by a category footprint that does not state its
+     * own. Every category does state one, so this is a backstop rather than a
+     * default anyone relies on.
+     */
     minimumVcpu: z.number().int().positive(),
+    /**
+     * One entry per product category — all of them, checked below. A new
+     * category in the enum must come with a decision about what its self-hosted
+     * footprint costs, rather than silently inheriting a log platform's.
+     */
+    byCategory: z.array(InfraCategoryFootprint),
     sources: z.array(Source).min(1),
   })
-  .strict();
+  .strict()
+  .superRefine((rates, ctx) => {
+    const seen = new Set<string>();
+    rates.byCategory.forEach((entry, index) => {
+      if (seen.has(entry.category)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['byCategory', index, 'category'],
+          message: `duplicate infrastructure footprint for "${entry.category}"`,
+        });
+      }
+      seen.add(entry.category);
+    });
+
+    const missing = ProductCategory.options.filter((category) => !seen.has(category));
+    if (missing.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['byCategory'],
+        message:
+          `no self-hosted infrastructure footprint for ${missing.join(', ')} — ` +
+          'every category needs one, so that adding a category forces the decision ' +
+          'rather than inheriting a log platform\'s sizing by accident',
+      });
+    }
+  });
 export type InfraRates = z.infer<typeof InfraRates>;
 
 /**

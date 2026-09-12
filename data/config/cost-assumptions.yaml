@@ -45,7 +45,168 @@ infra:
     currency: USD
   gbPerDayPerVcpu: 15 # Indexing and search throughput one vCPU sustains.
   ramGbPerVcpu: 4 # Provisioned RAM per vCPU for a search/index workload.
-  minimumVcpu: 4 # Smallest sensible self-hosted footprint, however tiny the estate.
+  minimumVcpu: 4 # Backstop floor. Every category states its own, so nothing uses this.
+
+  # What a self-hosted product in each category actually needs.
+  #
+  # ⚠ WHY THIS EXISTS. Infrastructure used to be sized from `sizing.gbPerDay`
+  # for every self-hostable product, whatever it was. A honeypot, a credential
+  # vault and a SIEM were each charged for 4 vCPU sized from the whole estate's
+  # log volume, so a bundle with eleven self-hosted products counted one
+  # log-volume figure eleven times — on a 300-bed hospital that was about
+  # USD 69,500/yr of infrastructure and thirteen identical segments on the
+  # cost-by-category chart. Defensible when a bundle held three or four log
+  # platforms; wrong at thirteen categories.
+  #
+  # Two bases, one formula each:
+  #   log_ingest       vCPU = max(minimumVcpu, ceil(gbPerDay / gbPerDayPerVcpu))
+  #   monitored_assets vCPU = max(minimumVcpu, ceil(assets / 1000 × perThousand))
+  #
+  # `vcpuPerThousandAssets: 0` means a flat footprint — the minimum is the whole
+  # answer. Only the categories that genuinely hold the logs pay for the
+  # retention storage the sizing stage derives.
+  #
+  # Every figure below is an analyst estimate. They are deliberately modest:
+  # the point of this line has always been that self-hosting is not free, not
+  # that it is accurate to the vCPU.
+  byCategory:
+    - category: siem
+      vcpuBasis: log_ingest
+      minimumVcpu: 4
+      vcpuPerThousandAssets: 0
+      chargesLogRetentionStorage: true
+      basis: >-
+        The log platform itself. Indexing and search is the work, the ingest
+        volume is what drives it, and the retention storage is genuinely its
+        bill — this is the one category the old estate-wide sizing was right
+        about.
+
+    - category: ndr
+      vcpuBasis: log_ingest
+      minimumVcpu: 4
+      vcpuPerThousandAssets: 0
+      chargesLogRetentionStorage: true
+      basis: >-
+        Sized like a SIEM because it is one in all but name: Zeek, Arkime and
+        Security Onion index and retain traffic metadata, and Arkime's full
+        packet capture is the most storage-hungry thing in the catalog. If
+        anything this understates it.
+
+    - category: edr
+      vcpuBasis: monitored_assets
+      minimumVcpu: 2
+      vcpuPerThousandAssets: 0.5
+      chargesLogRetentionStorage: false
+      basis: >-
+        A self-hosted management server whose load follows the number of agents
+        reporting to it. The telemetry it retains is its own, not the SIEM's,
+        and is not sized here.
+
+    - category: vulnerability_management
+      vcpuBasis: monitored_assets
+      minimumVcpu: 2
+      vcpuPerThousandAssets: 0.5
+      chargesLogRetentionStorage: false
+      basis: >-
+        Scanner throughput follows the number of assets to scan. Scan results
+        are small next to log retention, so no retention storage is charged.
+
+    - category: asset_discovery
+      vcpuBasis: monitored_assets
+      minimumVcpu: 1
+      vcpuPerThousandAssets: 0.25
+      chargesLogRetentionStorage: false
+      basis: >-
+        Lighter than a scanner — discovery sweeps and an inventory database.
+        Nmap on a small VM is the honest picture at the bottom of this
+        category.
+
+    - category: iam
+      vcpuBasis: monitored_assets
+      minimumVcpu: 2
+      vcpuPerThousandAssets: 0.25
+      chargesLogRetentionStorage: false
+      basis: >-
+        An identity provider is request-driven rather than volume-driven, and
+        needs a highly available pair more than it needs cores. Two vCPU is the
+        floor because one is not a pair.
+
+    - category: pam
+      vcpuBasis: monitored_assets
+      minimumVcpu: 2
+      vcpuPerThousandAssets: 0.25
+      chargesLogRetentionStorage: false
+      basis: >-
+        Same shape as an identity provider. ⚠ Session recording is the
+        exception and is not modelled: a product recording every privileged
+        session stores a great deal, and no sizing figure here captures it.
+
+    - category: email_security
+      vcpuBasis: monitored_assets
+      minimumVcpu: 2
+      vcpuPerThousandAssets: 0.25
+      chargesLogRetentionStorage: false
+      basis: >-
+        A mail gateway scales on message volume, which the sizing stage does not
+        derive; mailbox count via monitored assets is the closest available
+        proxy and is a weak one. Quarantine storage is not modelled.
+
+    - category: ngfw
+      vcpuBasis: monitored_assets
+      minimumVcpu: 2
+      vcpuPerThousandAssets: 0
+      chargesLogRetentionStorage: false
+      basis: >-
+        Flat, and small. A self-hosted OPNsense or pfSense is a modest VM or a
+        modest box. ⚠ The appliance itself is capex the cost engine has no line
+        for at all — see the header of data/catalog/ngfw.yaml.
+
+    - category: soar
+      vcpuBasis: monitored_assets
+      minimumVcpu: 2
+      vcpuPerThousandAssets: 0
+      chargesLogRetentionStorage: false
+      basis: >-
+        Flat. Automation load follows how many workflows fire, not how large the
+        estate is, and a small estate with chatty automation will exceed a large
+        quiet one.
+
+    - category: backup
+      vcpuBasis: monitored_assets
+      minimumVcpu: 2
+      vcpuPerThousandAssets: 0.5
+      chargesLogRetentionStorage: false
+      basis: >-
+        Compute follows the number of workloads being protected. ⚠ BACKUP
+        STORAGE IS NOT MODELLED, and it is the dominant cost of a backup
+        product. The sizing stage derives log-retention TB and nothing about
+        how much data the client actually holds, and charging a backup server
+        for a SIEM's retention — which is what happened before this table
+        existed — is a wrong number rather than a missing one. Quote storage
+        separately, exactly as data/catalog/backup.yaml says for Azure Backup.
+
+    - category: deception
+      vcpuBasis: monitored_assets
+      minimumVcpu: 1
+      vcpuPerThousandAssets: 0
+      chargesLogRetentionStorage: false
+      basis: >-
+        The smallest footprint in the catalog, and deliberately so. A decoy is a
+        small VM pretending to be a server; OpenCanary runs on almost nothing.
+        T-Pot is the outlier — twenty-plus containers and an Elastic stack — and
+        this understates it.
+
+    - category: mdr
+      vcpuBasis: monitored_assets
+      minimumVcpu: 1
+      vcpuPerThousandAssets: 0
+      chargesLogRetentionStorage: false
+      basis: >-
+        Present for completeness only. Every MDR product in the catalog is a
+        managed service with no on-premises deployment mode, so this footprint
+        is never charged — the infrastructure is the provider's, which is what
+        the client is paying them for.
+
   sources:
     - url: https://aws.amazon.com/ec2/pricing/on-demand/
       asOf: '2026-09-09'

@@ -341,6 +341,26 @@ interface SelectionOptions {
    * Recommended and quantified a gap of zero.
    */
   readonly objective: 'value_density' | 'cheapest' | 'best_fit';
+  /**
+   * What order the *categories* are filled in. `objective` decides which
+   * candidate wins inside a category; this decides which categories get a
+   * chance at the money first, and the two are independent.
+   *
+   * `weight` is plain risk-reduction order, which is the intuitive reading of
+   * §7.4 and what every bundle used until this existed.
+   *
+   * `weight_per_cost` divides that weight by what the category's cheapest
+   * option actually costs. It exists because plain weight order is a greedy
+   * knapsack and loses to the classic counterexample: on a 500-asset estate a
+   * USD 30,000 cap funded *less* risk-reduction than a USD 20,000 cap, because
+   * the extra money reached `mdr` (weight 65, USD 17,280) and buying it
+   * starved `email_security` (weight 53, USD 1,080) and `soar` (weight 45,
+   * USD 1,080) — 65 bought, 98 lost.
+   *
+   * Neither order is right on its own, which is why `buildRecommended` runs
+   * both and keeps whichever bundle is actually better.
+   */
+  readonly categoryOrder?: 'weight' | 'weight_per_cost';
 }
 
 /**
@@ -376,11 +396,42 @@ function select(
   let spend = zeroMoney(currency);
   let oneTime = zeroMoney(currency);
 
-  // Mandatory first, then the rest by category weight. Within each pass the
-  // best candidate for the category wins.
+  // Mandatory first, then the rest. Within each pass the best candidate for the
+  // category wins; `categoryOrder` decides which categories are offered the
+  // remaining money first.
+  //
+  // The cheapest candidate in a category stands in for what the category
+  // costs. It is the right representative for this: the question being asked is
+  // "how much risk-reduction does the next pound buy", and the cheapest option
+  // is the one that answers it.
+  const cheapestSpendByCategory = new Map<ProductCategory, number>();
+  for (const candidate of candidates) {
+    const spend = candidate.cost.procurementAnnual.amountMinor;
+    const current = cheapestSpendByCategory.get(candidate.category);
+    if (current === undefined || spend < current) {
+      cheapestSpendByCategory.set(candidate.category, spend);
+    }
+  }
+
+  const orderCategories = (group: readonly CategoryRanking[]): CategoryRanking[] => {
+    if (options.categoryOrder !== 'weight_per_cost') return [...group];
+    return [...group].sort((a, b) => {
+      // A free category is infinitely efficient and should go first, which is
+      // also the correct answer: it costs nothing to fund.
+      const perCost = (ranking: CategoryRanking) => {
+        const spend = cheapestSpendByCategory.get(ranking.category);
+        if (spend === undefined) return 0;
+        return spend === 0 ? Number.POSITIVE_INFINITY : ranking.weight / spend;
+      };
+      // Weight breaks the tie, so the order stays deterministic and still
+      // prefers the more valuable category when two cost the same.
+      return perCost(b) - perCost(a) || b.weight - a.weight;
+    });
+  };
+
   const passes: readonly CategoryRanking[][] = [
-    rankings.filter((ranking) => ranking.mandatory && options.eligible(ranking)),
-    rankings.filter((ranking) => !ranking.mandatory && options.eligible(ranking)),
+    orderCategories(rankings.filter((ranking) => ranking.mandatory && options.eligible(ranking))),
+    orderCategories(rankings.filter((ranking) => !ranking.mandatory && options.eligible(ranking))),
   ];
 
   for (const pass of passes) {
@@ -881,6 +932,15 @@ function buildRecommended(
     objective: 'cheapest',
   });
 
+  // The same cheapest-option-per-category fill, but offering the money to
+  // categories in order of risk-reduction per pound. See `categoryOrder`.
+  const byWeightPerCost = buildBundle('recommended', inputs, rankings, candidates, {
+    ignoreBudget: false,
+    eligible,
+    objective: 'cheapest',
+    categoryOrder: 'weight_per_cost',
+  });
+
   const coveredWeight = (bundle: Bundle): number =>
     bundle.selections.reduce((sum, selection) => sum + selection.categoryWeight, 0);
 
@@ -908,65 +968,91 @@ function buildRecommended(
     return { mandatory, total: met.size };
   };
 
-  const cheapest = controlsMet(byCheapest);
-  const density = controlsMet(byDensity);
-
-  // Lexicographic, in the order a client would defend the stack in:
-  //
-  //   1. mandates met    — an obligation the analyst ticked, and the framework
-  //                        marked mandatory. Nothing outranks this.
-  //   2. weighted need   — how much of the estate's risk the stack addresses.
-  //   3. controls met    — the remaining in-scope controls, mandatory or not.
-  //
-  // Density is the final tie-break, so an unregulated client (both control
-  // counts zero, both ties) keeps the old behaviour and the better-product
-  // bias exactly as before.
   const CHEAPEST_RATIONALE =
     'Built from the cheapest acceptable option in each category rather than the highest value ' +
     'density: at this budget, ranking on value alone let one expensive product take the ' +
     'money and leave whole categories unfunded. §7.4 step 3 calls for exactly this when the ' +
     'budget is tight.';
 
-  if (cheapest.mandatory !== density.mandatory) {
-    // Explained in both directions. When this rule rejects the broader stack
-    // the client is giving up a funded category, and being told why is the
-    // difference between a defensible recommendation and an arbitrary one.
-    const [winner, winnerMandates, loserMandates] =
-      cheapest.mandatory > density.mandatory
-        ? ([byCheapest, cheapest.mandatory, density.mandatory] as const)
-        : ([byDensity, density.mandatory, cheapest.mandatory] as const);
+  const WEIGHT_PER_COST_RATIONALE =
+    'Categories were funded in order of risk-reduction per pound rather than risk-reduction ' +
+    'alone. Filling in plain weight order is a greedy knapsack, and at this budget it spent the ' +
+    'money on one expensive category and starved two cheaper ones worth more between them.';
 
-    return {
-      ...winner,
-      rationale: [
-        ...winner.rationale,
-        `Chosen over the alternative stack because it meets more of the client's mandatory ` +
-          `obligations: ${winnerMandates} mandated control(s) against ${loserMandates}. A funded ` +
-          `category the selected frameworks do not require never outranks a control they do.`,
-      ],
-    };
-  }
+  /**
+   * The three things a stack is judged on, in the order a client would defend
+   * it in:
+   *
+   *   1. mandates met  — an obligation the analyst ticked and the framework
+   *                      marked mandatory. Nothing outranks this.
+   *   2. weighted need — how much of the estate's risk the stack addresses.
+   *   3. controls met  — the remaining in-scope controls, mandatory or not.
+   */
+  const measure = (bundle: Bundle) => ({ ...controlsMet(bundle), weight: coveredWeight(bundle) });
 
-  if (coveredWeight(byCheapest) !== coveredWeight(byDensity)) {
-    if (coveredWeight(byCheapest) > coveredWeight(byDensity)) {
-      return { ...byCheapest, rationale: [...byCheapest.rationale, CHEAPEST_RATIONALE] };
-    }
-    return byDensity;
-  }
+  // Density leads the list, so it wins every tie and keeps the better-product
+  // bias it has always had. An unregulated client with one affordable stack
+  // therefore sees exactly what they saw before any of this existed.
+  // Density leads the list, so it wins every tie and keeps the better-product
+  // bias it has always had. An unregulated client with one affordable stack
+  // therefore sees exactly what they saw before any of this existed.
+  const strategies: readonly { readonly bundle: Bundle; readonly note: string | undefined }[] = [
+    { bundle: byDensity, note: undefined },
+    { bundle: byCheapest, note: CHEAPEST_RATIONALE },
+    { bundle: byWeightPerCost, note: WEIGHT_PER_COST_RATIONALE },
+  ];
 
-  if (cheapest.total > density.total) {
-    return {
-      ...byCheapest,
-      rationale: [
-        ...byCheapest.rationale,
-        `Both strategies meet the same mandates and fund the same categories, so the one ` +
-          `satisfying more of the selected frameworks won: ${cheapest.total} in-scope control(s) ` +
-          `against ${density.total}. Spending more must not cover less.`,
-      ],
-    };
-  }
+  const measured = strategies.map((strategy) => ({ ...strategy, score: measure(strategy.bundle) }));
 
-  return byDensity;
+  type Measured = (typeof measured)[number];
+  const beats = (a: Measured, b: Measured): boolean =>
+    a.score.mandatory > b.score.mandatory ||
+    (a.score.mandatory === b.score.mandatory &&
+      (a.score.weight > b.score.weight ||
+        (a.score.weight === b.score.weight && a.score.total > b.score.total)));
+
+  const winner = measured.reduce((best, candidate) => (beats(candidate, best) ? candidate : best));
+
+  // The best stack the winner *strictly* beats. Strategies that tie it are
+  // excluded on purpose: two strategies often reach the same bundle by
+  // different routes, and comparing the winner against its own twin would
+  // report that nothing was decided.
+  const beaten = measured.filter((entry) => beats(winner, entry));
+  const runnerUp =
+    beaten.length === 0
+      ? undefined
+      : beaten.reduce((best, candidate) => (beats(candidate, best) ? candidate : best));
+
+  // Say which of the three tests the winner actually won on, measured against
+  // the best stack it beat. Explained in both directions on purpose: when this
+  // rejects a broader stack the client is giving up a funded category, and
+  // being told why is the difference between a defensible recommendation and
+  // an arbitrary one.
+  const decisive =
+    runnerUp === undefined
+      ? undefined
+      : winner.score.mandatory > runnerUp.score.mandatory
+        ? `Chosen over the alternative stack because it meets more of the client's mandatory ` +
+          `obligations: ${winner.score.mandatory} mandated control(s) against ` +
+          `${runnerUp.score.mandatory}. A funded category the selected frameworks do not ` +
+          `require never outranks a control they do.`
+        : winner.score.weight === runnerUp.score.weight && winner.score.total > runnerUp.score.total
+          ? `Both strategies meet the same mandates and fund the same categories, so the one ` +
+            `satisfying more of the selected frameworks won: ${winner.score.total} in-scope ` +
+            `control(s) against ${runnerUp.score.total}. Spending more must not cover less.`
+          : undefined;
+
+  const added = [
+    ...(winner.note === undefined ? [] : [winner.note]),
+    ...(decisive === undefined ? [] : [decisive]),
+  ];
+
+  if (added.length === 0) return winner.bundle;
+
+  return {
+    ...winner.bundle,
+    rationale: [...winner.bundle.rationale, ...added],
+  };
 }
 
 /** Step 5: the three bundles, each with its MSSP alternative. */

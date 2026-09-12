@@ -761,6 +761,60 @@ describe('regressions', () => {
     expect(recommended.selections.map((selection) => selection.productId)).toEqual(['narrow-iam']);
   });
 
+  it('does not let one expensive category starve two cheaper ones worth more', () => {
+    // The classic greedy-knapsack failure, and the third distinct way this
+    // stage has managed to buy less with more money.
+    //
+    // The fill walks categories in weight order, so once an expensive high-
+    // weight category becomes affordable it takes the money and the cheaper
+    // categories below it go unfunded. Found on the §12.3 estate after the
+    // per-category infrastructure change made the cheap categories cheaper: a
+    // USD 30,000 cap funded LESS weighted risk-reduction than a USD 20,000 cap,
+    // because the extra money reached mdr (weight 65, USD 17,280) and buying it
+    // starved email_security (53) and soar (45). 65 bought, 98 lost.
+    //
+    // buildRecommended now also fills in risk-reduction-per-pound order and
+    // keeps whichever bundle covers more.
+    // Three vendors, not one: the step-4 suite discount would otherwise take
+    // 10% off the second and third picks and make all three affordable, which
+    // is a different behaviour and not the one under test.
+    const dearHighWeight = product('dear-mdr', 'mdr', 17_000_00, 'Dear Inc.');
+    const cheapA = product('cheap-email', 'email_security', 500_00, 'Cheap A Inc.');
+    const cheapB = product('cheap-soar', 'soar', 500_00, 'Cheap B Inc.');
+
+    const weights = {
+      mdr: 65,
+      email_security: 53,
+      soar: 45,
+    } as Record<ProductCategory, number>;
+
+    const inputs: PortfolioInputs = {
+      ...buildInputs({
+        // Tight enough that the trade-off actually bites: weight order buys
+        // mdr and has USD 200 left, which buys neither cheap category. Per-pound
+        // order buys both cheap ones for USD 1,000 and cannot then afford mdr.
+        products: [dearHighWeight, cheapA, cheapB],
+        annualCap: 17_200_00,
+      }),
+    };
+    // Rank the three categories the way the real weights did: mdr first.
+    const ranked: PortfolioInputs = {
+      ...inputs,
+      relevance: inputs.relevance.map((entry) =>
+        weights[entry.category] === undefined
+          ? { ...entry, applicable: false, weight: 0, estateMultiplier: 0 }
+          : { ...entry, weight: weights[entry.category] },
+      ),
+    };
+
+    const { recommended } = buildPortfolio(ranked);
+    const funded = recommended.selections.map((selection) => selection.productId).sort();
+
+    // Both cheap categories, not the single expensive one: 98 beats 65.
+    expect(funded).toEqual(['cheap-email', 'cheap-soar']);
+    expect(recommended.rationale.join(' ')).toContain('risk-reduction per pound');
+  });
+
   it('quotes an empty bundle no residual', () => {
     const inputs = buildInputs({ products: [] });
     const { recommended } = buildPortfolio(inputs);

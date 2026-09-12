@@ -1,4 +1,4 @@
-import type { Product, ProductTier } from '@stackfit/schema';
+import type { Product, ProductCategory, ProductTier } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
 import { computeProductCost, computeSizing } from '../src/index';
@@ -226,6 +226,51 @@ describe('computeProductCost — the honest TCO (hard rule 8)', () => {
 
     expect(selfHostedCost.infraAnnual.amountMinor).toBeGreaterThan(0);
     expect(saasCost.infraAnnual.amountMinor).toBe(0);
+  });
+
+  it('sizes infrastructure from what the category runs on, not from log volume', () => {
+    // Was: every self-hostable product was sized from sizing.gbPerDay and
+    // charged the SIEM's log-retention storage, so a honeypot and a SIEM came
+    // out at exactly the same number. A bundle with eleven self-hosted products
+    // counted one log-volume figure eleven times — on a 300-bed hospital that
+    // was about USD 69,500/yr of infrastructure, and thirteen identical
+    // segments on the cost-by-category chart.
+    const selfHosted = (category: ProductCategory) => ({
+      ...buildProduct({ pricing: [{ model: 'zero_licence' }], deploymentModes: ['on_prem'] }),
+      category,
+    });
+
+    const infraFor = (category: ProductCategory) => {
+      const product = selfHosted(category);
+      return computeProductCost(product, firstTier(product), sizing, profile, inputs).infraAnnual
+        .amountMinor;
+    };
+
+    // The fixture gives siem and ndr the log-ingest basis and everything else a
+    // flat floor, which is the shape of the committed config.
+    expect(infraFor('siem')).toBeGreaterThan(infraFor('deception'));
+    expect(infraFor('ndr')).toBeGreaterThan(infraFor('deception'));
+
+    // And a non-log category pays nothing toward log retention, which was the
+    // other half of the same error.
+    expect(infraFor('deception')).toBe(infraFor('pam'));
+    expect(infraFor('deception')).toBeGreaterThan(0);
+  });
+
+  it('says in the rationale which quantity it sized the infrastructure from', () => {
+    // A number with no explanation does not ship (hard rule 5), and "4 vCPU"
+    // means nothing without "to carry what".
+    const siem = { ...buildProduct({ pricing: [{ model: 'zero_licence' }], deploymentModes: ['on_prem'] }), category: 'siem' as const };
+    const decoy = { ...buildProduct({ pricing: [{ model: 'zero_licence' }], deploymentModes: ['on_prem'] }), category: 'deception' as const };
+
+    const siemRationale = computeProductCost(siem, firstTier(siem), sizing, profile, inputs).rationale.join('\n');
+    const decoyRationale = computeProductCost(decoy, firstTier(decoy), sizing, profile, inputs).rationale.join('\n');
+
+    expect(siemRationale).toContain('GB/day of ingest');
+    expect(siemRationale).toContain('log retention');
+
+    expect(decoyRationale).not.toContain('GB/day of ingest');
+    expect(decoyRationale).toContain('no log-retention storage');
   });
 });
 

@@ -137,6 +137,19 @@ export function buildCostAssumptions(overrides: Partial<CostAssumptions> = {}): 
       gbPerDayPerVcpu: 15,
       ramGbPerVcpu: 4,
       minimumVcpu: 4,
+      // Every category, because the schema insists — a fixture that could skip
+      // one would let the engine fall back to a log platform's sizing without
+      // any test noticing. siem and ndr keep the log-platform shape; everything
+      // else is a flat floor here, so a fixture product's infra does not move
+      // when an unrelated sizing coefficient changes.
+      byCategory: ProductCategory.options.map((category) => ({
+        category,
+        vcpuBasis: category === 'siem' || category === 'ndr' ? ('log_ingest' as const) : ('monitored_assets' as const),
+        minimumVcpu: 4,
+        vcpuPerThousandAssets: 0,
+        chargesLogRetentionStorage: category === 'siem' || category === 'ndr',
+        basis: 'test fixture',
+      })),
       sources: [{ url: 'https://example.com/infra', asOf: '2026-01-01' }],
     },
     sources: [],
