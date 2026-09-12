@@ -104,3 +104,23 @@ roadmap:
     moves the plan — halve it and the roadmap roughly doubles in length. Both
     are worth confirming against the client's real delivery capacity on the
     call, because a roadmap nobody can staff is a roadmap that slips.
+
+# What the Operable bundle treats as this team's real capacity to run tools.
+#
+# ⚠ Two things about the figure this constrains on, stated here because they
+# decide how much weight the bundle deserves:
+#   - every opsBurden in data/catalog is an analyst_estimate — 65 of 65, none
+#     vendor-stated and none measured;
+#   - FTE is summed across products with no overlap, so a thirteen-tool stack
+#     overstates what one team actually carries. Modelling the overlap would
+#     mean inventing a coefficient nobody can source.
+# That is why operability shapes a fourth bundle rather than constraining the
+# Recommended one.
+operableCapacity:
+  utilisation: 1.0
+  basis: >-
+    The whole stated team, by default. An analyst who writes "two security
+    staff" means two, and discounting that to 1.4 would be StackFit inventing a
+    fact about the client's own staffing. Lower it for a team that also carries
+    incident response, audit and project work — which is most of them — and the
+    Operable bundle shrinks accordingly.
