@@ -9,7 +9,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "db:push": "prisma db push",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "seed": "tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "7.10.0",

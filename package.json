@@ -21,7 +21,8 @@
     "catalog:staleness": "tsx scripts/catalog-staleness.ts",
     "prices:refresh": "tsx scripts/refresh-prices.ts",
     "db:push": "pnpm --filter @stackfit/web db:push",
-    "db:generate": "pnpm --filter @stackfit/web db:generate"
+    "db:generate": "pnpm --filter @stackfit/web db:generate",
+    "seed": "pnpm --filter @stackfit/web seed"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
