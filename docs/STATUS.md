@@ -1044,8 +1044,20 @@ its sources and says NOT VENDOR-PUBLISHED in its own notes.
   Elastic before it reaches a proposal.
 
 Still unverified rather than unanswered:
-- **The dashboard has never been looked at in a browser, and the charts cannot
-  be checked any other way.** Verified again on 2026-09-12 against the finished
+- ~~**The charts have never been observed working.**~~ **Closed 2026-09-12.**
+  They render into jsdom in `apps/web/test/charts.test.tsx`, which verifies both
+  fixes that were made blind: the y-axis gives every tick a distinct label
+  (checked through Recharts' own tick generation), and all thirteen category
+  labels reach the axis rotated. Both charts also survive an empty bundle and
+  render in all three currencies.
+
+  ⚠ Two things remain browser-only, and the test names both. jsdom measures no
+  text, so whether thirteen angled labels *overlap* is still unanswerable. And
+  `<LabelList>` paints nothing headlessly — a bar label needs the bar's computed
+  geometry — so the cash-flow bar labels are asserted by a deliberately skipped
+  test rather than an absent one.
+
+- **The dashboard as a whole has never been looked at in a browser.** Verified again on 2026-09-12 against the finished
   65-product catalog: `pnpm dev` starts clean, the home page, wizard and results
   pages all return 200, the dev server logs zero errors or warnings, and the
   results page renders every one of the seven §8 sections with all thirteen
