@@ -113,7 +113,7 @@ export function StepOrganisation({
           <Field
             label="Security staff (FTE)"
             htmlFor="securityStaffFte"
-            hint="Zero is a valid answer, and the one that changes the recommendation most."
+            hint="Zero is a valid answer, and the one that changes the recommendation most. Presets run well under the published benchmark of 0.9 to 1.5 per 100 staff."
           >
             <NumberInput
               id="securityStaffFte"

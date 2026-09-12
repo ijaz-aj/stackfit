@@ -1421,14 +1421,40 @@ What follows is the honest scorecard, including where the sources are weak.
 
 **Open, and deliberately not acted on yet.**
 
-- ⚠ **Preset security staffing is far below published benchmarks.** IANS
-  Research's 2025 data puts security headcount at about 1.5 FTE per 100
-  employees below $50M revenue and 0.9 per 100 at $600M–$1B. The hospital
-  preset states 2 FTE for 1,400 staff: 0.14 per 100, six to ten times below
-  benchmark. Healthcare genuinely is understaffed and the preset may be
-  realistic, but it is currently an unexamined assumption rather than a sourced
-  one. Deciding this needs the reviewer: it changes every preset's Operable
-  bundle.
+- ~~⚠ **Preset security staffing is far below published benchmarks.**~~
+  **Closed 2026-09-12, and the numbers mostly stand.** The IANS 2025 figure is
+  real (1.5 FTE per 100 employees below $50M revenue, 0.9 per 100 at $600M–$1B)
+  but it bands by *revenue* and a preset carries *headcount*. An Indian hospital
+  with 1,400 staff and a US company with 1,400 staff are nowhere near the same
+  revenue, so reading a per-employee number out of a revenue band and applying
+  it here is arithmetic dressed as evidence. No equivalent published figure for
+  the Indian mid-market exists; the one headcount-based ratio that turns up
+  (one security specialist per 5–10 IT staff, which all six presets already
+  satisfy) is an uncited industry convention, not a survey. And raising the
+  figures would shrink the staffing gap the Operable bundle exists to show,
+  which is the tool hiding its own most useful finding.
+  What did change: every preset now carries a mandatory `staffingBasis`,
+  because `basis` explained camera counts across all six and said nothing about
+  the two figures that decide whether a client can operate the stack. The
+  benchmark, the divergence and the three reasons for it are stated at the head
+  of the preset file with the source and the date it was read.
+- **One preset was internally inconsistent, and that is fixed.**
+  `manufacturer-two-plants` claimed a business-hours SOC and one person to
+  staff it. Forty hours of coverage a week is exactly one FTE of desk time
+  before any leave, training or incident work, so a single hire means the SOC
+  is dark whenever they are away. Now 2, which is the floor at which the claim
+  holds. Measured effect: the Operable bundle's capacity goes from 0.96 to 1.98
+  FTE and the recommended stack's requirement moves from 6.40 to 7.24, because
+  ops-fit scoring changes which products are reachable. The gap the bundle
+  exists to show is still wide, which is the point.
+- ⚠ **`hasSoc` is captured, stored, diffed and never read by the engine.**
+  Found while checking the staffing figures. `SocPosture` is on `ClientProfile`
+  and appears in `compare.ts` as a text diff; no stage of the pipeline consults
+  it. A client who states a 24/7 SOC and one who states none get the same
+  recommendation. It is the same latent shape as `termYears`: an input the
+  intake asks for, the analyst answers honestly, and nothing downstream uses.
+  Either it should weight the operability dimension or the field should say it
+  is recorded for the write-up only.
 - ⚠ **Domain-controller and workstation EPS look understated.** Published
   rules of thumb cite 300–500 EPS for a domain controller and 1–5 for a
   workstation, against our 25 and 0.2. Some of the gap closes against our

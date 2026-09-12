@@ -11,6 +11,35 @@
 #
 # Budget caps are procurement spend: licence, support and infrastructure: to
 # match what the engine constrains. Salary is not procurement.
+#
+# ⚠ On security headcount, and why it is not raised to the published benchmark.
+#
+# IANS Research and Artico Search put security staffing at about 1.5 FTE per 100
+# employees below $50M revenue and 0.9 per 100 at $600M to $1B (2025 benchmark).
+# Every preset here is under that, the hospital by roughly ten times. Three
+# reasons it stays that way, all of which a reviewer is free to overturn:
+#
+#   1. That benchmark bands by *revenue*, and a preset carries headcount. The
+#      two are not interchangeable across markets: an Indian hospital with 1,400
+#      staff and a US company with 1,400 staff are nowhere near the same
+#      revenue, so reading a per-employee figure out of a revenue band and
+#      applying it here would be arithmetic dressed as evidence.
+#   2. The respondents are overwhelmingly North American. No equivalent
+#      published figure for the Indian mid-market could be found, and the one
+#      headcount-based ratio that turns up (one security specialist per 5 to 10
+#      IT staff, which every preset here already satisfies) is an uncited
+#      industry convention rather than a survey.
+#   3. Raising them would hide the finding. The Operable bundle exists to show a
+#      client that the recommended stack needs more people than they have.
+#      Inflating the assumed headcount shrinks exactly the gap the tool was
+#      built to put in front of them.
+#
+# What these figures are, then: analyst estimates of a typical understaffed
+# client, stated per preset in `staffingBasis`, and the first thing to correct
+# on a real call. They are not a claim about what good looks like.
+#
+# Source: https://www.iansresearch.com/resources/press-releases/detail/ians-research-and-artico-search-release-security-budget-benchmark-report
+# Read on 2026-09-12.
 
 notes: >-
   Six shapes chosen to span the paths the engine actually treats differently:
@@ -28,6 +57,13 @@ presets:
       staff PCs, the server estate and the e-commerce front end. Staff count is
       40 stores x 12 plus 120 at head office. The annual cap is what a retailer
       this size typically has room for once the network refresh is paid for.
+    staffingBasis: >-
+      6 IT for 600 staff is one per 100, the thin end of the usual range and
+      normal for retail, where head office carries the whole estate and stores
+      have none. The 1 security FTE is an analyst estimate: a single person who
+      owns PCI evidence, vendor questionnaires and whatever the MSP escalates.
+      Below the IANS 2025 benchmark of 1.5 per 100 employees under $50M
+      revenue, and deliberately so, see the note at the head of this file.
     profile:
       industry: retail
       region: in
@@ -78,6 +114,12 @@ presets:
       workloads and a 24-node Kubernetes estate. Service accounts outnumber
       people, which is normal here and is why identity ranks first for this
       shape.
+    staffingBasis: >-
+      4 IT for 120 staff is one per 30, which is the tech-sector ratio rather
+      than the general one, and right for a company whose staff are engineers
+      with their own laptops. The 1 security FTE is the first security hire,
+      usually made for the SOC 2 audit and usually still the only one at this
+      size. Closest of the six to the IANS benchmark, at 0.83 per 100.
     profile:
       industry: saas
       region: us
@@ -124,12 +166,21 @@ presets:
       520 office PCs across 850 staff, because line workers share terminals.
       Segmentation is the open question this shape always raises, which is why
       the firewall and switch counts matter more here than the endpoint count.
+    staffingBasis: >-
+      9 IT for 850 staff is one per 94, normal for manufacturing, where most of
+      the headcount is on a line and not at a desk. 2 security FTE, not 1: the
+      preset also states a business-hours SOC, and one person cannot staff one.
+      40 hours of coverage a week is exactly one FTE of desk time before any
+      leave, training or incident work, so a single hire means the SOC is dark
+      whenever they are away. Two is the floor at which the claim holds. The
+      figure remains an analyst estimate, and is well under the IANS
+      benchmark.
     profile:
       industry: manufacturing
       region: eu
       employeeCount: 850
       itStaffCount: 9
-      securityStaffFte: 1
+      securityStaffFte: 2
       hasSoc: business_hours
       riskTolerance: medium
       dataSensitivity: internal
@@ -175,6 +226,15 @@ presets:
       than with people. 1,600 connected devices covers infusion pumps, imaging,
       monitors and cameras. The class that cannot take an agent, which is the
       finding this preset exists to produce.
+    staffingBasis: >-
+      14 IT for 1,400 staff is one per 100, thin for the device count but
+      typical of hospitals, where clinical engineering owns much of the estate
+      and IT owns the rest. 2 security FTE against a business-hours SOC is the
+      minimum that gives any continuity. At 0.14 per 100 employees this is the
+      furthest of the six from the IANS 2025 figure, roughly ten times below
+      it, and it is the preset the reviewer should challenge first. It is kept
+      because healthcare is genuinely understaffed and because raising it would
+      shrink the staffing gap the Operable bundle exists to show.
     profile:
       industry: healthcare
       region: us
@@ -227,6 +287,16 @@ presets:
       cameras, a firewall, a router, 3 switches. Privileged and service account
       counts are high on purpose: core banking, middleware and reconciliation
       jobs each hold their own, and they are what size the PAM line.
+    staffingBasis: >-
+      25 IT for 1,800 staff is one per 72, the mainstream ratio, and banks sit
+      there because the branch estate is uniform and centrally managed. 4
+      security FTE reads low for a regulated bank until the outsourced SOC is
+      counted: the RBI framework requires 24/7 monitoring and a full-time CISO
+      who does not report to the Head of IT, and this client meets the first
+      through a provider. The 4 are that mandated CISO plus three who run
+      evidence, access recertification and the provider relationship. A bank
+      running its own 24/7 SOC could not do it with 4, since round-the-clock
+      single-analyst coverage alone is 4.2 FTE before leave.
     profile:
       industry: bfsi
       region: in
@@ -279,6 +349,13 @@ presets:
       as valid and very important, and the one where the managed alternative
       usually wins. Open-source-first is set deliberately: at this size the
       question is always whether free tools are actually cheaper.
+    staffingBasis: >-
+      1 IT for 45 consultants, and nobody whose job is security. Stated as 0
+      rather than left blank, because 0 is the answer and the one that changes
+      the recommendation most: every hour of operational effort in the stack
+      has to come from that single IT hire or from a provider. This is the case
+      §5.1 calls out as valid and important, and the one where the managed
+      alternative usually wins.
     profile:
       industry: other
       region: us

@@ -35,6 +35,21 @@ export const ScenarioPreset = z
      * nobody can correct.
      */
     basis: z.string().min(1),
+    /**
+     * Where the *staffing* came from, separately and also mandatory.
+     *
+     * `basis` above explained the asset counts in detail across all six
+     * presets and said nothing whatsoever about `itStaffCount` or
+     * `securityStaffFte`, which are the two figures on a preset that decide
+     * whether the recommended stack is one this client could actually operate.
+     * They were the exact thing the sentence above was written to prevent, and
+     * they got there by being in a different part of the same object.
+     *
+     * Split out rather than folded into `basis` so it cannot be satisfied by a
+     * paragraph about firewalls and camera counts that happens to be long
+     * enough.
+     */
+    staffingBasis: z.string().min(1),
   })
   .strict();
 export type ScenarioPreset = z.infer<typeof ScenarioPreset>;
