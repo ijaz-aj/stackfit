@@ -1,0 +1,796 @@
+# Backup and recovery.
+#
+# Prices are in minor units (hard rule 1). Proxmox is quoted in EUR because
+# that is the currency Proxmox publishes in; converting it here would bake in
+# an FX rate that belongs in data/config/fx.yaml.
+#
+# ⚠ PRICE TRANSPARENCY IS WORSE IN THIS CATEGORY THAN ANY OTHER SO FAR. Of the
+# five products below, three publish a rate on their own site and two do not.
+# Nakivo, Commvault, Rubrik, Cohesity and Veritas were all looked at and all
+# refuse to quote a figure; Veeam is catalogued anyway, on an explicitly
+# flagged analyst estimate, because a backup catalog without the market leader
+# would mislead more than a flagged estimate does. That is the same call that
+# was made for Microsoft Defender for Endpoint in edr.yaml, and it is recorded
+# in docs/STATUS.md under known placeholders.
+#
+# Storage is deliberately NOT priced as a licence line. Every product here
+# needs somewhere to put the data, and that is infrastructure — the cost engine
+# charges it for anything self-hostable, sized from the storage TB the sizing
+# stage derives.
+
+category: backup
+
+products:
+  - id: proxmox-backup-server
+    name: Proxmox Backup Server
+    vendor: Proxmox Server Solutions GmbH
+    category: backup
+    subcategory: self-hosted deduplicating backup server
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: no-subscription
+        name: No-subscription repository
+        capabilities:
+          - Incremental, deduplicated backups of VMs, containers and hosts
+          - Client-side encryption
+          - Backup verification against stored checksums
+          - Remote sync to a second Proxmox Backup Server
+          - Retention and prune policies
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.proxmox.com/en/products/proxmox-backup-server/pricing
+              note: >-
+                Confirm the no-subscription repository is still available and
+                still carries the complete feature set. Proxmox gates the
+                enterprise repository, not features, and that is the thing that
+                could change.
+            sources:
+              - url: https://www.proxmox.com/en/products/proxmox-backup-server/pricing
+                asOf: '2026-09-12'
+              - url: https://www.proxmox.com/en/products/proxmox-backup-server/overview
+                asOf: '2026-09-12'
+            notes: >-
+              AGPLv3, complete feature set, no licence fee. The paid tiers below
+              buy the tested enterprise repository and a support contract, not
+              additional capability. Running the no-subscription repository in
+              production is supported by the licence and normal in practice, but
+              it means taking updates that have had less soak time.
+
+      - id: community
+        name: Community subscription
+        capabilities:
+          - Everything in the no-subscription repository
+          - Access to the tested enterprise repository
+          - Community-based support
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: 500
+                flatPrice:
+                  amountMinor: 56000
+                  currency: EUR
+              - minUnits: 501
+                maxUnits: 2000
+                flatPrice:
+                  amountMinor: 112000
+                  currency: EUR
+              - minUnits: 2001
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 224000
+                  currency: EUR
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.proxmox.com/en/products/proxmox-backup-server/pricing
+              note: >-
+                Read the per-server annual rate for each tier. Also re-check the
+                coverage sentence — the subscription is per server with
+                unlimited storage and unlimited clients, and if that changes the
+                banding below stops being a sensible model.
+            sources:
+              - url: https://www.proxmox.com/en/products/proxmox-backup-server/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              Proxmox publishes "€ 560/year" per server, with unlimited backup
+              storage and unlimited backup clients per server.
+
+              ⚠ The bands are an analyst assumption laid over that published
+              rate, not a Proxmox price list. The rate is per *backup server*,
+              and the catalog has no field for "how many backup servers does
+              this estate need", so the bands encode one host up to 500
+              monitored assets, two to 2,000 and four above that. Argue with
+              the banding, not with the 560.
+
+      - id: basic
+        name: Basic subscription
+        capabilities:
+          - Everything in Community
+          - Support via the customer portal, three tickets a year
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: 500
+                flatPrice:
+                  amountMinor: 112000
+                  currency: EUR
+              - minUnits: 501
+                maxUnits: 2000
+                flatPrice:
+                  amountMinor: 224000
+                  currency: EUR
+              - minUnits: 2001
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 448000
+                  currency: EUR
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.proxmox.com/en/products/proxmox-backup-server/pricing
+              note: Read the per-server annual rate; the bands are this file's assumption.
+            sources:
+              - url: https://www.proxmox.com/en/products/proxmox-backup-server/pricing
+                asOf: '2026-09-12'
+            notes: Published at "€ 1120/year" per server. Same banding assumption as the Community tier.
+
+      - id: standard
+        name: Standard subscription
+        capabilities:
+          - Everything in Basic
+          - Faster response times and a larger annual ticket allowance
+          - Remote support
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: 500
+                flatPrice:
+                  amountMinor: 224000
+                  currency: EUR
+              - minUnits: 501
+                maxUnits: 2000
+                flatPrice:
+                  amountMinor: 448000
+                  currency: EUR
+              - minUnits: 2001
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 896000
+                  currency: EUR
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.proxmox.com/en/products/proxmox-backup-server/pricing
+              note: Read the per-server annual rate; the bands are this file's assumption.
+            sources:
+              - url: https://www.proxmox.com/en/products/proxmox-backup-server/pricing
+                asOf: '2026-09-12'
+            notes: Published at "€ 2240/year" per server. Same banding assumption as the Community tier.
+
+    supports:
+      os: [linux, windows]
+      deviceClasses: [server, hypervisor, container_node, database, workstation]
+      cloudPlatforms: []
+      deploymentModes: [on_prem, hybrid, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [proxmox, zfs, syslog]
+
+    controlsCovered:
+      - cis-v8:11
+      - nist-csf-2.0:PR.DS
+      - nist-csf-2.0:RC.RP
+      - iso-27001-2022:A.5.29
+      - iso-27001-2022:A.5.30
+      - iso-27001-2022:A.8.13
+      - hipaa:164.308.a.7
+      - hipaa:164.312.c.1
+      - soc-2:A1
+      - nis2:21.2.c
+      - gdpr:art-32
+      - dpdp-2023:rule-6-backup
+      - rbi-csf:backup-restoration
+
+    opsBurden:
+      baseFte: 0.25
+      ftePerThousandAssets: 0.15
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 8
+      skillLevel: security_engineer
+      typicalWeeks: 4
+      confidence: analyst_estimate
+
+    strengths:
+      - Deduplication and incremental-forever keep the storage bill down, which is where backup money actually goes
+      - Verification jobs prove a backup is restorable rather than merely present
+      - Runs fully air-gapped, and the subscription is per server rather than per protected workload
+    weaknesses:
+      - Strongest with Proxmox VE; VMware and Hyper-V estates are served through the file-level agent, not natively
+      - No SaaS or Microsoft 365 protection at all
+      - Restore testing and monitoring are still your job — the tool does not nag
+    bestFor:
+      - Proxmox and Linux estates
+      - Air-gapped or residency-constrained environments
+      - Clients whose workload count would make per-workload licensing punitive
+    avoidWhen:
+      - The estate is VMware-heavy and expects native integration
+      - Microsoft 365 or SaaS data is the thing that needs protecting
+
+    sources:
+      - url: https://www.proxmox.com/en/products/proxmox-backup-server/overview
+        asOf: '2026-09-12'
+      - url: https://www.proxmox.com/en/products/proxmox-backup-server/pricing
+        asOf: '2026-09-12'
+    notes: >-
+      The Premium subscription (published at "€ 4480/year" per server) is
+      deliberately not catalogued: it differs from Standard only in response
+      time and ticket allowance, and four tiers of the same product crowd the
+      shortlist without changing the recommendation.
+
+  - id: bareos
+    name: Bareos
+    vendor: Bareos GmbH & Co. KG
+    category: backup
+    subcategory: open-source enterprise backup with an optional subscription
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: community
+        name: Bareos community
+        capabilities:
+          - Network backup of Linux, Windows, macOS and Unix clients
+          - Disk, tape and cloud storage targets
+          - Database and virtualisation plugins
+          - Client-side encryption and signed backups
+          - Long-term retention with tape support
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.bareos.com/pricing/
+              note: >-
+                Bareos states plainly that there are no licence fees. Confirm
+                that sentence still stands and that the subscription remains a
+                binaries-and-support product rather than a feature gate.
+            sources:
+              - url: https://www.bareos.com/pricing/
+                asOf: '2026-09-12'
+              - url: https://github.com/bareos/bareos
+                asOf: '2026-09-12'
+            notes: >-
+              AGPLv3. Bareos's own pricing page says "Bareos has no license
+              fees"; the subscription below buys maintained binaries, plugins
+              and support.
+
+      - id: subscription
+        name: Bareos subscription
+        capabilities:
+          - Everything in the community build
+          - Maintained binaries and plugin packages
+          - A supported upgrade path between major versions
+        pricing:
+          - model: per_asset_year
+            unitPrice:
+              amountMinor: 4800
+              currency: EUR
+            minimumUnits: 10
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.bareos.com/pricing/
+              note: >-
+                Re-read the per-unit rate and the minimum unit count. Also
+                re-read how a unit is defined — it is the larger of source data
+                in TB or clients plus plugin jobs, and that definition moving
+                would change the bill without the rate moving at all.
+            sources:
+              - url: https://www.bareos.com/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              EUR 48 per unit per year, minimum 10 units, so EUR 480/year is the
+              floor — which is what the minimumUnits field encodes.
+
+              ⚠ A Bareos "unit" is the larger of source data in TB or the number
+              of clients plus plugin jobs. This entry bills it against monitored
+              assets, which stands in for the client count and ignores the TB
+              side of the comparison. For a client with few machines and a lot
+              of data that understates, possibly badly. Check the data volume
+              before quoting.
+
+    supports:
+      os: [linux, windows, macos]
+      deviceClasses: [server, workstation, database, hypervisor, container_node]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, air_gapped]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: true
+
+    integrations: [syslog, postgres, mysql, ldap]
+
+    controlsCovered:
+      - cis-v8:11
+      - nist-csf-2.0:PR.DS
+      - nist-csf-2.0:RC.RP
+      - iso-27001-2022:A.5.29
+      - iso-27001-2022:A.5.30
+      - iso-27001-2022:A.5.33
+      - iso-27001-2022:A.8.13
+      - hipaa:164.308.a.7
+      - hipaa:164.312.c.1
+      - soc-2:A1
+      - nis2:21.2.c
+      - gdpr:art-32
+      - dpdp-2023:rule-6-backup
+      - rbi-csf:backup-restoration
+
+    opsBurden:
+      baseFte: 0.4
+      ftePerThousandAssets: 0.2
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 15
+      skillLevel: security_engineer
+      typicalWeeks: 6
+      confidence: analyst_estimate
+
+    strengths:
+      - Genuinely enterprise-scale — tape libraries, long retention and heterogeneous clients
+      - No licence fee at all, and the subscription is optional rather than the real price
+      - The configuration is text, so the whole backup policy is reviewable and version-controllable
+    weaknesses:
+      - 'The configuration is text: it is powerful, verbose and unforgiving, and there is a real learning curve'
+      - Web UI is thin next to the commercial products; most work is on the command line
+      - No native SaaS or Microsoft 365 protection
+    bestFor:
+      - Mixed Unix, Linux and Windows estates with long retention obligations
+      - Clients who need tape, which most modern tools have quietly dropped
+      - Teams that already manage infrastructure as code
+    avoidWhen:
+      - There is no engineer who will own the configuration
+      - The requirement is a fast self-service restore console for a helpdesk
+
+    sources:
+      - url: https://www.bareos.com/pricing/
+        asOf: '2026-09-12'
+      - url: https://github.com/bareos/bareos
+        asOf: '2026-09-12'
+    notes: >-
+      opsBurden is the highest in this file on purpose. Bareos will do more than
+      anything else here and asks for more in return; costing it as cheap is the
+      exact failure hard rule 8 exists to prevent.
+
+  - id: azure-backup
+    name: Azure Backup
+    vendor: Microsoft
+    category: backup
+    subcategory: managed backup for Azure and on-premises workloads
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: protected-instance
+        name: Protected instance
+        capabilities:
+          - Agentless backup of Azure VMs and agent-based backup of on-premises servers
+          - Immutable vaults with soft delete
+          - Cross-region restore
+          - SQL Server and SAP HANA in-VM protection
+          - Centralised policy and retention across subscriptions
+        pricing:
+          - model: per_node_year
+            unitPrice:
+              amountMinor: 12000
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://prices.azure.com/api/retail/prices?$filter=serviceName%20eq%20%27Backup%27%20and%20armRegionName%20eq%20%27eastus%27
+              note: >-
+                Re-read meter cbe92596-7f61-5f48-ba3d-d624aa141eaf ("Azure VM
+                Protected Instance") from the Azure Retail Prices API and
+                multiply the monthly figure by 12.
+
+                Deliberately manual rather than azure_retail_prices. The
+                automated refresh compares the feed's number to the catalog's
+                directly, and the feed quotes "1/Month" while this entry is per
+                year — an automated check would report permanent 1,100% drift.
+                Re-checking a meter whose unit does not match the pricing model
+                needs a human to do the arithmetic.
+            sources:
+              - url: https://prices.azure.com/api/retail/prices?$filter=serviceName%20eq%20%27Backup%27%20and%20armRegionName%20eq%20%27eastus%27
+                asOf: '2026-09-12'
+              - url: https://learn.microsoft.com/en-us/azure/backup/backup-overview
+                asOf: '2026-09-12'
+            notes: >-
+              USD 10.00 per protected instance per month for East US, so USD
+              120.00 per year, read from the Azure Retail Prices API — the same
+              authoritative feed microsoft-sentinel is priced from.
+
+              Two caveats, both of which move a real bill.
+              (1) Backup *storage* is billed separately and is not in this rate.
+              The cost engine charges infrastructure for self-hostable products
+              only, and Azure Backup is not one, so storage is missing from this
+              line entirely. For a data-heavy estate storage is the larger half
+              of the bill — quote it separately.
+              (2) Microsoft's published protected-instance pricing bands by
+              instance size (under 50 GB, 50–500 GB, then per additional 500
+              GB). The API meter is a single figure and this entry uses it, so
+              a small-instance estate is overstated and a large-instance one
+              understated.
+
+    supports:
+      os: [windows, linux]
+      deviceClasses: [server, cloud_workload, database, container_node]
+      cloudPlatforms: [azure]
+      deploymentModes: [cloud, hybrid]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: false
+
+    integrations: [microsoft-sentinel, syslog]
+
+    controlsCovered:
+      - cis-v8:11
+      - nist-csf-2.0:PR.DS
+      - nist-csf-2.0:PR.IR
+      - nist-csf-2.0:RC.RP
+      - iso-27001-2022:A.5.29
+      - iso-27001-2022:A.5.30
+      - iso-27001-2022:A.5.33
+      - iso-27001-2022:A.8.13
+      - iso-27001-2022:A.8.14
+      - hipaa:164.308.a.7
+      - hipaa:164.312.c.1
+      - soc-2:A1
+      - nis2:21.2.c
+      - gdpr:art-32
+      - dpdp-2023:rule-6-backup
+      - rbi-csf:backup-restoration
+
+    opsBurden:
+      baseFte: 0.1
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 5
+      skillLevel: generalist
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - Immutable vaults with soft delete, which is the control that actually survives ransomware
+      - No backup infrastructure to build, patch or capacity-plan
+      - Policy and compliance reporting across every subscription in one place
+    weaknesses:
+      - 'Storage is billed separately and is usually the bigger number: the per-instance rate is not the bill'
+      - Strongest for Azure workloads; on-premises coverage needs the MARS agent or a backup server
+      - SaaS-only control plane, so air-gapped scopes eliminate it
+    bestFor:
+      - Estates already running workloads in Azure
+      - Clients who want ransomware-resistant backups without building an air gap themselves
+    avoidWhen:
+      - The environment is air-gapped or has residency constraints Azure cannot meet
+      - The estate is on-premises VMware with no Azure footprint
+
+    sources:
+      - url: https://learn.microsoft.com/en-us/azure/backup/backup-overview
+        asOf: '2026-09-12'
+    notes: >-
+      This entry is the clearest example in the catalog of a price that is
+      authoritative and still incomplete. The rate is Microsoft's own, read from
+      Microsoft's own feed, and it still is not what the client will pay,
+      because storage is a separate meter. Say so on the call.
+
+  - id: veeam-data-platform
+    name: Veeam Data Platform
+    vendor: Veeam Software
+    category: backup
+    subcategory: enterprise backup, replication and recovery orchestration
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: foundation
+        name: Foundation
+        capabilities:
+          - Backup and recovery for VMs, physical servers, cloud and Microsoft 365
+          - Immutable backup targets and hardened repositories
+          - Instant VM recovery
+          - Portable Veeam Universal Licence across workload types
+        pricing:
+          - model: per_node_year
+            unitPrice:
+              amountMinor: 25000
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.veeam.com/licensing-pricing.html
+              note: >-
+                Check first whether Veeam has started publishing a rate on its
+                own site — if it has, this entry should be regraded to
+                public_list immediately. Until then, re-derive from at least two
+                independent licensing specialists and note that Veeam raised
+                list prices in January of both 2025 and 2026, so this figure
+                ages faster than a normal list price.
+            sources:
+              - url: https://www.veeam.com/licensing-pricing.html
+                asOf: '2026-09-12'
+              - url: https://www.eon.io/blog/veeam-pricing
+                asOf: '2026-09-12'
+              - url: https://costbench.com/software/backup-recovery/veeam/
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED. Veeam's own pricing page offers a quote
+              request and a store link, not a rate. USD 250 per workload per
+              year is the consistently reported Veeam Universal Licence rate for
+              the Foundation edition, corroborated across independent licensing
+              sources; it is not a Veeam-published figure and must not be
+              presented to a client as one.
+
+              Same call as microsoft-defender-for-endpoint in edr.yaml: a backup
+              catalog without the market leader misleads more than an honestly
+              flagged estimate does.
+
+              Two further caveats. Licences are sold in packs of 5 or 10, so a
+              real order rounds up. And a VUL workload is not a server — one VM,
+              one physical server, three workstations or one Microsoft 365 user
+              set each consume differently — so billing this against the server
+              count is an approximation that will be wrong for a
+              workstation-heavy estate.
+
+      - id: advanced
+        name: Advanced
+        capabilities:
+          - Everything in Foundation
+          - Veeam ONE monitoring and analytics
+          - Inline malware and entropy detection
+          - Automated recovery verification with SureBackup
+        pricing:
+          - model: per_node_year
+            unitPrice:
+              amountMinor: 35000
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.veeam.com/licensing-pricing.html
+              note: See the Foundation tier's note — the whole product is on estimated pricing.
+            sources:
+              - url: https://www.veeam.com/licensing-pricing.html
+                asOf: '2026-09-12'
+              - url: https://www.eon.io/blog/veeam-pricing
+                asOf: '2026-09-12'
+              - url: https://costbench.com/software/backup-recovery/veeam/
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED. USD 350 per workload per year, reported
+              rather than published. See the Foundation tier.
+        controlsCovered:
+          - nist-csf-2.0:DE.CM
+          - iso-27001-2022:A.8.16
+
+      - id: premium
+        name: Premium
+        capabilities:
+          - Everything in Advanced
+          - Veeam Recovery Orchestrator with documented, testable runbooks
+          - Compliance and GRC reporting
+          - Clean-room recovery
+        pricing:
+          - model: per_node_year
+            unitPrice:
+              amountMinor: 45000
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.veeam.com/licensing-pricing.html
+              note: See the Foundation tier's note — the whole product is on estimated pricing.
+            sources:
+              - url: https://www.veeam.com/licensing-pricing.html
+                asOf: '2026-09-12'
+              - url: https://www.eon.io/blog/veeam-pricing
+                asOf: '2026-09-12'
+              - url: https://costbench.com/software/backup-recovery/veeam/
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED. USD 450 per workload per year, reported
+              rather than published. See the Foundation tier.
+        controlsCovered:
+          # Recovery Orchestrator is deliberately NOT credited with CSF RS.MA
+          # (Incident Management) or ISO A.5.24 (incident management planning).
+          # It orchestrates *recovery*, which this product already claims
+          # through RC.RP and A.5.29/A.5.30. Claiming the incident-management
+          # controls made the gap analysis offer a backup product as the fix for
+          # an incident-response gap, which is a worse answer than no answer.
+          - nist-csf-2.0:DE.CM
+          - iso-27001-2022:A.8.16
+
+    supports:
+      os: [windows, linux, macos]
+      deviceClasses:
+        - server
+        - workstation
+        - hypervisor
+        - database
+        - cloud_workload
+        - saas_tenant
+        - container_node
+      cloudPlatforms: [aws, azure, gcp, m365]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: enterprise
+      airGapCapable: true
+
+    integrations: [syslog, microsoft-sentinel, vmware, s3]
+
+    controlsCovered:
+      - cis-v8:11
+      - nist-csf-2.0:PR.DS
+      - nist-csf-2.0:PR.IR
+      - nist-csf-2.0:RC.RP
+      - iso-27001-2022:A.5.29
+      - iso-27001-2022:A.5.30
+      - iso-27001-2022:A.5.33
+      - iso-27001-2022:A.8.13
+      - iso-27001-2022:A.8.14
+      - hipaa:164.308.a.7
+      - hipaa:164.312.c.1
+      - soc-2:A1
+      - nis2:21.2.c
+      - gdpr:art-32
+      - dpdp-2023:rule-6-backup
+      - rbi-csf:backup-restoration
+
+    opsBurden:
+      baseFte: 0.2
+      ftePerThousandAssets: 0.1
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 12
+      skillLevel: security_engineer
+      typicalWeeks: 5
+      confidence: analyst_estimate
+
+    strengths:
+      - Covers VMware, Hyper-V, physical, cloud and Microsoft 365 from one console and one licence pool
+      - Hardened repositories and immutability are mature rather than recently bolted on
+      - Recovery Orchestrator turns a DR plan into something that can actually be tested
+    weaknesses:
+      - 'No published price: every conversation starts with a quote request'
+      - The Universal Licence is portable and also easy to over-buy, because workload counting is subtle
+      - The full platform is a lot of product for a small estate
+    bestFor:
+      - VMware or mixed estates that need one tool across virtual, physical and SaaS
+      - Clients with a real recovery-time obligation rather than just a backup obligation
+    avoidWhen:
+      - Budget certainty matters more than capability and a quote cannot be obtained in time
+      - The estate is a handful of Linux servers, where the licensing overhead is not worth it
+
+    sources:
+      - url: https://www.veeam.com/licensing-pricing.html
+        asOf: '2026-09-12'
+    notes: >-
+      Every tier of this product is on analyst-estimated pricing. It will show a
+      pricing-confidence warning wherever it is costed, and that warning is
+      correct — do not quote these figures to a client without a Veeam quote
+      behind them.
+
+  - id: backblaze-business-backup
+    name: Backblaze Computer Backup for Business
+    vendor: Backblaze, Inc.
+    category: backup
+    subcategory: unlimited endpoint backup to cloud
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: business
+        name: Business Backup
+        capabilities:
+          - Unlimited continuous backup of laptops and desktops
+          - Central administration across the fleet
+          - Version history and file-level restore
+          - Restore by download or by posted drive
+        pricing:
+          - model: per_endpoint_year
+            unitPrice:
+              amountMinor: 9900
+              currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.backblaze.com/cloud-backup/pricing
+              note: >-
+                Read the annual per-computer rate. The thing most likely to
+                change is not the price but the word "unlimited" — check the
+                storage claim as carefully as the number.
+            sources:
+              - url: https://www.backblaze.com/cloud-backup/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 99.00 per computer per year, with unlimited data backup. A
+              two-year term is offered at a stated 8% saving and is not
+              modelled here.
+
+    supports:
+      os: [windows, macos]
+      deviceClasses: [workstation]
+      cloudPlatforms: []
+      deploymentModes: [cloud]
+      scaleFloor: small
+      scaleCeiling: mid
+      airGapCapable: false
+
+    integrations: []
+
+    controlsCovered:
+      # Endpoints only. It does not back up servers, databases or SaaS, so the
+      # resilience and records-retention controls are deliberately absent — this
+      # product closes the laptop half of data recovery and says nothing about
+      # the rest.
+      - cis-v8:11
+      - nist-csf-2.0:PR.DS
+      - nist-csf-2.0:RC.RP
+      - iso-27001-2022:A.8.13
+      - iso-27001-2022:A.7.9
+      - soc-2:A1
+      - gdpr:art-32
+      - dpdp-2023:rule-6-backup
+
+    opsBurden:
+      baseFte: 0.05
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 2
+      skillLevel: generalist
+      typicalWeeks: 2
+      confidence: analyst_estimate
+
+    strengths:
+      - Genuinely unlimited storage at a flat per-machine price, which makes the bill predictable
+      - Deploys to a fleet in days and needs almost no operational attention
+      - Covers the roaming laptop, which most server-shaped backup tools quietly ignore
+    weaknesses:
+      - Endpoints only — no servers, no VMs, no databases, no Microsoft 365
+      - Not a compliance-grade retention tool; version history is limited by plan
+      - SaaS-only, with no air-gapped option
+    bestFor:
+      - Laptop-heavy or remote-first workforces
+      - Filling the endpoint gap alongside a server-focused backup product
+    avoidWhen:
+      - The requirement is server, VM or SaaS protection
+      - Long-term retention for a regulator is the driver
+
+    sources:
+      - url: https://www.backblaze.com/cloud-backup/pricing
+        asOf: '2026-09-12'
+    notes: >-
+      Catalogued as a complement rather than a competitor to the other four. It
+      is the only entry here that protects the endpoint estate properly and the
+      only one that protects nothing else.

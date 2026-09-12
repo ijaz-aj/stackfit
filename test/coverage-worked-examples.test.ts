@@ -48,7 +48,7 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
     ).toMatchInlineSnapshot(`
       [
         "pci-dss-4.0 | in scope true | covered 6/8 of 12 | partial 1 | gaps 1 | 75%",
-        "nist-csf-2.0 | in scope false | covered 6/13 of 22 | partial 3 | gaps 4 | 46.2%",
+        "nist-csf-2.0 | in scope false | covered 8/13 of 22 | partial 4 | gaps 1 | 61.5%",
       ]
     `);
   });
@@ -69,10 +69,10 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
       [
         "Govern 0/0 = null",
         "Identify 2/2 = 100",
-        "Protect 2/4 = 50",
+        "Protect 3/4 = 75",
         "Detect 2/2 = 100",
         "Respond 0/4 = 0",
-        "Recover 0/1 = 0",
+        "Recover 1/1 = 100",
       ]
     `);
   });
@@ -103,21 +103,22 @@ describe('Coverage for the 60-staff PCI DSS retailer', () => {
   });
 
   it('says plainly which gaps the catalog cannot close yet, and closes the rest', () => {
-    // ⚠ CATALOG LIMITATION, shrinking. Was nine of eleven before Phase 7; the
-    // iam category closed three of them. The remainder need pam, ngfw, backup
+    // ⚠ CATALOG LIMITATION, shrinking. Was nine of eleven before Phase 7; iam
+    // closed three and backup closed four more. The remainder need pam, ngfw
     // or email_security, none of which the catalog stocks yet. The honest
     // output for those is "StackFit cannot fix this", not a silent empty fix
     // list, and this number should keep falling as Phase 7 lands categories.
-    expect(coverage.unclosableGaps.length).toBe(6);
-    expect(coverage.gaps.length).toBe(9);
+    expect(coverage.unclosableGaps.length).toBe(3);
+    expect(coverage.gaps.length).toBe(7);
 
-    // The other three are partials — the stack has the right kind of tool and
+    // The other four are partials — the stack has the right kind of tool and
     // nothing in it claims the control — and those do have a route. Before
     // partials entered this list the client was shown a coverage percentage
     // with no way to improve it at all.
     const closable = coverage.gaps.filter((gap) => gap.cheapestCloser !== null);
     expect(closable.map((gap) => gap.controlId)).toEqual([
       'pci-dss-4.0:7',
+      'nist-csf-2.0:PR.IR',
       'nist-csf-2.0:RS.MI',
       'nist-csf-2.0:RS.AN',
     ]);
@@ -201,6 +202,7 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
         "greenbone-openvas (vulnerability_management) | 2450.04 USD/yr | 0.33 FTE | closes 6",
         "keycloak (iam) | 2450.04 USD/yr | 0.42 FTE | closes 3",
         "crowdstrike-falcon-go (edr) | 11998 USD/yr | 0.12 FTE | closes 1",
+        "azure-backup (backup) | 2640 USD/yr | 0.11 FTE | closes 4",
         "wazuh (siem) | 2450.04 USD/yr | 0.57 FTE | closes 3",
       ]
     `);
