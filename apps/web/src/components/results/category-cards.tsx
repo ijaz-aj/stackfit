@@ -8,6 +8,7 @@ import {
 } from '@stackfit/engine';
 
 import { Badge, Card } from '@/components/ui';
+import { cn } from '@/lib/cn';
 import { formatMoney, formatNumber } from '@/lib/format';
 import { ASSET_LABELS, CATEGORY_LABELS, DIMENSION_LABELS } from '@/components/wizard/labels';
 
@@ -150,7 +151,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
   );
 
   return (
-    <div className="grid gap-3 xl:grid-cols-2">
+    <div className="grid gap-4 xl:grid-cols-2">
       {bundle.selections.map((selection) => {
         const score = scoreBySku.get(`${selection.productId}::${selection.tierId}`);
         const justification = justificationByCategory.get(selection.category);
@@ -158,44 +159,82 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
         const cost = selection.cost;
 
         return (
-          <Card
-            key={selection.productId}
-            title={`${CATEGORY_LABELS[selection.category] ?? selection.category} — ${selection.productName}`}
-            hint={`${selection.vendor} · ${selection.tierName}`}
-          >
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Badge tone="accent">fit {formatNumber(selection.fitScore, 1)}/100</Badge>
-              {selection.mandatory && <Badge tone="warn">compliance-mandated</Badge>}
-              {selection.suiteDiscountApplied && <Badge>suite discount applied</Badge>}
-              <Badge tone={cost.needsRecheck ? 'warn' : 'neutral'}>
-                {cost.pricingConfidence.replace(/_/g, ' ')}
-              </Badge>
-            </div>
+          <Card key={selection.productId} className="flex flex-col">
+            {/*
+              The category and the product were one em-dashed string, which made
+              them the same kind of thing. They are not: the category is the
+              question this card answers and the product is the answer. The
+              category becomes a quiet eyebrow, and the product name gets the
+              weight — it is what an analyst says out loud.
+            */}
+            <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+              <div className="min-w-0">
+                <p className="text-faint text-2xs font-medium uppercase">
+                  {CATEGORY_LABELS[selection.category] ?? selection.category}
+                </p>
+                <h3 className="text-ink mt-1 text-lg font-semibold">{selection.productName}</h3>
+                <p className="text-faint mt-0.5 text-xs">
+                  {selection.vendor} · {selection.tierName}
+                </p>
+              </div>
 
-            <dl className="border-line mt-3 grid grid-cols-2 gap-x-4 gap-y-1 border-y py-2 text-sm sm:grid-cols-4">
-              <div>
-                <dt className="text-faint text-2xs tracking-wide uppercase">Licence / yr</dt>
-                <dd className="tabular text-ink">{formatMoney(cost.licenceAnnual)}</dd>
+              {/*
+                Three different kinds of fact used to share one treatment. The
+                fit score is a measurement, the mandate is a constraint, the
+                pricing grade is a caveat — so the score reads as a figure and
+                only the things that qualify it stay as badges.
+              */}
+              <div className="flex shrink-0 flex-col items-end gap-1.5">
+                <span className="tabular text-accent text-xl leading-none font-medium">
+                  {formatNumber(selection.fitScore, 1)}
+                  <span className="text-faint ml-1 text-2xs">/100 fit</span>
+                </span>
+                <div className="flex flex-wrap justify-end gap-1.5">
+                  {selection.mandatory && <Badge tone="warn">compliance-mandated</Badge>}
+                  {selection.suiteDiscountApplied && <Badge>suite discount</Badge>}
+                  <Badge tone={cost.needsRecheck ? 'warn' : 'neutral'}>
+                    {cost.pricingConfidence.replace(/_/g, ' ')}
+                  </Badge>
+                </div>
               </div>
-              <div>
-                <dt className="text-faint text-2xs tracking-wide uppercase">Infra / yr</dt>
-                <dd className="tabular text-ink">{formatMoney(cost.infraAnnual)}</dd>
-              </div>
-              <div>
-                <dt className="text-faint text-2xs tracking-wide uppercase">People / yr</dt>
-                <dd className="tabular text-ink">
-                  {formatMoney(cost.opsFteAnnual)}
-                  <span className="text-faint ml-1 text-2xs">
-                    {formatNumber(cost.opsFte, 2)} FTE
-                  </span>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-faint text-2xs tracking-wide uppercase">
-                  {cost.horizonYears}-yr TCO
-                </dt>
-                <dd className="tabular text-ink">{formatMoney(cost.tco)}</dd>
-              </div>
+            </header>
+
+            {/*
+              The figures the card exists to show. They were the same size as
+              their own labels, on a two-pixel row, which is not a hierarchy.
+              Each now sits in its own cell with the label above it in the
+              quiet weight, and the TCO — the one people quote — is accented.
+            */}
+            <dl className="border-line mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-(--radius-control) border sm:grid-cols-4">
+              {[
+                { label: 'Licence / yr', value: formatMoney(cost.licenceAnnual) },
+                { label: 'Infra / yr', value: formatMoney(cost.infraAnnual) },
+                {
+                  label: 'People / yr',
+                  value: formatMoney(cost.opsFteAnnual),
+                  note: `${formatNumber(cost.opsFte, 2)} FTE`,
+                },
+                {
+                  label: `${cost.horizonYears}-yr TCO`,
+                  value: formatMoney(cost.tco),
+                  accent: true,
+                },
+              ].map((stat) => (
+                <div key={stat.label} className="bg-panel-raised/40 px-3 py-2.5">
+                  <dt className="text-faint text-2xs font-medium uppercase">{stat.label}</dt>
+                  <dd
+                    className={cn(
+                      'tabular mt-1 text-base',
+                      stat.accent === true ? 'text-accent' : 'text-ink',
+                    )}
+                  >
+                    {stat.value}
+                    {stat.note !== undefined && (
+                      <span className="text-faint ml-1.5 text-2xs">{stat.note}</span>
+                    )}
+                  </dd>
+                </div>
+              ))}
             </dl>
 
             {score !== undefined && score.coveredAssets.length > 0 && (

@@ -112,7 +112,7 @@ export default async function ComparePage({
 
   if (leftRow === undefined || rightRow === undefined || leftRow.id === rightRow.id) {
     return (
-      <main className="mx-auto flex w-full max-w-[900px] flex-col gap-3 px-5 py-6">
+      <main className="mx-auto flex w-full max-w-[900px] flex-col gap-4 px-6 py-6">
         <header className="flex items-baseline gap-3">
           <Link href="/" className="text-faint hover:text-ink text-sm">
             ← sessions
@@ -194,7 +194,7 @@ export default async function ComparePage({
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-3 px-5 py-4">
+    <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-4 px-6 py-6">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex flex-wrap items-baseline gap-3">
           <Link href="/" className="text-faint hover:text-ink text-sm">

@@ -1068,3 +1068,72 @@ describe('regressions', () => {
     expect(recommended.mssp.residualAnnual.amountMinor).toBe(0);
   });
 });
+
+describe('rationale that repeats itself', () => {
+  // A product with four SKUs produced three near-identical sentences —
+  // "Community subscription costs more and scores no better", then Basic, then
+  // Standard — differing only in the name. They are named together now.
+  function withTiers(id: string, category: ProductCategory, prices: readonly number[]): Product {
+    const base = buildProduct({ id });
+    return {
+      ...base,
+      category,
+      vendor: `${id} Inc.`,
+      supports: { ...base.supports, deviceClasses: ['server', 'workstation'] },
+      opsBurden: { baseFte: 0.1, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+      tiers: prices.map((price, index) => ({
+        id: `tier-${index}`,
+        name: `Tier ${index}`,
+        capabilities: [],
+        controlsCovered: [],
+        pricing: [
+          {
+            model: 'flat_tiered' as const,
+            tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(price) }],
+            termYears: 1,
+            pricingConfidence: 'public_list' as const,
+            sources: [{ url: 'https://example.com/p', asOf: '2026-01-01' }],
+            refresh: {
+              method: 'manual' as const,
+              checkUrl: 'https://example.com/p',
+              note: 'test fixture',
+            },
+          },
+        ],
+      })),
+    };
+  }
+
+  it('names the dearer-for-nothing tiers together instead of once each', () => {
+    const { recommended } = buildPortfolio(
+      buildInputs({
+        products: [withTiers('siem-a', 'siem', [1_000_00, 2_000_00, 3_000_00, 4_000_00])],
+        annualCap: 500_000_00,
+      }),
+    );
+
+    const siem = recommended.selections.find((entry) => entry.category === 'siem');
+    const lines = siem?.rationale ?? [];
+
+    // The property that was violated: no line may be repeated, and no two may
+    // say the same thing with a different name swapped in.
+    const dearer = lines.filter((line) => line.includes('cost more and score no better'));
+    expect(dearer).toHaveLength(1);
+    expect(dearer[0]).toContain(' and ');
+    // The range is what the collapsed line adds over the three it replaces.
+    expect(dearer[0]).toMatch(/USD [\d,]+ to USD [\d,]+ a year/);
+  });
+
+  it('still gives a better-scoring tier a line of its own', () => {
+    // Each is a distinct proposition with its own price — the sentence an
+    // analyst repeats when a client asks about the upgrade.
+    const { recommended } = buildPortfolio(
+      buildInputs({
+        products: [withTiers('siem-a', 'siem', [1_000_00, 2_000_00])],
+        annualCap: 500_000_00,
+      }),
+    );
+    const siem = recommended.selections.find((entry) => entry.category === 'siem');
+    expect((siem?.rationale ?? []).every((line) => line.length > 0)).toBe(true);
+  });
+});

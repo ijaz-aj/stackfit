@@ -357,6 +357,12 @@ function formatMinor(dearer: Money, cheaper: Money): string {
   return `${dearer.currency} ${delta.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 }
 
+/** "A", "A and B", "A, B and C" — how a person writes a list in a sentence. */
+function listOf(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
 function withinCap(amount: Money, cap: Money | null): boolean {
   return cap === null || amount.amountMinor <= cap.amountMinor;
 }
@@ -687,18 +693,58 @@ function select(
           entry.candidate.productId === picked.candidate.productId &&
           entry.candidate.tierId !== picked.candidate.tierId,
       );
+      /*
+       * A line per sibling tier produced three near-identical sentences on any
+       * product with four SKUs — "Community subscription costs more and scores
+       * no better", then Basic, then Standard, differing only in the name. The
+       * ones that lose the same way are named together, with the range, which
+       * is both shorter and says more than any single line did.
+       *
+       * A tier that scores *higher* keeps its own line: each is a distinct
+       * proposition with its own price, and that is the sentence an analyst
+       * repeats when a client asks about the upgrade.
+       */
+      const dearerNoBetter: typeof siblings = [];
+      const cheaperWorse: typeof siblings = [];
+
       for (const sibling of siblings) {
-        const dearer = sibling.spendCost.amountMinor > picked.spendCost.amountMinor;
         const fitGap = round(sibling.candidate.fitScore - picked.candidate.fitScore, 1);
-        rationale.push(
-          fitGap > 0
-            ? `${sibling.candidate.tierName} scores ${fitGap} point(s) higher and costs ` +
+        if (fitGap > 0) {
+          rationale.push(
+            `${sibling.candidate.tierName} scores ${fitGap} point(s) higher and costs ` +
               `${formatMinor(sibling.spendCost, picked.spendCost)} more a year in procurement. ` +
-              'Not worth it at this budget; it is the upgrade to quote if the coverage gaps matter.'
-            : dearer
-              ? `${sibling.candidate.tierName} costs more and scores no better for this client, ` +
-                'so the cheaper SKU is the honest recommendation.'
-              : `${sibling.candidate.tierName} is cheaper but scores ${-fitGap} point(s) lower here.`,
+              'Not worth it at this budget; it is the upgrade to quote if the coverage gaps matter.',
+          );
+        } else if (sibling.spendCost.amountMinor > picked.spendCost.amountMinor) {
+          dearerNoBetter.push(sibling);
+        } else if (fitGap < 0) {
+          cheaperWorse.push(sibling);
+        }
+      }
+
+      if (dearerNoBetter.length > 0) {
+        const names = dearerNoBetter.map((entry) => entry.candidate.tierName);
+        const extra = dearerNoBetter
+          .map((entry) => entry.spendCost.amountMinor - picked.spendCost.amountMinor)
+          .sort((a, b) => a - b);
+        const currency = picked.spendCost.currency;
+        const range =
+          extra.length === 1 || extra[0] === extra[extra.length - 1]
+            ? moneyInWords({ amountMinor: extra[0] ?? 0, currency })
+            : `${moneyInWords({ amountMinor: extra[0] ?? 0, currency })} to ` +
+              `${moneyInWords({ amountMinor: extra[extra.length - 1] ?? 0, currency })}`;
+
+        rationale.push(
+          `${listOf(names)} cost more and score no better for this client — ${range} a year ` +
+            'more in procurement, buying nothing measurable on this estate — so the cheaper SKU ' +
+            'is the honest recommendation.',
+        );
+      }
+
+      if (cheaperWorse.length > 0) {
+        rationale.push(
+          `${listOf(cheaperWorse.map((entry) => entry.candidate.tierName))} are cheaper but ` +
+            'score lower here.',
         );
       }
       if (picked.suite) {

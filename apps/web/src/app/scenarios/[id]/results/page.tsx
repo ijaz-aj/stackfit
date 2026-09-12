@@ -71,7 +71,7 @@ export default async function ResultsPage({
   const coverage = coverageOfBundle(result, bundle);
 
   return (
-    <main className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 px-5 py-4">
+    <main className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-6 py-6">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex flex-wrap items-baseline gap-3">
           <Link href={`/scenarios/${id}`} className="text-faint hover:text-ink text-sm">
