@@ -107,7 +107,7 @@ export function CoverageMatrix({ coverage }: { coverage: CoverageResult }) {
   return (
     <Card
       title="Coverage matrix"
-      hint="Covered means a selected product claims the control. Partial means the right kind of tool with no such claim. Checked, not assumed."
+      hint="Covered means a product claims the control. Partial means the right kind of tool, claiming nothing."
     >
       {/* Verbatim, and first. This is the number most likely to be misread,
           and an export is where the reader stops seeing the qualifications. */}

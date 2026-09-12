@@ -118,10 +118,7 @@ export default async function ComparePage({
           <h1 className="text-ink text-lg font-semibold tracking-tight">Compare</h1>
         </header>
 
-        <Card
-          title="Pick two sessions"
-          hint="Clone a session, change one thing, and compare the two. Both must be readable and they must be different."
-        >
+        <Card title="Pick two sessions" hint="Clone a session, change one thing, compare the two.">
           {readable.length < 2 ? (
             <p className="text-faint text-sm">
               At least two readable sessions are needed. Clone one from the sessions list.
@@ -330,7 +327,7 @@ export default async function ComparePage({
 
       <Card
         title="Compliance coverage"
-        hint="Covered means a selected product claims the control, not that a product of the right kind is present."
+        hint="Covered means a product claims the control, not that the right kind is present."
       >
         <ChangeTable
           rows={comparison.coverage}

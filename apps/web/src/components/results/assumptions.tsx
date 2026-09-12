@@ -196,14 +196,11 @@ export function AssumptionsPanel({
   );
 
   return (
-    <Card
-      title="Assumptions and disclaimers"
-      hint="Read this before any of the above reaches a client. Every figure on this page rests on something here."
-    >
+    <Card title="Assumptions and disclaimers" hint="Read this before any of it reaches a client.">
       <div className="flex flex-col gap-5">
         <CardSection
           title="Where each price came from"
-          hint="A price is only as good as its source and its age. Both are graded; neither is inferred."
+          hint="Source and age, both graded. Neither is inferred."
         >
           {bundle.selections.length === 0 ? (
             <p className="text-faint text-sm">Nothing priced in this bundle.</p>
@@ -261,7 +258,7 @@ export function AssumptionsPanel({
 
         <CardSection
           title="Where each effort figure came from"
-          hint="Staffing and implementation decide whether a zero-licence tool is cheap or expensive, which makes them the most load-bearing numbers here after the prices. On this catalog they are almost all analyst estimates."
+          hint="Almost all analyst estimates, and they decide whether a zero-licence tool is cheap or expensive."
         >
           {bundle.selections.length === 0 ? (
             <p className="text-faint text-sm">Nothing costed in this bundle.</p>
@@ -343,7 +340,7 @@ export function AssumptionsPanel({
 
         <CardSection
           title="Products ruled out for this client"
-          hint="Grouped by reason. A catalog entry that loses on price is not here. These were removed before scoring, by a hard filter or a tier limit."
+          hint="Removed before scoring by a hard filter or a tier limit. Nothing here lost on price."
         >
           {ruledOutCount === 0 ? (
             <p className="text-faint text-xs">Nothing in the catalog was hard-filtered.</p>

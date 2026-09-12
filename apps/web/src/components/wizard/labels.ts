@@ -17,7 +17,7 @@ export const ASSET_GROUPS: readonly {
   },
   {
     title: 'Servers',
-    hint: 'Domain controllers are counted separately: they are the loudest thing in a Windows estate.',
+    hint: 'Domain controllers count separately. They are the loudest thing in a Windows estate.',
     classes: ['windowsServers', 'windowsDomainControllers', 'linuxServers', 'fileServers'],
   },
   {
@@ -27,7 +27,7 @@ export const ASSET_GROUPS: readonly {
   },
   {
     title: 'Network',
-    hint: 'Firewalls dominate log ingest in almost every estate; this is the count worth getting right.',
+    hint: 'Firewalls dominate log ingest. This is the count worth getting right.',
     classes: [
       'firewalls',
       'routers',
@@ -44,7 +44,7 @@ export const ASSET_GROUPS: readonly {
   },
   {
     title: 'Operational technology',
-    hint: 'You cannot put an agent on a PLC. These counts are what push a stack towards passive monitoring.',
+    hint: 'No agent goes on a PLC, so these push the stack towards passive monitoring.',
     classes: ['otIcsScadaDevices', 'iotCctvPosDevices'],
   },
   {
@@ -59,7 +59,7 @@ export const ASSET_GROUPS: readonly {
   },
   {
     title: 'Identity',
-    hint: 'Privileged accounts size any PAM licence. Left blank, it is estimated from IT headcount and flagged as estimated.',
+    hint: 'These size any PAM licence. Left blank, estimated from IT headcount and flagged.',
     classes: ['remoteUsers', 'privilegedAccounts', 'serviceAccounts'],
   },
 ];

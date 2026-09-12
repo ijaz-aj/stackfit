@@ -84,7 +84,7 @@ export function BundleComparison({
   return (
     <Card
       title="Bundle comparison"
-      hint="Four ways to answer the same brief. Click a tier to read its detail below. Operable against Recommended is the staffing gap."
+      hint="Click a tier for its detail. Operable against Recommended is the staffing gap."
     >
       <div className="overflow-x-auto">
         {/*

@@ -109,7 +109,7 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
       {remediation.length > 0 && (
         <Card
           title="What it would cost to fix"
-          hint="The fewest purchases that close the most gaps, not the cheapest fix for each gap taken one at a time, which buys a second tool to do a job something on the list already does."
+          hint="The fewest purchases that close the most gaps, not the cheapest fix for each one alone."
         >
           <ul className="flex flex-col gap-2">
             {remediation.map((option) => (
@@ -169,9 +169,8 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
             them for this client: {coverage.unclosableGaps.join(', ')}.
           </p>
           <p className="text-faint mt-1 text-xs leading-snug">
-            That is a gap in the catalog, not in the client: either no product here claims the
-            control, or no product category can satisfy it at all. Say so rather than letting a
-            coverage percentage imply it was considered.
+            A gap in the catalog, not in the client: no product here claims the control, or no
+            category can satisfy it at all.
           </p>
         </Card>
       )}

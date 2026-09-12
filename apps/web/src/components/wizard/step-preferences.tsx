@@ -69,7 +69,7 @@ export function StepPreferences({ products }: { products: readonly ProductOption
           <Field
             label="Environment they run"
             htmlFor="environment"
-            hint="What the client already has, not what they would prefer. Hybrid means both, and is the common answer."
+            hint="What the client already has, not what they would prefer."
           >
             <Select
               id="environment"
@@ -103,7 +103,7 @@ export function StepPreferences({ products }: { products: readonly ProductOption
           <Field
             label="Procurement bias"
             htmlFor="procurementBias"
-            hint="Open source first raises the weight on operability as well as tilting the ranking. Free tools still have to be runnable by this team."
+            hint="Open source first also raises the weight on operability. Free tools still have to be runnable."
             className="sm:col-span-2"
           >
             <Select
@@ -193,9 +193,8 @@ export function StepPreferences({ products }: { products: readonly ProductOption
           </div>
         )}
         <p className="text-faint mt-3 text-xs leading-snug">
-          Ruling a product out is a judgement about this client: a failed proof of concept, a vendor
-          the board will not approve. It does not remove the product from the catalog for anyone
-          else.
+          A judgement about this client, a failed proof of concept or a vendor the board will not
+          approve. Not a change to the catalog.
         </p>
       </Card>
     </div>

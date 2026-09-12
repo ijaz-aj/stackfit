@@ -19,10 +19,7 @@ export function StepOrganisation() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card
-        title="Organisation"
-        hint="Who they are, and how many people are available to run any of this."
-      >
+      <Card title="Organisation">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Client name" htmlFor="orgName" className="sm:col-span-2">
             <TextInput
@@ -47,7 +44,7 @@ export function StepOrganisation() {
           <Field
             label="Region"
             htmlFor="region"
-            hint="A hint, not a constraint: it suggests labour rates and likely frameworks, and you can override both."
+            hint="A hint, not a constraint. It suggests labour rates and frameworks."
           >
             <Select
               id="region"

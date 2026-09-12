@@ -112,7 +112,7 @@ export function SizingWorksheet({
   return (
     <Card
       title="Sizing worksheet"
-      hint="Every downstream number starts here. The coefficients are analyst estimates. Correct any of them for this client and the whole page re-derives."
+      hint="Analyst estimates. Correct any of them and the whole page re-derives."
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {overriddenCount > 0 ? (

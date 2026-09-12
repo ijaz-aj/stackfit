@@ -71,8 +71,8 @@ export function LiveReadout({
         <h3 className="text-faint text-2xs tracking-wide uppercase">Recommended spend</h3>
         {sizing !== null && sizing.monitoredAssetCount === 0 && (
           <p className="text-warn text-xs leading-snug">
-            No estate captured yet. Nothing is licensed, so the figures below are the floor cost of
-            owning these tools (minimum infrastructure and the people to run them), not a quote.
+            No estate captured, so the figures below are the floor cost of owning these tools, not a
+            quote.
           </p>
         )}
         {estimate === null ? (

@@ -31,7 +31,7 @@ export default async function ScenariosPage() {
 
       <Card
         title="Start from a typical estate"
-        hint="Analyst estimates of what an estate of this shape usually looks like. A starting point to edit, never an answer."
+        hint="Analyst estimates, to edit on the call. Never an answer."
         action={
           <form action={createScenario}>
             <Button type="submit" variant="secondary">

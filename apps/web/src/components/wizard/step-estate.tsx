@@ -86,15 +86,12 @@ export function StepEstate() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card
-        title="Estate"
-        hint="Counts drive every number downstream. Leave a row blank if it did not come up. Blank means not asked, 0 means asked and none."
-      >
+      <Card title="Estate" hint="Blank means not asked. 0 means asked, and none.">
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Badge tone={lineCount === 0 ? 'warn' : 'accent'}>{lineCount} classes captured</Badge>
           <span className="text-faint text-xs">
-            Criticality and internet-facing are captured for the proposal. Today&apos;s engine sizes
-            on counts alone, so they change the write-up rather than the recommendation.
+            Criticality and internet-facing are for the proposal. Sizing is on counts alone, so they
+            change the write-up rather than the recommendation.
           </span>
         </div>
 

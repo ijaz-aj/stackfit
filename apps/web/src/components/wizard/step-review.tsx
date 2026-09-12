@@ -128,7 +128,7 @@ export function StepReview({
         <>
           <Card
             title="Indicative bundles"
-            hint="Essential is the minimum defensible posture plus anything compliance mandates. Ideal ignores the budget, to quantify the gap."
+            hint="Essential is the minimum defensible posture. Ideal ignores the budget, to quantify the gap."
           >
             <div className="grid gap-3 lg:grid-cols-3">
               <BundleColumn
@@ -177,9 +177,8 @@ export function StepReview({
 
       <Card title="Next">
         <p className="text-muted text-sm leading-snug">
-          The intake is saved as you type. <strong>Results</strong> opens the full dashboard:
-          per-category cards, cost breakdown, coverage matrix, gap analysis, the sizing worksheet
-          and the assumptions panel, off the same engine run as the figures above.
+          Saved as you type. <strong>Results</strong> opens the full dashboard, off the same engine
+          run as the figures above.
         </p>
       </Card>
     </div>

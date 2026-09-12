@@ -45,13 +45,13 @@ export function StepCompliance({ frameworks }: { frameworks: readonly FrameworkO
   return (
     <Card
       title="Compliance"
-      hint="Tick what the client is actually on the hook for. Each one can make a product category mandatory and can lengthen log retention."
+      hint="Each one can make a category mandatory and lengthen log retention."
     >
       {suggested.length > 0 && (
         <p className="text-faint mb-3 text-xs">
           Common in {profile.region.toUpperCase()}:{' '}
-          {suggested.map((framework) => framework.name).join(', ')}. Suggestions only. The region is
-          a hint, never a constraint.
+          {suggested.map((framework) => framework.name).join(', ')}. A suggestion, never a
+          constraint.
         </p>
       )}
 
@@ -82,8 +82,8 @@ export function StepCompliance({ frameworks }: { frameworks: readonly FrameworkO
       </div>
 
       <p className="text-faint mt-4 text-xs leading-snug">
-        A framework graded below <em>publisher verified</em> is usable for shortlisting. Reconcile
-        it against the published standard before any coverage figure reaches the client.
+        Below <em>publisher verified</em>, a framework is fine for shortlisting. Reconcile it before
+        a coverage figure reaches the client.
       </p>
     </Card>
   );
