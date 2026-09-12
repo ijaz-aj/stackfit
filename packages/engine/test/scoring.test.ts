@@ -548,6 +548,157 @@ describe('a candidate is a SKU, not a product', () => {
   });
 });
 
+describe('tier limits — the conditions attached to a SKU, not to a product', () => {
+  /** A free tier capped at 10 users, and a paid tier with no cap. */
+  function cappedFreeTier(): Product {
+    const base = coveringProduct({ id: 'capped' });
+    const tier = base.tiers[0]!;
+    return {
+      ...base,
+      tiers: [
+        {
+          ...tier,
+          id: 'free',
+          name: 'Free',
+          limits: {
+            caps: [{ unit: 'users', maxUnits: 10, note: 'Vendor states "Add up to 10 users".' }],
+            prerequisites: [],
+            allowances: [],
+          },
+        },
+        { ...tier, id: 'paid', name: 'Paid' },
+      ],
+    };
+  }
+
+  it('eliminates only the tier whose cap the environment exceeds', () => {
+    // The point of the whole field. Duo Free is capped at ten users and Duo
+    // Essentials is not; eliminating the product would lose both.
+    const inputs = buildInputs({ profile: buildClientProfile({ employeeCount: 60 }) });
+    const scores = scoreProducts([cappedFreeTier()], inputs);
+
+    const free = scores.find((score) => score.tierId === 'free');
+    const paid = scores.find((score) => score.tierId === 'paid');
+
+    expect(free?.eliminated).toBe(true);
+    expect(paid?.eliminated).toBe(false);
+    expect(free?.eliminationReasons.join(' ')).toContain('capped at 10 users');
+    expect(free?.eliminationReasons.join(' ')).toContain('Add up to 10 users');
+  });
+
+  it('leaves a capped tier alone when the environment is inside the cap', () => {
+    const inputs = buildInputs({ profile: buildClientProfile({ employeeCount: 8 }) });
+    const free = scoreProducts([cappedFreeTier()], inputs).find(
+      (score) => score.tierId === 'free',
+    );
+    expect(free?.eliminated).toBe(false);
+  });
+
+  it('treats an unconfirmed prerequisite as unmet', () => {
+    // The Entra ID Free shape: free, but only inside a subscription the client
+    // has to already hold. Unmet by default is the whole point — assuming
+    // otherwise lets a zero-cost tier beat every priced option on a client who
+    // cannot take it.
+    const base = coveringProduct({ id: 'bundled' });
+    const tier = base.tiers[0]!;
+    const product: Product = {
+      ...base,
+      tiers: [
+        {
+          ...tier,
+          limits: {
+            caps: [],
+            prerequisites: [
+              {
+                description: 'an Azure or Microsoft 365 subscription',
+                satisfiedByRetainedTool: ['microsoft-365', 'azure-subscription'],
+              },
+            ],
+            allowances: [],
+          },
+        },
+      ],
+    };
+
+    const withoutIt = scoreProducts([product], buildInputs())[0];
+    expect(withoutIt?.eliminated).toBe(true);
+    expect(withoutIt?.eliminationReasons.join(' ')).toContain(
+      'an Azure or Microsoft 365 subscription',
+    );
+    expect(withoutIt?.eliminationReasons.join(' ')).toContain('retainedTools');
+
+    const withIt = scoreProducts(
+      [product],
+      buildInputs({ profile: buildClientProfile({ retainedTools: ['microsoft-365'] }) }),
+    )[0];
+    expect(withIt?.eliminated).toBe(false);
+  });
+
+  it('never eliminates on an allowance, and says so in the rationale', () => {
+    // Live workflows and metered executions are not quantities the sizing stage
+    // produces, so they cannot be enforced. Carrying them into the rationale is
+    // the honest alternative to pretending they can be.
+    const base = coveringProduct({ id: 'metered' });
+    const tier = base.tiers[0]!;
+    const product: Product = {
+      ...base,
+      tiers: [
+        {
+          ...tier,
+          limits: { caps: [], prerequisites: [], allowances: ['Three live workflows.'] },
+        },
+      ],
+    };
+
+    const score = scoreProducts([product], buildInputs())[0];
+    expect(score?.eliminated).toBe(false);
+    expect(score?.rationale.join(' ')).toContain('Three live workflows.');
+    expect(score?.rationale.join(' ')).toContain('not checked by StackFit');
+  });
+
+  it('measures each cap against the sizing figure it names', () => {
+    // A cap read against the wrong quantity eliminates the wrong tiers, which
+    // is the same failure mode billableUnitsFor exists to prevent in costing.
+    // The fixture gives every asset class role 'server' by default, so
+    // windowsEndpoints has to be told it is an endpoint for this to mean
+    // anything — which is itself the point being tested.
+    const inv = inventory({ windowsEndpoints: 40, windowsServers: 4 });
+    const profile = buildClientProfile({ securityStaffFte: 2 });
+    const inputs = buildInputs({
+      inventory: inv,
+      profile,
+      sizing: computeSizing(
+        inv,
+        profile,
+        buildSizingAssumptions({ windowsEndpoints: { role: 'endpoint' } }),
+      ),
+    });
+
+    const cappedOn = (unit: 'endpoints' | 'servers', maxUnits: number) => {
+      const base = coveringProduct({ id: `capped-${unit}` });
+      const tier = base.tiers[0]!;
+      const product: Product = {
+        ...base,
+        tiers: [
+          {
+            ...tier,
+            limits: {
+              caps: [{ unit, maxUnits, note: 'test fixture' }],
+              prerequisites: [],
+              allowances: [],
+            },
+          },
+        ],
+      };
+      return scoreProducts([product], inputs)[0]?.eliminated;
+    };
+
+    // 40 endpoints and 4 servers: a 10-endpoint cap bites, a 10-server one does not.
+    expect(cappedOn('endpoints', 10)).toBe(true);
+    expect(cappedOn('servers', 10)).toBe(false);
+  });
+});
+
 describe('regressions', () => {
   it('measures asset coverage in weighted units, not raw counts', () => {
     // Was: a SIEM ingesting every server, domain controller and firewall scored

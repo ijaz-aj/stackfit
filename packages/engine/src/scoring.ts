@@ -22,6 +22,7 @@ import type {
   ProductTier,
   ScoringDimension,
   ScoringWeights,
+  TierCapUnit,
 } from '@stackfit/schema';
 import {
   AssetClass as AssetClassEnum,
@@ -487,6 +488,80 @@ export function hardFilter(product: Product, inputs: ScoringInputs): string[] {
   return reasons;
 }
 
+/**
+ * How many units of a cap's unit this environment actually has.
+ *
+ * Deliberately the same mapping discipline as `billableUnitsFor` in cost.ts:
+ * each unit names the sizing figure it reads rather than reaching for a
+ * plausible-looking number, because a cap measured against the wrong quantity
+ * eliminates the wrong tiers.
+ */
+function unitsForCap(unit: TierCapUnit, sizing: SizingResult, profile: ClientProfile): number {
+  switch (unit) {
+    case 'users':
+      return profile.employeeCount;
+    case 'mailboxes':
+      return sizing.userSeatCount > 0 ? sizing.userSeatCount : profile.employeeCount;
+    case 'endpoints':
+      return sizing.endpointCount;
+    case 'servers':
+      return sizing.serverCount;
+    case 'monitored_assets':
+      return sizing.monitoredAssetCount;
+    case 'privileged_accounts':
+      return sizing.privilegedAccountCount;
+  }
+}
+
+/**
+ * Pass 1, per tier: the conditions attached to a SKU rather than to a product.
+ *
+ * A cap or an unmet prerequisite eliminates the tier and only that tier — the
+ * same product's other tiers are scored independently, which is the whole point
+ * of catalogue entries like Duo, where Free is capped at ten users and
+ * Essentials is not.
+ *
+ * Allowances never eliminate. They are the limits this engine cannot measure —
+ * live workflows, monthly executions — and pretending otherwise would be worse
+ * than carrying them as a note.
+ */
+export function tierLimitReasons(
+  tier: ProductTier,
+  product: Product,
+  inputs: ScoringInputs,
+): string[] {
+  const limits = tier.limits;
+  if (limits === undefined) return [];
+
+  const { profile, sizing } = inputs;
+  const reasons: string[] = [];
+
+  for (const cap of limits.caps) {
+    const have = unitsForCap(cap.unit, sizing, profile);
+    if (have > cap.maxUnits) {
+      reasons.push(
+        `${product.name} ${tier.name} is capped at ${cap.maxUnits} ${cap.unit.replace('_', ' ')} ` +
+          `and this environment has ${round(have, 0)}. ${cap.note}`,
+      );
+    }
+  }
+
+  for (const prerequisite of limits.prerequisites) {
+    const held = prerequisite.satisfiedByRetainedTool.some((tool) =>
+      profile.retainedTools.includes(tool),
+    );
+    if (!held) {
+      reasons.push(
+        `${product.name} ${tier.name} requires ${prerequisite.description}, which this client is ` +
+          `not recorded as holding. Add it to retainedTools if they do — otherwise this tier is ` +
+          `not available to them at its stated price.`,
+      );
+    }
+  }
+
+  return reasons;
+}
+
 /** Pass 2 (§7.3): weighted score out of 100 over the surviving products. */
 export function scoreProduct(
   product: Product,
@@ -496,7 +571,10 @@ export function scoreProduct(
   const { profile, inventory, sizing, frameworks, weights, categoryWeights } = inputs;
 
   const opsFte = operationalFteFor(product, sizing.monitoredAssetCount);
-  const eliminationReasons = hardFilter(product, inputs);
+  const eliminationReasons = [
+    ...hardFilter(product, inputs),
+    ...tierLimitReasons(tier, product, inputs),
+  ];
 
   if (eliminationReasons.length > 0) {
     return {
@@ -591,6 +669,13 @@ export function scoreProduct(
     );
   }
 
+  // Allowances are the limits this engine cannot measure, so they cannot be
+  // scored or filtered — but a tier that survived scoring while carrying one is
+  // exactly where an analyst needs to see it, not buried in the catalog notes.
+  for (const allowance of tier.limits?.allowances ?? []) {
+    rationale.push(`⚠ Tier allowance, not checked by StackFit: ${allowance}`);
+  }
+
   return {
     productId: product.id,
     tierId: tier.id,
@@ -632,8 +717,17 @@ export function scoreProducts(
     const first = product.tiers[0];
     if (first === undefined) return [];
 
-    const eliminated = scoreProduct(product, first, inputs);
-    if (eliminated.eliminated) return [eliminated];
+    // Product-level filters test the product, not what you pay for it, so a
+    // failure there is reported once rather than once per SKU.
+    //
+    // Tier limits are the opposite and must not collapse the product: a cap on
+    // a free tier says nothing about the paid one beside it, and eliminating
+    // both would lose the answer. This used to key off "did the first tier get
+    // eliminated", which was true of every filter that existed at the time and
+    // became wrong the moment a tier could be ruled out on its own terms.
+    if (hardFilter(product, inputs).length > 0) {
+      return [scoreProduct(product, first, inputs)];
+    }
 
     return product.tiers.map((tier) => scoreProduct(product, tier, inputs));
   });

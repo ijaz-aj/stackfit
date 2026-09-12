@@ -42,6 +42,112 @@ export const ControlId = z
   );
 export type ControlId = z.infer<typeof ControlId>;
 
+/**
+ * What a tier's cap counts. Every member maps to a figure the sizing stage
+ * already produces, because a cap the engine cannot measure is a cap it cannot
+ * enforce — and an unenforceable cap belongs in `allowances`, not here.
+ */
+export const TierCapUnit = z.enum([
+  'users',
+  'mailboxes',
+  'endpoints',
+  'servers',
+  'monitored_assets',
+  'privileged_accounts',
+]);
+export type TierCapUnit = z.infer<typeof TierCapUnit>;
+
+/** A hard ceiling the vendor places on a tier. Enforced: over it, the tier is out. */
+export const TierCap = z
+  .object({
+    unit: TierCapUnit,
+    maxUnits: z.number().int().positive(),
+    /** What the vendor actually says, in their words. A cap with no wording is a rumour. */
+    note: z.string().min(1),
+  })
+  .strict();
+export type TierCap = z.infer<typeof TierCap>;
+
+/**
+ * Something the client must already hold for this tier to exist at its stated
+ * price — the shape of Microsoft's free Entra ID tier, which is only free
+ * inside a subscription they are already paying for.
+ *
+ * Unmet by default and deliberately so. A prerequisite nobody has confirmed is
+ * a prerequisite that is probably not met, and the failure mode of assuming
+ * otherwise is a zero-cost tier beating every priced option on a client who
+ * cannot actually take it.
+ */
+export const TierPrerequisite = z
+  .object({
+    /** Shown to the analyst, e.g. "an Azure or Microsoft 365 subscription". */
+    description: z.string().min(1),
+    /**
+     * Any one of these appearing in `ClientProfile.retainedTools` satisfies it.
+     * Not restricted to catalog product ids: a prerequisite is often a
+     * subscription this catalog does not sell, and the analyst ticks what the
+     * client holds.
+     */
+    satisfiedByRetainedTool: z.array(Slug).min(1),
+  })
+  .strict();
+export type TierPrerequisite = z.infer<typeof TierPrerequisite>;
+
+/**
+ * The conditions attached to a tier beyond its price.
+ *
+ * Phase 7 hit seven of these in one pass — user caps, mailbox caps, asset
+ * caps, workflow caps, metered executions, prerequisite subscriptions — and
+ * had nowhere to put any of them. Four were approximated by pinning
+ * `scaleCeiling` to `small`, which is wrong in both directions, and two tiers
+ * were left out of the catalog entirely because a zero-cost tier with an
+ * unmodelled condition beats every priced option by construction.
+ *
+ * Three kinds, because the three behave differently:
+ *
+ *   caps          — measurable against the sizing stage, so enforced. Over the
+ *                   cap the tier is eliminated with a stated reason.
+ *   prerequisites — measurable against `retainedTools`, so enforced the same
+ *                   way, and unmet unless the analyst says otherwise.
+ *   allowances    — genuinely unmeasurable here (live workflows, monthly
+ *                   executions). Never enforced; carried into the tier's
+ *                   scoring rationale so an analyst sees it instead of it
+ *                   living only in prose nobody reads.
+ */
+export const TierLimits = z
+  .object({
+    caps: z.array(TierCap).default([]),
+    prerequisites: z.array(TierPrerequisite).default([]),
+    allowances: z.array(z.string().min(1)).default([]),
+  })
+  .strict()
+  .superRefine((limits, ctx) => {
+    if (
+      limits.caps.length === 0 &&
+      limits.prerequisites.length === 0 &&
+      limits.allowances.length === 0
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'an empty limits block says nothing — omit the field entirely rather than declaring no limits',
+      });
+    }
+
+    const seen = new Set<string>();
+    limits.caps.forEach((cap, index) => {
+      if (seen.has(cap.unit)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['caps', index, 'unit'],
+          message: `two caps on "${cap.unit}" — the tighter one is the only one that can bite`,
+        });
+      }
+      seen.add(cap.unit);
+    });
+  });
+export type TierLimits = z.infer<typeof TierLimits>;
+
 export const ProductTier = z
   .object({
     id: Slug,
@@ -67,6 +173,12 @@ export const ProductTier = z
      * actually selected.
      */
     controlsCovered: z.array(ControlId).default([]),
+    /**
+     * Caps, prerequisites and allowances attached to this tier. Optional
+     * because most tiers have none; a tier that does have one and does not
+     * declare it is the bug this field exists to stop.
+     */
+    limits: TierLimits.optional(),
   })
   .strict();
 export type ProductTier = z.infer<typeof ProductTier>;
