@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 6 — results dashboard, all seven sections of §8 (in review)
+**Current phase:** 7 — catalog expansion (in progress, see the phase log)
 **Last updated:** 2026-09-12
 
 ## Phase log
@@ -18,7 +18,7 @@
 | 4b `coverage.ts` (**inserted**) | in review | The §7.5 stage: coverage matrix per framework, CSF Function roll-up, risk-graded gap list, costed fix plan. `coverage-assumptions.yaml`. The engine pipeline is now complete end to end. 299 tests green. |
 | 5 Intake wizard UI | in review | Next 16 + React 19 + Tailwind v4 + Prisma 7/SQLite. Six steps, presets, continuous save, live readout. `runPipeline` + `@stackfit/data` extracted so the app and the tests share one path. 325 tests green; `pnpm audit` clean. |
 | 6 Results dashboard | in review | All seven parts of §8, server-rendered off one pipeline run. Recharts cost + cash-flow charts on a validated palette. Sizing assumptions are editable per scenario. **Reviewed; six defects found and fixed** — deployment fit read "no preference" as a demand, the fit score was rendered with no working shown, a control was credited to a tier that does not sell it, Ideal optimised for value rather than fit, a partial control had no route to being closed, and the fix list offered purchases that closed nothing. Both pre-Phase-7 open questions closed; the SKU is now part of the recommendation. 368 tests green. |
-| 7 Catalog expansion (≥5 per category) | not started | |
+| 7 Catalog expansion (≥5 per category) | **in progress** | 9 new categories landed at 5 products each — iam, backup, email_security, pam, ngfw, ndr, soar, mdr, asset_discovery — plus SentinelOne into edr. 54 products across 12 files, 90 catalog prices, all fresh, no placeholders. **Three engine defects found and fixed**, each pinned by a regression: a bigger budget could buy less compliance, a mandated control was outranked by one more funded category, and ops fit returned a flat score for every product when the client had no security staff. **Outstanding: deception (0 of 5), siem (3 of 5), edr (4 of 5), vulnerability_management (2 of 5)** — 12 products. Stopped because web research hit a session rate limit, and hard rule 2 forbids writing a price from memory. 372 tests green. |
 | 8 Export (DOCX/PDF/XLSX) | not started | |
 | 9 Scenario save / clone / compare | not started | |
 | 10 Polish + demo scenarios + README | not started | Pick + document the free hosting target (Vercel Hobby + Neon/Supabase free Postgres). |
@@ -846,30 +846,203 @@ uncovered controls, 9 genuinely unclosable, and one purchase that closes two.
   sourced, so neither was invented. Worth a schema decision in Phase 7 alongside
   the tier-level claims the catalog will need anyway.
 
+### Phase 7
+
+Nine categories researched and written on 2026-09-12. Every price is read from a
+vendor page or an authoritative feed on that date; nothing was written from
+memory. The phase is unfinished — see the phase log — but what landed raised
+more design questions than any phase since 4.
+
+**Decisions.**
+
+- 2026-09-12 — **A vendor's free tier is only catalogued when it is genuinely
+  unconditional.** Three were dropped or constrained rather than shipped as a
+  zero-cost option a client cannot actually take:
+  - `Duo Free` — capped at 10 users. Not catalogued; the schema cannot express a
+    headcount cap, so it would have been offered to a 500-person client at zero.
+  - `Entra ID Free` — not standalone, it needs an Azure or Microsoft 365
+    subscription the client must already hold. Catalogued briefly and
+    immediately selected as the identity answer for an explicitly
+    open-source-first client, beating Keycloak, under the rationale line "No
+    licence fee: Entra ID Free is commercial". Removed.
+  - `Tines Free` — three live workflows. Kept, but with `scaleCeiling: small`,
+    after it was selected over Shuffle for the same open-source-first client.
+
+  A client who genuinely already owns one of these should list it in
+  `retainedTools`, which is the field that models "already owned".
+
+- 2026-09-12 — **`scaleCeiling` is now doing double duty as a licence cap, and
+  it is an approximation every time.** Sublime Platform (100 mailboxes), TheHive
+  Community (2 users), runZero Community (100 assets) and Tines Free (3
+  workflows) are all pinned to `small`, which tops out at 250 monitored assets.
+  Each entry says so in its own notes. This is a stopgap, not a model.
+
+- 2026-09-12 — **A product too important to omit may ship on `analyst_estimate`
+  pricing, flagged, when the vendor publishes nothing.** Precedent set by
+  Microsoft Defender for Endpoint in Phase 1 and applied again to Veeam,
+  Proofpoint Essentials, Fortinet FortiGate, Sophos MDR, CrowdStrike Falcon
+  Complete and Arctic Wolf. 13 pricing rules are now `analyst_estimate`. Each
+  says NOT VENDOR-PUBLISHED in its notes, names its corroborating sources, and
+  will show a confidence warning wherever it is costed.
+
+- 2026-09-12 — **Where reported prices disagree, the higher figure is used and
+  the spread is stated.** Proofpoint Essentials Business is reported between USD
+  3.03 and 3.93 per user per month — about 30% apart. For a pre-sales budget,
+  overstating costs a conversation and understating costs a proposal that cannot
+  be honoured.
+
+- 2026-09-12 — **Control claims are split by what a product does, not by the
+  category it sits in.** Guacamole controls the session and claims no credential
+  control; Passbolt protects the credential and claims no session control;
+  Arkime records and claims no detection; ntopng describes traffic and claims
+  neither; Shuffle orchestrates and claims no case management; TheHive holds the
+  case and claims no mitigation. The pairings an analyst would actually propose
+  fall out of the entries rather than being asserted.
+
+**Defects found and fixed.** Each pinned by a regression test.
+
+1. **A bigger budget could buy less compliance.** `buildRecommended` runs two
+   strategies and compared them on weighted need alone. They optimise different
+   denominators — `cheapest` on what a product costs to *buy*, `value_density`
+   on fit per unit of what it costs to *own* — so they can fund the same
+   categories with different products, tie, and let density win. Surfaced by
+   `iam`: at a USD 20,000 cap identity was Keycloak, claiming CIS Controls 5 and
+   6; at USD 50,000 it became Duo Essentials, claiming only 6.
+2. **A mandated control was outranked by one more funded category.** Same
+   comparison, one level up. Surfaced by `ndr`: the PCI retailer started funding
+   a ninth category by switching the endpoint pick to one that does not claim
+   requirement 5, anti-malware, in a cardholder data environment. The comparison
+   is now lexicographic — mandates, then weighted need, then controls, then
+   density — and explains itself in both directions.
+3. **Ops fit returned a flat score at zero security staff.** The
+   `securityStaffFte === 0` branch returned a constant for every product,
+   flattening the one dimension that should discriminate hardest in exactly the
+   case it was written for. On §12.2 every product scored 15 — Huntress at 0.12
+   FTE and Wazuh at 0.60 alike — while the rationale read "A managed alternative
+   is the honest answer here". §12.2's own acceptance assertion had been
+   standing in with a weaker claim since Phase 4 because of it. It now falls
+   linearly to a floor as FTE rises to a new tunable,
+   `unusableFteWithNoSecurityStaff`.
+
+Plus one chore: `pnpm prices:refresh --write` enumerated three catalog filenames
+by hand, so a drifting price in any new file was reported and then silently not
+written. It reads the directory now.
+
+**Limitations found and deliberately NOT fixed.** All are recorded here rather
+than worked around in the data, and all understate rather than overstate.
+
+- **A tier cannot declare its limits.** Seven instances in one phase: Duo Free
+  (10 users), Entra ID Free (prerequisite subscription), Sublime (100
+  mailboxes), TheHive Community (2 users), Tines Free (3 workflows), runZero
+  Community (100 assets), n8n Cloud (metered executions). This is the single
+  strongest case for a `limits` block on `ProductTier`, and it would replace
+  four `scaleCeiling` approximations with something true.
+- **A pricing rule cannot say what unit it bills or bands on.** `flat_tiered`
+  always bands on `monitoredAssetCount`, which forced an assumed
+  one-administrator-per-40-assets mapping onto ManageEngine PAM360's published
+  per-administrator bands — the crudest number in the catalog. The same gap put
+  Proxmox's per-server and OPNsense's per-installation rates behind assumed
+  bands, and stopped Bareos's "larger of TB or clients" unit being modelled at
+  all.
+- **Azure meters quote per hour or per month; the catalog stores per year.**
+  `prices:refresh` compares the feed figure to the stored one directly, so Azure
+  Backup and Azure Firewall are deliberately `refresh: manual` despite coming
+  from the machine-readable feed. Annualising a meter needs a human.
+- **There is no hardware capex line.** PROJECT_SPEC §7.2 names `hardwareCost`;
+  the cost engine implements licence, support, infrastructure, ops FTE,
+  implementation and training. Every NGFW appliance entry understates year one
+  by whatever the box costs, and ntopng's perpetual licences could not be
+  catalogued at all.
+- **There is no network-throughput sizing figure.** Azure Firewall and AWS
+  Network Firewall both bill per GB of traffic processed. The sizing stage
+  derives log ingest in GB/day, a different and much smaller quantity, so the
+  data-processing fee is named in the notes and excluded rather than billed
+  against the wrong number.
+- **`termYears` is in the schema and no code reads it.** Harmless today — every
+  rule in the catalog is `termYears: 1` — but a three-year rule would be
+  silently costed as an annual one.
+- **A vendor onboarding fee has no home.** Blumira publishes one-time onboarding
+  fees per edition. The engine's only one-off lines are implementation services
+  and training, and an onboarding fee is neither.
+
+**Worth eyeballing.** The §12.1 retailer — 60 staff, PCI DSS, USD 25k/yr cap —
+went from 62.5% PCI coverage with three unmet mandates at the start of the phase
+to **100% on both PCI DSS and NIST CSF, with an empty gap list**. PCI requirement
+7 is the clearest single trace of what the catalog is for: an unclosable
+critical gap before Phase 7, a closable one after `iam` (fixable by upgrading a
+tier already in the bundle), and simply covered after `pam`.
+
+**Price transparency, by category.** Worth knowing before a scoping call which
+markets will give you a number and which will not.
+
+| Category | Publish a rate | Notes |
+|---|---|---|
+| iam | 4 of 5 | Only Keycloak is free; everyone else publishes. |
+| backup | 3 of 5 | Nakivo, Commvault, Rubrik, Cohesity, Veritas all refuse. |
+| email_security | 2 of 5 | Worst in the catalog. Eight vendors checked, all quote-only. |
+| pam | 2 of 5 | Every market leader is quote-only. |
+| ngfw | 4 of 5 | Fortinet publishes nothing; Palo Alto and Sophos likewise. |
+| ndr | 5 of 5 free | The commercial half is unpriceable and therefore absent. |
+| soar | 1 of 5 paid | Free tiers are real; paid tiers are quote-only. |
+| mdr | 2 of 5 | The category that most needs a number and least gives one. |
+| asset_discovery | 2 of 5 | runZero's paid platform is "Starts at $5,000", which is not a price. |
+
 ## Open questions
 
-**None blocking Phase 7.** Both of the questions this section carried were
-answered on 2026-09-12 — see the Phase 6 review section above.
+**One decision needed before Phase 7 can be called done**, plus two unverified
+items carried forward.
 
-Opened and closed 2026-09-12:
-- ~~**Tier selection is on price alone.**~~ Fixed the same day rather than
-  deferred: a candidate is now a product at a tier, all the way through
-  scoring, selection, coverage and the gap list. See the Phase 6 review
-  section above.
+- **Should a `ProductTier` gain a `limits` block?** Seven products in Phase 7
+  carry a vendor limit the schema cannot express — a user cap, a mailbox cap, a
+  workflow cap, a prerequisite subscription, metered executions. Four of them
+  are approximated today by pinning `scaleCeiling` to `small`, which is wrong in
+  both directions: it over-permits between the real cap and 250 assets, and it
+  hard-filters products that would be fine for a large estate with few analysts.
+  Two others (Duo Free, Entra ID Free) were dropped from the catalog entirely
+  because there was no honest way to ship them.
+
+  It is a schema plus scoring change, not a data change, so it was not done
+  inside a `data:` phase. Say the word and it becomes a small inserted phase
+  before the remaining 12 products land; otherwise the approximations stand and
+  every affected entry documents itself.
+
+- **The remaining 12 products need a session with web research available.**
+  `deception` has no products at all, and `siem`, `edr` and
+  `vulnerability_management` are short of five. Research stopped mid-phase on a
+  rate limit; hard rule 2 forbids writing a price from memory, so nothing was
+  guessed to finish the count.
 
 Still unverified rather than unanswered:
 - **The dashboard has never been looked at in a browser.** Verified by rendering
-  its HTML and driving its server actions over HTTP across two sessions now; the
-  Recharts charts have been validated for colour and written to spec but never
-  seen. Browser automation was unavailable again this session (the extension
-  reports as not connected). Worth ten minutes with `pnpm dev` before Phase 7.
+  its HTML and driving its server actions over HTTP across three sessions now;
+  the Recharts charts have been validated for colour and written to spec but
+  never seen. Worth ten minutes with `pnpm dev` — and it is now more worth it
+  than before, because the catalog went from 8 products to 54 and the dashboard
+  has never rendered a shortlist that long.
 
 ## Known placeholders
 
 <!-- every catalog entry still on placeholder pricing, so they can be chased down before any client sees output -->
 <!-- `pnpm catalog:validate` prints this list; keep it in sync -->
 
-**None.** Both Phase 1 placeholders were closed by research on 2026-09-09:
+**No `placeholder`-confidence prices anywhere in the catalog**, and none has
+ever shipped. ⚠ But `analyst_estimate` is now 13 pricing rules across 7
+products, up from 2 before Phase 7, because whole categories publish nothing.
+Each is flagged NOT VENDOR-PUBLISHED in its own notes and carries corroborating
+sources; each will show a confidence warning wherever it is costed. In order of
+how much they could be wrong by:
+
+| Product | Rules | Why it is an estimate |
+|---|---|---|
+| `arctic-wolf` | 1 | The weakest price in the catalog. Arctic Wolf prices on the whole environment — users, sensors, log sources, cloud accounts — not on any unit this catalog holds, so the rule is a per-user approximation of a third-party benchmark. |
+| `fortinet-fortigate` | 1 | Reseller-listed UTP bundle renewals for the FG-60F and FG-100F. Excludes the appliance, which is capex the engine cannot model. |
+| `proofpoint-essentials` | 3 | Sources disagree by about 30%; the higher figure is used deliberately. |
+| `sophos-mdr` | 2 | Partner-led sales, so the price depends on which partner is asked. |
+| `crowdstrike-falcon-complete` | 1 | CrowdStrike publishes Falcon Go and nothing above it. |
+| `veeam-data-platform` | 3 | VUL per workload, corroborated across two independent licensing sources. Veeam raised list prices in January of both 2025 and 2026, so this ages faster than a normal list price. |
+| `microsoft-defender-for-endpoint` | 2 | Phase 1. Microsoft publishes no standalone per-plan price, only the bundled Defender Suite. |
+
+The two Phase 1 placeholders were closed by research on 2026-09-09:
 
 - `microsoft-sentinel` — now `public_list` at USD 4.30/GB, read from the **Azure Retail Prices
   API** (`prices.azure.com`), which is Microsoft's own authoritative price feed. Both the

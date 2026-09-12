@@ -164,3 +164,30 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   is a thin CLI over it and `test/data.test.ts` asserts the committed tree is clean. So
   `pnpm test` fails on a bad `data:` commit, not just the command someone forgot to run.
   That root-level `test/` directory is its own Vitest project, named `data`.
+- **`flat_tiered` always bands on `monitoredAssetCount`**, and a pricing rule
+  cannot say otherwise. Several catalog entries whose vendor bands on something
+  else — administrators (ManageEngine PAM360), backup servers (Proxmox),
+  installations (OPNsense) — carry an explicit analyst assumption converting
+  estate size into the vendor's unit. Those assumptions are stated on the rule,
+  and they are the crudest numbers in the catalog.
+- **A tier cannot express a vendor limit**, so a free tier with a user, mailbox
+  or workflow cap has no honest home. Four such tiers approximate it with
+  `scaleCeiling: small`; two more (Duo Free, Entra ID Free) were left out of the
+  catalog entirely. Before adding a capped free tier, read the Phase 7 section
+  of `docs/STATUS.md` — a zero-cost tier with an unmodelled condition beats
+  every open-source option on cost by construction, and it has done exactly that
+  twice.
+- **An Azure meter's unit is not the catalog's unit.** `prices:refresh` compares
+  the feed's number to the stored one directly, so a meter quoting "1 Hour" or
+  "1/Month" cannot be stored as a per-year price and still be machine-refreshed.
+  Azure Backup and Azure Firewall are `refresh: manual` for that reason even
+  though they come from the machine-readable feed. Only per-unit meters that
+  match the pricing model (Sentinel's per-GB) can use `azure_retail_prices`.
+- **The cost engine has no hardware line and no network-throughput figure.**
+  §7.2 names `hardwareCost`; the implementation does not have one. Appliance
+  vendors therefore understate year one, and cloud firewalls' per-GB traffic
+  charges are named in notes rather than billed against log-ingest GB/day, which
+  is a different and much smaller quantity.
+- **`termYears` is on `PricingRule` and nothing reads it.** Every committed rule
+  is `termYears: 1`, so this is latent rather than broken — but a multi-year
+  rule would be costed as if it were annual.
