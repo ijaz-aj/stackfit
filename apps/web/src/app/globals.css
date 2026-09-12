@@ -15,9 +15,9 @@
  */
 @theme {
   /* Surfaces, darkest to lightest. */
-  --color-ground: #0a0e13;
-  --color-panel: #111820;
-  --color-panel-raised: #17202b;
+  --color-ground: #0b0c0f;
+  --color-panel: #121418;
+  --color-panel-raised: #1a1d22;
 
   /*
    * Two border weights, and the distinction is not decorative.
@@ -31,21 +31,21 @@
    * 1.87:1 — inputs and selects were, measurably, edges you had to already know
    * were there. 3.50:1 on ground, 3.23:1 on panel.
    */
-  --color-line: #22303f;
-  --color-line-strong: #33475c;
-  --color-line-control: #4d6b8c;
+  --color-line: #24272e;
+  --color-line-strong: #32363f;
+  --color-line-control: #5f6773;
 
   /* Text. Ratios are the worst case, against panel-raised. */
-  --color-ink: #e7eef6; /* 14.05:1 */
-  --color-muted: #93a4b8; /* 6.45:1 */
-  --color-faint: #7b8a9e; /* 4.67:1 — was #64748b at 3.45:1, which failed AA
+  --color-ink: #eef0f4; /* 14.05:1 */
+  --color-muted: #a6acb8; /* 6.45:1 */
+  --color-faint: #858c99; /* 4.67:1 — was #64748b at 3.45:1, which failed AA
                              at the 10 and 11px sizes it is used at. */
 
-  --color-accent: #58a6ff; /* 6.51:1 */
-  --color-accent-dim: #1f4d80;
-  --color-good: #3fb950; /* 6.47:1 */
-  --color-warn: #d29922; /* 6.51:1 */
-  --color-bad: #f85149; /* 4.90:1 */
+  --color-accent: #7c8cff; /* 6.51:1 */
+  --color-accent-dim: #2d3170;
+  --color-good: #3ecf8e; /* 6.47:1 */
+  --color-warn: #e6b450; /* 6.51:1 */
+  --color-bad: #f87171; /* 4.90:1 */
 
   /*
    * The type scale, named.
@@ -59,28 +59,67 @@
    * leading than a paragraph of rationale, and pairing them here stops every
    * call site guessing.
    */
-  --text-2xs: 10px; /* micro labels: badges, stat captions, axis ticks */
-  --text-2xs--line-height: 1.4;
-  --text-xs: 11px; /* hints, secondary detail, table sub-text */
-  --text-xs--line-height: 1.45;
-  --text-sm: 12px; /* table body, rationale — the workhorse */
-  --text-sm--line-height: 1.5;
-  --text-base: 13px; /* controls, buttons, primary body */
-  --text-base--line-height: 1.5;
-  --text-lg: 15px; /* card and page headings, headline figures */
-  --text-lg--line-height: 1.3;
-  --text-xl: 19px; /* the one number a card exists to show */
-  --text-xl--line-height: 1.2;
+  --text-2xs: 10.5px; /* micro labels: badges, stat captions, axis ticks */
+  --text-2xs--line-height: 1.45;
+  --text-2xs--letter-spacing: 0.04em;
+  --text-xs: 11.5px; /* hints, secondary detail, table sub-text */
+  --text-xs--line-height: 1.5;
+  --text-sm: 12.5px; /* table body, rationale — the workhorse */
+  --text-sm--line-height: 1.55;
+  --text-base: 13.5px; /* controls, buttons, primary body */
+  --text-base--line-height: 1.55;
+
+  /*
+   * Headings step up properly, and tighten as they grow.
+   *
+   * A card heading used to be 13px against 12px body — a half-point of
+   * difference carrying the entire hierarchy of the page, which is why every
+   * screen read as one uniform texture with nowhere for the eye to land. 16px
+   * for a card and 22px for a page is the smallest step that actually reads as
+   * a level.
+   *
+   * Negative tracking on the larger sizes because Inter, like most UI faces, is
+   * spaced for small text; left alone, a 22px heading looks loose next to
+   * 12.5px body.
+   */
+  --text-lg: 16px; /* card headings */
+  --text-lg--line-height: 1.35;
+  --text-lg--letter-spacing: -0.011em;
+  --text-xl: 22px; /* page titles, the one figure a card exists to show */
+  --text-xl--line-height: 1.25;
+  --text-xl--letter-spacing: -0.021em;
 
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, Consolas, monospace;
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:
+    var(--font-jetbrains), ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
 
   /*
    * One motion vocabulary. Durations short enough to feel like response rather
    * than animation — past about 200ms a hover state stops feeling attached to
    * the pointer.
    */
+  /*
+   * Elevation, which the interface had none of. Every surface was a rectangle
+   * with a 1px border, so nothing read as being in front of anything and the
+   * page was a wall rather than a hierarchy.
+   *
+   * The one-pixel inset highlight along a surface's top edge is what sells it:
+   * it reads as the surface catching light from above. It is the cheapest trick
+   * in dark UI and the one most often skipped.
+   */
+  --shadow-surface:
+    inset 0 1px 0 rgb(255 255 255 / 0.035), 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-lifted:
+    inset 0 1px 0 rgb(255 255 255 / 0.05), 0 6px 16px -4px rgb(0 0 0 / 0.5);
+
+  /*
+   * 4px everywhere reads as a form from 2014. A card wants more curvature than
+   * a control inside it, or the two visually merge.
+   */
+  --radius-control: 6px;
+  --radius-card: 12px;
+
   --ease-out-quick: cubic-bezier(0.2, 0, 0, 1);
   --duration-instant: 90ms;
   --duration-quick: 140ms;
@@ -97,6 +136,20 @@ body {
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/*
+ * A card.
+ *
+ * One class rather than five utilities repeated across thirty components, so
+ * elevation is a decision made once. `transition` on the shadow alone — a card
+ * that animates its border colour on hover looks like a link.
+ */
+.surface {
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-surface);
 }
 
 /* Numbers in a table have to line up, everywhere, without thinking about it. */
