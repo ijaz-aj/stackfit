@@ -199,13 +199,17 @@ export function Badge({
   tone = 'neutral',
   children,
   className,
+  title,
 }: {
   tone?: keyof typeof BADGE_TONES;
   children: ReactNode;
   className?: string;
+  /** The long form, where the badge shows an abbreviation of it. */
+  title?: string;
 }) {
   return (
     <span
+      title={title}
       className={cn(
         'inline-flex items-center rounded-full border px-2 py-1 text-2xs font-medium whitespace-nowrap uppercase',
         BADGE_TONES[tone],

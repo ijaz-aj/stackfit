@@ -1,9 +1,12 @@
 'use server';
 
+import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+import { INDUSTRY_SHORT } from '@/components/wizard/labels';
 import { engineData } from './config.server';
+import { formatNumber } from './format';
 import { prisma } from './db';
 import { summariseEstimate, type EstimateSummary } from './estimate';
 import { resultsFor } from './results.server';
@@ -17,6 +20,9 @@ import {
   SizingOverrideInput,
   profileFromPreset,
   uniqueScenarioName,
+  isUnreadable,
+  parseScenarioRow,
+  type ScenarioRecord,
 } from './scenario';
 
 /**
@@ -231,4 +237,58 @@ export async function estimateScenario(input: unknown): Promise<EstimateResult> 
 
   const result = resultsFor(parsed.data.profile, parsed.data.inventory);
   return { ok: true, summary: summariseEstimate(result) };
+}
+
+/** One row in the command palette's results. */
+export interface CommandTarget {
+  readonly id: string;
+  readonly name: string;
+  /** Industry, headcount and currency, for telling two same-named rows apart. */
+  readonly detail: string;
+}
+
+/**
+ * Sessions matching what the analyst has typed into the command palette.
+ *
+ * A server action rather than a list shipped with the layout. The layout wraps
+ * the sign-in page too, and baking every saved session's name into every page
+ * would put a prospective client list in front of anyone who can load the
+ * login screen. This way the query is gated by `requireAnalyst()` like every
+ * other mutation, and nothing reaches the browser until somebody asks.
+ *
+ * Matching is a plain case-insensitive substring over the name and the
+ * industry, done in SQL-free Prisma. Ranking beyond "starts with beats
+ * contains" would be inventing relevance for a list that is fifty rows long.
+ */
+export async function searchSessions(query: unknown): Promise<readonly CommandTarget[]> {
+  await requireAnalyst();
+
+  const parsed = z.string().max(120).safeParse(query);
+  if (!parsed.success) return [];
+  const needle = parsed.data.trim().toLowerCase();
+
+  const rows = await prisma.scenario.findMany({ orderBy: { updatedAt: 'desc' }, take: 50 });
+
+  return rows
+    .map(parseScenarioRow)
+    .filter((scenario): scenario is ScenarioRecord => !isUnreadable(scenario))
+    .map((scenario) => ({
+      id: scenario.id,
+      name: scenario.name,
+      detail:
+        `${INDUSTRY_SHORT[scenario.profile.industry] ?? scenario.profile.industry} · ` +
+        `${formatNumber(scenario.profile.employeeCount)} staff · ${scenario.profile.budget.currency}`,
+    }))
+    .filter(
+      (target) =>
+        needle === '' ||
+        target.name.toLowerCase().includes(needle) ||
+        target.detail.toLowerCase().includes(needle),
+    )
+    .sort((a, b) => {
+      const rank = (target: CommandTarget) =>
+        target.name.toLowerCase().startsWith(needle) ? 0 : 1;
+      return rank(a) - rank(b);
+    })
+    .slice(0, 8);
 }

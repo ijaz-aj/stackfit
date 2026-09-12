@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { AnalystMenu } from '@/components/analyst-menu';
+import { CommandPalette } from '@/components/command-palette';
 import { currentAnalyst } from '@/lib/session.server';
 
 import './globals.css';
@@ -54,7 +55,7 @@ export const metadata: Metadata = {
  */
 export const viewport: Viewport = {
   colorScheme: 'dark',
-  themeColor: '#0a0e13',
+  themeColor: '#10161b',
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
@@ -85,6 +86,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             </Link>
 
             <div className="ml-auto flex items-center gap-3">
+              <CommandPalette />
               {/*
                 Load-bearing, not decoration. This is what stops a screenshot of
                 indicative figures being read as a quote, so it stays visible at

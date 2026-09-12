@@ -14,38 +14,61 @@
  * so the next person to adjust a colour can tell whether they broke it.
  */
 @theme {
-  /* Surfaces, darkest to lightest. */
-  --color-ground: #0b0c0f;
-  --color-panel: #121418;
-  --color-panel-raised: #1a1d22;
+  /*
+   * Surfaces, darkest to lightest, built around UST's own charcoal.
+   *
+   * Sampled from ust.com rather than guessed at: their dominant dark is
+   * #1C242C, their accents are a teal #006E74, a petrol #003C52 and a cyan
+   * #0097AB, and their light ground is a bone #F7F7F1. What makes that palette
+   * theirs is the *blue* in the charcoal. The previous surfaces here were
+   * deliberately neutral greys, which is a different and more anonymous thing.
+   *
+   * Their charcoal is the panel. The ground goes a step below it, because a
+   * full-dark application needs somewhere for a raised surface to be raised
+   * from, and a site with a white body does not.
+   */
+  --color-ground: #10161b;
+  --color-panel: #18212a;
+  --color-panel-raised: #212d38;
 
   /*
    * Two border weights, and the distinction is not decorative.
    *
    * `line` separates things: card edges, table rules. WCAG exempts purely
-   * decorative boundaries, so it stays quiet at 1.33:1 and the interface keeps
+   * decorative boundaries, so it stays quiet at 1.26:1 and the interface keeps
    * its density.
    *
    * `line-control` outlines something you click or type into. That is a UI
-   * component under 1.4.11 and needs 3:1, which the old #33475c missed at
-   * 1.87:1: inputs and selects were, measurably, edges you had to already know
-   * were there. 3.50:1 on ground, 3.23:1 on panel.
+   * component under 1.4.11 and needs 3:1. The first value drawn for this
+   * palette, #5C7285, came in at 2.81:1 against the raised surface and was
+   * lifted until it cleared with room: 4.44 on ground, 3.97 on panel, 3.42 on
+   * panel-raised.
    */
-  --color-line: #24272e;
-  --color-line-strong: #32363f;
-  --color-line-control: #5f6773;
+  --color-line: #27333e;
+  --color-line-strong: #334250;
+  --color-line-control: #6a8093;
 
   /* Text. Ratios are the worst case, against panel-raised. */
-  --color-ink: #eef0f4; /* 14.05:1 */
-  --color-muted: #a6acb8; /* 6.45:1 */
-  --color-faint: #858c99; /* 4.67:1. Was #64748b at 3.45:1, which failed AA
-                             at the 10 and 11px sizes it is used at. */
+  --color-ink: #eef3f4; /* 12.53:1 */
+  --color-muted: #a6b6be; /* 6.72:1 */
+  --color-faint: #83969f; /* 4.56:1, and no lower: it is used at 10 and 11px */
 
-  --color-accent: #7c8cff; /* 6.51:1 */
-  --color-accent-dim: #2d3170;
-  --color-good: #3ecf8e; /* 6.47:1 */
-  --color-warn: #e6b450; /* 6.51:1 */
-  --color-bad: #f87171; /* 4.90:1 */
+  /*
+   * The accent is UST's cyan, lifted.
+   *
+   * #0097AB is their colour and it reads on white, where they use it. On this
+   * ground it manages 3.9:1, which fails AA for the small text this interface
+   * is almost entirely made of. #2FB6C5 is the same hue carried up until it
+   * clears, at 5.76:1 against the worst surface.
+   *
+   * `accent-dim` is their petrol #003C52 pulled toward the panel, for the
+   * filled backgrounds behind an accent border.
+   */
+  --color-accent: #2fb6c5; /* 5.76:1 */
+  --color-accent-dim: #0e3b45;
+  --color-good: #3dc98f; /* 6.65:1 */
+  --color-warn: #e3b24f; /* 7.18:1 */
+  --color-bad: #f4736f; /* 5.03:1 */
 
   /*
    * The type scale, named.

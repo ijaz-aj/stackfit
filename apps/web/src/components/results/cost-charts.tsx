@@ -42,11 +42,11 @@ const SERIES = [
  * in a panel colour the panel no longer used.
  */
 /** `--color-panel`. Painted between stacked segments as a 2px gap, not a border. */
-const SURFACE = '#121418';
+const SURFACE = '#18212a';
 /** `--color-line`. */
-const GRID = '#24272e';
-/** `--color-faint`: 4.67:1, which an 11px axis tick needs. */
-const TEXT = '#858c99';
+const GRID = '#27333e';
+/** `--color-faint`: 4.56:1, which an 11px axis tick needs. */
+const TEXT = '#83969f';
 
 export interface CategoryCost {
   readonly label: string;

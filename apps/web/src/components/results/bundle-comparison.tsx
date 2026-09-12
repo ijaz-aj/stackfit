@@ -1,4 +1,4 @@
-import type { Bundle, PipelineResult } from '@stackfit/engine';
+import { PRICING_CONFIDENCE_LABELS, type Bundle, type PipelineResult } from '@stackfit/engine';
 import type { FxConfig } from '@stackfit/schema';
 import { coverageOfBundle } from '@stackfit/engine';
 import type { PricingConfidence } from '@stackfit/schema';
@@ -8,6 +8,21 @@ import { MoneyWithRupees } from '@/components/money';
 import { Badge, Card, RationaleList } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { formatMoney, formatNumber } from '@/lib/format';
+
+/**
+ * The grading, short enough for a table column.
+ *
+ * `PRICING_CONFIDENCE_LABELS` is the full form and is what the assumptions
+ * panel and the exports use. Here the column heading already supplies "pricing",
+ * and the badge cannot wrap, so the long form was setting the table's minimum
+ * width on its own.
+ */
+const SHORT_CONFIDENCE: Readonly<Record<PricingConfidence, string>> = {
+  vendor_quote: 'quoted',
+  public_list: 'list',
+  analyst_estimate: 'estimate',
+  placeholder: 'placeholder',
+};
 
 const CONFIDENCE_TONE: Readonly<Record<PricingConfidence, 'good' | 'warn' | 'bad'>> = {
   public_list: 'good',
@@ -192,9 +207,24 @@ export function BundleComparison({
                   {formatMoney(bundle.mssp.totalAnnual)}
                   <span className="text-faint block text-2xs">{bundle.mssp.serviceLevel}</span>
                 </td>
-                <td className="py-2 align-top">
-                  <Badge tone={CONFIDENCE_TONE[worstConfidence]}>
-                    {worstConfidence.replace(/_/g, ' ')}
+                {/*
+                  The column is sized by this badge and the badge cannot wrap,
+                  so "analyst estimate" set the table's minimum width and spilled
+                  past the scroller however wide the page got. Widening the page
+                  only made the other columns grow to meet it again.
+
+                  The header already says Pricing, so the word "estimate" is
+                  doing the work and the qualifier is the part that can go. The
+                  full grading stays on the element, for a pointer and for a
+                  screen reader, and the assumptions panel spells every one of
+                  them out in full.
+                */}
+                <td className="w-px py-2 align-top">
+                  <Badge
+                    tone={CONFIDENCE_TONE[worstConfidence]}
+                    title={PRICING_CONFIDENCE_LABELS[worstConfidence]}
+                  >
+                    {SHORT_CONFIDENCE[worstConfidence]}
                   </Badge>
                   {needsRecheck && (
                     <span className="text-warn mt-1 block text-2xs">due a re-check</span>

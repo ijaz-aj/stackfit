@@ -8,6 +8,7 @@ import { CategoryCards } from '@/components/results/category-cards';
 import { CostBreakdown } from '@/components/results/cost-breakdown';
 import { CoverageMatrix } from '@/components/results/coverage-matrix';
 import { GapAnalysis } from '@/components/results/gap-analysis';
+import { SectionNav } from '@/components/results/section-nav';
 import { SizingWorksheet } from '@/components/results/sizing-worksheet';
 import { frameworkLabel, INDUSTRY_SHORT } from '@/components/wizard/labels';
 import { Badge } from '@/components/ui';
@@ -19,6 +20,23 @@ import { resultsFor } from '@/lib/results.server';
 import { isUnreadable, parseScenarioRow } from '@/lib/scenario';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * The panels below, in the order they appear.
+ *
+ * Written out rather than derived from the DOM, so the nav and the page cannot
+ * drift: adding a panel without adding it here is a visible omission, while a
+ * nav that scraped headings would silently pick up whatever was rendered.
+ */
+const RESULTS_SECTIONS = [
+  { id: 'bundles', label: 'Bundles' },
+  { id: 'categories', label: 'By category' },
+  { id: 'cost', label: 'Cost' },
+  { id: 'coverage', label: 'Coverage' },
+  { id: 'gaps', label: 'Gaps' },
+  { id: 'sizing', label: 'Sizing' },
+  { id: 'assumptions', label: 'Assumptions' },
+] as const;
 
 const KINDS = ['essential', 'operable', 'recommended', 'ideal'] as const;
 
@@ -71,8 +89,13 @@ export default async function ResultsPage({
   const bundle = result[kind];
   const coverage = coverageOfBundle(result, bundle);
 
+  // Wider than the other pages, because this one now spends 180px on a nav. At
+  // 1400 the bundle comparison overflowed its scroller by 28px and clipped a
+  // badge mid-word, which is the same defect an earlier pass fixed and this
+  // layout reintroduced. Nothing reads wider as a result: prose is capped by
+  // `.measure`, tables scroll, charts are responsive.
   return (
-    <main className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-6 py-6">
+    <main className="mx-auto flex w-full max-w-[1520px] flex-col gap-4 px-6 py-6">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex flex-wrap items-baseline gap-3">
           <Link href={`/scenarios/${id}`} className="text-faint hover:text-ink text-sm">
@@ -148,34 +171,64 @@ export default async function ResultsPage({
         </div>
       )}
 
-      <BundleComparison result={result} selectedKind={kind} scenarioId={id} fx={data.fx} />
+      {/*
+        Two columns from `xl` up: the panels, and a nav that says where in them
+        you are. The page is fourteen thousand pixels tall, and before this the
+        only route to the assumptions was to scroll past a 240-row coverage
+        matrix and hope.
 
-      <CategoryCards result={result} bundle={bundle} />
+        `scroll-mt` on each target clears the sticky header, so following an
+        anchor does not park the heading underneath it.
+      */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_180px]">
+        <div className="flex min-w-0 flex-col gap-4">
+          <div id="bundles" className="scroll-mt-20">
+            <BundleComparison result={result} selectedKind={kind} scenarioId={id} fx={data.fx} />
+          </div>
 
-      <CostBreakdown bundle={bundle} />
+          <div id="categories" className="scroll-mt-20">
+            <CategoryCards result={result} bundle={bundle} />
+          </div>
 
-      <CoverageMatrix coverage={coverage} />
+          <div id="cost" className="scroll-mt-20">
+            <CostBreakdown bundle={bundle} />
+          </div>
 
-      <GapAnalysis coverage={coverage} />
+          <div id="coverage" className="scroll-mt-20">
+            <CoverageMatrix coverage={coverage} />
+          </div>
 
-      <SizingWorksheet
-        scenarioId={id}
-        sizing={result.sizing}
-        // The coefficients this run actually used, so an overridden row shows
-        // the number it was sized on rather than the default it replaced.
-        assumptions={result.sizingAssumptions}
-        defaults={data.sizingAssumptions}
-        overrides={scenario.overrides}
-      />
+          <div id="gaps" className="scroll-mt-20">
+            <GapAnalysis coverage={coverage} />
+          </div>
 
-      <AssumptionsPanel
-        result={result}
-        bundle={bundle}
-        fxAsOf={data.fx.asOf}
-        msspConfidence={data.mssp.confidence}
-        msspAsOf={data.mssp.asOf}
-        today={today()}
-      />
+          <div id="sizing" className="scroll-mt-20">
+            <SizingWorksheet
+              scenarioId={id}
+              sizing={result.sizing}
+              // The coefficients this run actually used, so an overridden row
+              // shows the number it was sized on rather than the default it
+              // replaced.
+              assumptions={result.sizingAssumptions}
+              defaults={data.sizingAssumptions}
+              overrides={scenario.overrides}
+            />
+          </div>
+
+          <div id="assumptions" className="scroll-mt-20">
+            <AssumptionsPanel
+              result={result}
+              bundle={bundle}
+              fxAsOf={data.fx.asOf}
+              msspConfidence={data.mssp.confidence}
+              msspAsOf={data.mssp.asOf}
+              today={today()}
+            />
+          </div>
+        </div>
+
+        <SectionNav sections={RESULTS_SECTIONS} />
+      </div>
     </main>
   );
 }
