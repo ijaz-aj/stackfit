@@ -46,8 +46,8 @@ export default tseslint.config(
     // Next.js discovers pages, layouts, configs and middleware by default
     // export. This is the override CONTRIBUTING.md's convention already anticipated.
     files: [
-      'apps/web/src/app/**/{page,layout,loading,error,not-found,template,default,route}.tsx',
-      'apps/web/src/app/**/{page,layout,loading,error,not-found,template,default,route}.ts',
+      'apps/web/src/app/**/{page,layout,loading,error,global-error,not-found,template,default,route}.tsx',
+      'apps/web/src/app/**/{page,layout,loading,error,global-error,not-found,template,default,route}.ts',
       'apps/web/src/proxy.ts',
       'apps/web/*.config.{ts,mjs}',
       'apps/web/prisma.config.ts',
