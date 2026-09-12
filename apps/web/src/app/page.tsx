@@ -4,12 +4,14 @@ import { Badge, Button, Card } from '@/components/ui';
 import { cloneScenario, createScenario, deleteScenario } from '@/lib/actions';
 import { engineData } from '@/lib/config.server';
 import { prisma } from '@/lib/db';
+import { requireAnalyst } from '@/lib/session.server';
 import { formatNumber } from '@/lib/format';
 import { isUnreadable, parseScenarioRow } from '@/lib/scenario';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ScenariosPage() {
+  await requireAnalyst();
   const { presets } = engineData();
   const rows = await prisma.scenario.findMany({ orderBy: { updatedAt: 'desc' }, take: 50 });
   const scenarios = rows.map(parseScenarioRow);

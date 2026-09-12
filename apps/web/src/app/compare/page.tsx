@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { Badge, Card } from '@/components/ui';
 import { prisma } from '@/lib/db';
+import { requireAnalyst } from '@/lib/session.server';
 import { renderCell } from '@/lib/proposal.server';
 import { resultsFor } from '@/lib/results.server';
 import { isUnreadable, parseScenarioRow, type ScenarioRecord } from '@/lib/scenario';
@@ -90,6 +91,7 @@ export default async function ComparePage({
 }: {
   searchParams: Promise<{ left?: string; right?: string }>;
 }) {
+  await requireAnalyst();
   const { left: leftId, right: rightId } = await searchParams;
 
   const rows = await prisma.scenario.findMany({ orderBy: { updatedAt: 'desc' }, take: 50 });

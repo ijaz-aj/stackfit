@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { prisma } from '@/lib/db';
+import { requireAnalyst } from '@/lib/session.server';
 import { proposalToPdf } from '@/lib/proposal-pdf.server';
 import { proposalFilename, proposalFor } from '@/lib/proposal.server';
 import { resultsFor } from '@/lib/results.server';
@@ -15,6 +16,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
+  await requireAnalyst();
   const { id } = await params;
 
   const row = await prisma.scenario.findUnique({ where: { id } });

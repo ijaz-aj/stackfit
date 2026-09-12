@@ -12,6 +12,7 @@ import { SizingWorksheet } from '@/components/results/sizing-worksheet';
 import { Badge } from '@/components/ui';
 import { engineData, today } from '@/lib/config.server';
 import { prisma } from '@/lib/db';
+import { requireAnalyst } from '@/lib/session.server';
 import { formatMoney } from '@/lib/format';
 import { resultsFor } from '@/lib/results.server';
 import { isUnreadable, parseScenarioRow } from '@/lib/scenario';
@@ -43,6 +44,7 @@ export default async function ResultsPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ bundle?: string }>;
 }) {
+  await requireAnalyst();
   const { id } = await params;
   const { bundle: requested } = await searchParams;
 

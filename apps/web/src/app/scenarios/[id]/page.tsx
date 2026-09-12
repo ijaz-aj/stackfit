@@ -4,11 +4,13 @@ import { notFound } from 'next/navigation';
 import { Wizard } from '@/components/wizard/wizard';
 import { engineData } from '@/lib/config.server';
 import { prisma } from '@/lib/db';
+import { requireAnalyst } from '@/lib/session.server';
 import { isUnreadable, parseScenarioRow } from '@/lib/scenario';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ScenarioPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAnalyst();
   const { id } = await params;
 
   const row = await prisma.scenario.findUnique({ where: { id } });

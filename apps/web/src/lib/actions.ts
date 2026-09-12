@@ -7,6 +7,7 @@ import { engineData } from './config.server';
 import { prisma } from './db';
 import { summariseEstimate, type EstimateSummary } from './estimate';
 import { resultsFor } from './results.server';
+import { requireAnalyst } from './session.server';
 import {
   CreateScenarioInput,
   NEW_INVENTORY,
@@ -27,9 +28,17 @@ import {
  * Arguments arrive from the browser, so every one of them is parsed through Zod
  * before it reaches the database or the engine (hard rule 10). Nothing here
  * builds SQL; Prisma is the only way in.
+ *
+ * Every one of these now opens with `requireAnalyst()`. A server action is a
+ * POST endpoint with a generated URL, reachable by anyone who can read the
+ * page source — gating the *page* that renders the form protects nothing at
+ * all. This is the authz home Q3 described, and it is used rather than
+ * described.
  */
 
 export async function createScenario(formData: FormData): Promise<void> {
+  const analyst = await requireAnalyst();
+
   const parsed = CreateScenarioInput.safeParse({
     presetId: formData.get('presetId')?.toString() || undefined,
   });
@@ -53,6 +62,10 @@ export async function createScenario(formData: FormData): Promise<void> {
       name: profile.orgName,
       profile: JSON.stringify(profile),
       inventory: JSON.stringify(inventory),
+      // Null on a local install with no auth, which is the column's documented
+      // meaning rather than a missing value.
+      ownerId: analyst.id,
+      createdBy: analyst.email,
     },
   });
 
@@ -72,6 +85,8 @@ export interface SaveResult {
  * why the schema's defaults are sane rather than strict.
  */
 export async function saveScenario(input: unknown): Promise<SaveResult> {
+  await requireAnalyst();
+
   const parsed = ScenarioDraft.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -111,6 +126,8 @@ export async function saveScenario(input: unknown): Promise<SaveResult> {
  * for, and versioning is a different feature with a different UI.
  */
 export async function cloneScenario(formData: FormData): Promise<void> {
+  const analyst = await requireAnalyst();
+
   const parsed = ScenarioId.safeParse({ id: formData.get('id')?.toString() });
   if (!parsed.success) throw new Error('invalid scenario id');
 
@@ -123,8 +140,9 @@ export async function cloneScenario(formData: FormData): Promise<void> {
       profile: source.profile,
       inventory: source.inventory,
       overrides: source.overrides,
-      ownerId: source.ownerId,
-      createdBy: source.createdBy,
+      // The copy belongs to whoever made it, not to whoever made the original.
+      ownerId: analyst.id,
+      createdBy: analyst.email,
     },
   });
 
@@ -133,6 +151,8 @@ export async function cloneScenario(formData: FormData): Promise<void> {
 }
 
 export async function deleteScenario(formData: FormData): Promise<void> {
+  await requireAnalyst();
+
   const parsed = ScenarioId.safeParse({ id: formData.get('id')?.toString() });
   if (!parsed.success) throw new Error('invalid scenario id');
 
@@ -148,6 +168,8 @@ export async function deleteScenario(formData: FormData): Promise<void> {
  * work — which they would if either wrote the whole row.
  */
 export async function saveSizingOverrides(input: unknown): Promise<SaveResult> {
+  await requireAnalyst();
+
   const parsed = SizingOverrideInput.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -181,6 +203,8 @@ export interface EstimateResult {
  * The engine call itself is pure; `today` is read here, at the edge.
  */
 export async function estimateScenario(input: unknown): Promise<EstimateResult> {
+  await requireAnalyst();
+
   const parsed = ScenarioDraft.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];

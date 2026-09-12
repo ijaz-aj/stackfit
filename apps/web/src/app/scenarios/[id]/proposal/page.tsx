@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { ProposalPreview } from '@/components/results/proposal-preview';
 import { prisma } from '@/lib/db';
+import { requireAnalyst } from '@/lib/session.server';
 import { proposalFor } from '@/lib/proposal.server';
 import { resultsFor } from '@/lib/results.server';
 import { isUnreadable, parseScenarioRow } from '@/lib/scenario';
@@ -18,6 +19,7 @@ export const dynamic = 'force-dynamic';
  * replacing it.
  */
 export default async function ProposalPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAnalyst();
   const { id } = await params;
 
   const row = await prisma.scenario.findUnique({ where: { id } });
