@@ -17,4 +17,5 @@ export * from './infrastructure';
 export * from './scoring';
 export * from './portfolio';
 export * from './coverage';
+export * from './proposal';
 export * from './pipeline';

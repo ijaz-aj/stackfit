@@ -104,6 +104,15 @@ const assumptions: PortfolioAssumptions = {
   suiteIntegrationBonusPoints: 5,
   minimumAnnualisedCostMinor: 100,
   openSourcePreferencePoints: 8,
+  roadmap: {
+    parallelWorkstreams: 2,
+    phases: [
+    { label: 'Immediate', horizon: 'First quarter', elapsedWeeks: 13, basis: 'test fixture' },
+    { label: 'Consolidate', horizon: 'Months four to nine', elapsedWeeks: 26, basis: 'test fixture' },
+    { label: 'Extend', horizon: 'Month ten onward', elapsedWeeks: null, basis: 'test fixture' },
+    ],
+    basis: 'test fixture',
+  },
   basis: 'test fixture',
 };
 

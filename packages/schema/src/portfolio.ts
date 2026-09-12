@@ -6,6 +6,66 @@
 
 import { z } from 'zod';
 
+/**
+ * One band of the delivery roadmap (PROJECT_SPEC §8: the proposal carries
+ * "roadmap phasing").
+ *
+ * A phase is defined by how much elapsed delivery time it contains, not by how
+ * many products it holds. Nobody deploys thirteen tools at once, and the
+ * catalog already records how long each one takes to stand up, so the honest
+ * sequencing question is "how much can they actually absorb by when".
+ */
+export const RoadmapPhase = z
+  .object({
+    label: z.string().min(1),
+    /** Shown to the client, e.g. "First quarter". Prose, not arithmetic. */
+    horizon: z.string().min(1),
+    /**
+     * Elapsed weeks of delivery this phase can absorb, across all parallel
+     * workstreams. `null` marks the final, open-ended phase — everything left
+     * lands there, so nothing can fall off the end of the roadmap.
+     */
+    elapsedWeeks: z.number().positive().nullable(),
+    basis: z.string().min(1),
+  })
+  .strict();
+export type RoadmapPhase = z.infer<typeof RoadmapPhase>;
+
+export const RoadmapAssumptions = z
+  .object({
+    /**
+     * How many deployments the client can genuinely run at once. The divisor on
+     * elapsed time, and the number most worth arguing with: a client with one
+     * engineer runs one workstream, whatever the plan says.
+     */
+    parallelWorkstreams: z.number().int().positive(),
+    phases: z.array(RoadmapPhase).min(1),
+    basis: z.string().min(1),
+  })
+  .strict()
+  .superRefine((roadmap, ctx) => {
+    roadmap.phases.forEach((phase, index) => {
+      const isLast = index === roadmap.phases.length - 1;
+      if (isLast && phase.elapsedWeeks !== null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['phases', index, 'elapsedWeeks'],
+          message:
+            'the final phase must be open-ended (null), or a long enough programme would have ' +
+            'products with nowhere to go and they would silently vanish from the roadmap',
+        });
+      }
+      if (!isLast && phase.elapsedWeeks === null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['phases', index, 'elapsedWeeks'],
+          message: 'only the final phase may be open-ended — an earlier one would absorb everything',
+        });
+      }
+    });
+  });
+export type RoadmapAssumptions = z.infer<typeof RoadmapAssumptions>;
+
 export const PortfolioAssumptions = z
   .object({
     notes: z.string().min(1).optional(),
@@ -53,6 +113,8 @@ export const PortfolioAssumptions = z
      * reason to claim it fits better than it does.
      */
     openSourcePreferencePoints: z.number().min(0).max(25),
+    /** Delivery sequencing for the exported proposal (§8). */
+    roadmap: RoadmapAssumptions,
     basis: z.string().min(1),
   })
   .strict();

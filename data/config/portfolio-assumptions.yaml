@@ -57,3 +57,50 @@ basis: >-
   procurement decision the client should make rather than one the tool should
   quietly make for them. The 5-point integration bonus is likewise small enough
   to break a tie without overturning a materially better product.
+
+# Delivery sequencing for the exported proposal (PROJECT_SPEC §8).
+#
+# A phase is defined by how much elapsed delivery time it can absorb, not by how
+# many products it holds. Nobody deploys thirteen tools at once, and the catalog
+# already records how long each one takes to stand up, so the honest sequencing
+# question is how much the client can actually absorb by when.
+#
+# Ordering within the roadmap is mandatory categories first, then by category
+# weight — the same priority the portfolio stage already used to spend the
+# money, so the plan to deploy matches the plan to buy.
+roadmap:
+  # The divisor on elapsed time, and the number most worth arguing with: a
+  # client with one engineer runs one workstream whatever the plan says. Two is
+  # a mid-market IT team running a security project alongside the day job.
+  parallelWorkstreams: 2
+
+  phases:
+    - label: Immediate
+      horizon: First quarter
+      elapsedWeeks: 13
+      basis: >-
+        One quarter. Mandatory controls and the fastest wins, because a
+        compliance obligation with a date on it does not wait for a roadmap and
+        the tools that deploy in days are how a programme shows progress early.
+
+    - label: Consolidate
+      horizon: Months four to nine
+      elapsedWeeks: 26
+      basis: >-
+        Two quarters. The substantial platforms — the ones that need design,
+        integration and tuning rather than an installer.
+
+    - label: Extend
+      horizon: Month ten onward
+      elapsedWeeks: null
+      basis: >-
+        Open-ended on purpose, so nothing falls off the end of the plan. What
+        lands here is genuine improvement rather than remediation, and a client
+        who never funds it is not in breach of anything.
+
+  basis: >-
+    Analyst judgement. The phase lengths are conventional quarters rather than
+    anything derived, and parallelWorkstreams is the assumption that actually
+    moves the plan — halve it and the roadmap roughly doubles in length. Both
+    are worth confirming against the client's real delivery capacity on the
+    call, because a roadmap nobody can staff is a roadmap that slips.
