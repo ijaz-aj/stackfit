@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 9 — scenario save / clone / compare (in review)
+**Current phase:** 10 — polish, demo scenarios, README (in review)
 **Last updated:** 2026-09-12
 
 ## Phase log
@@ -21,7 +21,7 @@
 | 7 Catalog expansion (≥5 per category) | in review | **65 products across all 13 categories**, up from 8 across 3. Every category holds at least five. 106 catalog prices, all fresh, no placeholders. **Three engine defects found and fixed**, each pinned by a regression: a bigger budget could buy less compliance, a mandated control was outranked by one more funded category, and ops fit returned a flat score for every product when the client had no security staff. **`ProductTier.limits` added**, closing the design question the phase raised — five vendor limits now enforced exactly, two previously undeliverable free tiers back in the catalog. Both §12.1 and §12.2 acceptance assertions tightened to what the spec actually asks for. 377 tests green. |
 | 8 Export (DOCX/PDF/XLSX) | in review | All four outputs off one document model: HTML preview, DOCX, PDF and an XLSX cost model. Roadmap phasing added to the engine. The §6 rule 4 disclaimer is verbatim in every one of them and pinned by a test. Three new dependencies, audit clean. 415 tests green. |
 | 9 Scenario save / clone / compare | in review | Save already worked; clone copies profile, inventory and sizing overrides, and `compareScenarios` in the engine diffs two runs at both ends — what the analyst changed, and what it cost. Refuses to subtract across currencies; has no notion of an "original", so flipping the sides tells the same story. 425 tests green. |
-| 10 Polish + demo scenarios + README | not started | Pick + document the free hosting target (Vercel Hobby + Neon/Supabase free Postgres). |
+| 10 Polish + demo scenarios + README | in review | A README, `pnpm seed` writing four demo sessions, and a cold start verified from a fresh clone rather than asserted. **Two defects found and fixed**, both surfaced by looking at the demo rather than by a test: the engine blamed the annual cap for a shortfall the one-time cap caused, and `compareScenarios` did not compare the one-time cap at all. Hosting target picked and its migration checked with `prisma validate`. 439 tests green, 1 skipped. |
 
 ## Decisions made
 
@@ -1072,10 +1072,17 @@ Still unverified rather than unanswered:
   charts exist only after client-side hydration. Four sessions of HTTP checking
   have therefore proven nothing at all about them.
 
-  Browser automation has been unavailable in all four sessions — the Claude
-  in Chrome extension reports as not connected. Until someone opens
-  `http://localhost:3000` by hand, the two Recharts figures in §8 are the only
-  part of this application that has never been observed working.
+  Browser automation has been unavailable in all five sessions — the Claude
+  in Chrome extension reports as not connected, tried again on 2026-09-12
+  during Phase 10. Until someone opens `http://localhost:3000` by hand, the two
+  Recharts figures in §8 are the only part of this application that has never
+  been observed working.
+
+  Phase 10 narrowed what is left to check by eye rather than closing it. The
+  cold start was performed from a fresh clone and every page, every export and
+  the production build were verified — so a reviewer opening the app is now
+  checking two charts for overlapping labels, not checking whether the thing
+  runs.
 
 ### Phase 8
 
@@ -1178,6 +1185,107 @@ at identical annual spend and USD 63,079 more in people. The stack gets better
 because there is now somebody to run it, and the cost moves entirely into a line
 the budget cap does not constrain. That is the question clone-and-compare exists
 to answer.
+
+### Phase 10
+
+Polish, a README, seeded demo sessions, and a cold start actually performed.
+
+**What the phase was supposed to be** was documentation and seed data. What it
+mostly became was two defects, both found the same way: by building the demo and
+reading what the product said, rather than by writing another test. Neither had
+a failing test before this phase and both were wrong in the same direction —
+confidently naming the wrong cause.
+
+**Decisions.**
+
+- 2026-09-12 — **The cold start is verified by doing one, not by reasoning about
+  one.** `git clone` to a scratch directory, `pnpm install --frozen-lockfile`,
+  `db:generate`, `db:push`, `seed`, `dev` — exactly the commands the README
+  gives, in a tree with no `node_modules`, no generated Prisma client and no
+  database file. Then every page over HTTP, all three exports downloaded and
+  checked as real files (zip integrity for the OOXML pair, `%PDF` and a page
+  count for the PDF), and `pnpm build` for the production path the hosting
+  target will use. Zero errors or warnings in the dev log across the run.
+
+- 2026-09-12 — **The demo sessions are presets, not fixtures.** Everything
+  `pnpm seed` writes comes from `data/presets/`, so there is no second set of
+  numbers to keep in step with the first, and nothing in the demo is invented.
+  The one figure the seed script chooses for itself — the raised one-time cap on
+  the fourth session — is named, explained, and a round number chosen because it
+  changes the answer rather than because it flatters the tool.
+
+  Fixed `demo-` ids and an upsert, so re-running is a no-op and it can never
+  touch a session an analyst saved.
+
+- 2026-09-12 — **Four sessions, chosen to exercise different paths.** A clean
+  large estate (hospital, 13 categories, no shortfall), three frameworks at once
+  in INR (bank), a budget that cannot buy compliance (retail), and that same
+  retail client with a larger implementation budget. The last pair exists so the
+  compare page opens on two scenarios differing in exactly one input; the
+  hospital and the bank together demonstrate the currency guard.
+
+- 2026-09-12 — **Hosting: Vercel Hobby plus a free Postgres tier**, and the
+  migration was checked rather than assumed. `prisma validate` accepts the schema
+  unchanged with `provider = "postgresql"`, so the two documented steps really
+  are the whole change. Prisma does not accept an environment variable for
+  `provider`, so step one is a genuine edit and the README says so instead of
+  implying it is configuration.
+
+**Defect 1 — the engine named the wrong budget cap.** The retail preset, which
+is the first thing the home page offers, funds 5 of 13 categories and leaves
+seven mandatory ones unfunded. Its explanation was:
+
+> "...a stated cap of 6000000 INR. That cap cannot buy compliance."
+
+The annual cap was not the constraint. INR 39.6 lakh of it was unspent. The
+one-time cap was 98.6% committed — INR 19,72,250 of 20,00,000 — and the cheapest
+remaining mandatory category needed INR 2,01,250 to stand up. An analyst reading
+that sentence goes back to the client for a bigger annual budget, gets it,
+changes nothing, and has spent the concession they had.
+
+The selection was correct throughout; only the explanation was wrong.
+`mandatoryFloor` summed `procurementAnnual` and nothing computed a one-time
+floor, so the one-time cap could not be named as a cause even in principle.
+
+`select()` now records which cap blocked each mandatory category, testing the two
+independently so that "fits each separately but never both" is still a two-cap
+answer. `Bundle` gained `unfundedReasons`, `oneTimeShortfall` and
+`minimumViableOneTime`. The two minimums are independent lower bounds and say so:
+each is cheapest in its own dimension, so no single stack costs exactly both.
+
+Three display bugs in the same family were hiding it, and all three are fixed:
+
+- the results banner rendered only when `annualShortfall` was non-null, so a
+  purely one-time shortfall showed nothing at all;
+- `withinOneTimeCap` was computed and rendered nowhere in the app;
+- the wizard gated its shortfall on `!withinAnnualCap`, which is backwards. A
+  shortfall is precisely the case where the bundle *underspends* because it could
+  not buy compliance, so the cap is comfortably met and the warning never fired.
+
+Raising only the implementation budget on that client, from INR 20L to 30L,
+takes it from 5 funded categories to 9 and coverage from 53.8% to 69.2%. That is
+the conversation the old message sent the analyst away from.
+
+**Defect 2 — the comparison did not compare the one-time cap.** `profileChanges`
+handled `budget.annualCap` and stopped. The demo pair, which exists specifically
+to show the effect of a larger implementation budget, reported "No differences."
+in its inputs panel beside a stack table where five of thirteen categories had
+changed. Both caps now go through one helper.
+
+**A dead safety net, removed.** `select()` carried a "for a mandatory category,
+fall back to the cheapest that fits rather than skipping it" pass. It ran only
+when the `find` above it had returned nothing — which means nothing fitted both
+caps, which means the cheapest did not either. It could never have selected
+anything. It read like special protection for compliance obligations and was
+not any. Removed, with the reasoning left in a comment so it is not re-added.
+No behaviour change, and the path is now covered by a test.
+
+**On the regressions.** Each new test was checked by reverting its fix and
+confirming it goes red. One did not, and that finding was worth more than the
+test: the fallback I had assumed was buggy turned out to be unreachable. The
+test was rewritten to pin the behaviour that actually exists — a mandatory
+category whose cheapest SKU cannot be implemented is still funded from the rest
+of the list — and the dead code deleted rather than "fixed".
 
 ## Open defects
 

@@ -223,3 +223,15 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   arrays and encodes them as WinAnsi, so a naive extractor returns nothing or
   silently mangles punctuation. `apps/web/test/export.test.ts` has a working
   extractor for each.
+- **The two budget caps bind independently, and `withinAnnualCap: true` does not
+  mean the budget was adequate.** A shortfall is precisely the case where the
+  bundle *underspends* — it could not buy compliance, so the annual cap is
+  comfortably met. Anything gated on `!withinAnnualCap` will therefore never fire
+  when it matters. Ask `unfundedMandatory`/`unfundedReasons` instead, and when
+  reporting a shortfall say which cap caused it: the one-time cap runs out
+  separately, and naming the wrong one sends the analyst into the wrong
+  negotiation with the client.
+- **Verify a regression by reverting its fix and watching it go red.** Two of the
+  Phase 10 tests passed against the broken code — one because the "bug" it
+  targeted was unreachable dead code, which was worth more to learn than the test
+  was. A test written alongside a fix proves nothing until it has failed once.
