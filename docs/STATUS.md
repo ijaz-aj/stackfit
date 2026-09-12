@@ -17,7 +17,7 @@
 | 4 `scoring.ts` + `portfolio.ts` + tests | in review | Both stages plus all seven §7.4 steps. `scoring-weights.yaml`, `portfolio-assumptions.yaml`. **Reviewed; 7 defects found and fixed**, each pinned by a regression. 244 tests green. |
 | 4b `coverage.ts` (**inserted**) | in review | The §7.5 stage: coverage matrix per framework, CSF Function roll-up, risk-graded gap list, costed fix plan. `coverage-assumptions.yaml`. The engine pipeline is now complete end to end. 299 tests green. |
 | 5 Intake wizard UI | in review | Next 16 + React 19 + Tailwind v4 + Prisma 7/SQLite. Six steps, presets, continuous save, live readout. `runPipeline` + `@stackfit/data` extracted so the app and the tests share one path. 325 tests green; `pnpm audit` clean. |
-| 6 Results dashboard | in review | All seven parts of §8, server-rendered off one pipeline run. Recharts cost + cash-flow charts on a validated palette. Sizing assumptions are editable per scenario. **Reviewed; one scoring defect found and fixed** (deployment fit read "no preference" as a demand). 347 tests green. |
+| 6 Results dashboard | in review | All seven parts of §8, server-rendered off one pipeline run. Recharts cost + cash-flow charts on a validated palette. Sizing assumptions are editable per scenario. **Reviewed; three defects found and fixed** — deployment fit read "no preference" as a demand, the fit score was rendered with no working shown, and a control was credited to a tier that does not sell it. Both pre-Phase-7 open questions closed. 356 tests green. |
 | 7 Catalog expansion (≥5 per category) | not started | |
 | 8 Export (DOCX/PDF/XLSX) | not started | |
 | 9 Scenario save / clone / compare | not started | |
@@ -700,9 +700,75 @@ it did is now true, and on the card.
 not been carried into the next. Phase 4's review named this exact failure mode
 and predicted it would recur.
 
+### Phase 6 review — the two questions that gated Phase 7, and a third defect
+
+Both open questions are closed, and answering the first one found a defect
+neither of them was about.
+
+- 2026-09-12 — **Effort figures are graded, and the grade travels.**
+  `EstimateConfidence` (`vendor_documented` / `field_measured` /
+  `analyst_estimate` / `placeholder`) is now required on both `opsBurden` and
+  `implementation`, graded separately because a vendor that publishes a
+  professional-services day count usually says nothing about who runs the thing
+  afterwards. A `placeholder` needs a TODO in the notes, the same convention a
+  placeholder price follows. All eight seed products are `analyst_estimate` —
+  what the catalog headers have said in prose since Phase 1; nothing was
+  upgraded, because no vendor here publishes a staffing guide.
+  `ProductCost` carries both grades, the ops-FTE rationale states the
+  confidence, `catalog:validate` lists any ungrounded figure, and the
+  assumptions panel shows them beside the prices. Carrying it to the screen was
+  the point: a grade that stays in the YAML is not a grade anyone reads.
+- 2026-09-12 — **⚠ A control was credited to a tier that does not sell it.**
+  Found while checking the five claims. `controlsCovered` was product-level
+  while capabilities are sold by tier, so a bundle costed on the cheapest tier
+  inherited every claim the top tier made. On the committed catalog, **Defender
+  Plan 1 was selected and credited with `cis-v8:7` continuous vulnerability
+  management** while the same entry's own tier list puts that in Plan 2.
+  `ProductTier.controlsCovered` is additive to the product-level list, so
+  product level means "what every tier does" and a stage that has not picked a
+  tier under-credits rather than over-credits. Pinned by a regression that was
+  checked by sabotaging the lookup, not by assuming it would fail.
+- 2026-09-12 — **The five out-of-mapping claims are settled one at a time**,
+  because the right answer genuinely differs between them. Sentinel keeps both
+  incident-response claims and `cis-v8:17` / `RS.MA` gain `siem` in their
+  `satisfiedBy` — Sentinel's playbooks are sold as SOAR, and a SIEM that makes
+  no such claim still reads `partial`. Wazuh drops `cis-v8:1` (syscollector
+  inventories hosts that already run an agent; Control 1 is about the ones that
+  do not) and keeps `cis-v8:4` as a **deliberate product-level exception**, the
+  only one left: the SCA module really does run CIS benchmark checks and most
+  SIEMs do not, so widening the category would be false. Defender drops
+  `cis-v8:7` outright — Plan 2's TVM is real, but the control names
+  `vulnerability_management` and an EDR is not one.
+- 2026-09-12 — **A category mapping is a floor for what a *kind* of tool does,
+  not a ceiling on what one product can claim.** That is the rule the five
+  disagreements were really about, and it is now written down: a claim that
+  outruns its category is allowed, has to be true of that specific product, and
+  carries a note in the catalog saying why.
+
+**Worth eyeballing.** A 300-seat Windows estate on CIS v8, Defender selected at
+Plan 1:
+
+| Control | Before | After |
+|---|---|---|
+| CIS 2 Inventory and Control of Software Assets | covered | **partial** — a plan-2 claim |
+| CIS 7 Continuous Vulnerability Management | covered by Defender + Nessus | covered by **Nessus only** |
+| CIS 17 Incident Response Management | covered, reported as a conflict | covered, mapping agrees |
+
+The retailer worked example moves RS.MA from gap to partial and its coverage
+percentage does not move at all, which is the two-signal rule doing exactly what
+it was built for: partial is reported, never counted.
+
 ## Open questions
-- **Five catalog control claims fall outside the framework's own category mapping** (Phase 4b). Wazuh claims `cis-v8:1` and `cis-v8:4`, Defender claims `cis-v8:7`, Sentinel claims `cis-v8:17` and `nist-csf-2.0:RS.MA`. Each is defensible on the merits, and each means either the framework file's `satisfiedBy` is too narrow or the product entry is too generous. Coverage reports the disagreement rather than resolving it. **Worth a decision before Phase 7 multiplies it.**
-- **opsBurden and implementation figures have no confidence field.** Every one in the seed catalog is an analyst estimate, flagged in each product's `notes`, but the schema cannot distinguish an estimate from a measured figure the way `pricingConfidence` does for prices. Worth adding an `opsBurdenConfidence` before the catalog grows in Phase 7.
+
+**None blocking Phase 7.** Both of the questions this section carried were
+answered on 2026-09-12 — see the Phase 6 review section above.
+
+Still unverified rather than unanswered:
+- **The dashboard has never been looked at in a browser.** Verified by rendering
+  its HTML and driving its server actions over HTTP across two sessions now; the
+  Recharts charts have been validated for colour and written to spec but never
+  seen. Browser automation was unavailable again this session (the extension
+  reports as not connected). Worth ten minutes with `pnpm dev` before Phase 7.
 
 ## Known placeholders
 
