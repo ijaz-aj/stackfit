@@ -464,3 +464,150 @@ products:
       Singularity Enterprise is quote-only and is not catalogued. Singularity
       Core and Control appear in the comparison table without their own
       published prices and are likewise absent.
+
+  - id: bitdefender-gravityzone
+    name: Bitdefender GravityZone
+    vendor: Bitdefender
+    category: edr
+    subcategory: mid-market endpoint protection with EDR
+    licenceModel: commercial
+    maturity: established
+
+    tiers:
+      - id: business-security
+        name: Business Security
+        capabilities:
+          - Prevention-focused endpoint protection
+          - Anti-malware, anti-exploit and web filtering
+          - Centralised policy management
+        pricing:
+          - model: per_endpoint_year
+            unitPrice:
+              amountMinor: 7700
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.bitdefender.com/business/
+              note: >-
+                Check first whether Bitdefender has started publishing a
+                per-device rate on its own site; if it has, regrade to
+                public_list. Otherwise re-derive from reseller catalogues and
+                expect a spread — the reported figures move with the reseller,
+                not with Bitdefender.
+            sources:
+              - url: https://www.bitdefender.com/business/
+                asOf: '2026-09-12'
+              - url: https://edrcost.com/bitdefender-gravityzone-pricing
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED. Bitdefender publishes no standard
+              per-endpoint price. USD 77 per device per year is aggregated from
+              reseller catalogues and buyer-reported quotes, and the source that
+              reports it says plainly that these "are estimates, not quotes".
+
+              This tier is deliberately catalogued as the cheaper, prevention-
+              only option — it does NOT include EDR, and its control claims say
+              so.
+
+      - id: business-security-premium
+        name: Business Security Premium
+        capabilities:
+          - Everything in Business Security
+          - Endpoint detection and response
+          - Cloud sandboxing and detonation
+          - Incident visualisation and root-cause analysis
+          - Risk analytics for endpoint misconfiguration
+        pricing:
+          - model: per_endpoint_year
+            unitPrice:
+              amountMinor: 9589
+              currency: USD
+            termYears: 1
+            pricingConfidence: analyst_estimate
+            refresh:
+              method: manual
+              checkUrl: https://www.bitdefender.com/business/
+              note: See the Business Security tier — the whole product is on estimated pricing.
+            sources:
+              - url: https://www.bitdefender.com/business/
+                asOf: '2026-09-12'
+              - url: https://edrcost.com/bitdefender-gravityzone-pricing
+                asOf: '2026-09-12'
+            notes: >-
+              ⚠ NOT VENDOR-PUBLISHED. USD 95.89 per device per year, reported
+              rather than published. This is the cheapest tier that includes
+              EDR, which is what makes it the one worth quoting — the base tier
+              below it is prevention only.
+        controlsCovered:
+          - cis-v8:13
+          - nist-csf-2.0:DE.AE
+          - nist-csf-2.0:RS.AN
+          - iso-27001-2022:A.5.28
+          - iso-27001-2022:A.8.16
+          - soc-2:CC7
+
+    supports:
+      os: [windows, linux, macos]
+      deviceClasses: [workstation, server, hypervisor, container_node, cloud_workload]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [cloud, hybrid, on_prem]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: false
+
+    integrations: [syslog, microsoft-sentinel, microsoft-entra-id]
+
+    controlsCovered:
+      # What both tiers do. EDR, sandboxing and root-cause analysis arrive only
+      # at Premium and are claimed there, so selecting the base tier does not
+      # credit the client with detection they have not bought.
+      - cis-v8:2
+      - cis-v8:10
+      - nist-csf-2.0:PR.PS
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:RS.MI
+      - iso-27001-2022:A.8.1
+      - iso-27001-2022:A.8.7
+      - pci-dss-4.0:5
+      - rbi-csf:anti-malware
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.12
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 5
+      skillLevel: generalist
+      typicalWeeks: 3
+      confidence: analyst_estimate
+
+    strengths:
+      - Consistently strong detection results for a mid-market price point
+      - On-premises management console is available, which the SaaS-only competitors do not offer
+      - One console across workstations, servers and virtualised workloads
+    weaknesses:
+      - 'No published price: every figure here is reported rather than vendor-stated'
+      - 'The base tier is prevention only — buying "Bitdefender" does not mean buying EDR, and the gap is easy to miss'
+      - Enterprise tier with XDR is quote-only, so the top of the range has no visible price
+    bestFor:
+      - Mid-market clients wanting credible EDR without CrowdStrike or SentinelOne pricing
+      - Estates that need an on-premises console for data-residency reasons
+    avoidWhen:
+      - Budget certainty matters and a reseller quote cannot be obtained in time
+      - The environment is air-gapped
+
+    sources:
+      - url: https://www.bitdefender.com/business/
+        asOf: '2026-09-12'
+    notes: >-
+      Both tiers carry analyst-estimated pricing and will show a
+      pricing-confidence warning wherever they are costed. That warning is
+      correct.
+
+      The tier split is the point of this entry. Bitdefender's base Business
+      Security is prevention only; EDR starts at Premium. A proposal that says
+      "Bitdefender" without saying which tier is a proposal that may not include
+      EDR at all, and the control claims here are split so the tool cannot make
+      that mistake on an analyst's behalf.
