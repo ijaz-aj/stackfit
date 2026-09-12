@@ -38,7 +38,7 @@ function ControlCell({ control }: { control: ControlCoverage }) {
   return (
     <li
       className={cn(
-        'flex items-center gap-1.5 rounded border px-1.5 py-1 text-xs',
+        'flex items-center gap-2 rounded border px-2 py-1 text-xs',
         cell.tone,
       )}
       title={`${control.localId} ${control.title}: ${cell.label}${covered}`}
@@ -119,22 +119,22 @@ export function CoverageMatrix({ coverage }: { coverage: CoverageResult }) {
     >
       {/* Verbatim, and first. This is the number most likely to be misread,
           and an export is where the reader stops seeing the qualifications. */}
-      <p className="border-warn/40 bg-warn/10 text-warn mb-3 rounded border px-2.5 py-2 text-xs leading-snug">
+      <p className="border-warn/40 bg-warn/10 text-warn mb-3 rounded border px-3 py-2 text-xs leading-snug">
         {coverageDisclaimer()}
       </p>
       <div className="mb-3 flex flex-wrap gap-2">
         {Object.entries(CELL).map(([status, cell]) => (
           <span
             key={status}
-            className={cn('rounded border px-1.5 py-0.5 text-2xs', cell.tone)}
+            className={cn('rounded border px-2 py-1 text-2xs', cell.tone)}
           >
             {cell.mark} {cell.label}
           </span>
         ))}
-        <span className="text-faint px-1 py-0.5 text-2xs">! mandatory</span>
+        <span className="text-faint px-1 py-1 text-2xs">! mandatory</span>
       </div>
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-6">
         {ordered.map((framework) => (
           <FrameworkBlock key={framework.frameworkId} framework={framework} />
         ))}

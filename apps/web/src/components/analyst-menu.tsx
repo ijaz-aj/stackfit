@@ -24,7 +24,7 @@ export function AnalystMenu({ email }: { email: string }) {
       <button
         type="button"
         onClick={() => void signOut({ callbackUrl: '/signin' })}
-        className="border-line text-muted hover:text-ink hover:border-line-strong rounded border px-2 py-0.5 text-xs transition-colors duration-(--duration-quick)"
+        className="border-line text-muted hover:text-ink hover:border-line-strong rounded border px-2 py-1 text-xs transition-colors duration-(--duration-quick)"
       >
         Sign out
       </button>

@@ -54,7 +54,7 @@ export default async function ResultsPage({
   const scenario = parseScenarioRow(row);
   if (isUnreadable(scenario)) {
     return (
-      <main className="mx-auto w-full max-w-[700px] px-5 py-10">
+      <main className="mx-auto w-full max-w-[700px] px-6 py-10">
         <h1 className="text-ink text-lg font-semibold">This session cannot be opened</h1>
         <p className="text-muted mt-2 text-sm">{scenario.problem}</p>
         <Link href="/" className="text-accent mt-4 inline-block text-sm">
@@ -87,7 +87,7 @@ export default async function ResultsPage({
               ` · ${scenario.profile.compliance.join(', ')}`}
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
           {bundle.unfundedMandatory.length > 0 && (
             <Badge tone="bad">{bundle.unfundedMandatory.length} mandatory unfunded</Badge>
           )}

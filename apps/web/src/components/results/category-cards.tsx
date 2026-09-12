@@ -39,7 +39,7 @@ function FitBreakdown({ score }: { score: ProductScore }) {
       <summary className="text-faint cursor-pointer text-xs select-none">
         Why this scored {formatNumber(score.score, 1)}
       </summary>
-      <ul className="mt-2 flex flex-col gap-1.5">
+      <ul className="mt-2 flex flex-col gap-2">
         {score.dimensions.map((dimension) => (
           <li key={dimension.dimension} className="text-xs leading-snug">
             <div className="flex items-baseline gap-2">
@@ -53,7 +53,7 @@ function FitBreakdown({ score }: { score: ProductScore }) {
                 x {formatNumber(dimension.weight, 0)}% = {formatNumber(dimension.contribution, 1)}
               </span>
             </div>
-            <p className="text-faint mt-0.5 pl-2">{dimension.rationale}</p>
+            <p className="text-faint mt-1 pl-2">{dimension.rationale}</p>
           </li>
         ))}
       </ul>
@@ -66,7 +66,7 @@ function AlternativeRow({ alternative }: { alternative: AlternativeVerdict }) {
   const ruledOut = alternative.kind === 'eliminated';
 
   return (
-    <li className="border-line border-t pt-1.5 text-xs leading-snug">
+    <li className="border-line border-t pt-2 text-xs leading-snug">
       <div className="flex flex-wrap items-baseline justify-between gap-x-2">
         <span className={ruledOut ? 'text-faint' : 'text-muted'}>
           {alternative.productName}
@@ -85,7 +85,7 @@ function AlternativeRow({ alternative }: { alternative: AlternativeVerdict }) {
           )}
         </span>
       </div>
-      <p className="text-faint mt-0.5">{alternative.verdict}</p>
+      <p className="text-faint mt-1">{alternative.verdict}</p>
     </li>
   );
 }
@@ -114,8 +114,8 @@ function WhyNotTheOthers({ justification }: { justification: CategoryJustificati
       <summary className="text-faint cursor-pointer text-xs select-none">
         Why not the other {justification.alternatives.length}
       </summary>
-      <p className="text-faint mt-1.5 text-xs leading-snug">{justification.headline}</p>
-      <ul className="mt-1.5 flex flex-col gap-1.5">
+      <p className="text-faint mt-2 text-xs leading-snug">{justification.headline}</p>
+      <ul className="mt-2 flex flex-col gap-2">
         {justification.alternatives.map((alternative) => (
           <AlternativeRow
             key={`${alternative.productId}::${alternative.tierId}`}
@@ -173,7 +173,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
                   {CATEGORY_LABELS[selection.category] ?? selection.category}
                 </p>
                 <h3 className="text-ink mt-1 text-lg font-semibold">{selection.productName}</h3>
-                <p className="text-faint mt-0.5 text-xs">
+                <p className="text-faint mt-1 text-xs">
                   {selection.vendor} · {selection.tierName}
                 </p>
               </div>
@@ -184,12 +184,12 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
                 pricing grade is a caveat — so the score reads as a figure and
                 only the things that qualify it stay as badges.
               */}
-              <div className="flex shrink-0 flex-col items-end gap-1.5">
+              <div className="flex shrink-0 flex-col items-end gap-2">
                 <span className="tabular text-accent text-xl leading-none font-medium">
                   {formatNumber(selection.fitScore, 1)}
                   <span className="text-faint ml-1 text-2xs">/100 fit</span>
                 </span>
-                <div className="flex flex-wrap justify-end gap-1.5">
+                <div className="flex flex-wrap justify-end gap-2">
                   {selection.mandatory && <Badge tone="warn">compliance-mandated</Badge>}
                   {selection.suiteDiscountApplied && <Badge>suite discount</Badge>}
                   <Badge tone={cost.needsRecheck ? 'warn' : 'neutral'}>
@@ -220,7 +220,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
                   accent: true,
                 },
               ].map((stat) => (
-                <div key={stat.label} className="bg-panel-raised/40 px-3 py-2.5">
+                <div key={stat.label} className="bg-panel-raised/40 px-3 py-3">
                   <dt className="text-faint text-2xs font-medium uppercase">{stat.label}</dt>
                   <dd
                     className={cn(

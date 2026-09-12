@@ -137,7 +137,7 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
   }, [api, revision]);
 
   return (
-    <main className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-5 py-4">
+    <main className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-6 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex items-baseline gap-3">
           <Link href="/" className="text-faint hover:text-ink text-sm">
@@ -151,7 +151,7 @@ function WizardBody({ scenario, frameworks, products, sizingAssumptions }: Wizar
           <SaveIndicator state={saveState} problem={saveProblem} />
           <Link
             href={`/scenarios/${scenarioId}/results`}
-            className="border-accent/60 bg-accent/10 text-accent hover:bg-accent/20 rounded border px-3 py-1.5 text-base transition-colors"
+            className="border-accent/60 bg-accent/10 text-accent hover:bg-accent/20 rounded border px-3 py-2 text-base transition-colors"
           >
             Results →
           </Link>

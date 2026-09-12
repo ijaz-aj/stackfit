@@ -21,7 +21,7 @@ export default async function SignInPage({
   const { error } = await searchParams;
 
   return (
-    <main className="mx-auto w-full max-w-[420px] px-5 py-16">
+    <main className="mx-auto w-full max-w-[420px] px-6 py-16">
       <h1 className="text-ink text-lg font-semibold tracking-tight">Sign in</h1>
       <p className="text-muted mt-2 text-sm leading-snug">
         StackFit holds prospective clients&rsquo; asset inventories, so access is limited to named

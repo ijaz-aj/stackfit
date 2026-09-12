@@ -24,7 +24,7 @@ function Block({ block }: { block: ProposalBlock }) {
 
     case 'bullets':
       return (
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-neutral-700">
+        <ul className="mt-2 list-disc space-y-1 pl-6 text-sm leading-relaxed text-neutral-700">
           {block.items.map((item) => (
             <li key={item}>{item}</li>
           ))}
@@ -53,7 +53,7 @@ function Block({ block }: { block: ProposalBlock }) {
                 {block.columns.map((column) => (
                   <th
                     key={column.heading}
-                    className={`py-1.5 pr-3 font-medium ${column.align === 'right' ? 'text-right' : ''}`}
+                    className={`py-2 pr-3 font-medium ${column.align === 'right' ? 'text-right' : ''}`}
                   >
                     {column.heading}
                   </th>
@@ -66,7 +66,7 @@ function Block({ block }: { block: ProposalBlock }) {
                   {row.map((cell, cellIndex) => (
                     <td
                       key={cellIndex}
-                      className={`py-1.5 pr-3 align-top text-neutral-800 ${
+                      className={`py-2 pr-3 align-top text-neutral-800 ${
                         block.columns[cellIndex]?.align === 'right' ? 'tabular text-right' : ''
                       }`}
                     >
@@ -80,7 +80,7 @@ function Block({ block }: { block: ProposalBlock }) {
                   {block.total.map((cell, cellIndex) => (
                     <td
                       key={cellIndex}
-                      className={`py-1.5 pr-3 ${
+                      className={`py-2 pr-3 ${
                         block.columns[cellIndex]?.align === 'right' ? 'tabular text-right' : ''
                       }`}
                     >
@@ -107,7 +107,7 @@ export function ProposalPreview({ document }: { document: ProposalDocument }) {
       </header>
 
       {document.sections.map((section) => (
-        <section key={section.heading} className="mt-7 break-inside-avoid">
+        <section key={section.heading} className="mt-6 break-inside-avoid">
           <h2 className="border-b border-neutral-200 pb-1 text-[14px] font-semibold tracking-tight">
             {section.heading}
           </h2>

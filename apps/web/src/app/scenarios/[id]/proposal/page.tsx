@@ -28,7 +28,7 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
   const scenario = parseScenarioRow(row);
   if (isUnreadable(scenario)) {
     return (
-      <main className="mx-auto w-full max-w-[700px] px-5 py-10">
+      <main className="mx-auto w-full max-w-[700px] px-6 py-10">
         <h1 className="text-ink text-lg font-semibold">This session cannot be opened</h1>
         <p className="text-muted mt-2 text-sm">{scenario.problem}</p>
         <Link href="/" className="text-accent mt-4 inline-block text-sm">
@@ -42,7 +42,7 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
   const document = proposalFor(scenario.profile, result);
 
   return (
-    <main className="mx-auto flex w-full max-w-[900px] flex-col gap-3 px-5 py-4">
+    <main className="mx-auto flex w-full max-w-[900px] flex-col gap-3 px-6 py-4">
       <header className="flex flex-wrap items-center justify-between gap-2 print:hidden">
         <div className="flex flex-wrap items-baseline gap-3">
           <Link href={`/scenarios/${id}/results`} className="text-faint hover:text-ink text-sm">
@@ -55,19 +55,19 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
         <div className="flex flex-wrap items-center gap-2">
           <a
             href={`/scenarios/${id}/proposal/docx`}
-            className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-sm"
+            className="border-line text-ink hover:bg-panel-raised rounded border px-3 py-1 text-sm"
           >
             Download DOCX
           </a>
           <a
             href={`/scenarios/${id}/proposal/pdf`}
-            className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-sm"
+            className="border-line text-ink hover:bg-panel-raised rounded border px-3 py-1 text-sm"
           >
             Download PDF
           </a>
           <a
             href={`/scenarios/${id}/proposal/xlsx`}
-            className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-sm"
+            className="border-line text-ink hover:bg-panel-raised rounded border px-3 py-1 text-sm"
           >
             Cost model (XLSX)
           </a>

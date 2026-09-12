@@ -204,12 +204,12 @@ export function SizingWorksheet({
           <table className="w-full min-w-[720px] border-collapse text-sm">
             <thead>
               <tr className="text-faint text-left text-2xs tracking-wide uppercase">
-                <th className="py-1.5 pr-3 font-medium">Asset class</th>
-                <th className="py-1.5 pr-3 text-right font-medium">Count</th>
-                <th className="py-1.5 pr-3 text-right font-medium">EPS each</th>
-                <th className="py-1.5 pr-3 text-right font-medium">EPS</th>
-                <th className="py-1.5 pr-3 text-right font-medium">Share</th>
-                <th className="py-1.5 font-medium">Where the coefficient comes from</th>
+                <th className="py-2 pr-3 font-medium">Asset class</th>
+                <th className="py-2 pr-3 text-right font-medium">Count</th>
+                <th className="py-2 pr-3 text-right font-medium">EPS each</th>
+                <th className="py-2 pr-3 text-right font-medium">EPS</th>
+                <th className="py-2 pr-3 text-right font-medium">Share</th>
+                <th className="py-2 font-medium">Where the coefficient comes from</th>
               </tr>
             </thead>
             <tbody>
@@ -217,9 +217,9 @@ export function SizingWorksheet({
                 const overridden = draft.eventsPerSecond?.[row.assetClass] !== undefined;
                 return (
                   <tr key={row.assetClass} className="border-line border-t align-top">
-                    <td className="py-1.5 pr-3">{ASSET_LABELS[row.assetClass] ?? row.assetClass}</td>
-                    <td className="tabular py-1.5 pr-3 text-right">{formatNumber(row.count)}</td>
-                    <td className="py-1.5 pr-3">
+                    <td className="py-2 pr-3">{ASSET_LABELS[row.assetClass] ?? row.assetClass}</td>
+                    <td className="tabular py-2 pr-3 text-right">{formatNumber(row.count)}</td>
+                    <td className="py-2 pr-3">
                       <NumberInput
                         aria-label={`${ASSET_LABELS[row.assetClass] ?? row.assetClass} events per second`}
                         min={0}
@@ -230,13 +230,13 @@ export function SizingWorksheet({
                         onChange={(event) => setEps(row.assetClass, event.target.value)}
                       />
                     </td>
-                    <td className="tabular py-1.5 pr-3 text-right">
+                    <td className="tabular py-2 pr-3 text-right">
                       {formatNumber(row.eventsPerSecond, 1)}
                     </td>
-                    <td className="tabular py-1.5 pr-3 text-right">
+                    <td className="tabular py-2 pr-3 text-right">
                       {formatNumber(share(row.eventsPerSecond), 1)}%
                     </td>
-                    <td className="text-faint py-1.5 text-xs leading-snug">
+                    <td className="text-faint py-2 text-xs leading-snug">
                       {assumptions.assetClasses[row.assetClass].basis}
                     </td>
                   </tr>

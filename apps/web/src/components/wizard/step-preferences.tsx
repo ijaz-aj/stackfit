@@ -133,12 +133,12 @@ export function StepPreferences({ products }: { products: readonly ProductOption
               const excluded = profile.excludedProducts.includes(product.id);
               return (
                 <div key={product.id} className="border-line rounded border px-3 py-2">
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-ink text-base">{product.name}</span>
                     <Badge>{CATEGORY_LABELS[product.category] ?? product.category}</Badge>
                   </div>
-                  <div className="mt-1.5 flex gap-4">
-                    <label className="text-muted flex items-center gap-1.5 text-xs">
+                  <div className="mt-2 flex gap-4">
+                    <label className="text-muted flex items-center gap-2 text-xs">
                       <input
                         type="checkbox"
                         className="accent-accent h-3 w-3"
@@ -158,7 +158,7 @@ export function StepPreferences({ products }: { products: readonly ProductOption
                       />
                       keeps it
                     </label>
-                    <label className="text-muted flex items-center gap-1.5 text-xs">
+                    <label className="text-muted flex items-center gap-2 text-xs">
                       <input
                         type="checkbox"
                         className="accent-bad h-3 w-3"

@@ -18,7 +18,7 @@ export default async function ScenariosPage() {
   const scenarios = rows.map(parseScenarioRow);
 
   return (
-    <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-4 px-5 py-6">
+    <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-4 px-6 py-6">
       <section className="flex flex-col gap-1">
         <h1 className="text-ink text-[17px] font-semibold tracking-tight">Scoping sessions</h1>
         <p className="text-muted text-sm">

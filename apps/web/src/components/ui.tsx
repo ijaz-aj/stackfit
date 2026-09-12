@@ -27,7 +27,7 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-(--radius-control) px-3 py-1.5 text-base transition-[color,background-color,border-color,transform] duration-(--duration-instant) active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:active:translate-y-0',
+        'inline-flex items-center justify-center gap-2 rounded-(--radius-control) px-3 py-2 text-base transition-[color,background-color,border-color,transform] duration-(--duration-instant) active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:active:translate-y-0',
         BUTTON_VARIANTS[variant],
         className,
       )}
@@ -53,7 +53,7 @@ export function Card({
   return (
     <section className={cn('surface', className)}>
       {title !== undefined && (
-        <header className="border-line flex items-start justify-between gap-3 border-b px-5 py-3.5">
+        <header className="border-line flex items-start justify-between gap-3 border-b px-6 py-4">
           <div className="min-w-0">
             {/* `text-lg` is 16px now, against 12.5px body. A card heading used
                 to be 13px against 12px, which is not a hierarchy. */}
@@ -63,7 +63,7 @@ export function Card({
           {action !== undefined && <div className="shrink-0">{action}</div>}
         </header>
       )}
-      <div className="p-5">{children}</div>
+      <div className="p-6">{children}</div>
     </section>
   );
 }
@@ -98,7 +98,7 @@ export function Field({
  * and was, measurably, an edge you had to already know was there.
  */
 const CONTROL_CLASSES =
-  'bg-ground border-line-control text-ink placeholder:text-faint w-full rounded-(--radius-control) border px-2.5 py-2 text-base transition-[color,background-color,border-color] duration-(--duration-quick) hover:border-accent/60 focus:border-accent';
+  'bg-ground border-line-control text-ink placeholder:text-faint w-full rounded-(--radius-control) border px-3 py-2 text-base transition-[color,background-color,border-color] duration-(--duration-quick) hover:border-accent/60 focus:border-accent';
 
 export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(CONTROL_CLASSES, className)} {...props} />;
@@ -161,7 +161,7 @@ export function Checkbox({
   return (
     <label
       className={cn(
-        'border-line-strong hover:border-accent/60 hover:bg-panel-raised/60 flex cursor-pointer items-start gap-2.5 rounded-(--radius-control) border px-3 py-2.5 transition-colors duration-(--duration-quick)',
+        'border-line-strong hover:border-accent/60 hover:bg-panel-raised/60 flex cursor-pointer items-start gap-3 rounded-(--radius-control) border px-3 py-3 transition-colors duration-(--duration-quick)',
         checked && 'border-accent/60 bg-accent/5',
         className,
       )}
@@ -170,7 +170,7 @@ export function Checkbox({
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="accent-accent mt-0.5 h-3.5 w-3.5"
+        className="accent-accent mt-1 h-3.5 w-3.5"
       />
       <span className="flex-1">
         <span className="text-ink block text-base leading-tight">{label}</span>
@@ -200,7 +200,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-medium whitespace-nowrap uppercase',
+        'inline-flex items-center rounded-full border px-2 py-1 text-2xs font-medium whitespace-nowrap uppercase',
         BADGE_TONES[tone],
         className,
       )}
@@ -225,7 +225,7 @@ export function Stat({
   tone?: 'accent' | 'warn';
 }) {
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col gap-1">
       <span className="text-faint text-2xs tracking-wide uppercase">{label}</span>
       <span
         className={cn(

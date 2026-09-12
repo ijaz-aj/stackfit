@@ -63,31 +63,31 @@ export function CostBreakdown({ bundle }: { bundle: Bundle }) {
           <table className="w-full min-w-[560px] border-collapse text-sm">
             <thead>
               <tr className="text-faint text-left text-2xs tracking-wide uppercase">
-                <th className="py-1.5 pr-3 font-medium">Category</th>
-                <th className="py-1.5 pr-3 text-right font-medium">Licence</th>
-                <th className="py-1.5 pr-3 text-right font-medium">Support</th>
-                <th className="py-1.5 pr-3 text-right font-medium">Infrastructure</th>
-                <th className="py-1.5 pr-3 text-right font-medium">People</th>
-                <th className="py-1.5 text-right font-medium">Annual</th>
+                <th className="py-2 pr-3 font-medium">Category</th>
+                <th className="py-2 pr-3 text-right font-medium">Licence</th>
+                <th className="py-2 pr-3 text-right font-medium">Support</th>
+                <th className="py-2 pr-3 text-right font-medium">Infrastructure</th>
+                <th className="py-2 pr-3 text-right font-medium">People</th>
+                <th className="py-2 text-right font-medium">Annual</th>
               </tr>
             </thead>
             <tbody>
               {byCategory.map((row) => (
                 <tr key={row.label} className="border-line border-t">
-                  <td className="py-1.5 pr-3">{row.label}</td>
-                  <td className="tabular py-1.5 pr-3 text-right">
+                  <td className="py-2 pr-3">{row.label}</td>
+                  <td className="tabular py-2 pr-3 text-right">
                     {formatMoney({ amountMinor: row.licence, currency })}
                   </td>
-                  <td className="tabular py-1.5 pr-3 text-right">
+                  <td className="tabular py-2 pr-3 text-right">
                     {formatMoney({ amountMinor: row.support, currency })}
                   </td>
-                  <td className="tabular py-1.5 pr-3 text-right">
+                  <td className="tabular py-2 pr-3 text-right">
                     {formatMoney({ amountMinor: row.infra, currency })}
                   </td>
-                  <td className="tabular py-1.5 pr-3 text-right">
+                  <td className="tabular py-2 pr-3 text-right">
                     {formatMoney({ amountMinor: row.people, currency })}
                   </td>
-                  <td className="tabular py-1.5 text-right">
+                  <td className="tabular py-2 text-right">
                     {formatMoney({
                       amountMinor: row.licence + row.support + row.infra + row.people,
                       currency,
@@ -96,9 +96,9 @@ export function CostBreakdown({ bundle }: { bundle: Bundle }) {
                 </tr>
               ))}
               <tr className="border-line text-ink border-t-2">
-                <td className="py-1.5 pr-3 font-medium">Total</td>
+                <td className="py-2 pr-3 font-medium">Total</td>
                 <td colSpan={4} />
-                <td className="tabular py-1.5 text-right font-medium">
+                <td className="tabular py-2 text-right font-medium">
                   {formatMoney(bundle.annualRecurring)}
                 </td>
               </tr>

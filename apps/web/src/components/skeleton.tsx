@@ -34,11 +34,11 @@ export function SkeletonCard({
 }) {
   return (
     <section aria-hidden className={cn('border-line bg-panel rounded border', className)}>
-      <header className="border-line border-b px-4 py-2.5">
+      <header className="border-line border-b px-4 py-3">
         <SkeletonLine className="h-3.5 w-40" />
-        <SkeletonLine className="mt-1.5 h-2.5 w-64 max-w-full" />
+        <SkeletonLine className="mt-2 h-2.5 w-64 max-w-full" />
       </header>
-      <div className="flex flex-col gap-2.5 p-4">
+      <div className="flex flex-col gap-3 p-4">
         {Array.from({ length: rows }, (_, index) => (
           <SkeletonLine
             key={index}

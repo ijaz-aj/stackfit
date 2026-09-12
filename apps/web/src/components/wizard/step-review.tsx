@@ -42,7 +42,7 @@ function BundleColumn({ bundle, label, hint }: { bundle: BundleSummary; label: s
 
       <ul className="flex flex-col gap-1">
         {bundle.selections.map((selection) => (
-          <li key={selection.productId} className="text-muted flex items-baseline gap-1.5 text-xs">
+          <li key={selection.productId} className="text-muted flex items-baseline gap-2 text-xs">
             <span className="text-faint w-24 shrink-0 truncate">
               {CATEGORY_LABELS[selection.category] ?? selection.category}
             </span>
@@ -55,7 +55,7 @@ function BundleColumn({ bundle, label, hint }: { bundle: BundleSummary; label: s
         )}
       </ul>
 
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-2">
         {bundle.coveragePercent !== null && (
           <Badge tone="accent">{bundle.coveragePercent}% of in-scope controls</Badge>
         )}

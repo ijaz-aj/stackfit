@@ -68,7 +68,7 @@ export function StepCompliance({ frameworks }: { frameworks: readonly FrameworkO
               })
             }
             label={
-              <span className="flex flex-wrap items-center gap-1.5">
+              <span className="flex flex-wrap items-center gap-2">
                 {framework.name}
                 <span className="text-faint">{framework.version}</span>
                 <Badge tone={QUALITY_TONE[framework.sourceQuality]}>

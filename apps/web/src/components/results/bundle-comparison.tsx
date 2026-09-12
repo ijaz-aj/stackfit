@@ -92,24 +92,28 @@ export function BundleComparison({
           a 1400px results page the browser gave the text column everything the
           numbers did not ask for, which left roughly 225px of dead space
           between a tier's name and its first figure — the eye had to travel it
-          on every row to connect the two. 42ch is the width at which every
-          tier hint fits on two lines, so the rows stay the same height and the
-          figures still sit next to what they describe.
+          on every row to connect the two.
+
+          A px width rather than ch: `ch` is relative to the font, so the value
+          tuned against the system stack put the table 2px over its container
+          the moment the typeface changed — enough to raise a scrollbar on a
+          table of money, which is the last place a reader should wonder
+          whether a column is cut off. 300px fits every tier hint on two lines.
         */}
         <table className="w-full min-w-[720px] table-fixed border-collapse text-sm">
           <thead>
             <tr className="text-faint text-left text-2xs tracking-wide uppercase">
-              <th className="w-[42ch] py-1.5 pr-3 font-medium">Tier</th>
-              <th className="py-1.5 pr-3 text-right font-medium">Year 1</th>
-              <th className="py-1.5 pr-3 text-right font-medium">Procurement / yr</th>
-              <th className="py-1.5 pr-3 text-right font-medium">All-in / yr</th>
-              <th className="py-1.5 pr-3 text-right font-medium">
+              <th className="w-[300px] py-2 pr-3 font-medium">Tier</th>
+              <th className="py-2 pr-3 text-right font-medium">Year 1</th>
+              <th className="py-2 pr-3 text-right font-medium">Procurement / yr</th>
+              <th className="py-2 pr-3 text-right font-medium">All-in / yr</th>
+              <th className="py-2 pr-3 text-right font-medium">
                 {result.recommended.selections[0]?.cost.horizonYears ?? 3}-yr TCO
               </th>
-              <th className="py-1.5 pr-3 text-right font-medium">Ops</th>
-              <th className="py-1.5 pr-3 text-right font-medium">Coverage</th>
-              <th className="py-1.5 pr-3 text-right font-medium">Managed / yr</th>
-              <th className="py-1.5 font-medium">Pricing</th>
+              <th className="py-2 pr-3 text-right font-medium">Ops</th>
+              <th className="py-2 pr-3 text-right font-medium">Coverage</th>
+              <th className="py-2 pr-3 text-right font-medium">Managed / yr</th>
+              <th className="py-2 font-medium">Pricing</th>
             </tr>
           </thead>
           <tbody>
@@ -193,7 +197,7 @@ export function BundleComparison({
                     {worstConfidence.replace(/_/g, ' ')}
                   </Badge>
                   {needsRecheck && (
-                    <span className="text-warn mt-0.5 block text-2xs">due a re-check</span>
+                    <span className="text-warn mt-1 block text-2xs">due a re-check</span>
                   )}
                 </td>
               </tr>

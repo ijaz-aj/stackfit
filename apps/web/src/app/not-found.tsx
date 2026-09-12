@@ -10,7 +10,7 @@ import Link from 'next/link';
  */
 export default function NotFound() {
   return (
-    <main className="mx-auto w-full max-w-[700px] px-5 py-10">
+    <main className="mx-auto w-full max-w-[700px] px-6 py-10">
       <h1 className="text-ink text-lg font-semibold tracking-tight">Not found</h1>
       <p className="text-muted mt-2 text-sm leading-snug">
         There is no page here. If you followed a link to a scoping session, it has probably been

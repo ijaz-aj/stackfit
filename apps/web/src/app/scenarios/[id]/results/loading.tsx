@@ -9,7 +9,7 @@ import { LoadingAnnouncement, SkeletonCard, SkeletonLine } from '@/components/sk
  */
 export default function ResultsLoading() {
   return (
-    <main className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 px-5 py-4">
+    <main className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 px-6 py-4">
       <LoadingAnnouncement>Running the recommendation engine.</LoadingAnnouncement>
 
       <header className="flex flex-wrap items-baseline justify-between gap-2">

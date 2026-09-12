@@ -74,7 +74,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </a>
 
         <header className="border-line bg-panel/90 sticky top-0 z-20 border-b backdrop-blur-sm">
-          <div className="flex items-center gap-4 px-5 py-2.5">
+          <div className="flex items-center gap-4 px-6 py-3">
             <Link
               href="/"
               className="flex items-baseline gap-2 rounded"
@@ -84,13 +84,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               <span className="text-faint hidden text-xs sm:inline">security solution advisor</span>
             </Link>
 
-            <div className="ml-auto flex items-center gap-2.5">
+            <div className="ml-auto flex items-center gap-3">
               {/*
                 Load-bearing, not decoration. This is what stops a screenshot of
                 indicative figures being read as a quote, so it stays visible at
                 every width rather than being the thing that drops on mobile.
               */}
-              <span className="border-line text-faint rounded border px-2 py-0.5 text-xs">
+              <span className="border-line text-faint rounded border px-2 py-1 text-xs">
                 figures are indicative — not a quote
               </span>
               {analyst !== null && analyst.email !== null && <AnalystMenu email={analyst.email} />}

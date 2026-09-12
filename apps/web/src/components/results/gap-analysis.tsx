@@ -38,11 +38,11 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
             <table className="w-full min-w-[720px] border-collapse text-sm">
               <thead>
                 <tr className="text-faint text-left text-2xs tracking-wide uppercase">
-                  <th className="py-1.5 pr-3 font-medium">Risk</th>
-                  <th className="py-1.5 pr-3 font-medium">Control</th>
-                  <th className="py-1.5 pr-3 font-medium">Would be closed by</th>
-                  <th className="py-1.5 pr-3 font-medium">Cheapest fix</th>
-                  <th className="py-1.5 text-right font-medium">Procurement / yr</th>
+                  <th className="py-2 pr-3 font-medium">Risk</th>
+                  <th className="py-2 pr-3 font-medium">Control</th>
+                  <th className="py-2 pr-3 font-medium">Would be closed by</th>
+                  <th className="py-2 pr-3 font-medium">Cheapest fix</th>
+                  <th className="py-2 text-right font-medium">Procurement / yr</th>
                 </tr>
               </thead>
               <tbody>
@@ -51,7 +51,7 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
                     <td className="py-2 pr-3">
                       <Badge tone={RISK_TONE[gap.residualRisk]}>{gap.residualRisk}</Badge>
                       {gap.mandatory && gap.inScope && (
-                        <span className="text-bad mt-0.5 block text-2xs">obligation</span>
+                        <span className="text-bad mt-1 block text-2xs">obligation</span>
                       )}
                     </td>
                     <td className="py-2 pr-3">
@@ -134,7 +134,7 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
                     {formatNumber(option.opsFte, 2)} FTE
                   </span>
                 </div>
-                <ul className="text-faint mt-1 flex flex-col gap-0.5 text-xs leading-snug">
+                <ul className="text-faint mt-1 flex flex-col gap-1 text-xs leading-snug">
                   {option.rationale.map((line) => (
                     <li key={line}>— {line}</li>
                   ))}

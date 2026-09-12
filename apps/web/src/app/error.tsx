@@ -37,7 +37,7 @@ export default function RouteError({
   }, [error]);
 
   return (
-    <main className="mx-auto w-full max-w-[700px] px-5 py-10">
+    <main className="mx-auto w-full max-w-[700px] px-6 py-10">
       <h1 className="text-ink text-lg font-semibold tracking-tight">Something broke</h1>
       <p className="text-muted mt-2 text-sm leading-snug">
         This page could not be built. Nothing was saved or changed by the attempt — the scoping
@@ -51,11 +51,11 @@ export default function RouteError({
         </p>
       )}
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={reset}
-          className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-sm"
+          className="border-line text-ink hover:bg-panel-raised rounded border px-3 py-1 text-sm"
         >
           Try again
         </button>

@@ -18,7 +18,7 @@ const LABELS: Readonly<Record<string, string>> = {
 export function SignInForm({ providers }: { providers: readonly string[] }) {
   if (providers.length === 0) {
     return (
-      <p className="text-warn mt-5 text-sm leading-snug">
+      <p className="text-warn mt-6 text-sm leading-snug">
         No sign-in provider is configured on this instance, so there is no way in from here.
         Whoever administers it needs to set one.
       </p>
@@ -26,7 +26,7 @@ export function SignInForm({ providers }: { providers: readonly string[] }) {
   }
 
   return (
-    <div className="mt-5 flex flex-col gap-2">
+    <div className="mt-6 flex flex-col gap-2">
       {providers.map((provider) => (
         <button
           key={provider}

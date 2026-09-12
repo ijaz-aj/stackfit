@@ -150,7 +150,7 @@ export function LiveReadout({
               </p>
             )}
 
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {estimate.recommended.coveragePercent !== null && (
                 <Badge tone="accent">{estimate.recommended.coveragePercent}% covered</Badge>
               )}
@@ -164,7 +164,7 @@ export function LiveReadout({
       </section>
 
       {estimate !== null && estimate.warnings.length > 0 && (
-        <section className="border-line flex flex-col gap-1.5 border-t pt-4">
+        <section className="border-line flex flex-col gap-2 border-t pt-4">
           <h3 className="text-warn text-2xs tracking-wide uppercase">Before this ships</h3>
           <ul className="text-muted flex flex-col gap-1 text-xs leading-snug">
             {estimate.warnings.map((warning) => (

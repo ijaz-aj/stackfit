@@ -3,7 +3,7 @@ import { LoadingAnnouncement, SkeletonCard, SkeletonLine } from '@/components/sk
 /** Two pipeline runs rather than one, so this page has further to go. */
 export default function CompareLoading() {
   return (
-    <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-3 px-5 py-4">
+    <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-3 px-6 py-4">
       <LoadingAnnouncement>Running both scenarios to compare them.</LoadingAnnouncement>
 
       <header className="flex items-baseline gap-3">

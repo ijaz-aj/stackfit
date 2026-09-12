@@ -34,15 +34,15 @@ function ChangeRow({ change }: { change: ValueChange }) {
 
   return (
     <tr className="border-line border-t">
-      <td className="text-muted py-1.5 pr-3">{change.label}</td>
-      <td className="tabular py-1.5 pr-3 text-right">
+      <td className="text-muted py-2 pr-3">{change.label}</td>
+      <td className="tabular py-2 pr-3 text-right">
         {change.left === null ? <span className="text-faint">—</span> : renderCell(change.left)}
       </td>
-      <td className="tabular py-1.5 pr-3 text-right">
+      <td className="tabular py-2 pr-3 text-right">
         {change.right === null ? <span className="text-faint">—</span> : renderCell(change.right)}
       </td>
       <td
-        className={`tabular py-1.5 text-right ${changed ? 'text-accent' : 'text-faint'}`}
+        className={`tabular py-2 text-right ${changed ? 'text-accent' : 'text-faint'}`}
       >
         {change.delta === null ? (changed ? 'changed' : '—') : renderCell(change.delta)}
       </td>
@@ -70,15 +70,15 @@ function ChangeTable({
       <table className="w-full min-w-[520px] border-collapse text-sm">
         <thead>
           <tr className="text-faint text-left text-2xs tracking-wide uppercase">
-            <th className="py-1.5 pr-3 font-medium">{firstHeading}</th>
-            <th className="max-w-[24ch] py-1.5 pr-3 text-right font-medium" title={leftName}>
+            <th className="py-2 pr-3 font-medium">{firstHeading}</th>
+            <th className="max-w-[24ch] py-2 pr-3 text-right font-medium" title={leftName}>
               {leftName}
             </th>
-            <th className="max-w-[24ch] py-1.5 pr-3 text-right font-medium" title={rightName}>
+            <th className="max-w-[24ch] py-2 pr-3 text-right font-medium" title={rightName}>
               {rightName}
             </th>
             {/* Never the column that gets squeezed: it is the answer. */}
-            <th className="w-[18ch] py-1.5 text-right font-medium whitespace-nowrap">Difference</th>
+            <th className="w-[18ch] py-2 text-right font-medium whitespace-nowrap">Difference</th>
           </tr>
         </thead>
         <tbody>
@@ -160,7 +160,7 @@ export default async function ComparePage({
               </label>
               <button
                 type="submit"
-                className="border-line text-ink hover:bg-panel-raised rounded border px-2.5 py-1 text-sm"
+                className="border-line text-ink hover:bg-panel-raised rounded border px-3 py-1 text-sm"
               >
                 Compare
               </button>
@@ -204,7 +204,7 @@ export default async function ComparePage({
             {comparison.leftName} vs {comparison.rightName}
           </h1>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <Link href={`/scenarios/${leftRow.id}/results`} className="text-accent text-xs">
             {comparison.leftName} results
           </Link>
@@ -274,17 +274,17 @@ export default async function ComparePage({
           <table className="w-full min-w-[620px] border-collapse text-sm">
             <thead>
               <tr className="text-faint text-left text-2xs tracking-wide uppercase">
-                <th className="py-1.5 pr-3 font-medium">Category</th>
-                <th className="py-1.5 pr-3 font-medium">{comparison.leftName}</th>
-                <th className="py-1.5 pr-3 font-medium">{comparison.rightName}</th>
-                <th className="py-1.5 font-medium">Verdict</th>
+                <th className="py-2 pr-3 font-medium">Category</th>
+                <th className="py-2 pr-3 font-medium">{comparison.leftName}</th>
+                <th className="py-2 pr-3 font-medium">{comparison.rightName}</th>
+                <th className="py-2 font-medium">Verdict</th>
               </tr>
             </thead>
             <tbody>
               {comparison.categories.map((change) => (
                 <tr key={change.category} className="border-line border-t">
-                  <td className="text-muted py-1.5 pr-3">{change.categoryLabel}</td>
-                  <td className="py-1.5 pr-3">
+                  <td className="text-muted py-2 pr-3">{change.categoryLabel}</td>
+                  <td className="py-2 pr-3">
                     {change.left === null ? (
                       <span className="text-faint">not funded</span>
                     ) : (
@@ -294,7 +294,7 @@ export default async function ComparePage({
                       </>
                     )}
                   </td>
-                  <td className="py-1.5 pr-3">
+                  <td className="py-2 pr-3">
                     {change.right === null ? (
                       <span className="text-faint">not funded</span>
                     ) : (
@@ -304,7 +304,7 @@ export default async function ComparePage({
                       </>
                     )}
                   </td>
-                  <td className="py-1.5">
+                  <td className="py-2">
                     {change.kind === 'same' ? (
                       <span className="text-faint text-xs">same</span>
                     ) : (

@@ -3,7 +3,7 @@ import { LoadingAnnouncement, SkeletonCard, SkeletonLine } from '@/components/sk
 /** The pipeline, then the document model, then seven rendered sections. */
 export default function ProposalLoading() {
   return (
-    <main className="mx-auto flex w-full max-w-[1000px] flex-col gap-3 px-5 py-4">
+    <main className="mx-auto flex w-full max-w-[1000px] flex-col gap-3 px-6 py-4">
       <LoadingAnnouncement>Building the proposal.</LoadingAnnouncement>
 
       <header className="flex flex-wrap items-baseline justify-between gap-2">

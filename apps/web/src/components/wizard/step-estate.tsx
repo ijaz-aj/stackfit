@@ -57,7 +57,7 @@ function AssetRow({ assetClass }: { assetClass: AssetClass }) {
               })
             }
           />
-          <label className="text-faint flex items-center gap-1.5 text-xs">
+          <label className="text-faint flex items-center gap-2 text-xs">
             <input
               type="checkbox"
               className="accent-accent h-3 w-3"
@@ -106,10 +106,10 @@ export function StepEstate() {
                   {group.title}
                 </h3>
                 {group.hint !== '' && (
-                  <p className="text-faint mt-0.5 text-xs leading-snug">{group.hint}</p>
+                  <p className="text-faint mt-1 text-xs leading-snug">{group.hint}</p>
                 )}
               </header>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 {group.classes.map((assetClass) => (
                   <AssetRow key={assetClass} assetClass={assetClass} />
                 ))}
