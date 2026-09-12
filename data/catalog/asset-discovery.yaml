@@ -1,0 +1,550 @@
+# Asset discovery and inventory.
+#
+# Prices are in minor units (hard rule 1).
+#
+# WHY THIS CATEGORY EXISTS AT ALL. CIS Control 1 is first for a reason, and
+# every framework in data/frameworks/ opens with some version of "know what you
+# have". It is also the control this catalog's own scoping form depends on: the
+# whole tool takes an asset inventory as input, and a client who cannot fill it
+# in reliably needs this category before they need any other.
+#
+# ⚠ TWO DIFFERENT JOBS LIVE IN THIS CATEGORY AND THEY ARE NOT SUBSTITUTES.
+# Discovery finds assets the client did not know about; inventory records the
+# ones they do. Nmap and runZero do the first, Snipe-IT and NetBox do the
+# second, and Lansweeper attempts both. A client with a spreadsheet has an
+# inventory problem; a client who keeps being surprised has a discovery
+# problem. The strengths and weaknesses below say which is which, because
+# selling the wrong one is the common failure here.
+
+category: asset_discovery
+
+products:
+  - id: nmap
+    name: Nmap
+    vendor: Nmap Project
+    category: asset_discovery
+    subcategory: open-source network discovery and port scanner
+    licenceModel: open_core
+    maturity: established
+
+    tiers:
+      - id: open
+        name: Nmap (self-hosted)
+        capabilities:
+          - Host discovery across arbitrary network ranges
+          - Port and service scanning with version detection
+          - Operating-system fingerprinting
+          - Scriptable scanning through the Nmap Scripting Engine
+          - Machine-readable output for downstream inventory
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://nmap.org/npsl/
+              note: >-
+                ⚠ Read the NPSL itself, not a summary of it. Nmap moved off
+                plain GPLv2 to its own licence, and the restrictions are about
+                redistribution inside proprietary products rather than internal
+                use. If a client intends to embed or resell it, that is a legal
+                question, not a procurement one.
+            sources:
+              - url: https://nmap.org/npsl/
+                asOf: '2026-09-12'
+            notes: >-
+              Nmap Public Source License. Free for internal business use at any
+              scale; the licence restricts redistribution within proprietary
+              products, not the client running it on their own network. No
+              licence fee.
+
+    supports:
+      os: [linux, windows, macos]
+      deviceClasses:
+        - server
+        - workstation
+        - network_device
+        - firewall
+        - iot
+        - ot_ics
+        - database
+        - web_app
+      cloudPlatforms: []
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [greenbone-openvas, syslog, netbox]
+
+    controlsCovered:
+      # Finds hosts. It does not record, own or reconcile them, so the inventory
+      # controls belong to NetBox and Snipe-IT rather than here.
+      - cis-v8:1
+      - nist-csf-2.0:ID.AM
+      - iso-27001-2022:A.5.9
+      - hipaa:164.308.a.1
+      - rbi-csf:asset-inventory
+
+    opsBurden:
+      baseFte: 0.15
+      ftePerThousandAssets: 0.1
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 3
+      skillLevel: security_engineer
+      typicalWeeks: 2
+      confidence: analyst_estimate
+
+    strengths:
+      - Finds things nothing else will, including the hosts nobody remembers building
+      - Free at any scale and runs anywhere, including fully air-gapped
+      - The output is the input to almost everything else — vulnerability scanning, inventory, segmentation review
+    weaknesses:
+      - 'A scanner, not a system: no database, no history, no change detection unless somebody builds it'
+      - Active scanning can disrupt fragile OT and legacy devices, and needs care before it is pointed anywhere sensitive
+      - Results are a snapshot; keeping them current is a scheduling and storage problem you now own
+    bestFor:
+      - A first pass at an unknown network during scoping
+      - Air-gapped or segmented environments where an agent cannot go
+      - Clients who need to challenge an inventory they do not trust
+    avoidWhen:
+      - OT or medical devices are in scope and active scanning has not been risk-assessed
+      - The requirement is an ongoing inventory of record rather than a discovery sweep
+
+    sources:
+      - url: https://nmap.org/npsl/
+        asOf: '2026-09-12'
+    notes: >-
+      licenceModel is open_core rather than open_source. The NPSL is Nmap's own
+      licence, derived from GPLv2 but not OSI-approved in that form, and calling
+      it plain open source would misstate what a client may do with it.
+
+  - id: runzero
+    name: runZero
+    vendor: runZero, Inc.
+    category: asset_discovery
+    subcategory: unauthenticated network asset discovery
+    licenceModel: freemium
+    maturity: established
+
+    tiers:
+      - id: community
+        name: Community Edition
+        capabilities:
+          - Unauthenticated active discovery across the whole estate
+          - Identification of unmanaged, OT and IoT devices
+          - Service and operating-system fingerprinting without credentials
+          - Asset change tracking over time
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.runzero.com/pricing/
+              note: >-
+                Re-read the asset limit on the Community Edition, which is the
+                only thing about this tier that matters, and check whether
+                runZero has started publishing a per-asset rate for the paid
+                platform.
+            sources:
+              - url: https://www.runzero.com/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              runZero publishes the Community Edition as free for "100 or fewer
+              assets".
+
+              ⚠ THE ASSET LIMIT IS A HARD VENDOR CAP AND THE SCHEMA CANNOT
+              EXPRESS IT. scaleCeiling is set to "small" as the closest
+              approximation, which hard-filters this entry above 250 monitored
+              assets — so between 100 and 250 it over-permits. This is the same
+              approximation used for Sublime Platform, TheHive Community and
+              Tines Free.
+
+              The paid runZero Platform is published only as "Starts at $5,000"
+              with no unit, no term and no upper bound, which is not a price.
+              It is therefore not catalogued as a tier; get a quote.
+
+    supports:
+      os: [linux, windows, macos]
+      deviceClasses:
+        - server
+        - workstation
+        - network_device
+        - firewall
+        - iot
+        - ot_ics
+        - mobile
+        - hypervisor
+        - database
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: small
+      airGapCapable: true
+
+    integrations: [netbox, syslog, tenable-nessus-professional, crowdstrike-falcon-go]
+
+    controlsCovered:
+      - cis-v8:1
+      - cis-v8:2
+      - nist-csf-2.0:ID.AM
+      - iso-27001-2022:A.5.9
+      - iso-27001-2022:A.5.11
+      - hipaa:164.308.a.1
+      - rbi-csf:asset-inventory
+      - nis2:21.2.i
+
+    opsBurden:
+      baseFte: 0.1
+      ftePerThousandAssets: 0.05
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 3
+      skillLevel: security_engineer
+      typicalWeeks: 2
+      confidence: analyst_estimate
+
+    strengths:
+      - Finds OT, IoT and unmanaged devices without credentials, which is where the surprises live
+      - Deploys and produces a usable picture in hours, not weeks
+      - Safe-by-default scanning, designed by people who knew what aggressive scanning does to fragile devices
+    weaknesses:
+      - 'The free tier stops at 100 assets, which is smaller than almost every client in scope for this tool'
+      - The paid platform has no published unit price, so the upgrade is a sales conversation
+      - Discovery only — it will not track ownership, cost or lifecycle
+    bestFor:
+      - Very small estates, or a time-boxed discovery exercise during scoping
+      - Environments with OT or IoT that an agent or credentialled scan cannot reach
+    avoidWhen:
+      - The estate is above about a hundred assets and there is no budget for the platform
+      - The requirement is an inventory of record with ownership and lifecycle
+
+    sources:
+      - url: https://www.runzero.com/pricing/
+        asOf: '2026-09-12'
+    notes: >-
+      Catalogued for its free tier, which makes it an excellent scoping tool and
+      a poor answer for most estates. If the client is above the cap, the honest
+      recommendation is Nmap plus a real inventory, or a runZero quote.
+
+  - id: netbox
+    name: NetBox
+    vendor: NetBox Labs
+    category: asset_discovery
+    subcategory: network source of truth, IPAM and DCIM
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: community
+        name: NetBox Community (self-hosted)
+        capabilities:
+          - IP address management for prefixes, ranges and addresses
+          - Data centre infrastructure modelling — racks, devices, cabling, power
+          - VLAN, circuit and virtualisation modelling
+          - Full REST and GraphQL APIs for automation
+          - Change logging on every object
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/netbox-community/netbox
+              note: >-
+                Apache 2.0 today. NetBox Labs is a commercial company built
+                around the project, so the thing to watch is capability moving
+                into NetBox Enterprise or Cloud rather than the licence changing.
+            sources:
+              - url: https://github.com/netbox-community/netbox
+                asOf: '2026-09-12'
+            notes: >-
+              Apache License 2.0. No licence fee and no object limit. NetBox
+              Labs sells NetBox Cloud and NetBox Enterprise; both are quote-only
+              and neither is catalogued.
+
+    supports:
+      os: [linux]
+      deviceClasses: [server, network_device, firewall, hypervisor, cloud_workload]
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: mid
+      scaleCeiling: enterprise
+      airGapCapable: true
+
+    integrations: [nmap, runzero, ansible, syslog]
+
+    controlsCovered:
+      # The intended state of the estate, recorded and versioned. It does not
+      # discover anything, so cis-v8:1's discovery half is Nmap's or runZero's
+      # job — this entry claims the inventory half.
+      - cis-v8:1
+      - nist-csf-2.0:ID.AM
+      - iso-27001-2022:A.5.9
+      - iso-27001-2022:A.5.21
+      - hipaa:164.308.a.1
+      - rbi-csf:asset-inventory
+      - nis2:21.2.i
+
+    opsBurden:
+      baseFte: 0.25
+      ftePerThousandAssets: 0.1
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 15
+      skillLevel: security_engineer
+      typicalWeeks: 8
+      confidence: analyst_estimate
+
+    strengths:
+      - The de facto network source of truth, and the thing automation reads from
+      - Models intent rather than observation, which is what makes a segmentation review possible
+      - API-first, so the inventory can actually feed other tools instead of being a document
+    weaknesses:
+      - 'Records what you tell it: NetBox will confidently hold a wrong inventory forever'
+      - No discovery of its own — it needs Nmap, runZero or an automation pipeline to populate it
+      - The elapsed implementation time is data entry and modelling, not installation
+    bestFor:
+      - Network-heavy estates where segmentation and addressing must be documented
+      - Clients building automation that needs a source of truth to read
+    avoidWhen:
+      - Nobody will keep it current — a stale source of truth is worse than none
+      - The client needs to find unknown assets rather than record known ones
+
+    sources:
+      - url: https://github.com/netbox-community/netbox
+        asOf: '2026-09-12'
+    notes: >-
+      scaleFloor is "mid" deliberately. Below that size a spreadsheet is
+      genuinely adequate and NetBox is a project the client will abandon.
+
+  - id: snipe-it
+    name: Snipe-IT
+    vendor: Grokability, Inc.
+    category: asset_discovery
+    subcategory: IT asset management and lifecycle tracking
+    licenceModel: open_core
+    maturity: established
+
+    tiers:
+      - id: self-hosted
+        name: Self-hosted
+        capabilities:
+          - Hardware asset register with check-out and check-in to people
+          - Software licence tracking and seat allocation
+          - Depreciation and warranty tracking
+          - Audit workflows and history per asset
+          - Unlimited users and assets
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/grokability/snipe-it
+              note: >-
+                Confirm the licence is still AGPL-3.0 and that the self-hosted
+                edition is still advertised as unlimited. The hosted plans are
+                where the commercial pressure sits, so watch for features
+                appearing only there.
+            sources:
+              - url: https://github.com/grokability/snipe-it
+                asOf: '2026-09-12'
+              - url: https://snipeitapp.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              AGPL-3.0. Snipe-IT's own pricing page states the self-hosted
+              edition "is and always will be free", with unlimited users and
+              assets. No licence fee.
+
+      - id: hosted-basic
+        name: Basic hosting
+        capabilities:
+          - Everything in the self-hosted edition
+          - Managed hosting, backups and upgrades
+          - Vendor support
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 39999
+                  currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://snipeitapp.com/pricing
+              note: >-
+                Read the annual price. Also re-check what distinguishes the
+                hosting tiers, because Snipe-IT bands them on hosting capacity
+                rather than on asset count and that is not something this entry
+                can model.
+            sources:
+              - url: https://snipeitapp.com/pricing
+                asOf: '2026-09-12'
+            notes: >-
+              USD 399.99 per year, billed annually at a stated 16% saving
+              against USD 39.99 monthly. A flat subscription, not per asset.
+
+              The Small Business (USD 999.99/yr) and Dedicated (USD 2,499.99/yr)
+              hosting tiers are also published and are not catalogued: they are
+              banded on hosting capacity rather than on anything the sizing
+              stage measures, so a band could not be selected honestly.
+
+    supports:
+      os: [linux, windows, macos]
+      deviceClasses: [workstation, server, network_device, mobile, iot]
+      cloudPlatforms: []
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [ldap, saml, syslog]
+
+    controlsCovered:
+      - cis-v8:1
+      - cis-v8:2
+      - nist-csf-2.0:ID.AM
+      - iso-27001-2022:A.5.9
+      - iso-27001-2022:A.5.11
+      - hipaa:164.308.a.1
+      - hipaa:164.310.d.1
+      - rbi-csf:asset-inventory
+      - nis2:21.2.i
+
+    opsBurden:
+      baseFte: 0.1
+      ftePerThousandAssets: 0.1
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 6
+      skillLevel: generalist
+      typicalWeeks: 4
+      confidence: analyst_estimate
+
+    strengths:
+      - Tracks the thing auditors actually ask about — who has which device, since when
+      - Genuinely free and unlimited self-hosted, with a supported hosted path if that changes
+      - Operable by IT rather than by security, which is where asset records really live
+    weaknesses:
+      - 'No discovery at all: every asset arrives because a person or an import put it there'
+      - Keeping it accurate is a process problem, and the tool cannot solve it
+      - Software licence tracking is basic next to a dedicated SAM product
+    bestFor:
+      - Clients whose asset register is a spreadsheet and needs to stop being one
+      - Estates with an offboarding problem — devices that leave with people
+    avoidWhen:
+      - The problem is unknown assets rather than unrecorded ones
+      - There is no process to keep the register current
+
+    sources:
+      - url: https://snipeitapp.com/pricing
+        asOf: '2026-09-12'
+      - url: https://github.com/grokability/snipe-it
+        asOf: '2026-09-12'
+    notes: >-
+      Pairs with Nmap or runZero rather than competing with them — one finds,
+      this one records. A client buying only this has an inventory they believe
+      and no way to test it.
+
+  - id: glpi
+    name: GLPI
+    vendor: Teclib'
+    category: asset_discovery
+    subcategory: IT asset management with agent-based inventory
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: community
+        name: GLPI (self-hosted)
+        capabilities:
+          - Agent-based hardware and software inventory across Windows, Linux and macOS
+          - Network discovery and SNMP inventory of network equipment
+          - Asset lifecycle, contract and supplier management
+          - Integrated service desk and ticketing
+          - Software licence and installation tracking
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/glpi-project/glpi
+              note: >-
+                Confirm the licence is still GPLv3 and watch the relationship
+                with Teclib', which sells GLPI Network as a paid subscription.
+                The risk here is plugins and updates moving behind that
+                subscription, not the core licence changing.
+            sources:
+              - url: https://github.com/glpi-project/glpi
+                asOf: '2026-09-12'
+            notes: >-
+              GPLv3. No licence fee and no asset limit. Teclib' sells GLPI
+              Network as a commercial subscription; it is quote-based and is not
+              catalogued.
+
+    supports:
+      os: [linux, windows, macos]
+      deviceClasses:
+        - workstation
+        - server
+        - network_device
+        - firewall
+        - mobile
+        - hypervisor
+        - iot
+      cloudPlatforms: []
+      deploymentModes: [on_prem, hybrid, air_gapped]
+      scaleFloor: small
+      scaleCeiling: large
+      airGapCapable: true
+
+    integrations: [ldap, saml, snmp, syslog]
+
+    controlsCovered:
+      # The only entry here that both discovers and records — agent inventory
+      # plus SNMP discovery plus a register — which is why it claims both halves
+      # of CIS Control 1 and Control 2.
+      - cis-v8:1
+      - cis-v8:2
+      - nist-csf-2.0:ID.AM
+      - iso-27001-2022:A.5.9
+      - iso-27001-2022:A.5.11
+      - hipaa:164.308.a.1
+      - hipaa:164.310.d.1
+      - rbi-csf:asset-inventory
+      - nis2:21.2.i
+
+    opsBurden:
+      baseFte: 0.25
+      ftePerThousandAssets: 0.12
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 12
+      skillLevel: generalist
+      typicalWeeks: 6
+      confidence: analyst_estimate
+
+    strengths:
+      - Discovery and inventory in one product, which nothing else free here manages
+      - The agent keeps the register current automatically, so accuracy is not purely a process problem
+      - Service desk included, so it can replace two tools for a small IT team
+    weaknesses:
+      - Broad rather than deep — each of its many modules is adequate rather than excellent
+      - The interface shows its age and the learning curve is real
+      - Agent deployment is a project of its own on an unmanaged estate
+    bestFor:
+      - Small and mid-sized IT teams wanting one system for assets and tickets
+      - Clients who need the inventory to stay accurate without a manual process
+    avoidWhen:
+      - A best-of-breed source of truth is needed for network automation — NetBox is the better answer
+      - Only discovery is wanted, with no appetite for a platform
+
+    sources:
+      - url: https://github.com/glpi-project/glpi
+        asOf: '2026-09-12'
+    notes: >-
+      The most complete answer in this file for a typical mid-market client, and
+      the one most likely to be dismissed on looks. Worth demonstrating rather
+      than describing.
