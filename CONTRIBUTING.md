@@ -235,3 +235,17 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   Phase 10 tests passed against the broken code — one because the "bug" it
   targeted was unreachable dead code, which was worth more to learn than the test
   was. A test written alongside a fix proves nothing until it has failed once.
+- **An enum value that secretly means "unanswered" will be answered.**
+  `deploymentPreference: 'hybrid'` was the wizard's wording for "no strong
+  preference" and scoring branched on it that way, so a client who genuinely ran
+  a hybrid estate could not say so and was told in writing that they had said
+  nothing. Absence needs its own name (`not_asked`), and a field that carries
+  both a fact and a policy needs splitting into two.
+- **Ranking candidates on `procurementAnnual` inverts hard rule 8.** It makes a
+  self-hosted tool look free and picks it over a commercial one that is better
+  *and* cheaper once `opsFteAnnual` is counted. The budget *cap* is rightly
+  judged on procurement — salary is not a purchase order — but choosing between
+  products is a different question. `cheapest` and `lowest_tco` exist as
+  separate strategies for exactly this reason; do not merge them, and do not
+  "fix" `cheapest` to rank on TCO. That breaks budget monotonicity, because at a
+  tight cap the lowest-TCO option frequently does not fit the procurement cap.

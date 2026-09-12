@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 10 — polish, demo scenarios, README (in review)
+**Current phase:** 11 — environment as a fact, and justified selection (in review)
 **Last updated:** 2026-09-12
 
 ## Phase log
@@ -1286,6 +1286,66 @@ test: the fallback I had assumed was buggy turned out to be unreachable. The
 test was rewritten to pin the behaviour that actually exists — a mandatory
 category whose cheapest SKU cannot be implemented is still funded from the rest
 of the list — and the dead code deleted rather than "fixed".
+
+### Phase 11 — the environment is a fact, and the choice is justified
+
+Raised by the reviewer on 2026-09-12: "in Constraints and preferences ... what
+I mean is the client already has the environment ... it is not a preference" and
+"after choosing the security product, why this is chosen instead of others
+should be justifiable and shown, so nothing manual has to be explained".
+
+Both were right, and both were worse than a labelling problem.
+
+**`deploymentPreference` carried two questions and `hybrid` meant neither.**
+The wizard's own label read "Hybrid — no strong preference", and scoring
+implemented it as exactly that: `if (stated !== 'hybrid')`. So a client who
+genuinely ran both had their answer discarded, was scored by inference from
+their asset counts on the compressed band, and was told so in writing. The
+retail preset states hybrid, and its results page said, four times over:
+
+> "No preference was stated, so the estate decides: this is a self-hosted
+> estate, and on-prem deployment suits it."
+
+That reaches the client-facing proposal.
+
+Split into `environment` (what they run — a fact) and `deploymentConstraint`
+(what procurement forbids — the only new hard filter). A hybrid client now
+scores a hybrid-capable product 100 and a single-mode one 85: native to the
+half it targets, reaching the other half over a longer path. Only `not_asked`
+reads the estate.
+
+**Where assets live is not how a tool is delivered.** Decided with the
+reviewer: an on-premises environment marks a cloud-delivered product down but
+never eliminates it, because a SaaS EDR protects on-prem endpoints perfectly
+well and eliminating there would remove every cloud-delivered product from
+every on-prem client. A stated no-SaaS policy does eliminate it.
+
+**Stored scenarios migrate on read.** Legacy `hybrid` maps to `not_asked`,
+because that is what it meant; mapping it to `hybrid` would silently change
+what those clients said. An unrecognised legacy value fails rather than being
+guessed at.
+
+**The justification found a recommendation defect.** Showing every alternative
+made it obvious that the hospital's EDR was Velociraptor at $1,080 of licence
+over Defender for Endpoint P1 at $42,840 — P1 scoring 95.7 to 89.8 and costing
+$172,928 a year all-in against $185,797. Worse, dearer, selected. `cheapest`
+ranks on procurement, which is right for stretching a tight purchase-order
+budget but is hard rule 8 inverted as the only cost-led strategy.
+
+Changing `cheapest` to rank on total cost was the obvious fix and broke the
+budget-monotonicity acceptance test outright — at a tight cap the lowest-TCO
+option often does not fit the procurement cap, so categories go unfunded. A
+fourth strategy, `lowest_tco`, was added instead and the existing comparison
+decides between them.
+
+**Open question, for the reviewer.** On the hospital, `cheapest` still wins,
+because it funds all thirteen categories and `lowest_tco` funds fewer. The
+resulting stack asks a two-person security team for **8.58 FTE**. The engine
+says so plainly and offers the managed alternative, and coverage-first is a
+deliberate, documented priority — but a stack nobody can operate is arguably
+not a recommendation. Whether operational capacity should *constrain*
+selection rather than only warn is a product decision and has not been made.
+It is the single biggest open judgement in the engine.
 
 ## Open defects
 
