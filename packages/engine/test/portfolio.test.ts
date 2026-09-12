@@ -599,9 +599,12 @@ describe('regressions', () => {
       name: 'CIS Controls',
       sourceQuality: 'secondary_sources',
       version: '8',
+      // Deliberately NOT mandatory: this test exercises the tie-break on
+      // in-scope controls generally. The mandatory-control rule, which outranks
+      // weighted need, has its own test below.
       controls: [
-        { id: '5', title: 'Account Management', satisfiedBy: ['iam'], mandatory: true },
-        { id: '6', title: 'Access Control Management', satisfiedBy: ['iam'], mandatory: true },
+        { id: '5', title: 'Account Management', satisfiedBy: ['iam'], mandatory: false },
+        { id: '6', title: 'Access Control Management', satisfiedBy: ['iam'], mandatory: false },
       ],
     });
 
@@ -653,6 +656,70 @@ describe('regressions', () => {
 
     expect(recommended.selections.map((selection) => selection.productId)).toEqual(['broad-iam']);
     expect(recommended.rationale.join(' ')).toContain('Spending more must not cover less');
+  });
+
+  it('meets a mandate rather than funding one more optional category', () => {
+    // Found when the ndr category landed. For the PCI-scoped retailer the
+    // portfolio began funding a ninth category — network detection — by
+    // switching the endpoint pick to one that does not claim PCI requirement 5,
+    // anti-malware. More categories funded, a mandatory control lost, in a
+    // cardholder data environment. No QSA would accept that stack, so weighted
+    // need must not outrank a mandate.
+    const pciMandatingIam: Framework = buildFramework({
+      id: 'pci-dss-4.0',
+      name: 'PCI DSS',
+      sourceQuality: 'secondary_sources',
+      version: '4.0',
+      controls: [{ id: '7', title: 'Restrict access', satisfiedBy: ['iam'], mandatory: true }],
+    });
+
+    // Dear to buy, cheap to own, and the only thing that meets the mandate.
+    const mandateMeeting: Product = {
+      ...buildProduct({
+        id: 'mandate-iam',
+        pricing: [
+          {
+            model: 'flat_tiered',
+            tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(3_000_00) }],
+          },
+        ],
+        opsBurden: { baseFte: 0.01, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+      }),
+      category: 'iam',
+      vendor: 'Mandate Inc.',
+      controlsCovered: ['pci-dss-4.0:7'],
+      supports: { ...buildProduct().supports, deviceClasses: ['server', 'workstation'] },
+    };
+
+    // Cheap to buy, expensive to own, meets nothing.
+    const cheapMiss: Product = {
+      ...buildProduct({
+        id: 'cheap-iam',
+        pricing: [
+          { model: 'flat_tiered', tiers: [{ minUnits: 0, maxUnits: null, flatPrice: usd(100_00) }] },
+        ],
+        opsBurden: { baseFte: 0.6, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+      }),
+      category: 'iam',
+      vendor: 'Cheap Inc.',
+      supports: { ...buildProduct().supports, deviceClasses: ['server', 'workstation'] },
+    };
+
+    // The extra category the cheap stack can afford and the mandate stack cannot.
+    const extraCategory = product('some-ndr', 'ndr', 1_000_00);
+
+    const { recommended } = buildPortfolio(
+      buildInputs({
+        products: [mandateMeeting, cheapMiss, extraCategory],
+        frameworks: [pciMandatingIam],
+        annualCap: 3_500_00,
+      }),
+    );
+
+    // The cheap stack funds two categories and meets no mandate; the mandate
+    // stack funds one and meets it. The mandate wins.
+    expect(recommended.selections.map((selection) => selection.productId)).toEqual(['mandate-iam']);
+    expect(recommended.rationale.join(' ')).toContain('mandatory obligations');
   });
 
   it('leaves the density winner alone when no framework is selected', () => {

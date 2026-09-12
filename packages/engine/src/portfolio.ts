@@ -885,14 +885,16 @@ function buildRecommended(
     bundle.selections.reduce((sum, selection) => sum + selection.categoryWeight, 0);
 
   const productById = new Map(inputs.products.map((product) => [product.id, product]));
-  const inScopeControls = new Set(
+  const inScopeControls = new Map<string, boolean>(
     inputs.frameworks.flatMap((framework) =>
-      framework.controls.map((control) => `${framework.id}:${control.id}`),
+      framework.controls.map(
+        (control) => [`${framework.id}:${control.id}`, control.mandatory] as [string, boolean],
+      ),
     ),
   );
 
-  /** Distinct in-scope controls this bundle's selections claim, at the tiers chosen. */
-  const mandatedControlsMet = (bundle: Bundle): number => {
+  /** In-scope controls this bundle's selections claim, at the tiers chosen. */
+  const controlsMet = (bundle: Bundle): { mandatory: number; total: number } => {
     const met = new Set<string>();
     for (const selection of bundle.selections) {
       const product = productById.get(selection.productId);
@@ -901,41 +903,67 @@ function buildRecommended(
         if (inScopeControls.has(controlId)) met.add(controlId);
       }
     }
-    return met.size;
+    let mandatory = 0;
+    for (const controlId of met) if (inScopeControls.get(controlId) === true) mandatory += 1;
+    return { mandatory, total: met.size };
   };
 
-  // Strictly more, so density keeps ties and the better-product bias.
-  if (coveredWeight(byCheapest) > coveredWeight(byDensity)) {
+  const cheapest = controlsMet(byCheapest);
+  const density = controlsMet(byDensity);
+
+  // Lexicographic, in the order a client would defend the stack in:
+  //
+  //   1. mandates met    — an obligation the analyst ticked, and the framework
+  //                        marked mandatory. Nothing outranks this.
+  //   2. weighted need   — how much of the estate's risk the stack addresses.
+  //   3. controls met    — the remaining in-scope controls, mandatory or not.
+  //
+  // Density is the final tie-break, so an unregulated client (both control
+  // counts zero, both ties) keeps the old behaviour and the better-product
+  // bias exactly as before.
+  const CHEAPEST_RATIONALE =
+    'Built from the cheapest acceptable option in each category rather than the highest value ' +
+    'density: at this budget, ranking on value alone let one expensive product take the ' +
+    'money and leave whole categories unfunded. §7.4 step 3 calls for exactly this when the ' +
+    'budget is tight.';
+
+  if (cheapest.mandatory !== density.mandatory) {
+    // Explained in both directions. When this rule rejects the broader stack
+    // the client is giving up a funded category, and being told why is the
+    // difference between a defensible recommendation and an arbitrary one.
+    const [winner, winnerMandates, loserMandates] =
+      cheapest.mandatory > density.mandatory
+        ? ([byCheapest, cheapest.mandatory, density.mandatory] as const)
+        : ([byDensity, density.mandatory, cheapest.mandatory] as const);
+
     return {
-      ...byCheapest,
+      ...winner,
       rationale: [
-        ...byCheapest.rationale,
-        'Built from the cheapest acceptable option in each category rather than the highest value ' +
-          'density: at this budget, ranking on value alone let one expensive product take the ' +
-          'money and leave whole categories unfunded. §7.4 step 3 calls for exactly this when the ' +
-          'budget is tight.',
+        ...winner.rationale,
+        `Chosen over the alternative stack because it meets more of the client's mandatory ` +
+          `obligations: ${winnerMandates} mandated control(s) against ${loserMandates}. A funded ` +
+          `category the selected frameworks do not require never outranks a control they do.`,
       ],
     };
   }
 
-  // Same categories funded either way. Compliance breaks the tie before value
-  // does, so a larger budget can never buy a stack that meets fewer of the
-  // obligations the analyst actually ticked.
-  if (coveredWeight(byCheapest) === coveredWeight(byDensity)) {
-    const cheapestControls = mandatedControlsMet(byCheapest);
-    const densityControls = mandatedControlsMet(byDensity);
-    if (cheapestControls > densityControls) {
-      return {
-        ...byCheapest,
-        rationale: [
-          ...byCheapest.rationale,
-          `Both strategies fund the same categories, so the one satisfying more of the selected ` +
-            `frameworks won: the cheapest acceptable option in each category claims ` +
-            `${cheapestControls} of the in-scope control(s) against ${densityControls} for the ` +
-            `highest-value-density option. Spending more must not cover less.`,
-        ],
-      };
+  if (coveredWeight(byCheapest) !== coveredWeight(byDensity)) {
+    if (coveredWeight(byCheapest) > coveredWeight(byDensity)) {
+      return { ...byCheapest, rationale: [...byCheapest.rationale, CHEAPEST_RATIONALE] };
     }
+    return byDensity;
+  }
+
+  if (cheapest.total > density.total) {
+    return {
+      ...byCheapest,
+      rationale: [
+        ...byCheapest.rationale,
+        `Both strategies meet the same mandates and fund the same categories, so the one ` +
+          `satisfying more of the selected frameworks won: ${cheapest.total} in-scope control(s) ` +
+          `against ${density.total}. Spending more must not cover less.`,
+      ],
+    };
   }
 
   return byDensity;
