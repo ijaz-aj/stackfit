@@ -90,6 +90,15 @@ export interface PipelineResult {
   readonly essential: Bundle;
   readonly recommended: Bundle;
   readonly ideal: Bundle;
+  /**
+   * What this client's own team can actually run (§7.4, reviewer 2026-09-12).
+   *
+   * Recommended answers "what does the estate need, inside the budget" and can
+   * ask a two-person team for 8.58 FTE. This answers "what can they operate on
+   * Monday". The distance between the two is the hiring or the managed service,
+   * and stating it is more useful than quietly picking either one.
+   */
+  readonly operable: Bundle;
   /** Coverage of the Recommended bundle. */
   readonly coverage: CoverageResult;
   /** Everything `computeCoverage` needs but the bundle, to measure the others. */
@@ -198,6 +207,7 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
     essential: portfolio.essential,
     recommended: portfolio.recommended,
     ideal: portfolio.ideal,
+    operable: portfolio.operable,
     coverage: computeCoverage({ ...coverageInputs, bundle: portfolio.recommended }),
     coverageInputs,
   };

@@ -18,7 +18,7 @@ import { isUnreadable, parseScenarioRow } from '@/lib/scenario';
 
 export const dynamic = 'force-dynamic';
 
-const KINDS = ['essential', 'recommended', 'ideal'] as const;
+const KINDS = ['essential', 'operable', 'recommended', 'ideal'] as const;
 
 function bundleKindFrom(value: string | undefined): Bundle['kind'] {
   return KINDS.find((kind) => kind === value) ?? 'recommended';

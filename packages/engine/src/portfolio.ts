@@ -44,7 +44,7 @@ import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney 
 import type { ProductScore } from './scoring';
 import type { SizingResult } from './sizing';
 
-export type BundleKind = 'essential' | 'recommended' | 'ideal';
+export type BundleKind = 'essential' | 'recommended' | 'ideal' | 'operable';
 
 export interface CategoryRanking {
   readonly category: ProductCategory;
@@ -179,7 +179,13 @@ export interface Bundle {
 }
 
 /** Why a mandatory category has nothing in the bundle. */
-export type UnfundedReason = 'no_candidate' | 'annual_cap' | 'one_time_cap' | 'both_caps';
+export type UnfundedReason =
+  | 'no_candidate'
+  | 'annual_cap'
+  | 'one_time_cap'
+  | 'both_caps'
+  /** Affordable to buy, but there is nobody left to run it. */
+  | 'ops_capacity';
 
 export interface UnfundedCategory {
   readonly category: ProductCategory;
@@ -420,6 +426,15 @@ interface SelectionOptions {
    * both and keeps whichever bundle is actually better.
    */
   readonly categoryOrder?: 'weight' | 'weight_per_cost';
+  /**
+   * Total operational FTE this bundle may consume, or undefined for no limit.
+   *
+   * Only the Operable bundle sets it. The others deliberately ignore ops
+   * capacity and report the overrun instead: what the estate needs does not
+   * change because the client is short-staffed, and hiding that would turn a
+   * staffing conversation into a silently smaller recommendation.
+   */
+  readonly fteCapacity?: number;
 }
 
 /**
@@ -456,6 +471,7 @@ function select(
   let annual = zeroMoney(currency);
   let spend = zeroMoney(currency);
   let oneTime = zeroMoney(currency);
+  let opsFte = 0;
 
   // Mandatory first, then the rest. Within each pass the best candidate for the
   // category wins; `categoryOrder` decides which categories are offered the
@@ -610,7 +626,14 @@ function select(
       // anything: it ran only when this `find` returned nothing, which means
       // nothing fitted both caps, which means the cheapest did not either. It
       // read like a safety net for compliance obligations and was not one.
+      // Capacity is a constraint on the same footing as the caps, and it binds
+      // per bundle: only Operable sets one.
+      const withinCapacity = (entry: (typeof scored)[number]): boolean =>
+        options.fteCapacity === undefined ||
+        opsFte + entry.cost.opsFte <= options.fteCapacity;
+
       const picked = scored.find((entry) => {
+        if (!withinCapacity(entry)) return false;
         if (options.ignoreBudget) return true;
         return (
           withinCap(addMoney(spend, entry.spendCost), profile.budget.annualCap) &&
@@ -621,9 +644,20 @@ function select(
       if (picked === undefined) {
         if (ranking.mandatory) {
           unfundedMandatory.push(ranking.category);
+          // Money before people: if nothing here is affordable either, the cap
+          // is the more actionable answer. Capacity is only named as the cause
+          // when something in the category could actually have been bought.
+          const affordable = scored.some(
+            (entry) =>
+              options.ignoreBudget ||
+              (withinCap(addMoney(spend, entry.spendCost), profile.budget.annualCap) &&
+                withinCap(addMoney(oneTime, entry.oneTimeCost), profile.budget.oneTimeCap)),
+          );
           unfundedReasons.push({
             category: ranking.category,
-            reason: blockingCap(scored, spend, oneTime, profile.budget),
+            reason: affordable
+              ? 'ops_capacity'
+              : blockingCap(scored, spend, oneTime, profile.budget),
           });
         }
         continue;
@@ -708,6 +742,7 @@ function select(
       annual = addMoney(annual, picked.annualCost);
       spend = addMoney(spend, picked.spendCost);
       oneTime = addMoney(oneTime, picked.oneTimeCost);
+      opsFte += picked.cost.opsFte;
       chosenVendors.add(picked.candidate.vendor);
       filledCategories.add(ranking.category);
     }
@@ -887,6 +922,9 @@ function buildBundle(
     mandatoryOneTimeFloor.amountMinor > oneTimeCap.amountMinor &&
     mandatoryCategories.length > 0;
 
+  const capacityFte =
+    profile.securityStaffFte * inputs.assumptions.operableCapacity.utilisation;
+
   const rationale: string[] = [];
   switch (kind) {
     case 'essential':
@@ -905,6 +943,31 @@ function buildBundle(
       rationale.push(
         'Ideal: ignores the budget cap entirely. It exists to quantify the gap between what this ' +
           'client can afford and what the estate actually warrants.',
+      );
+      break;
+    case 'operable':
+      rationale.push(
+        `Operable: what ${profile.securityStaffFte} security FTE can actually run, at ` +
+          `${round(inputs.assumptions.operableCapacity.utilisation * 100, 0)}% of the stated team. ` +
+          'Everything here is affordable *and* staffable. The distance between this and ' +
+          'Recommended is the hiring, or the managed service, that the recommendation assumes.',
+      );
+      if (result.selections.length === 0) {
+        rationale.push(
+          profile.securityStaffFte === 0
+            ? '⚠ Nothing. This client has no security staff, so there is no tool they can operate ' +
+              'themselves — not the cheapest one, and not a free one. Every option in the ' +
+              'recommendation above assumes somebody runs it. For this client the managed ' +
+              'alternative is not a comparison, it is the only route.'
+            : `⚠ Nothing fits. Every candidate costs more than the ${round(capacityFte, 2)} FTE ` +
+              'this team has spare, so there is no stack they can run unaided.',
+        );
+      }
+      rationale.push(
+        '⚠ Both figures behind this are soft, and it is a planning aid rather than a measurement: ' +
+          'every operational-effort estimate in the catalog is an analyst estimate, none is ' +
+          'vendor-stated, and effort is summed across products with no overlap — one engineer ' +
+          'genuinely does run several tools, so the total overstates a real team’s load.',
       );
       break;
   }
@@ -936,6 +999,18 @@ function buildBundle(
   // enough: "we could not fund EDR" reads as a licence problem, and an analyst
   // who goes back for a bigger annual budget gets it, changes nothing, and has
   // spent the concession they had.
+  const blockedByCapacity = result.unfundedReasons.filter(
+    (entry) => entry.reason === 'ops_capacity',
+  );
+  if (blockedByCapacity.length > 0) {
+    rationale.push(
+      `⚠ ${blockedByCapacity.map((entry) => entry.category).join(', ')} ` +
+        `${blockedByCapacity.length === 1 ? 'is' : 'are'} affordable but not staffable: the money ` +
+        'is there and the people are not. This is a hiring or managed-service decision, not a ' +
+        'procurement one, and no budget increase closes it.',
+    );
+  }
+
   const blockedByOneTime = result.unfundedReasons.filter(
     (entry) => entry.reason === 'one_time_cap',
   );
@@ -1224,6 +1299,7 @@ export function buildPortfolio(inputs: PortfolioInputs): {
   essential: Bundle;
   recommended: Bundle;
   ideal: Bundle;
+  operable: Bundle;
 } {
   const rankings = rankCategoriesForClient(inputs);
   const candidates = buildCandidates(inputs, rankings);
@@ -1241,6 +1317,17 @@ export function buildPortfolio(inputs: PortfolioInputs): {
       ignoreBudget: true,
       eligible: (ranking) => ranking.weight > 0,
       objective: 'best_fit',
+    }),
+    // Same budget as Recommended, plus a ceiling on people. Ranked on total
+    // cost of ownership rather than licence price, because a team at the limit
+    // of its capacity is exactly who cannot absorb a cheap tool that eats an
+    // engineer.
+    operable: buildBundle('operable', inputs, rankings, candidates, {
+      ignoreBudget: false,
+      eligible: (ranking) => ranking.weight > 0,
+      objective: 'lowest_tco',
+      fteCapacity:
+        inputs.profile.securityStaffFte * inputs.assumptions.operableCapacity.utilisation,
     }),
   };
 }

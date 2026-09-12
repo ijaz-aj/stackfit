@@ -104,6 +104,7 @@ const assumptions: PortfolioAssumptions = {
   suiteIntegrationBonusPoints: 5,
   minimumAnnualisedCostMinor: 100,
   openSourcePreferencePoints: 8,
+  operableCapacity: { utilisation: 1, basis: 'test fixture' },
   roadmap: {
     parallelWorkstreams: 2,
     phases: [
@@ -239,6 +240,96 @@ describe('step 1 — category ranking', () => {
       buildInputs({ products: [product('siem-a', 'siem', 100_000)], frameworks: [] }),
     );
     expect(rankings.every((entry) => !entry.mandatory)).toBe(true);
+  });
+});
+
+describe('the Operable bundle — what this team can actually run', () => {
+  // Recommended answers "what does the estate need, inside the budget", and on
+  // the hospital demo that is thirteen categories needing 8.58 FTE from a
+  // two-person team. Operable answers "what can they run on Monday". The gap
+  // between them is the hiring, or the managed service, and stating it is more
+  // useful than quietly picking either one.
+  function heavy(id: string, category: ProductCategory, fte: number): Product {
+    return {
+      ...product(id, category, 100_00),
+      opsBurden: { baseFte: fte, ftePerThousandAssets: 0, confidence: 'analyst_estimate' },
+    };
+  }
+
+  it('never exceeds the capacity the client stated', () => {
+    const { operable } = buildPortfolio(
+      buildInputs({
+        products: [heavy('siem-a', 'siem', 0.8), heavy('edr-a', 'edr', 0.8), heavy('iam-a', 'iam', 0.8)],
+        securityStaffFte: 2,
+        annualCap: 500_000_00,
+      }),
+    );
+
+    expect(operable.totalOpsFte).toBeLessThanOrEqual(2);
+    expect(operable.selections.length).toBeLessThan(3);
+  });
+
+  it('leaves Recommended alone — a short-staffed client still sees what they need', () => {
+    // The whole point of a fourth bundle rather than a constraint. What the
+    // estate warrants does not shrink because the client is short-handed.
+    const inputs = buildInputs({
+      products: [heavy('siem-a', 'siem', 0.8), heavy('edr-a', 'edr', 0.8), heavy('iam-a', 'iam', 0.8)],
+      securityStaffFte: 2,
+      annualCap: 500_000_00,
+    });
+    const { recommended, operable } = buildPortfolio(inputs);
+
+    expect(recommended.selections).toHaveLength(3);
+    expect(recommended.totalOpsFte).toBeGreaterThan(operable.totalOpsFte);
+  });
+
+  it('recommends nothing at all to a client with no security staff', () => {
+    // The most important case in the catalog and the easiest to get wrong. A
+    // free tool is not operable by nobody, and an empty bundle here is the
+    // honest answer rather than a bug.
+    const { operable } = buildPortfolio(
+      buildInputs({
+        products: [heavy('siem-a', 'siem', 0.1), heavy('edr-a', 'edr', 0.1)],
+        securityStaffFte: 0,
+        annualCap: 500_000_00,
+      }),
+    );
+
+    expect(operable.selections).toEqual([]);
+    expect(operable.totalOpsFte).toBe(0);
+    expect(operable.rationale.join(' ')).toContain('no security staff');
+    expect(operable.rationale.join(' ')).toContain('only route');
+  });
+
+  it('calls an unstaffable mandatory category a staffing problem, not a budget one', () => {
+    // Money is there, people are not. Telling the analyst to ask for a bigger
+    // budget would send them into a negotiation that cannot fix it.
+    const { operable } = buildPortfolio(
+      buildInputs({
+        products: [heavy('siem-a', 'siem', 5)],
+        frameworks: [pciMandatingSiem],
+        securityStaffFte: 1,
+        annualCap: 500_000_00,
+      }),
+    );
+
+    expect(operable.unfundedMandatory).toContain('siem');
+    expect(operable.unfundedReasons).toContainEqual({ category: 'siem', reason: 'ops_capacity' });
+    const rationale = operable.rationale.join(' ');
+    expect(rationale).toContain('affordable but not staffable');
+    expect(rationale).toContain('no budget increase closes it');
+  });
+
+  it('says plainly that the effort figures behind it are estimates', () => {
+    // Every opsBurden in the catalog is an analyst estimate and effort is summed
+    // with no overlap. A bundle that constrains on that must not be read as a
+    // measurement.
+    const { operable } = buildPortfolio(
+      buildInputs({ products: [heavy('siem-a', 'siem', 0.5)], securityStaffFte: 2, annualCap: 500_000_00 }),
+    );
+    const rationale = operable.rationale.join(' ');
+    expect(rationale).toContain('analyst estimate');
+    expect(rationale).toContain('overstates');
   });
 });
 

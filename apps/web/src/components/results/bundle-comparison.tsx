@@ -33,7 +33,14 @@ export function BundleComparison({
   selectedKind: Bundle['kind'];
   scenarioId: string;
 }) {
-  const bundles: readonly Bundle[] = [result.essential, result.recommended, result.ideal];
+  // Operable sits next to Recommended rather than at the end: the two are read
+  // against each other, and the distance between them is the point.
+  const bundles: readonly Bundle[] = [
+    result.essential,
+    result.operable,
+    result.recommended,
+    result.ideal,
+  ];
 
   const rows = bundles.map((bundle) => {
     const confidences: readonly PricingConfidence[] = bundle.selections.map(
@@ -57,9 +64,15 @@ export function BundleComparison({
     };
   });
 
-  const label = { essential: 'Essential', recommended: 'Recommended', ideal: 'Ideal' } as const;
+  const label = {
+    essential: 'Essential',
+    operable: 'Operable',
+    recommended: 'Recommended',
+    ideal: 'Ideal',
+  } as const;
   const hint = {
     essential: 'Minimum defensible posture, plus everything compliance mandates.',
+    operable: 'What this team can run unaided. Affordable and staffable.',
     recommended: 'Best value inside the stated budget.',
     ideal: 'Ignores the budget cap, to quantify the gap.',
   } as const;
@@ -67,7 +80,7 @@ export function BundleComparison({
   return (
     <Card
       title="Bundle comparison"
-      hint="Three ways to answer the same brief. Click a tier to read its detail below."
+      hint="Four ways to answer the same brief. Click a tier to read its detail below. Operable against Recommended is the staffing gap."
     >
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] border-collapse text-[12px]">

@@ -266,6 +266,7 @@ export function buildPortfolioAssumptions(
     suiteIntegrationBonusPoints: 5,
     minimumAnnualisedCostMinor: 100,
     openSourcePreferencePoints: 8,
+    operableCapacity: { utilisation: 1, basis: 'test fixture' },
     roadmap: {
       parallelWorkstreams: 2,
       phases: [
