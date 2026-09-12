@@ -138,6 +138,85 @@ products:
               SSPL, free of charge with no per-user fee and no ingestion cap.
               SSPL is not an OSI-approved licence, hence licenceModel open_core.
 
+      - id: enterprise
+        name: Graylog Enterprise
+        capabilities:
+          - Everything in Graylog Open
+          - Data routing, archiving and tiered storage
+          - Audit log and role-based access control
+          - Report scheduling
+          - Vendor support
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 1500000
+                  currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://graylog.org/pricing/
+              note: >-
+                Graylog publishes a starting price rather than a rate. Read the
+                "starting at" figure and the minimum entry point together — the
+                floor is what this models, and the rate above it is quote-only.
+            sources:
+              - url: https://graylog.org/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              Graylog publishes "Starting at $15,000/year", with a minimum entry
+              of 10 GB/day of processed volume or 100 Graylog Consumption Units
+              on annual consumption.
+
+              ⚠ THIS IS A FLOOR, NOT A RATE. Graylog licenses processed data
+              volume in the active tier, and the per-GB figure above the minimum
+              is quote-only. A client ingesting 100 GB/day will pay
+              considerably more than USD 15,000, and this entry has no way to
+              say how much more. Treat it as "the cheapest this can be" and get
+              a quote.
+
+      - id: security
+        name: Graylog Security
+        capabilities:
+          - Everything in Graylog Enterprise
+          - Security-specific detection content and anomaly detection
+          - Investigation and case workflow
+          - Compliance reporting and dashboards
+          - SOAR-style response integrations
+        pricing:
+          - model: flat_tiered
+            tiers:
+              - minUnits: 0
+                maxUnits: null
+                flatPrice:
+                  amountMinor: 1800000
+                  currency: USD
+            termYears: 1
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://graylog.org/pricing/
+              note: Read the "starting at" figure and the minimum entry point together.
+            sources:
+              - url: https://graylog.org/pricing/
+                asOf: '2026-09-12'
+            notes: >-
+              Graylog publishes "Starting at $18,000/year", on the same 10 GB/day
+              minimum entry point. Same caveat as the Enterprise tier: a floor,
+              not a rate.
+        controlsCovered:
+          - cis-v8:17
+          - nist-csf-2.0:DE.AE
+          - nist-csf-2.0:RS.AN
+          - nist-csf-2.0:RS.MA
+          - iso-27001-2022:A.5.25
+          - iso-27001-2022:A.8.16
+          - soc-2:CC7
+          - rbi-csf:incident-response
+
     supports:
       os: [windows, linux, macos, network_os]
       deviceClasses:
@@ -188,8 +267,18 @@ products:
       - url: https://graylog.org/products/open/
         asOf: '2026-09-09'
     notes: >-
-      Only the free Open tier is catalogued. Graylog Security and Enterprise
-      are quote-based and land in the Phase 7 catalog expansion.
+      Graylog Security and Enterprise are now catalogued, as the Phase 1 note
+      said they would be. Both publish a starting price and neither publishes a
+      rate: Graylog licenses processed data volume in the active tier, with a
+      minimum entry of 10 GB/day, and the figure above that minimum is
+      quote-only. The two paid tiers are therefore modelled as floors and will
+      understate any real ingest volume — which is the wrong direction, so get
+      a quote before either number reaches a client.
+
+      Open remains genuinely free with no ingestion cap. The upgrade decision is
+      almost never about ingest and almost always about archiving, audit logging
+      and — for Security — the detection content, which is the only thing in
+      this product that a SIEM buyer is really paying for.
 
   - id: microsoft-sentinel
     name: Microsoft Sentinel
@@ -308,3 +397,250 @@ products:
       Activity logs ingest free. For a Microsoft-heavy client a large slice of
       the estimated GB/day may be free, so Sentinel can come out cheaper than a
       naive per-GB calculation suggests.
+
+  - id: opensearch
+    name: OpenSearch with Security Analytics
+    vendor: OpenSearch Software Foundation (Linux Foundation)
+    category: siem
+    subcategory: Apache-licensed search platform with a threat-detection plugin
+    licenceModel: open_source
+    maturity: established
+
+    tiers:
+      - id: open
+        name: OpenSearch (self-hosted)
+        capabilities:
+          - Log ingestion, indexing and search at scale
+          - Security Analytics threat-detection engine with pre-loaded detection rules
+          - Rules that can be customised and extended for custom attack patterns
+          - Event correlation across log sources
+          - Alerting and notification on findings
+          - Security analytics dashboards
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://github.com/opensearch-project/OpenSearch
+              note: >-
+                Apache 2.0 under the Linux Foundation, which makes a licence
+                change about as unlikely as it gets in this catalog — OpenSearch
+                exists precisely because Elasticsearch's licence changed. Worth
+                re-checking the Security Analytics plugin's release cadence
+                rather than the licence.
+            sources:
+              - url: https://github.com/opensearch-project/OpenSearch
+                asOf: '2026-09-12'
+              - url: https://github.com/opensearch-project/security-analytics
+                asOf: '2026-09-12'
+            notes: >-
+              Apache License 2.0, for both the platform and the Security
+              Analytics plugin. OpenSearch is a registered trademark of LF
+              Projects, LLC. No licence fee, no ingest cap, no per-user charge —
+              the cost is entirely the cluster and the engineer who runs it.
+
+              AWS sells a managed OpenSearch Service; that is a different
+              purchase, priced per instance-hour, and is not catalogued.
+
+    supports:
+      os: [linux, windows]
+      deviceClasses:
+        - server
+        - workstation
+        - domain_controller
+        - network_device
+        - firewall
+        - container_node
+        - cloud_workload
+      cloudPlatforms: [aws, azure, gcp]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: mid
+      scaleCeiling: enterprise
+      airGapCapable: true
+
+    integrations: [syslog, cef, otel, wazuh, arkime, zeek, suricata]
+
+    controlsCovered:
+      # Claims detection, not response. Security Analytics raises findings and
+      # alerts; acting on them is a SOAR or an analyst, and crediting it with
+      # incident management would overstate what shipping the plugin buys.
+      - cis-v8:8
+      - cis-v8:13
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:DE.AE
+      - iso-27001-2022:A.8.15
+      - iso-27001-2022:A.8.16
+      - pci-dss-4.0:10
+      - hipaa:164.312.b
+      - soc-2:CC7
+      - rbi-csf:audit-logs
+      - dpdp-2023:rule-6-logging
+      - cert-in:logs-180-days-in-india
+
+    opsBurden:
+      baseFte: 0.5
+      ftePerThousandAssets: 0.25
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 18
+      skillLevel: security_engineer
+      typicalWeeks: 8
+      confidence: analyst_estimate
+
+    strengths:
+      - Genuinely Apache 2.0 under the Linux Foundation, with no licence cliff ahead of it
+      - No ingest licensing at all, so log volume growth is an infrastructure decision rather than a commercial one
+      - Runs fully air-gapped and is already the storage layer under Arkime and several other tools here
+    weaknesses:
+      - 'You are running a distributed search cluster: index lifecycle, shard sizing and capacity are now standing jobs'
+      - Detection content is thinner than a commercial SIEM's and thinner than Elastic's
+      - No case management and no response actions of its own
+    bestFor:
+      - Clients with a platform team who want a SIEM with no licence ceiling
+      - Estates already running OpenSearch for observability
+      - Air-gapped or data-residency-constrained environments
+    avoidWhen:
+      - Security staffing is thin — this is a platform to operate, not a product to buy
+      - The client expects vendor-supplied detections to work on day one
+
+    sources:
+      - url: https://github.com/opensearch-project/OpenSearch
+        asOf: '2026-09-12'
+      - url: https://github.com/opensearch-project/security-analytics
+        asOf: '2026-09-12'
+    notes: >-
+      The highest baseFte in the siem file, deliberately. OpenSearch will do
+      what Wazuh and Graylog do and more, and it asks for a cluster operator to
+      do it. scaleFloor is "mid" for the same reason: below that size this is a
+      project rather than a control.
+
+      ⚠ Security Analytics' documentation did not state Sigma rule support or
+      threat-intelligence feed support on the page read, so neither is claimed
+      here. Check both before promising them.
+
+  - id: elastic-security
+    name: Elastic Security
+    vendor: Elastic
+    category: siem
+    subcategory: SIEM and endpoint on the Elastic Stack
+    licenceModel: open_core
+    maturity: established
+
+    tiers:
+      - id: basic-self-managed
+        name: Basic (self-managed)
+        capabilities:
+          - Centralised ingestion, analysis and management of security data
+          - Prebuilt and customisable detection rules that alert when events match
+          - Timeline for investigating events and alerts
+          - Case management for collecting and sharing information about security issues
+          - Elastic Defend for endpoint threat detection and prevention
+        pricing:
+          - model: zero_licence
+            pricingConfidence: public_list
+            refresh:
+              method: manual
+              checkUrl: https://www.elastic.co/subscriptions
+              note: >-
+                ⚠ READ THE SUBSCRIPTIONS PAGE FIRST, not the licence. The
+                licensing is settled; what is not settled in this entry is which
+                of the capabilities above are in the free Basic tier and which
+                need a paid subscription. See the product notes.
+            sources:
+              - url: https://github.com/elastic/elasticsearch/blob/main/LICENSE.txt
+                asOf: '2026-09-12'
+              - url: https://www.elastic.co/guide/en/security/current/es-overview.html
+                asOf: '2026-09-12'
+            notes: >-
+              Elasticsearch source is triple-licensed — AGPLv3, Server Side
+              Public License v1, or Elastic License 2.0 — except the x-pack
+              folder, which is Elastic License 2.0 only. The Security solution
+              lives largely in x-pack, so ELv2 is the licence that governs it:
+              source-available, free to self-manage, and forbidding provision to
+              third parties as a managed service. That distinction matters to an
+              MSP and not to an end client.
+
+              Elastic Cloud and the paid subscription tiers are consumption- and
+              tier-priced and are not catalogued.
+
+    supports:
+      os: [windows, linux, macos]
+      deviceClasses:
+        - server
+        - workstation
+        - domain_controller
+        - network_device
+        - firewall
+        - container_node
+        - cloud_workload
+        - saas_tenant
+      cloudPlatforms: [aws, azure, gcp, m365]
+      deploymentModes: [on_prem, hybrid, cloud, air_gapped]
+      scaleFloor: mid
+      scaleCeiling: enterprise
+      airGapCapable: true
+
+    integrations: [syslog, cef, otel, zeek, suricata, elasticsearch]
+
+    controlsCovered:
+      # Held to the capabilities Elastic's own overview states, and no further.
+      # The Basic-versus-paid split could not be verified this session, so these
+      # are the claims that hold if the client ends up on a paid tier; see the
+      # notes before relying on any of them at zero cost.
+      - cis-v8:8
+      - cis-v8:13
+      - nist-csf-2.0:DE.CM
+      - nist-csf-2.0:DE.AE
+      - nist-csf-2.0:RS.AN
+      - iso-27001-2022:A.8.15
+      - iso-27001-2022:A.8.16
+      - iso-27001-2022:A.5.25
+      - pci-dss-4.0:10
+      - hipaa:164.312.b
+      - soc-2:CC7
+      - rbi-csf:audit-logs
+      - rbi-csf:incident-response
+      - dpdp-2023:rule-6-logging
+
+    opsBurden:
+      baseFte: 0.45
+      ftePerThousandAssets: 0.25
+      confidence: analyst_estimate
+    implementation:
+      effortDays: 18
+      skillLevel: security_engineer
+      typicalWeeks: 8
+      confidence: analyst_estimate
+
+    strengths:
+      - Detection content is the strongest of any self-hostable option here, and it ships maintained
+      - SIEM and endpoint in one platform, so the endpoint agent feeds the SIEM with nothing to build
+      - Self-managed and air-gappable, which the commercial SaaS SIEMs are not
+    weaknesses:
+      - 'Elastic License 2.0, not open source: an MSP cannot run it as a service for clients'
+      - Operating an Elastic cluster at security log volumes is a standing engineering job
+      - 'The free-versus-paid line moves, and it is where the value is: this is the licensing question to settle first'
+    bestFor:
+      - Clients who want commercial-grade detection content without a per-GB SIEM bill
+      - Estates already running Elastic for observability
+    avoidWhen:
+      - The client is an MSP intending to run it on behalf of others
+      - There is no engineer who will own the cluster
+
+    sources:
+      - url: https://www.elastic.co/guide/en/security/current/es-overview.html
+        asOf: '2026-09-12'
+      - url: https://github.com/elastic/elasticsearch/blob/main/LICENSE.txt
+        asOf: '2026-09-12'
+    notes: >-
+      ⚠ THE LICENCE IS VERIFIED AND THE FREE-TIER FEATURE SPLIT IS NOT.
+      elastic.co/subscriptions returned HTTP 502 throughout the session it was
+      catalogued, so which of the listed capabilities sit in the free Basic tier
+      and which need Platinum or Enterprise could not be confirmed. The
+      capabilities above are taken verbatim from Elastic's own Security
+      overview, which describes the solution as a whole.
+
+      This matters more here than it would elsewhere, because the tier is priced
+      at zero. Confirm the Basic feature set before putting this in front of a
+      client as a free option — and if it turns out detection rules or case
+      management are gated, the control claims above need narrowing with it.

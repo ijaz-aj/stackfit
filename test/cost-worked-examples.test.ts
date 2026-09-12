@@ -200,8 +200,12 @@ describe('Costing the real catalog for a 60-staff PCI DSS retailer (US, USD)', (
         "microsoft-sentinel/pay-as-you-go | licence/yr 17,833 | ops FTE 0.32 | year1 106,413 | 3yr TCO 252,957 | USD",
         "bareos/community | licence/yr 0 | ops FTE 0.42 | year1 108,199 | 3yr TCO 255,597 | USD",
         "bareos/subscription | licence/yr 5,580 | ops FTE 0.42 | year1 113,779 | 3yr TCO 273,187 | USD",
+        "elastic-security/basic-self-managed | licence/yr 0 | ops FTE 0.48 | year1 124,394 | 3yr TCO 290,382 | USD",
+        "graylog-open/enterprise | licence/yr 15,000 | ops FTE 0.43 | year1 117,144 | 3yr TCO 298,519 | USD",
+        "graylog-open/security | licence/yr 18,000 | ops FTE 0.43 | year1 120,144 | 3yr TCO 307,977 | USD",
         "zeek/open | licence/yr 0 | ops FTE 0.53 | year1 125,944 | 3yr TCO 308,832 | USD",
         "security-onion/free | licence/yr 0 | ops FTE 0.53 | year1 126,789 | 3yr TCO 311,367 | USD",
+        "opensearch/open | licence/yr 0 | ops FTE 0.53 | year1 132,844 | 3yr TCO 315,732 | USD",
         "wazuh/open | licence/yr 0 | ops FTE 0.53 | year1 138,289 | 3yr TCO 322,867 | USD",
       ]
     `);
@@ -315,8 +319,10 @@ describe('The same retailer priced in India (INR)', () => {
         "sentinelone-singularity/complete | licence/yr 768,187 | ops FTE 0.16 | year1 1,187,327 | 3yr TCO 3,276,629 | INR",
         "jumpcloud/sso | licence/yr 751,158 | ops FTE 0.16 | year1 1,285,668 | 3yr TCO 3,327,555 | INR",
         "blumira/detect | licence/yr 819,445 | ops FTE 0.15 | year1 1,229,170 | 3yr TCO 3,409,975 | INR",
+        "elastic-security/basic-self-managed | licence/yr 0 | ops FTE 0.48 | year1 1,621,250 | 3yr TCO 3,414,749 | INR",
         "zeek/open | licence/yr 0 | ops FTE 0.53 | year1 1,567,750 | 3yr TCO 3,495,749 | INR",
         "security-onion/free | licence/yr 0 | ops FTE 0.53 | year1 1,574,475 | 3yr TCO 3,515,924 | INR",
+        "opensearch/open | licence/yr 0 | ops FTE 0.53 | year1 1,688,500 | 3yr TCO 3,616,499 | INR",
         "wazuh/open | licence/yr 0 | ops FTE 0.53 | year1 1,775,725 | 3yr TCO 3,717,174 | INR",
         "jumpcloud/device-identity-management | licence/yr 887,732 | ops FTE 0.16 | year1 1,422,242 | 3yr TCO 3,758,105 | INR",
         "azure-firewall/standard | licence/yr 1,038,533 | ops FTE 0.11 | year1 1,381,008 | 3yr TCO 3,898,899 | INR",
@@ -333,6 +339,8 @@ describe('The same retailer priced in India (INR)', () => {
         "blumira/automate | licence/yr 1,434,029 | ops FTE 0.15 | year1 1,843,754 | 3yr TCO 5,347,451 | INR",
         "crowdstrike-falcon-complete/complete | licence/yr 1,792,536 | ops FTE 0.10 | year1 2,130,976 | 3yr TCO 6,263,789 | INR",
         "microsoft-sentinel/pay-as-you-go | licence/yr 1,691,306 | ops FTE 0.32 | year1 2,725,456 | 3yr TCO 7,226,792 | INR",
+        "graylog-open/enterprise | licence/yr 1,422,648 | ops FTE 0.43 | year1 2,735,147 | 3yr TCO 7,456,396 | INR",
+        "graylog-open/security | licence/yr 1,707,177 | ops FTE 0.43 | year1 3,019,677 | 3yr TCO 8,353,375 | INR",
       ]
     `);
   });
