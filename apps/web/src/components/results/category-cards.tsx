@@ -94,8 +94,7 @@ function AlternativeRow({ alternative }: { alternative: AlternativeVerdict }) {
  *
  * This used to be a single runner-up rendered as three bare numbers, which hid
  * three of the five candidates and left the analyst to justify the choice out
- * loud. A pre-sales tool whose recommendation needs a verbal footnote has not
- * finished the job.
+ * loud. A recommendation that needs a verbal footnote has not finished the job.
  *
  * Open by default, unlike the fit breakdown above it: "what else did you look
  * at" is the first question a client asks, not the last.

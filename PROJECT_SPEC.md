@@ -12,7 +12,7 @@
 
 ## 1. Mission
 
-Build a web portal used during **pre-sales / security assessment** engagements. An analyst enters a prospective client's environment (assets, headcount, compliance obligations, budget), and the portal outputs:
+Build a web portal used during **security assessment and scoping** engagements. An analyst enters a prospective client's environment (assets, headcount, compliance obligations, budget), and the portal outputs:
 
 - A recommended security stack (SIEM, EDR/XDR, PAM, IAM, VM, NDR, email security, SOAR, backup, MDR).
 - Which specific product fits which part of their environment, and **why**.

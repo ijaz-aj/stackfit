@@ -27,7 +27,7 @@ export function proxy(request: NextRequest): NextResponse {
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: blob:`,
     `font-src 'self' data:`,
-    // Same-origin only. This tool talks to no third party, and a pre-sales tool
+    // Same-origin only. This tool talks to no third party, and a scoping tool
     // quietly posting a client's asset inventory somewhere would be a breach.
     `connect-src 'self'${isDev ? ' ws: wss:' : ''}`,
     `object-src 'none'`,

@@ -911,7 +911,7 @@ with a schema change.
 
 - 2026-09-12 — **Where reported prices disagree, the higher figure is used and
   the spread is stated.** Proofpoint Essentials Business is reported between USD
-  3.03 and 3.93 per user per month — about 30% apart. For a pre-sales budget,
+  3.03 and 3.93 per user per month — about 30% apart. For a budget estimate,
   overstating costs a conversation and understating costs a proposal that cannot
   be honoured.
 

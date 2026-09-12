@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <span className="text-faint text-[11px]">security solution advisor</span>
             </Link>
             <span className="border-line text-faint ml-auto rounded border px-2 py-0.5 text-[11px]">
-              pre-sales tool — figures are indicative
+              figures are indicative — not a quote
             </span>
           </div>
         </header>

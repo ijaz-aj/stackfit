@@ -1,6 +1,6 @@
 # StackFit — Security Solution Advisor & Budget Portal
 
-Pre-sales tool. An analyst enters a prospective client's environment (assets, headcount,
+Scoping tool. An analyst enters a prospective client's environment (assets, headcount,
 compliance, budget); the portal recommends a security stack (SIEM / EDR / PAM / IAM / VM /
 NDR / email / SOAR / backup / MDR), costs it over 3 years, and exports a proposal.
 

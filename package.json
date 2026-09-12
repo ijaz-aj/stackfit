@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Security Solution Advisor & Budget Portal — pre-sales stack recommendation and TCO engine",
+  "description": "Security Solution Advisor & Budget Portal — stack recommendation and TCO engine",
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=22.12"

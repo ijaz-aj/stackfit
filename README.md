@@ -1,6 +1,6 @@
 # StackFit
 
-A pre-sales security stack advisor. An analyst enters a prospective client's
+A security stack advisor. An analyst enters a prospective client's
 environment — assets, headcount, compliance obligations, budget — and the portal
 recommends a security stack, costs it over three years, and exports a proposal.
 
@@ -148,8 +148,8 @@ pair of eyes can answer; jsdom measures no text.
 ## Hosting
 
 Not yet deployed. The intended target is **Vercel Hobby** plus a free Postgres
-tier (Neon or Supabase), which costs nothing and is enough for a pre-sales tool
-used by a handful of analysts.
+tier (Neon or Supabase), which costs nothing and is enough for a tool used by a
+handful of analysts.
 
 Switching from SQLite to Postgres is two changes, and the schema was written for
 it: no SQLite-only column types or features, so `prisma validate` accepts the
