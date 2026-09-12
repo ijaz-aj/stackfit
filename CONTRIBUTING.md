@@ -137,9 +137,14 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   Scenario row, applied by `applySizingOverrides`). The committed YAML is never mutated, and
   the results worksheet is the only writer of that column. The wizard's autosave deliberately
   does not touch it.
-- **Restart `pnpm dev` after `prisma db push`.** The Prisma client is cached on `globalThis`
-  to survive hot reloads, so a schema change leaves the old client in memory and every write
-  to the new column fails validation until the server restarts.
+- **Restart `pnpm dev` after `prisma db push`, and after any change to `DATABASE_URL`.** The
+  Prisma client is cached on `globalThis` so it survives hot reloads, which is what stops
+  every file edit opening another connection pool. The cost is that neither a new schema nor
+  a new connection string reaches a running server: a schema change leaves the old client in
+  memory and writes to the new column fail validation, and rotating the database password
+  while `pnpm dev` is up turns every page into `PrismaClientKnownRequestError:
+  Authentication failed`, with the credentials reported as `(not available)` so the message
+  does not say which ones it tried. Nothing is wrong with the code in either case. Restart.
 - `pnpm` is a user-scoped global (`npm i -g pnpm@9.15.0`), not corepack: corepack needs admin
   on this machine. Node is v24 (winget LTS). Re-open the shell after any Node reinstall so
   `PATH` refreshes.
