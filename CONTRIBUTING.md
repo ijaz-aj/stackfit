@@ -311,3 +311,12 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   results page was written, shipped and never once rendered. The layout that
   was being tuned was the stacked fallback. Check `innerWidth` in the browser
   before reaching past `lg:`, and treat `xl:` as a rule for external monitors.
+- **Stop `pnpm dev` before `pnpm seed`, or the seed can be silently rolled
+  back.** SQLite is one file and the dev server holds its own handle to it,
+  cached on `globalThis` across hot reloads. A CLI script writing the same file
+  concurrently is a second writer: the seed reported four sessions ready and
+  they were readable a moment later, then a later write from the dev server
+  took the file back to a state that did not contain them. Four demo rows and
+  one saved session disappeared that way. Nothing errored at any point, which
+  is what makes it worth a note rather than a footnote. The same applies to any
+  `tsx scripts/…` that writes: stop the server, run it, start the server.

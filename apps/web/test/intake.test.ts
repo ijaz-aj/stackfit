@@ -6,10 +6,10 @@
 // what a currency change does to a figure the analyst typed, and whether the
 // live readout is showing the engine's numbers or its own.
 
-import { ClientProfile } from '@stackfit/schema';
+import { ClientProfile, Region } from '@stackfit/schema';
 import { describe, expect, it } from 'vitest';
 
-import { engineData, today } from '../src/lib/config.server';
+import { currencyByRegion, engineData, today } from '../src/lib/config.server';
 import { summariseEstimate } from '../src/lib/estimate';
 import { formatMoney, toMajorUnitsText, toMinorUnits } from '../src/lib/format';
 import {
@@ -20,10 +20,17 @@ import {
   parseScenarioRow,
   profileFromPreset,
   withCurrency,
+  withRegion,
 } from '../src/lib/scenario';
 import { convertMoney, runPipeline } from '@stackfit/engine';
 
 const data = engineData();
+
+function presetOrThrow(id: string) {
+  const preset = data.presets.find((entry) => entry.id === id);
+  if (preset === undefined) throw new Error(`expected the ${id} preset`);
+  return preset;
+}
 
 function pipelineFor(profile: ClientProfile, inventory = NEW_INVENTORY) {
   return runPipeline({
@@ -211,6 +218,121 @@ describe('the money boundary', () => {
     const there = convertMoney(start, 'INR', data.fx);
     const back = convertMoney(there, 'EUR', data.fx);
     expect(Math.abs(back.amountMinor - start.amountMinor)).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('changing the region', () => {
+  const rates = currencyByRegion();
+
+  it('takes its currency mapping from the labour rate card, for every region', () => {
+    // The rate card holds each region's pay in the currency that region is
+    // actually paid in, which makes it the one place this mapping exists. If a
+    // region is ever added without a rate, this fails rather than silently
+    // leaving that client priced in whatever was there before.
+    for (const region of Region.options) {
+      expect(rates[region], `${region} has no currency`).toBeDefined();
+    }
+    expect(rates.in).toBe('INR');
+    expect(rates.us).toBe('USD');
+    expect(rates.eu).toBe('EUR');
+    // GBP is not a supported scenario currency yet; the rate card says so too.
+    expect(rates.uk).toBe('USD');
+  });
+
+  it('converts the caps rather than re-labelling them', () => {
+    // The opposite of a currency change, and deliberately so. "This client is
+    // in the United States" is a statement about the client; the budget they
+    // stated is the same money either way.
+    const profile: ClientProfile = {
+      ...NEW_PROFILE,
+      region: 'in',
+      budget: {
+        annualCap: { amountMinor: 600_000_000, currency: 'INR' },
+        oneTimeCap: { amountMinor: 100_000_000, currency: 'INR' },
+        currency: 'INR',
+        horizonYears: 3,
+      },
+    };
+
+    const moved = withRegion(profile, 'us', rates, data.fx);
+
+    expect(moved.region).toBe('us');
+    expect(moved.budget.currency).toBe('USD');
+    expect(moved.budget.annualCap?.currency).toBe('USD');
+    expect(moved.budget.oneTimeCap?.currency).toBe('USD');
+    // INR 6,000,000 is a low five-figure dollar sum, not six million dollars.
+    expect(moved.budget.annualCap?.amountMinor).toBe(
+      convertMoney(profile.budget.annualCap!, 'USD', data.fx).amountMinor,
+    );
+    expect(moved.budget.annualCap!.amountMinor).toBeLessThan(
+      profile.budget.annualCap!.amountMinor / 50,
+    );
+  });
+
+  it('leaves an unset cap unset', () => {
+    const moved = withRegion(NEW_PROFILE, 'us', rates, data.fx);
+    expect(moved.budget.currency).toBe('USD');
+    expect(moved.budget.annualCap).toBeNull();
+    expect(moved.budget.oneTimeCap).toBeNull();
+  });
+
+  it('touches nothing when the region shares the current currency', () => {
+    // apac and us are both USD. Moving between them must not run a conversion,
+    // which at a 1:1 rate would still be a needless rewrite of the figure.
+    const inUs: ClientProfile = {
+      ...NEW_PROFILE,
+      region: 'us',
+      budget: {
+        annualCap: { amountMinor: 12_000_000, currency: 'USD' },
+        oneTimeCap: null,
+        currency: 'USD',
+        horizonYears: 3,
+      },
+    };
+    const moved = withRegion(inUs, 'apac', rates, data.fx);
+    expect(moved.region).toBe('apac');
+    expect(moved.budget).toEqual(inUs.budget);
+  });
+
+  it('still produces a valid profile', () => {
+    const moved = withRegion(
+      profileFromPreset(presetOrThrow('retail-chain-40-stores')),
+      'eu',
+      rates,
+      data.fx,
+    );
+    expect(ClientProfile.safeParse(moved).success).toBe(true);
+    expect(moved.budget.currency).toBe('EUR');
+  });
+
+  it('round-trips a region change back to within a rupee', () => {
+    // in -> us -> in does not land exactly on the figure it started from, and
+    // cannot: INR 6,000,000 is USD 63,263.05-and-then-some, the cent is the
+    // smallest unit a dollar figure has, and half a cent is about half a rupee
+    // on the way back. Measured drift here is 14 paise on a 60 lakh budget.
+    //
+    // Asserting equality would be asserting something arithmetic does not do.
+    // What is worth pinning is that the error stays inside one unit of the
+    // currency it passed through, so an analyst correcting a mis-click sees the
+    // same budget rather than a slowly moving one.
+    const start: ClientProfile = {
+      ...NEW_PROFILE,
+      region: 'in',
+      budget: {
+        annualCap: { amountMinor: 600_000_000, currency: 'INR' },
+        oneTimeCap: null,
+        currency: 'INR',
+        horizonYears: 3,
+      },
+    };
+    const back = withRegion(withRegion(start, 'us', rates, data.fx), 'in', rates, data.fx);
+    expect(back.budget.currency).toBe('INR');
+    const drift = Math.abs(
+      back.budget.annualCap!.amountMinor - start.budget.annualCap!.amountMinor,
+    );
+    // One cent, expressed in paise, is the ceiling the intermediate rounding
+    // can produce. Under a rupee on a figure of sixty lakh.
+    expect(drift).toBeLessThan(100);
   });
 });
 

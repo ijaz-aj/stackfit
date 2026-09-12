@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { Wizard } from '@/components/wizard/wizard';
-import { engineData } from '@/lib/config.server';
+import { currencyByRegion, engineData } from '@/lib/config.server';
 import { prisma } from '@/lib/db';
 import { requireAnalyst } from '@/lib/session.server';
 import { isUnreadable, parseScenarioRow } from '@/lib/scenario';
@@ -62,6 +62,7 @@ export default async function ScenarioPage({ params }: { params: Promise<{ id: s
       // Three rates and a date. The budget step needs them to offer a
       // conversion when the analyst changes the scenario currency.
       fx={data.fx}
+      currencyByRegion={currencyByRegion()}
     />
   );
 }

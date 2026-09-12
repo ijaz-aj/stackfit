@@ -18,6 +18,7 @@ import {
 } from '@stackfit/data';
 import type { CostInputs } from '@stackfit/engine';
 import type {
+  CurrencyCode,
   Framework,
   IsoDate,
   Product,
@@ -86,6 +87,28 @@ export function engineData(): EngineData {
   };
 
   return cached;
+}
+
+/**
+ * Every region's natural currency, taken from the labour rate card.
+ *
+ * The rate card already holds each region's pay in the currency that region is
+ * actually paid in, which makes it the one place this mapping exists. Writing a
+ * second `{ us: 'USD', eu: 'EUR' }` somewhere in the UI would be a second thing
+ * to keep in step, and the first symptom of it drifting would be a client
+ * priced in the wrong money.
+ *
+ * The UK sits in USD here rather than GBP, because GBP is not a supported
+ * scenario currency yet; the rate card says the same thing in the same words.
+ */
+export function currencyByRegion(): Readonly<Record<string, CurrencyCode>> {
+  const { labourRates } = engineData().costInputsWithoutDate;
+  return Object.fromEntries(
+    Object.entries(labourRates.byRegion).map(([region, rate]) => [
+      region,
+      rate.loadedAnnualCost.currency,
+    ]),
+  );
 }
 
 /**

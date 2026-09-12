@@ -1,3 +1,4 @@
+import { convertMoney } from '@stackfit/engine';
 import {
   AssetInventory,
   ClientProfile,
@@ -5,6 +6,7 @@ import {
   StoredClientProfile,
   SizingOverrides,
   Slug,
+  type FxConfig,
   type ScenarioPreset,
 } from '@stackfit/schema';
 import { z } from 'zod';
@@ -190,6 +192,50 @@ export function withCurrency(
       currency,
       annualCap: annualCap === null ? null : { ...annualCap, currency },
       oneTimeCap: oneTimeCap === null ? null : { ...oneTimeCap, currency },
+    },
+  };
+}
+
+/**
+ * Moving the client to another region moves the money with them.
+ *
+ * The region is still a hint rather than a constraint: it gates nothing, and
+ * the analyst can set the currency back on the next step. But saying "this
+ * client is in the United States" while leaving a budget denominated in rupees
+ * describes a client who does not exist, and the figure underneath it is the
+ * one the engine spends.
+ *
+ * Converting rather than re-labelling, because the two changes mean different
+ * things. Picking a different *currency* is usually a correction to the code,
+ * so the digits stay and the conversion is offered. Picking a different
+ * *region* is a statement about the client, and the budget they stated is the
+ * same money either way, so it travels at the dated rate. Both are reversible
+ * and neither is silent.
+ *
+ * The mapping comes from the labour rate card, which already holds every
+ * region's natural currency. A second mapping invented here would be a second
+ * thing to keep in step with it.
+ */
+export function withRegion(
+  profile: ClientProfile,
+  region: ClientProfile['region'],
+  currencyByRegion: Readonly<Record<string, ClientProfile['budget']['currency']>>,
+  fx: FxConfig,
+): ClientProfile {
+  const currency = currencyByRegion[region];
+  if (currency === undefined || currency === profile.budget.currency) {
+    return { ...profile, region };
+  }
+
+  const { annualCap, oneTimeCap } = profile.budget;
+  return {
+    ...profile,
+    region,
+    budget: {
+      ...profile.budget,
+      currency,
+      annualCap: annualCap === null ? null : convertMoney(annualCap, currency, fx),
+      oneTimeCap: oneTimeCap === null ? null : convertMoney(oneTimeCap, currency, fx),
     },
   };
 }

@@ -1,8 +1,19 @@
 'use client';
 
-import { Industry, Region, RiskTolerance, SocPosture } from '@stackfit/schema';
+import {
+  Industry,
+  Region,
+  RiskTolerance,
+  SocPosture,
+  type ClientProfile,
+  type CurrencyCode,
+  type FxConfig,
+} from '@stackfit/schema';
+import { useState } from 'react';
 
-import { Card, Field, NumberInput, Select, TextInput } from '@/components/ui';
+import { Button, Card, Field, NumberInput, Select, TextInput } from '@/components/ui';
+import { formatMoney } from '@/lib/format';
+import { withRegion } from '@/lib/scenario';
 
 import { INDUSTRY_LABELS, REGION_LABELS, RISK_LABELS, SOC_LABELS } from './labels';
 import { useWizard } from './store';
@@ -13,9 +24,36 @@ const optionsFrom = (
 ): readonly { value: string; label: string }[] =>
   values.map((value) => ({ value, label: labels[value] ?? value }));
 
-export function StepOrganisation() {
+export function StepOrganisation({
+  fx,
+  currencyByRegion,
+}: {
+  fx: FxConfig;
+  currencyByRegion: Readonly<Record<string, CurrencyCode>>;
+}) {
   const profile = useWizard((state) => state.profile);
   const patchProfile = useWizard((state) => state.patchProfile);
+  const replaceProfile = useWizard((state) => state.replaceProfile);
+
+  /*
+   * The profile as it was before the last region change, so the conversion can
+   * be put back.
+   *
+   * Moving the client to another region moves the money with them, which is
+   * almost always what is meant and is never what an analyst wants done behind
+   * their back. The figure is converted, what happened is stated in the two
+   * currencies it happened in, and the previous profile is held here until the
+   * next edit so one click restores it.
+   */
+  const [beforeRegion, setBeforeRegion] = useState<ClientProfile | null>(null);
+
+  const changeRegion = (region: ClientProfile['region']) => {
+    const next = withRegion(profile, region, currencyByRegion, fx);
+    setBeforeRegion(next.budget.currency === profile.budget.currency ? null : profile);
+    replaceProfile(next);
+  };
+
+  const priorCap = beforeRegion?.budget.annualCap ?? null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -44,15 +82,13 @@ export function StepOrganisation() {
           <Field
             label="Region"
             htmlFor="region"
-            hint="A hint, not a constraint. It suggests labour rates and frameworks."
+            hint="Sets the labour rate, the likely frameworks and the currency. None of them is a constraint."
           >
             <Select
               id="region"
               value={profile.region}
               options={optionsFrom(Region.options, REGION_LABELS)}
-              onChange={(event) =>
-                patchProfile({ region: event.target.value as typeof profile.region })
-              }
+              onChange={(event) => changeRegion(event.target.value as typeof profile.region)}
             />
           </Field>
 
@@ -112,6 +148,41 @@ export function StepOrganisation() {
             />
           </Field>
         </div>
+
+        {beforeRegion !== null && (
+          <div
+            role="status"
+            className="border-accent/40 bg-accent/10 mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-(--radius-control) border px-3 py-2.5"
+          >
+            <p className="text-muted min-w-0 flex-1 text-xs leading-relaxed">
+              <span className="text-ink">
+                Currency set to {profile.budget.currency} for {REGION_LABELS[profile.region]}.
+              </span>{' '}
+              {priorCap !== null && profile.budget.annualCap !== null ? (
+                <>
+                  The annual cap was converted at the {fx.asOf} rate: {formatMoney(priorCap)} is{' '}
+                  {formatMoney(profile.budget.annualCap)}.
+                </>
+              ) : (
+                <>No budget is stated yet, so nothing was converted.</>
+              )}
+            </p>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                // The region stays; only the money goes back. Changing the
+                // region was deliberate, and undoing that too would fight the
+                // analyst rather than help them.
+                const restore = beforeRegion;
+                setBeforeRegion(null);
+                patchProfile({ budget: restore.budget });
+              }}
+            >
+              Keep {beforeRegion.budget.currency}
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );
