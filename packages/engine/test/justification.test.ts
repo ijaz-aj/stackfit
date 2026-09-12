@@ -277,6 +277,7 @@ describe('tiers of one product', () => {
         id: tier.id,
         name: tier.name,
         capabilities: [],
+        controlsCovered: [],
         pricing: [
           {
             model: 'flat_tiered' as const,
@@ -284,11 +285,15 @@ describe('tiers of one product', () => {
             termYears: 1,
             pricingConfidence: 'public_list' as const,
             sources: [{ url: 'https://example.com/pricing', asOf: '2026-01-01' }],
-            refresh: { method: 'manual' as const, url: 'https://example.com/pricing', note: 'test fixture' },
+            refresh: {
+              method: 'manual' as const,
+              checkUrl: 'https://example.com/pricing',
+              note: 'test fixture',
+            },
           },
         ],
       })),
-    } as Product;
+    };
   }
 
   it('describes a second tier against its sibling, not against the selection', () => {
