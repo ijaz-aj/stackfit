@@ -22,7 +22,6 @@ import {
   buildClientProfile,
   buildCostInputs,
   buildCoverageAssumptions,
-  buildFxConfig,
   buildMsspRateCard,
   buildPortfolioAssumptions,
   buildProduct,
@@ -53,7 +52,7 @@ function product(id: string, category: ProductCategory, annualMinor: number, typ
     ...base,
     category,
     vendor: `${id} Inc.`,
-    supports: { ...base.supports, deviceClasses: ['server', 'workstation'] as const },
+    supports: { ...base.supports, deviceClasses: ['server' as const, 'workstation' as const] },
   };
 }
 
@@ -85,7 +84,6 @@ function proposalInputs(
     portfolioAssumptions: buildPortfolioAssumptions(),
     coverageAssumptions: buildCoverageAssumptions(),
     mssp: buildMsspRateCard(),
-    fx: buildFxConfig(),
     costInputs: buildCostInputs(),
   });
 

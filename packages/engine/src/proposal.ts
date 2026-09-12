@@ -110,6 +110,16 @@ const money = (value: Money): ProposalCell => ({ kind: 'money', value });
 const number = (value: number, decimals = 0): ProposalCell => ({ kind: 'number', value, decimals });
 const percent = (value: number | null): ProposalCell => ({ kind: 'percent', value });
 
+/**
+ * Service levels are enum values in the rate card and prose in a proposal.
+ * "mdr" in the middle of a client-facing sentence reads as a typo.
+ */
+const SERVICE_LEVEL_LABELS: Readonly<Record<string, string>> = {
+  monitoring: 'Monitoring',
+  mdr: 'Managed detection and response',
+  managed_security: 'Fully managed security',
+};
+
 const CATEGORY_LABELS: Readonly<Record<ProductCategory, string>> = {
   siem: 'SIEM',
   edr: 'EDR',
@@ -369,12 +379,39 @@ function costs(inputs: ProposalInputs): ProposalSection {
     });
   }
 
+  const mssp = recommended.mssp;
+  const serviceLevel = SERVICE_LEVEL_LABELS[mssp.serviceLevel] ?? mssp.serviceLevel;
+
   blocks.push({
     kind: 'paragraph',
     text:
-      `Managed alternative: ${recommended.mssp.serviceLevel} at the equivalent of the annual ` +
-      'figure shown in the cost model, covering the categories listed there. Where it does not ' +
-      'cover a category, that category remains the client’s to buy and is shown as residual.',
+      `Build versus buy. The same outcome can be bought as a service: ${serviceLevel} covering ` +
+      `${mssp.coversCategories.length} of the ${recommended.selections.length} recommended ` +
+      'categories. It is shown in full below rather than as a headline, because a managed fee ' +
+      'that covers only part of the stack is not comparable to the stack until the rest is added ' +
+      'back.',
+  });
+
+  blocks.push({
+    kind: 'table',
+    columns: [
+      { heading: 'Managed alternative', align: 'left' },
+      { heading: 'Annual', align: 'right' },
+    ],
+    rows: [
+      [text(`${serviceLevel} — service fee`), money(mssp.annual)],
+      [
+        text(
+          mssp.uncoveredCategories.length === 0
+            ? 'Residual — none, the service covers every recommended category'
+            : `Residual — still the client's to buy: ${mssp.uncoveredCategories
+                .map((category) => CATEGORY_LABELS[category])
+                .join(', ')}`,
+        ),
+        money(mssp.residualAnnual),
+      ],
+    ],
+    total: [text('Total annual, managed route'), money(mssp.totalAnnual)],
   });
 
   return { heading: 'Costs', blocks };
