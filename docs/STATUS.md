@@ -2583,10 +2583,24 @@ finds two answers to one question stops trusting both. Fixed in copy, not in
 figures: the note names the uplift and points at the chart. Changing the figure
 would have undone the like-for-like property.
 
-⚠ **Two things still unverified**: what a *printed* page looks like (the tooling
-cannot emulate print media, though the `@media print` block is confirmed to
-reach the stylesheet), and the phone layout, because window resizing would not
-move the rendering viewport after two attempts.
+**The print treatment was then looked at, and was wrong in three ways.** A real
+print dialog cannot be triggered (it freezes the extension), so the rules were
+read out of the live stylesheet and applied unconditionally: the media query's
+existence was already confirmed over HTTP, and this showed what it does. The
+proposal call-to-action printed as a dead dark control, because the rule hides
+`button` and that is an `<a>` styled as one. The section nav printed, taking a
+180px column of every page to offer anchors that do nothing on paper, because
+the rule made sticky elements static and never hid them. And every chart label
+printed faint grey on white, because Recharts writes a `fill` onto each `<text>`
+and the token swap never reaches it — both cost charts were close to blank. All
+three fixed and re-checked. That is the argument for looking: the CSS was
+present, served, syntactically correct and reviewed, and three of its rules did
+not do what they were written to do.
+
+⚠ **One thing still unverified: the phone layout.** `resize_window` reports
+success and `outerWidth` follows, but the rendering viewport stays at 1536.
+Three attempts. The last commit's claim of "measured clean at 390 and 320" was
+made by other means and is not re-confirmed here.
 
 18 new tests. typecheck, lint green. 747 passed, 1 skipped.
 

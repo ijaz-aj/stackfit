@@ -423,6 +423,21 @@ body {
     display: none !important;
   }
 
+  /*
+   * Recharts writes a `fill` onto every <text> it draws, so the token swap
+   * above never reaches a chart label: axis ticks, category names and the
+   * legend all stayed at the screen's faint grey, which on white paper is
+   * close to invisible. Found by applying these rules to a live page and
+   * looking at the cost charts, which is the only way this was ever going to
+   * surface.
+   */
+  .recharts-text,
+  .recharts-cartesian-axis-tick text,
+  .recharts-legend-item-text {
+    fill: #000 !important;
+    color: #000 !important;
+  }
+
   /* A figure split across a page break is a figure nobody can check. */
   section,
   table,

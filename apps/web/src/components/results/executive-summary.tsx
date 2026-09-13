@@ -247,7 +247,7 @@ export function ExecutiveSummary({
         typing its URL, which meant the document this product exists to produce
         could not be found by clicking.
       */}
-      <div className="border-line mt-4 flex flex-wrap items-center gap-3 border-t pt-3">
+      <div className="border-line mt-4 flex flex-wrap items-center gap-3 border-t pt-3 print:hidden">
         <Link
           href={`/scenarios/${scenarioId}/proposal`}
           className="bg-accent text-ground hover:bg-accent/90 inline-flex items-center rounded-(--radius-control) px-3 py-1.5 text-sm font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.25)] transition-colors"

@@ -57,7 +57,12 @@ export function SectionNav({ sections }: { sections: readonly ResultsSection[] }
       cost more room than it saves. The page is fully usable without it: every
       target is a heading you can still scroll to.
     */
-    <nav aria-label="Sections of this result" className="sticky top-20 hidden h-fit xl:block">
+    // `print:hidden`: a list of anchors with no page numbers is dead weight on
+    // paper, and it was taking a 180px column of every printed page.
+    <nav
+      aria-label="Sections of this result"
+      className="sticky top-20 hidden h-fit xl:block print:hidden"
+    >
       <p className="text-faint mb-3 text-2xs tracking-wide uppercase">On this page</p>
       <ul className="flex flex-col gap-0.5">
         {sections.map((section) => {

@@ -364,11 +364,10 @@ Recorded plainly so the next one does not have to rediscover it.
   omission. `MoneyWithRupees` renders a second line, and thirteen of them would
   double the table's height to restate, thirteen times, the one thing a reader
   needs once: the order of magnitude.
-- **Everything above was verified in a browser** — see "Seen in a browser"
-  below. Two things were not: what a *printed* page looks like (the tooling
-  cannot emulate print media, though the `@media print` block is confirmed to
-  reach the stylesheet), and the phone layout, because window resizing would
-  not move the rendering viewport after two attempts.
+- **Everything above was verified in a browser**, the print treatment
+  included — see "Seen in a browser" below. One thing was not: the phone
+  layout, because window resizing would not move the rendering viewport after
+  three attempts (`outerWidth` followed, `innerWidth` stayed at 1536).
 - **The dark theme is unchanged**, as intended. Only what leaves the building on
   paper was addressed.
 
@@ -494,3 +493,31 @@ both of them.
 little each year with the subscription uplift and points at the chart, which has
 each year separately. Changing the figure would have broken the like-for-like
 property F1 exists to hold.
+
+
+### F4. The print treatment was wrong in three ways, and only looking showed it
+
+A real print dialog cannot be triggered — it freezes the extension — so the
+rules were read out of the live stylesheet and applied to the page
+unconditionally. The media query's *existence* was already confirmed over
+HTTP; this showed what it actually does.
+
+Three defects, none of which any test could have caught:
+
+- **The proposal call-to-action printed as a dead dark control.** The rule
+  hides `button` and `[role="button"]`. That call-to-action is an `<a>` styled
+  as a button, so nothing touched it.
+- **The section navigation printed**, taking a 180px column of every page to
+  offer anchors that do nothing on paper. The rule made sticky elements static;
+  it never hid them.
+- **Every chart label printed faint grey on white.** Recharts writes a `fill`
+  onto each `<text>` it draws, so the token swap that inverts the rest of the
+  page never reaches an axis tick, a category name or a legend entry. The two
+  cost charts were close to blank.
+
+All three fixed and re-checked the same way. The printed page is now white
+ground, black text, coloured bars, legible tables, and no controls.
+
+This is the argument for the method, not against it: the CSS was present,
+served, syntactically correct, and reviewed — and three of its rules did not
+do what they were written to do.
