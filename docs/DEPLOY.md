@@ -21,11 +21,21 @@ Three services. You create all three; none of them can be created from here.
 Create a Neon project and copy the connection string. It looks like:
 
 ```
-postgresql://USER:PASSWORD@ep-something.region.aws.neon.tech/neondb?sslmode=require
+postgresql://USER:PASSWORD@ep-something.region.aws.neon.tech/neondb?sslmode=verify-full
 ```
 
-`sslmode=require` matters. Neon refuses plaintext connections and the error if
-you omit it is not obvious.
+The SSL mode matters twice over. Neon refuses plaintext connections and the
+error if you omit it entirely is not obvious.
+
+**Use `verify-full`, not `require`.** They behave identically today: `pg` 8
+treats `require` as an alias for `verify-full`, so the certificate really is
+verified. It warns at startup that this is changing. In `pg` 9 and
+`pg-connection-string` 3, `require` adopts libpq semantics, where it means
+"encrypt but do not check who you are talking to" — a connection that is
+encrypted to an attacker just as happily as to Neon. Writing `verify-full`
+pins the behaviour we already rely on, so a future dependency bump cannot
+silently downgrade the database connection of a product that holds clients'
+asset inventories. Verified against Neon: both modes connect.
 
 **Do not paste that string into a chat, a ticket or a commit.** It contains the
 database password. It belongs in exactly two places: Vercel's environment
@@ -80,7 +90,7 @@ needs changing is the root directory.
 Then add the environment variables, for Production and Preview both:
 
 ```
-DATABASE_URL           postgresql://...?sslmode=require
+DATABASE_URL           postgresql://...?sslmode=verify-full
 NEXTAUTH_SECRET        (openssl rand -base64 32)
 NEXTAUTH_URL           https://your-app.vercel.app
 GITHUB_CLIENT_ID       from step 2

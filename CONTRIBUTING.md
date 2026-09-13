@@ -349,6 +349,14 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   results page was written, shipped and never once rendered. The layout that
   was being tuned was the stacked fallback. Check `innerWidth` in the browser
   before reaching past `lg:`, and treat `xl:` as a rule for external monitors.
+- **`DATABASE_URL` uses `sslmode=verify-full`, and the difference is not
+  cosmetic.** `pg` 8 treats `require` as an alias for `verify-full` and warns at
+  startup that this is changing; in `pg` 9 it adopts libpq semantics, where
+  `require` means "encrypt, but do not verify who you are talking to". That
+  warning surfaces in the Next dev overlay under a *Console Error* heading,
+  which is Next mislabelling a Node warning, not a fault. Writing `verify-full`
+  pins the behaviour already relied on so a dependency bump cannot silently
+  downgrade the connection to a database holding clients' asset inventories.
 - **Administration FTE and monitoring FTE are different quantities and are never
   summed.** `staffing.ts` holds both. Administration (`opsBurden`, per product)
   is deploy/tune/patch/upgrade and scales sublinearly with the estate;
