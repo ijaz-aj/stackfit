@@ -198,6 +198,7 @@ function bundleOf(
       providerMarginYearOne: zero,
       fullBuildAnnual: zero,
       rationale: [],
+      providerRationale: [],
     },
     rationale: [],
   };

@@ -244,7 +244,7 @@ describe('attributeBundle', () => {
       );
 
       expect(Number(result.providerMarginAnnual.amountMinor)).toBeLessThan(0);
-      expect(result.rationale.join(' ')).toMatch(/does not cover its own running cost/);
+      expect(result.providerRationale.join(' ')).toMatch(/does not cover its own running cost/);
     });
 
     it('flags a year one that delivery swallows, without crying loss', () => {
@@ -258,8 +258,8 @@ describe('attributeBundle', () => {
 
       expect(Number(result.providerMarginAnnual.amountMinor)).toBeGreaterThan(0);
       expect(Number(result.providerMarginYearOne.amountMinor)).toBeLessThan(0);
-      expect(result.rationale.join(' ')).toMatch(/Year one does not pay for itself/);
-      expect(result.rationale.join(' ')).not.toMatch(/does not cover its own running cost/);
+      expect(result.providerRationale.join(' ')).toMatch(/Year one does not pay for itself/);
+      expect(result.providerRationale.join(' ')).not.toMatch(/does not cover its own running cost/);
     });
 
     /**
@@ -277,8 +277,30 @@ describe('attributeBundle', () => {
         usd(900_000),
       );
 
-      expect(result.rationale.join(' ')).toMatch(/excludes the monitoring rota/);
-      expect(result.rationale.join(' ')).toMatch(/upper bound/);
+      expect(result.providerRationale.join(' ')).toMatch(/excludes the monitoring rota/);
+      expect(result.providerRationale.join(' ')).toMatch(/upper bound/);
+    });
+
+    /**
+     * The leak guard. `rationale` renders on the results page, which is the
+     * screen an analyst turns toward the client; our cost and margin live in a
+     * separate field so a surface has to ask for them by name. A sentence in
+     * the wrong list is a commercial accident, not a formatting one.
+     */
+    it('keeps every figure about us out of the client-safe rationale', () => {
+      const result = attributeBundle(
+        [selection('edr', 10_000, 500_000, { delivery: 80_000, run: 250_000 })],
+        managed,
+        card,
+        'USD',
+        usd(900_000),
+      );
+      const clientSafe = result.rationale.join(' ');
+
+      expect(clientSafe).not.toMatch(/margin/i);
+      expect(clientSafe).not.toMatch(/[Cc]osts us/);
+      expect(clientSafe).not.toMatch(/our own rates/);
+      expect(result.providerRationale.join(' ')).toMatch(/margin/i);
     });
 
     it('keeps our cost out of what the client pays', () => {

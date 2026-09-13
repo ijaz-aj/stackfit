@@ -94,6 +94,51 @@ export function Engagement({ bundle, profile }: { bundle: Bundle; profile: Clien
         </div>
       </div>
 
+      {/*
+        Our own numbers, and the reason they are collapsed and labelled.
+        This page is the one an analyst turns toward the client, and a margin
+        figure sitting open on it is a commercial accident waiting to happen.
+        The client-facing exports never receive `attribution` at all, which is
+        the stronger guarantee; this is the weaker one that covers the screen.
+      */}
+      {weOperate && (
+        <details className="border-line mt-4 border-t pt-3">
+          <summary className="text-faint cursor-pointer text-xs select-none">
+            Internal: what this engagement costs us. Not for the client.
+          </summary>
+          <dl className="mt-2 flex flex-col gap-2 text-sm">
+            <Row label="Our fee" value={formatMoney(attribution.providerFeeAnnual)} />
+            <Row
+              label="Costs us to run, per year"
+              value={formatMoney(attribution.providerRunAnnual)}
+            />
+            <Row
+              label="Costs us to stand up, once"
+              value={formatMoney(attribution.providerDeliveryOneTime)}
+            />
+            <div className="border-line mt-1 border-t pt-2">
+              <Row
+                label="Margin, per year"
+                value={
+                  <span className="text-ink font-semibold">
+                    {formatMoney(attribution.providerMarginAnnual)}
+                  </span>
+                }
+              />
+              <Row
+                label="Margin, year one"
+                value={formatMoney(attribution.providerMarginYearOne)}
+              />
+            </div>
+          </dl>
+          <ul className="text-faint mt-2 flex flex-col gap-1.5 text-xs leading-snug">
+            {attribution.providerRationale.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+
       {attribution.rationale.length > 0 && (
         <ul className="text-muted mt-4 flex flex-col gap-1.5 text-xs leading-snug">
           {attribution.rationale.map((line) => (

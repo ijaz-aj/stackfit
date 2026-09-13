@@ -93,7 +93,19 @@ export interface BundleAttribution {
    * total cost rather than about invoices.
    */
   readonly fullBuildAnnual: Money;
+  /**
+   * Client-safe. Every line here can be read aloud on the call or turned
+   * toward the person across the table.
+   */
   readonly rationale: readonly string[];
+  /**
+   * Our own numbers, kept in a separate field rather than a separate sentence.
+   *
+   * What it costs us and what we make on it must never render on a surface a
+   * client can see, and "remember not to print these two lines" is not a
+   * guarantee, it is an intention. A caller has to ask for these by name.
+   */
+  readonly providerRationale: readonly string[];
 }
 
 /** What one selection needs to be attributed. Structural, so tests stay small. */
@@ -195,6 +207,7 @@ export function attributeBundle(
   const providerMarginYearOne = subtractMoney(providerMarginAnnual, providerDeliveryOneTime);
 
   const rationale: string[] = [];
+  const providerRationale: string[] = [];
   const plural = (count: number) => (count === 1 ? 'category' : 'categories');
 
   if (split.providerOperatesNothing) {
@@ -244,7 +257,7 @@ export function attributeBundle(
      * engagement is actually being judged on internally: what it costs us to
      * stand up, what it costs us to run, and whether the fee covers both.
      */
-    rationale.push(
+    providerRationale.push(
       `Costs us ${moneyInWords(providerDeliveryOneTime)} to stand up and ` +
         `${moneyInWords(providerRunAnnual)} a year to run, at our own rates. Against a ` +
         `${moneyInWords(providerFeeAnnual)} fee that is ${moneyInWords(providerMarginAnnual)} a ` +
@@ -265,20 +278,20 @@ export function attributeBundle(
      * stage rather than this one. Until it does, this is gross margin on tool
      * administration, not on the service.
      */
-    rationale.push(
+    providerRationale.push(
       '⚠ That margin counts only what it costs us to administer the tools. It excludes the ' +
         'monitoring rota, which is the thing a managed engagement actually sells and the larger ' +
         'figure by an order of magnitude. Treat it as an upper bound, not as a margin.',
     );
 
     if (Number(providerMarginAnnual.amountMinor) <= 0) {
-      rationale.push(
+      providerRationale.push(
         '⚠ This engagement does not cover its own running cost at this service level. Widen ' +
           'what we operate, reprice it, or decline it: the fee is below what the people on it ' +
           'cost us before any delivery effort is counted.',
       );
     } else if (Number(providerMarginYearOne.amountMinor) <= 0) {
-      rationale.push(
+      providerRationale.push(
         'Year one does not pay for itself: delivery costs more than the first year of margin. ' +
           'That is normal on a multi-year engagement and is worth saying out loud before the ' +
           'term is negotiated down to one.',
@@ -323,5 +336,6 @@ export function attributeBundle(
     providerMarginYearOne,
     fullBuildAnnual,
     rationale,
+    providerRationale,
   };
 }
