@@ -275,6 +275,7 @@ function executiveSummary(inputs: ProposalInputs): ProposalSection {
   });
 
   const summary: string[] = [];
+
   if (inScope.length > 0) {
     const named = inScope
       .map((framework) => `${framework.name} at ${framework.coveragePercent ?? 0}%`)
@@ -294,6 +295,63 @@ function executiveSummary(inputs: ProposalInputs): ProposalSection {
     summary.push('⚠ The recommended stack exceeds the stated annual budget. See Costs.');
   }
   blocks.push({ kind: 'bullets', items: summary });
+
+  /*
+   * The investment, and previously absent from this section altogether.
+   *
+   * It stated estate size, headcount, control count, coverage percentages and
+   * operational FTE, and never once said what the thing costs: the first cost
+   * figure in the document was in section 4. An executive reading page one
+   * learned everything except the price, which is the most predictable
+   * complaint a proposal can attract.
+   *
+   * A table rather than a sentence, because money stays `Money` until each
+   * renderer formats it (a formatted string in a bullet would put currency
+   * formatting in the document model, where three renderers would then
+   * disagree with it) — and because four figures in a column is what a CFO
+   * reads first anyway.
+   */
+  if (recommended.selections.length > 0) {
+    const yearOne = recommended.selections.reduce(
+      (total, selection) => total + selection.cost.year1.amountMinor,
+      0,
+    );
+
+    blocks.push({
+      kind: 'table',
+      columns: [
+        { heading: 'Investment', align: 'left' },
+        { heading: 'Amount', align: 'right' },
+      ],
+      /*
+       * Every row the same measure, so the column adds up.
+       *
+       * This shipped as year one (all-in: licence, support, infrastructure,
+       * implementation, training and people) against `annualSpend`
+       * (procurement only). On the retail preset that printed ₹70.6 lakh
+       * falling to ₹26.6 lakh, under a three-year total of ₹1.74 crore that
+       * the two of them cannot produce: 70.6 + 26.6 + 26.6 is 1.24 crore. A
+       * reader who checks the arithmetic finds it wrong, and this is the page
+       * a CFO checks.
+       *
+       * Procurement keeps its own row, indented under the figure it is part
+       * of, where it informs instead of inviting a false comparison.
+       */
+      rows: [
+        [
+          text('Year one, everything including implementation and training'),
+          money({ amountMinor: yearOne, currency: recommended.currency }),
+        ],
+        [text('Each year after, people included'), money(recommended.annualRecurring)],
+        [text('    of which licences, support and infrastructure'), money(recommended.annualSpend)],
+        [
+          text(`Total cost of ownership over ${plural(profile.budget.horizonYears, 'year')}`),
+          money(recommended.tco),
+        ],
+        [text('People to administer it (FTE)'), number(recommended.totalOpsFte, 2)],
+      ],
+    });
+  }
 
   if (recommended.unfundedMandatory.length > 0) {
     blocks.push({
@@ -525,7 +583,7 @@ function costs(inputs: ProposalInputs): ProposalSection {
       rows: [
         compare(essential, 'Essential: minimum defensible'),
         compare(recommended, 'Recommended: year one'),
-        compare(phase2, 'Phase 2: deferred'),
+        compare(phase2, 'Deferred to a later budget year'),
       ],
     },
   ];

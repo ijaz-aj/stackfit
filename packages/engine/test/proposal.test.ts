@@ -371,6 +371,85 @@ describe('what a proposal must not hide', () => {
     expect(allText(buildProposal(starved))).toContain('Privileged access');
   });
 
+  /**
+   * The most predictable complaint a proposal can attract, and it was live.
+   *
+   * This section listed estate size, headcount, control count, coverage
+   * percentages and operational FTE, and never said what the thing costs: the
+   * first cost figure in the document was in section 4, "Costs". An executive
+   * reading page one learned everything except the price.
+   */
+  it('states the investment in the executive summary, not four sections later', () => {
+    const summary = buildProposal(proposalInputs()).sections.find(
+      (section) => section.heading === 'Executive summary',
+    );
+
+    const tables = blocksOf(summary).filter((block) => block.kind === 'table');
+    expect(tables).toHaveLength(1);
+
+    const table = tables[0];
+    if (table?.kind !== 'table') throw new Error('expected a table');
+
+    const labels = table.rows.map((row) => (row[0]?.kind === 'text' ? row[0].value : ''));
+    expect(labels[0]).toMatch(/Year one/);
+    expect(labels[1]).toMatch(/Each year after/);
+    expect(labels[3]).toMatch(/Total cost of ownership/);
+
+    // Money stays `Money` through the document model, so each renderer formats
+    // it. A pre-formatted string here would put currency formatting in the
+    // model and give three renderers something to disagree with.
+    expect(table.rows[0]?.[1]?.kind).toBe('money');
+    expect(table.rows[1]?.[1]?.kind).toBe('money');
+    expect(table.rows[3]?.[1]?.kind).toBe('money');
+    expect(table.rows[4]?.[1]?.kind).toBe('number');
+  });
+
+  /**
+   * The column has to add up, because this is the page a CFO checks.
+   *
+   * It first shipped with year one (all-in) set against `annualSpend`
+   * (procurement only), under a horizon total neither could produce: on the
+   * retail preset ₹70.6 lakh and ₹26.6 lakh under a ₹1.74 crore total, where
+   * 70.6 + 26.6 + 26.6 is 1.24 crore. Found by reading the served page, not by
+   * a test, which is why there is now a test.
+   *
+   * Asserted as a reconciliation rather than as wording: year one plus the
+   * remaining years must land on the horizon total. The tolerance is the
+   * licence uplift, which compounds on the later years and which this table
+   * does not itemise.
+   */
+  it('states an investment column that reconciles with the horizon total', () => {
+    const summary = buildProposal(proposalInputs()).sections.find(
+      (section) => section.heading === 'Executive summary',
+    );
+    const table = blocksOf(summary).find((block) => block.kind === 'table');
+    if (table?.kind !== 'table') throw new Error('expected a table');
+
+    const amount = (row: number) => {
+      const cell = table.rows[row]?.[1];
+      if (cell?.kind !== 'money') throw new Error(`row ${row} is not money`);
+      return Number(cell.value.amountMinor);
+    };
+
+    const yearOne = amount(0);
+    const eachYearAfter = amount(1);
+    const procurementOnly = amount(2);
+    const horizonTotal = amount(3);
+
+    // The split row is part of the figure above it, never larger than it.
+    expect(procurementOnly).toBeLessThanOrEqual(eachYearAfter);
+
+    const years = proposalInputs().profile.budget.horizonYears;
+    const reconstructed = yearOne + eachYearAfter * (years - 1);
+
+    // Within 15%: the uplift compounds on licence and support in later years.
+    expect(Math.abs(reconstructed - horizonTotal) / horizonTotal).toBeLessThan(0.15);
+
+    // And the broken pairing must not come back: procurement alone cannot.
+    const broken = yearOne + procurementOnly * (years - 1);
+    expect(Math.abs(broken - horizonTotal) / horizonTotal).toBeGreaterThan(0.15);
+  });
+
   it('says when the recommended stack is over budget', () => {
     const inputs = proposalInputs();
     const over: ProposalInputs = {
