@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 13: the project's actual goal, checked against the code (in review).
+**Current phase:** 14: the FTE figure, made defensible and made to show its working (in review).
 Deployed and in client demo throughout.
 **Last updated:** 2026-09-13
 
@@ -2233,6 +2233,84 @@ self-hosted and buying Elastic Cloud are different products with different
 prices, efforts and operational burdens. Splitting those into per-mode tiers is
 the change that would make the estate decisive, and it needs real per-mode
 prices rather than a weighting decision.
+
+### Phase 14. The FTE figure, made defensible and made to show its working
+
+Raised 2026-09-13: "how do I know how many people is for running that particular
+client, how are you calculating the FTE ... everything behind the scene should be
+explainable because this is a production grade client presenting product."
+
+It was not defensible. `operationalFteFor` was one linear expression, unbounded:
+
+    fte = baseFte + ftePerThousandAssets x assets / 1000
+
+On Elastic Security's own committed coefficients that is **15.5 FTE to
+administer one SIEM** across 50,000 assets. Nobody takes that number into a room.
+
+**Researched before changing anything**, and the sources split cleanly in two.
+
+- **Monitoring is arithmetic over published figures.** 8,760 hours of continuous
+  coverage over ~1,800 productive hours per FTE is **4.87 FTE to keep one seat
+  staffed around the clock**, which is the figure behind the widely reported
+  8-12 headcount for a minimum viable in-house 24/7 SOC. An MSSP spreads that
+  seat across a reported **50-100 small customers**, so a reference client
+  consumes about 0.065 FTE. All of it now modelled and reported with its working.
+- **Administration has no published ratio at all.** A per-1,000-asset staffing
+  figure for administering a SIEM or an EDR was searched for and does not exist.
+  What *is* published, consistently, is that administration does **not** scale
+  linearly: automation, central policy and template inheritance make the
+  ten-thousandth endpoint far cheaper to bring under management than the
+  hundredth.
+
+**So the shape comes from the sources and the magnitude is stated as a
+judgement.** `scaleExponent: 0.75` is the conventional sublinear exponent where
+the direction is established and the coefficient is not, and the file says so
+rather than dressing it as evidence. Effect on the SIEM coefficients:
+
+| assets | linear (old) | 0.75 (now) |
+|---|---|---|
+| 100 | 0.53 | 0.55 |
+| 1,000 | 0.80 | 0.80 |
+| 10,000 | 3.50 | 2.19 |
+| 50,000 | **15.50** | **6.14** |
+
+Anchored at 1,000 assets, where the scale factor is exactly 1 whatever the
+exponent, so all 65 `opsBurden` coefficients keep meaning what their author
+intended and the change is safe against committed data. Note it moves *up*
+slightly below the reference, which is also right: a small estate does not get
+proportionally cheaper to administer, because a floor of irreducible work exists.
+
+**The delivery mode now changes the effort, which the deployment decision made
+possible.** The same product is not the same job depending on who hosts it: a
+vendor-hosted tenancy has no patching, capacity planning, upgrades or backup of
+the tool itself; an air-gapped one has all of that plus manual content updates.
+0.6 / 0.85 / 1.0 / 1.25 by mode, each with a basis, and the schema requires
+every mode so a missing one cannot silently default to the on-premises answer.
+Measured effect: SaaS-delivered products become materially cheaper to administer
+than self-hosted ones and the cheapest-first ordering changes accordingly. Three
+worked-example snapshots regenerated; the §12 acceptance scenarios untouched.
+
+**Everything returns its own arithmetic.** `administrationFte` and
+`monitoringFte` hand back their terms and a worked-out sentence rather than a
+bare number with prose written about it elsewhere, because those two drift and
+the one on the slide is the one quoted back. A "People" section on the results
+page renders it, on the committed hospital scenario: monitoring 0.41 FTE =
+4.87 per seat x 6.30 (this client against a reference client) / 75.
+
+⚠ **Three things this does not fix, all stated on the page.**
+
+- **The administration total is a straight sum with no overlap.** Two tools run
+  by the same engineer share context, tooling and on-call. Honest per product,
+  pessimistic in aggregate, and a thirteen-tool stack is where it bites.
+- **Every `opsBurden` pair is still an analyst estimate**, 65 of 65, none
+  vendor-stated and none measured. The scaling is better grounded than the
+  coefficients it scales.
+- **`referenceClientsPerSeat` (75) and `referenceMonitoredAssets` (250) are the
+  weakest numbers in the new file.** 75 is the midpoint of a published 50-100
+  range; 250 is the analyst reading of what that guidance calls a "small
+  customer". Both want our own rota and client book, which is the one place the
+  real figures exist. So does `msspAnalystFtePerClient` (0.6), which now sits
+  next to a derived figure it was never reconciled against.
 
 ## Open defects
 

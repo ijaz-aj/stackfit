@@ -349,6 +349,20 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   results page was written, shipped and never once rendered. The layout that
   was being tuned was the stacked fallback. Check `innerWidth` in the browser
   before reaching past `lg:`, and treat `xl:` as a rule for external monitors.
+- **Administration FTE and monitoring FTE are different quantities and are never
+  summed.** `staffing.ts` holds both. Administration (`opsBurden`, per product)
+  is deploy/tune/patch/upgrade and scales sublinearly with the estate;
+  monitoring is a share of a round-the-clock rota and comes from 8,760 hours
+  over ~1,800 productive hours per FTE = 4.87 FTE a seat, spread over a
+  published 50-100 clients. They differ by an order of magnitude and reading one
+  as the other always understates. Both return their own arithmetic, because a
+  number and prose written about it elsewhere will drift.
+- **The administration exponent is anchored at `referenceAssets`, and that is
+  load bearing.** At 1,000 assets the scale factor is exactly 1 whatever the
+  exponent, which is what lets all 65 committed `opsBurden` coefficients keep
+  meaning what their author intended. Changing `referenceAssets` silently
+  reinterprets every one of them; changing `byDeploymentMode.on_prem` from 1.0
+  does the same.
 - **`deploymentModes` is a capability set; `cost.deployment` is the decision.**
   `chooseDeployment` picks one mode per product per client from the estate and
   the procurement policy, and the infrastructure line follows *that*, not the
