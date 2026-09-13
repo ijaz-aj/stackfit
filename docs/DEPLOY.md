@@ -111,6 +111,12 @@ anyone who can read the configuration can read them, and there is no rotation,
 lockout or second factor. Delete the variable and redeploy when the demo is
 over. See `apps/web/src/lib/credentials.ts`.
 
+Deleting it stops new sign-ins and does **not** end the ones already issued.
+Sessions are JWTs with no server-side store, on NextAuth's default 30-day
+rolling window (nothing sets `maxAge`), so there is no session table to clear:
+rotating `NEXTAUTH_SECRET` invalidates every existing session and is the only
+way to sign everyone out. It signs out the OAuth analysts too.
+
 ## Changing the app after it is live
 
 Push to `main`. Vercel rebuilds and the live URL updates, usually inside two

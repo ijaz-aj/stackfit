@@ -1,7 +1,8 @@
 # Status
 
-**Current phase:** 11: environment as a fact, and justified selection (in review)
-**Last updated:** 2026-09-12
+**Current phase:** deployed and in client demo. Phase 11 (environment as a fact,
+and justified selection) is in review; the engine and the app are unchanged since.
+**Last updated:** 2026-09-13
 
 ## Phase log
 
@@ -1833,6 +1834,82 @@ read and delete any scenario. For five or six colleagues sharing a scoping
 tool that is the intended behaviour, and `ownerId` now carries the data a
 per-owner rule would need if that changes.
 
+### Going live, 2026-09-13
+
+The portal is deployed. Vercel builds from `main`, Neon holds the database, and
+`docs/DEPLOY.md` is the walkthrough from an empty account to a running URL.
+
+Three things had to change first, and **two of the three were found by building
+and running the real artefact rather than by reading the code.** Both would have
+produced a broken first deploy that looked perfect locally, which is the note
+worth keeping: `next start` runs from a working copy, and a working copy hides
+every question a deployment actually asks.
+
+- 2026-09-13: **`data/` is not in a bundle unless it is named.** The catalog,
+  the framework library and eleven config files are read with `readFileSync` at
+  a path assembled at runtime from `import.meta.url`. A build tracer follows
+  static imports and cannot see that, so a standalone build contained **zero of
+  the 35 YAML files**. `outputFileTracingIncludes` plus a tracing root at the
+  monorepo puts all 35 in. The path itself was not stable either, because the
+  compiled chunk sits at a different depth than the source, so
+  `config.server.ts` now searches from two anchors and throws naming every path
+  it tried: the failure it replaces was a bare `ENOENT` three frames down on a
+  host with no shell to go looking in.
+- 2026-09-13: **`DATABASE_URL` was a build-time requirement, and a build that
+  needs a database cannot run in CI, in a container image, or on any host that
+  builds before the environment is attached.** `next build` imports every route
+  to collect its configuration, so a `PrismaClient` at module scope killed the
+  build with "Failed to collect configuration for /". The client is now created
+  on first property access, behind a Proxy, so the nine call sites are
+  unchanged. The test is that the build succeeds with no `DATABASE_URL` at all,
+  and it does.
+- 2026-09-13: **SQLite could not come, and the reason is not performance.** A
+  serverless host discards its filesystem between invocations, so a SQLite file
+  there is not slow, it is gone: writes vanish and nothing errors. Postgres is
+  now the provider in *every* environment rather than only in the deployment,
+  because testing on a different engine from the one you ship on is its own
+  class of bug. The schema comment promised portability and it was true: the
+  move cost two lines. `DATABASE_URL` loses its file fallback for the same
+  reason any fallback here is dangerous. `docker-compose.yml` is the zero-account
+  local Postgres; `scripts/migrate-sqlite-to-postgres.ts` carries existing
+  sessions across, idempotent by id and reading its own writes back. Run against
+  the 21 real sessions in this working copy: all 21 copied and rendering.
+
+**Three more, found only by deploying.** Each is a gap between what worked on
+this machine and what a host does.
+
+- 2026-09-13: **Three tools disagreed about which env file counts.** Next reads
+  `.env.local` and `.env`; the Prisma CLI reads only `.env`; `tsx` reads
+  neither. So `DATABASE_URL` in `apps/web/.env.local` gave a working dev server
+  and a `db:push` that failed claiming the variable was not set, with an error
+  telling you to put it exactly where it already was. `scripts/load-env.ts`
+  loads both, side-effect imported first by `prisma.config.ts`, the seed and the
+  migration. It has to be a side-effect import: ES module imports all evaluate
+  before any top-level statement in the importing file, so a `loadEnvFiles()`
+  call above an `import { prisma }` line still runs after that module has
+  loaded. `.env.local` wins over `.env`, matching Next, and a real environment
+  variable beats both, which is what the deployment relies on.
+- 2026-09-13: **The host has no generated Prisma client.** It is generated into
+  `apps/web/src/generated/`, which `.gitignore` excludes, and nothing
+  regenerated it: no postinstall, and the build script was `next build` alone.
+  It worked everywhere it had been tried because `pnpm db:generate` had been run
+  by hand once, months of local work ago. The build now generates first, and
+  `generate` is exempted from the `DATABASE_URL` assertion because it is the one
+  Prisma command that never connects. Exempting it is what keeps the promise
+  above, that `next build` needs no database, true.
+- 2026-09-13: **Rotating `DATABASE_URL` needs the same restart a schema push
+  does.** Hit while setting up the real database. The password was rotated with
+  `pnpm dev` running and every page became `PrismaClientKnownRequestError:
+  Authentication failed` with the credentials reported as `(not available)`, so
+  the message does not name what it tried. It reads like a broken app and
+  nothing was wrong with it. Same cause as the schema case already in Gotchas,
+  the client is cached on `globalThis` to survive hot reloads, and that entry
+  covered only half of it.
+
+**What the first deploy tested that nothing local could**: the OAuth round trip
+and a serverless function reading the traced `data/` tree. Both were called out
+in `docs/DEPLOY.md` in advance as exactly that, and both hold.
+
 ### Password sign-in, 2026-09-13
 
 Added on request, to demonstrate the deployed portal to a client for approval.
@@ -1875,6 +1952,36 @@ read the configuration can read them, and there is no rotation, no lockout and
 no second factor. That is strictly weaker than the OAuth path it sits beside,
 which is why it is opt-in, documented as the weakest door in
 `apps/web/src/lib/credentials.ts`, and why both providers stay configured.
+
+### The first phone, 2026-09-13
+
+Found by opening the live URL on a phone, which is the first time this app had
+been looked at below `lg:`. One defect, on the one interaction where it matters
+most.
+
+- 2026-09-13: **The delete confirmation pushed its own buttons off the screen.**
+  Tapping Delete on a saved session took the page's `scrollWidth` from 390 to
+  575. The confirmation is about 435px of content ("Delete <name>?", "Yes,
+  delete", "Cancel") sitting in a `shrink-0` container inside a 308px row, so it
+  could neither shrink nor wrap, and the row it was confirming scrolled out of
+  view along with the buttons. `shrink-0` was doing real work in the resting
+  state, where Clone and Delete must not be squeezed by a long client name, so
+  it became `min-w-0` plus `flex-wrap`: the name still gives up its width first
+  and the cluster folds onto a second line rather than off the edge. Measured at
+  390px, `scrollWidth` 575 → 390 and both buttons fully inside the viewport.
+  Desktop is unchanged, because nothing wraps until it has to.
+- **Swept for the same class of defect while there, and found none.** The seven
+  tables carrying `min-w-[520px]`–`[720px]` are each already inside an
+  `overflow-x-auto` wrapper, which is the right answer for a table of money
+  rather than a thing to fix, and the wizard's three-column layout is `lg:`-gated
+  and collapses on its own.
+
+⚠ **The rest of the app below `lg:` is unexamined, not verified.** One screen
+was looked at because one defect was reported on it. The results dashboard and
+the six-step wizard are the two surfaces an analyst would actually turn toward a
+client, and neither has been opened on a phone. Related and already recorded:
+this machine reports 1254 CSS pixels, so every `xl:` rule on the results page
+has never rendered here either.
 
 ## Open defects
 
