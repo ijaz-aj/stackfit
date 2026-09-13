@@ -122,6 +122,35 @@ export const MsspServiceLevelRate = z
   .strict();
 export type MsspServiceLevelRate = z.infer<typeof MsspServiceLevelRate>;
 
+/**
+ * Who holds the licence for a category we operate.
+ *
+ * Only meaningful inside the responsibility boundary: a category the client
+ * runs is one they have obviously bought. Inside it the answer is genuinely
+ * mixed and is a commercial fact about each engagement, not something the
+ * catalog can derive, so it is configured rather than inferred.
+ *
+ * It decides one thing precisely: whether the licence is already inside our
+ * monthly fee or is a line the client still pays on top. Getting it wrong in
+ * the `resold` direction double-charges the client for the same product.
+ */
+export const LicenceOwnership = z.enum([
+  /** The client buys the licence; we operate what they own. Billed separately. */
+  'client_direct',
+  /** We hold the licence and it is inside our fee. Not billed to the client again. */
+  'resold',
+]);
+export type LicenceOwnership = z.infer<typeof LicenceOwnership>;
+
+export const CategoryLicenceOwnership = z
+  .object({
+    category: ProductCategory,
+    ownership: LicenceOwnership,
+    basis: z.string().min(1),
+  })
+  .strict();
+export type CategoryLicenceOwnership = z.infer<typeof CategoryLicenceOwnership>;
+
 export const MsspScaleTier = z
   .object({
     scaleClass: ScaleClass,
@@ -149,6 +178,20 @@ export const MsspRateCard = z
     /** Per GB/day of ingest, charged monthly. */
     perGbDayMonthly: NonNegativeMoney,
     serviceLevels: z.array(MsspServiceLevelRate).min(1),
+    /**
+     * Whether a licence inside our boundary sits in our fee or on the client's
+     * own purchase order. `default` applies to any category not listed.
+     *
+     * `client_direct` is the default deliberately: it is the reading that shows
+     * the client every cost, and being wrong that way overstates what they are
+     * asked to sign rather than hiding a charge inside a fee.
+     */
+    licenceOwnership: z
+      .object({
+        default: LicenceOwnership,
+        byCategory: z.array(CategoryLicenceOwnership).default([]),
+      })
+      .strict(),
     /** No engagement is quoted below this, whatever the per-unit maths says. */
     minimumMonthly: NonNegativeMoney,
   })

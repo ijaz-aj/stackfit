@@ -120,6 +120,37 @@ serviceLevels:
       privileged access and backup are deliberately excluded: providers will
       monitor them, but running them is rarely on the contract.
 
+# Who holds the licence for a category we operate.
+#
+# Only applies inside the responsibility boundary: a category the client runs is
+# one they have bought. Inside it, this decides whether the licence is already in
+# our monthly fee or is a line the client pays on top, and getting it wrong in
+# the `resold` direction bills the same product twice.
+#
+# ⚠ ANALYST ASSUMPTION, and the weakest kind in this file, because it is a
+# commercial fact about how we contract rather than anything published. The
+# default is `client_direct` on purpose: it shows the client every cost, and
+# being wrong that way overstates what they are asked to sign instead of burying
+# a charge in a fee. Set these from the actual contracts.
+#
+# The two listed are the ones where the base platform fee above already assumes
+# we carry the platform: the fee was backed out of quotes that include it, so
+# billing the client for it again is double-counting our own rate card.
+licenceOwnership:
+  default: client_direct
+  byCategory:
+    - category: siem
+      ownership: resold
+      basis: >-
+        The base platform fee is the SIEM tenancy. Every quote the tiers above
+        were derived from includes the platform the provider detects on, so a
+        separate client-side SIEM licence would charge for it a second time.
+    - category: mdr
+      ownership: resold
+      basis: >-
+        MDR is the service, not a product the client licenses alongside it.
+        Where we are the MDR, there is no third-party MDR line to pay.
+
 # No engagement is quoted below this, whatever the per-unit maths produces.
 # Matches the floor of the reported SMB range.
 minimumMonthly:

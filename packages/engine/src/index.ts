@@ -16,6 +16,7 @@ export * from './claims';
 export * from './cost';
 export * from './infrastructure';
 export * from './responsibility';
+export * from './attribution';
 export * from './scoring';
 export * from './portfolio';
 export * from './coverage';

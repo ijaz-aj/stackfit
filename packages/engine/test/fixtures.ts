@@ -312,6 +312,10 @@ export function buildMsspRateCard(): MsspRateCard {
     confidence: 'analyst_estimate',
     notes: 'test fixture',
     sources: [{ url: 'https://example.com/mssp', asOf: '2026-01-01' }],
+    licenceOwnership: {
+      default: 'client_direct',
+      byCategory: [{ category: 'siem', ownership: 'resold', basis: 'test fixture' }],
+    },
     tiers: (['small', 'mid', 'large', 'enterprise'] as const).map((scaleClass) => ({
       scaleClass,
       basePlatformFeeMonthly: usd(100_000),
