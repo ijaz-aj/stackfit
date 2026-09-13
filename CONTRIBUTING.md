@@ -349,6 +349,24 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   results page was written, shipped and never once rendered. The layout that
   was being tuned was the stacked fallback. Check `innerWidth` in the browser
   before reaching past `lg:`, and treat `xl:` as a rule for external monitors.
+- **`deliveryModel` and `serviceLevel` are one answer in two fields, and the
+  schema enforces the pair in both directions.** The first says whether we
+  operate any of the stack, the second how far that reaches;
+  `responsibilitySplit` turns them into the set of categories that are ours,
+  read from `coveredCategories` on the rate card's service levels rather than
+  from anything hard-coded. `serviceLevel: null` is the positive statement that
+  we operate nothing and is the *only* valid value on `client_operated`. Before
+  the split, `co_managed` and `mssp_managed` produced byte-identical output on
+  two of the six presets.
+- **`tco` and `annualSpend` on a bundle are what the stack costs to own and
+  run, with no regard for who bears it. `attribution.clientTotalAnnual` is what
+  the client actually pays.** The first is right for `client_operated` and
+  badly wrong for a managed engagement, where most of it is salary for people we
+  employ: the hospital preset was quoted USD 1.2M a year of its own security
+  staff for a stack our SOC runs. Never put a bundle total in front of a client
+  without checking which question it answers. `fullBuildAnnual` deliberately
+  does not move with the boundary, because it is the build-versus-buy
+  denominator and a figure that moved would make the comparison circular.
 - **A `tsx scripts/…` run and a live `pnpm dev` are two database connections, and
   they disagreed about what the database contained.** Recorded from the SQLite
   era; whether it survives the move to Postgres is untested, and Postgres has no

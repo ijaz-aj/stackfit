@@ -1,7 +1,7 @@
 # Status
 
-**Current phase:** deployed and in client demo. Phase 11 (environment as a fact,
-and justified selection) is in review; the engine and the app are unchanged since.
+**Current phase:** 12: who operates it, and therefore who pays (in review).
+Deployed and in client demo throughout.
 **Last updated:** 2026-09-13
 
 ## Phase log
@@ -2042,6 +2042,108 @@ browser-test infrastructure. A `scrollWidth` assertion over every route at three
 widths is a genuinely small Playwright suite, and it is also a new dependency and
 a CI change, so it is recorded rather than taken. Until it exists, the phone
 layout is verified as of this commit and not defended.
+
+### Phase 12. Who operates it, and therefore who pays
+
+Raised 2026-09-13: "in the organisation session and in who operate it session
+how the category changes the output ... I don't want this to be just a dummy
+thing, it should have proper logic."
+
+The suspicion was correct for about half of it. Measured by running the real
+pipeline over all six committed presets under all three delivery models, before
+changing anything.
+
+**What was already real**, and is untouched: `operatingCapacityFte` genuinely
+swapped the `ops_fit` denominator between our 0.6 analyst FTE and the client's
+headcount, with the prose following correctly; the scoring deltas (`ops_fit`
+-8/+2/+12, `integration_fit` +5/+3/0) are reasoned and renormalised; and the
+category modifiers bite hard, `mdr` at x0 managed against x1.6 client-operated,
+which is why every `client_operated` run added MDR to the stack.
+
+**Three things were dummy.**
+
+- 2026-09-13: **`cost.ts` never read `deliveryModel`, not once.** The hospital
+  under `mssp_managed` was quoted a three-year TCO of USD 3,897,831, of which
+  **USD 1,205,181 a year was its own security salaries and USD 0 was licence**,
+  on an engagement where our SOC runs the stack and they hire nobody. Our fee
+  appeared nowhere. The bank was the same shape at INR 10,672,306 a year of
+  people against zero licence. "What would it cost you to build this yourself"
+  was printed under the heading of what they were buying from us.
+- 2026-09-13: **`co_managed` was a scalar nudge wearing the name of a delivery
+  model.** Byte-identical output to `mssp_managed` on two of six presets and
+  within 0.7% on two more. Capacity is `securityStaffFte + 0.6` against `0.6`,
+  the same number at zero staff, and the curve saturates at one or two.
+- 2026-09-13: **The MSSP figure was priced at a hardcoded `'mdr'`.** A default
+  parameter no caller ever overrode, so it was identical down all three columns
+  and a `managed_security` engagement was priced as response-only.
+
+**The fix is one concept: a responsibility boundary.** `deliveryModel` says
+whether we operate; `serviceLevel` says how far that reaches; together they say
+which categories are ours. The category lists are not invented, they are
+`coveredCategories` on the rate card's service levels, which an analyst already
+maintains and which had been loaded, validated and used for one comparison
+figure since Phase 4.
+
+- **The pair is enforced in the schema, both ways.** `client_operated` must
+  carry `null`; anything else must carry a level. `null` is a positive
+  statement that we operate nothing, not an unanswered sentinel, which is the
+  `deploymentPreference: 'hybrid'` lesson applied before it could be repaid.
+- **Attribution follows the boundary.** Effort follows the operator; ours is
+  reported and never added to what the client pays. Licence follows
+  `licenceOwnership`, config on the rate card with a per-category override and a
+  `client_direct` default, because the reviewer's answer was "mixed, depends on
+  the product" and inventing it per product across 65 entries would break hard
+  rule 2. Being wrong the `client_direct` way overstates what the client is
+  asked to sign rather than burying a charge in a fee.
+- **The fee is charged once.** `siem` and `mdr` are `resold`: the tiers were
+  backed out of quotes that already include the platform the provider detects
+  on, so a client-side SIEM licence on top bills the same tenancy twice.
+- **`fullBuildAnnual` deliberately does not move with the boundary.** It is the
+  build-versus-buy denominator, and a figure that changed with the delivery
+  model would make that comparison circular. Pinned by a test across both.
+
+**What it buys, measured.** The model now moves on the axis that means
+something. Professional services, 45 staff, **zero** security FTE:
+
+| | client pays/yr | our fee | their people | categories we run |
+|---|---|---|---|---|
+| client_operated | 330,315 | 0 | 320,838 | 0/8 |
+| mssp_managed, monitoring | 313,334 | 28,972 | 279,070 | 1/7 |
+| mssp_managed, managed_security | **201,085** | 49,253 | 146,540 | 4/7 |
+
+Widening what we run makes the client *cheaper*, because their people cost falls
+faster than our fee rises, and for a client with nobody to run anything that is
+the argument the tool exists to make. Under the old model all three were the
+same number.
+
+### ⚠ Two rate-card problems this surfaced
+
+Both were always there. They mattered less while the fee was a side comparison
+and matter a great deal now it is the headline for managed engagements.
+
+- ⚠ **The rate card has no regional dimension, and `labour-rates.yaml` does.**
+  It is USD, synthesised from published US and global MDR ranges. Converted into
+  INR and applied to an Indian client it produces a fee of **seven to twelve
+  times the total cost of building the same stack**: retail 35.7M-60.6M against
+  a 5.2M build, bank 127M against 18M. Not corrected, because the correction is
+  a commercial fact about our own cost base and hard rule 2 does not permit
+  inventing one. Said out loud instead: a fee above the full build cost now
+  carries a warning naming the likely cause, pinned in both directions so it
+  neither stays silent nor cries wolf. **This needs our real numbers.**
+- ⚠ **The fee does not scale with how much we operate.** It is a whole-estate
+  price (base + per endpoint + per server + per GB) whose only lever is the
+  service-level multiplier, so it barely falls when we run one category instead
+  of five. Narrow service levels are therefore poor value by construction: the
+  hospital at `monitoring` pays USD 1,518,180 against a USD 1,216,460 build.
+  That may be how MDR is genuinely priced, and it may not. Worth one real quote.
+
+**Still open on this thread.** `ops_fit` still divides by one global capacity
+rather than by the operator of each category, so a managed engagement continues
+to measure `backup` against the 0.6 analyst FTE we allocate even though no
+service level covers backup. `responsibilitySplit` makes that a one-line change
+and it will move recommendations, so it is deliberately a separate step to be
+measured on its own rather than folded into a commit that already changes what
+a client is quoted.
 
 ## Open defects
 
