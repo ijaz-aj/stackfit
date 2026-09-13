@@ -2022,8 +2022,19 @@ class that is supposed to control it.
 
 Desktop is unchanged, and was checked rather than assumed: the same measurements
 at 1280 and 1254 are byte-identical with the three fixes stashed and restored.
-All six wizard steps, `/compare`, both proposal pages and all three saved
-scenarios' results now measure clean at 390, 360 and 320.
+All six wizard steps, `/compare` (empty *and* with a comparison loaded, which is
+the state that renders its two wide tables), both proposal pages and all three
+saved scenarios' results now measure clean at 390, 360 and 320.
+
+**A collapsed `<details>` measures zero and reports success.** The results page
+carries 21 of them, five holding tables, and the first sweep could not see
+inside any: hidden content has no width, so it passes every check silently. The
+same shape as the inert scroll wrapper above, and the reason the 320px
+fit-score defect was nearly missed. Re-measured with every `<details>` forced
+open, at both 390 and 320, on all three scenarios: clean. Also confirmed the
+four wide tables are genuinely *rendered* rather than merely absent, each one
+720/560/720/720 wide inside a 292px wrapper that really scrolls, because "no
+overflow" and "nothing there" look identical from the outside.
 
 ⚠ **Nothing pins this.** These are the first defects found here that no test in
 the repo could have caught, because layout needs a browser and there is no
