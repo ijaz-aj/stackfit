@@ -196,6 +196,29 @@ export function attributeBundle(
       `Owning and running all of this themselves would be ${moneyInWords(fullBuildAnnual)} a ` +
         'year. That is the build-versus-buy comparison, and not what they are being asked to pay.',
     );
+
+    /*
+     * A fee above the total cost of building the same thing is a signal, not a
+     * quote. It happens most readily outside the currency the rate card was
+     * written in: the card is USD, synthesised from published US and global MDR
+     * ranges, and it carries no regional dimension at all, while
+     * `labour-rates.yaml` does. Converted into INR and applied to an Indian
+     * client it produces a fee several times the cost of building the stack,
+     * which is a statement about the card rather than about the engagement.
+     *
+     * Said out loud rather than corrected, because the correction is a
+     * commercial fact about our own cost base and hard rule 2 does not allow it
+     * to be invented here.
+     */
+    if (Number(providerFeeAnnual.amountMinor) > Number(fullBuildAnnual.amountMinor)) {
+      rationale.push(
+        `⚠ Our fee is more than the whole stack would cost the client to own and run. Either ` +
+          'this engagement is genuinely not worth buying as a managed service, or the rate ' +
+          'card does not apply here: it is in USD, is synthesised from published US and ' +
+          'global ranges, and has no regional dimension, while the labour rates it is being ' +
+          'compared against do. Check it before this figure reaches a client.',
+      );
+    }
   }
 
   return {

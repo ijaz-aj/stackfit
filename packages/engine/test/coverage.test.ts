@@ -174,6 +174,19 @@ function bundleOf(
       buildAnnual: zero,
       rationale: [],
     },
+    // Coverage does not read attribution; this is the empty shape so the
+    // fixture satisfies `Bundle` without asserting anything about who pays.
+    attribution: {
+      currency: 'USD',
+      bySelection: [],
+      clientProcurementAnnual: zero,
+      clientOpsAnnual: zero,
+      providerFeeAnnual: zero,
+      clientTotalAnnual: zero,
+      providerOpsAnnual: zero,
+      fullBuildAnnual: zero,
+      rationale: [],
+    },
     rationale: [],
   };
 }

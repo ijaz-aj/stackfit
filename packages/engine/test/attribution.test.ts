@@ -143,6 +143,38 @@ describe('attributeBundle', () => {
     expect(prose).toMatch(/build-versus-buy/);
   });
 
+  /**
+   * Found by running the six committed presets through the new attribution: the
+   * INR clients came back with a fee seven to twelve times the total cost of
+   * building the same stack. The rate card is USD, synthesised from published
+   * US and global ranges, and carries no regional dimension, while the labour
+   * rates it is implicitly compared against do.
+   */
+  it('warns when our fee exceeds what building the whole stack would cost', () => {
+    const result = attributeBundle(
+      [selection('edr', 1_000, 1_000)],
+      managed,
+      card,
+      'USD',
+      usd(9_000_000),
+    );
+
+    expect(result.rationale.join(' ')).toMatch(/more than the whole stack would cost/);
+    expect(result.rationale.join(' ')).toMatch(/no regional dimension/);
+  });
+
+  it('does not cry wolf when the fee is a sensible fraction of the build', () => {
+    const result = attributeBundle(
+      [selection('edr', 10_000, 900_000)],
+      managed,
+      card,
+      'USD',
+      usd(200_000),
+    );
+
+    expect(result.rationale.join(' ')).not.toMatch(/more than the whole stack would cost/);
+  });
+
   it('adds up: client total is procurement plus their ops plus our fee', () => {
     const result = attributeBundle(
       [

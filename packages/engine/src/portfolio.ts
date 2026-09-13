@@ -38,6 +38,7 @@ import {
   type CostsByProduct,
   type ProductCost,
 } from './cost';
+import { attributeBundle, type BundleAttribution } from './attribution';
 import { controlsClaimedBy } from './claims';
 import type { CategoryRelevance } from './infrastructure';
 import { CATEGORY_LABELS, SERVICE_LEVEL_LABELS, listOf, plural } from './labels';
@@ -50,6 +51,7 @@ import {
   sumMoney,
   zeroMoney,
 } from './money';
+import { responsibilitySplit } from './responsibility';
 import type { ProductScore } from './scoring';
 import type { SizingResult } from './sizing';
 
@@ -253,6 +255,16 @@ export interface Bundle {
    */
   readonly minimumViableOneTime: Money | null;
   readonly mssp: MsspAlternative;
+  /**
+   * Who pays for what, once the responsibility boundary is drawn.
+   *
+   * `tco` and `annualSpend` above are what the stack costs to own and run,
+   * with no regard for who bears it. That is the right figure for a
+   * `client_operated` engagement and the wrong one to put in front of a client
+   * whose stack we operate, because most of it is salary for people we employ.
+   * `attribution.clientTotalAnnual` is what they actually pay.
+   */
+  readonly attribution: BundleAttribution;
   readonly rationale: readonly string[];
 }
 
@@ -1004,7 +1016,17 @@ function select(
 export function msspAlternative(
   inputs: PortfolioInputs,
   selections: readonly BundleSelection[] = [],
-  serviceLevel = 'mdr',
+  /*
+   * Defaults to what this engagement actually is, rather than to 'mdr'.
+   *
+   * It was a hardcoded literal and no caller ever passed one, so the figure was
+   * identical under all three delivery models across every preset: a managed
+   * engagement quoting `managed_security` was priced as if it were response
+   * only. On a `client_operated` engagement there is no service level, and
+   * 'mdr' is then the right question to ask, because the comparison is against
+   * a provider they have not hired yet.
+   */
+  serviceLevel: string = inputs.profile.serviceLevel ?? 'mdr',
 ): MsspAlternative {
   const { profile, sizing, mssp, fx } = inputs;
   const currency = profile.budget.currency;
@@ -1305,6 +1327,8 @@ function buildBundle(
     }
   }
 
+  const mssp = msspAlternative(inputs, result.selections);
+
   return {
     kind,
     currency,
@@ -1326,7 +1350,25 @@ function buildBundle(
         ? subtractMoney(mandatoryOneTimeFloor, oneTimeCap)
         : null,
     minimumViableOneTime: mandatoryCategories.length > 0 ? mandatoryOneTimeFloor : null,
-    mssp: msspAlternative(inputs, result.selections),
+    mssp,
+    attribution: attributeBundle(
+      result.selections.map((selection) => ({
+        category: selection.category,
+        productId: selection.productId,
+        procurementAnnual: selection.cost.procurementAnnual,
+        opsFteAnnual: selection.cost.opsFteAnnual,
+        licenceAnnual: selection.cost.licenceAnnual,
+      })),
+      responsibilitySplit(profile, inputs.mssp),
+      inputs.mssp,
+      currency,
+      /*
+       * The fee only applies where we are actually the operator. On a
+       * `client_operated` engagement the same figure is a quote from a provider
+       * they have not hired, so charging it to them here would invent a cost.
+       */
+      profile.deliveryModel === 'client_operated' ? zeroMoney(currency) : mssp.annual,
+    ),
     rationale,
   };
 }
