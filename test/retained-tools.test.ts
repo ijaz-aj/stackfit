@@ -32,32 +32,57 @@ const profileOf = (retainedTools: string[]) => ({
 
 describe('a tool the client already owns', () => {
   it('closes the controls it claims, instead of being reported as a gap', () => {
-    // The retail preset defers EDR to Phase 2, so nothing in the year-one stack
-    // covers the controls an endpoint agent closes. A client who already runs
-    // Defender for Endpoint has them closed: the proposal should say so rather
-    // than quote them a gap they closed years ago.
+    // A client who already runs Defender for Endpoint has the controls an
+    // endpoint agent closes *closed*. The proposal should say so rather than
+    // quote them a gap they closed years ago.
     //
-    // It used to use a backup product, on the premise that the retailer could
-    // not afford backup. That stopped being true when mandate resolution was
-    // corrected: a PCI client had twelve of thirteen categories marked
-    // mandatory, the mandatory set consumed the budget before the ranking was
-    // consulted, and the freed money now reaches backup in year one. The
-    // premise moved, not the property being tested.
-    const without = runScenario(profileOf([]), retailer.inventory);
-    const with_ = runScenario(profileOf(['microsoft-defender-for-endpoint']), retailer.inventory);
-
-    const coveredIn = (result: typeof without) =>
+    // ⚠ The premise has now moved twice, and the property has not. It first
+    // used a backup product, on the premise that the retailer could not afford
+    // backup; that stopped being true when mandate resolution was corrected and
+    // the freed money reached backup in year one. It then used the retail
+    // preset for both halves, on the premise that retail defers EDR to Phase 2;
+    // that stopped being true when the one-time allocator was corrected and
+    // retail now funds EDR in year one, which leaves it with zero gaps and
+    // nothing for a holding to close.
+    //
+    // So each half is now asserted where it is observable. Retail still shows
+    // the holding *covering* more (7 to 9). The manufacturer is the preset that
+    // genuinely has no EDR in year one, and shows the holding *closing gaps*
+    // (9 to 3). Splitting them is what stops this test being quietly satisfied
+    // by a scenario in which nothing is being tested at all.
+    const coveredIn = (result: ReturnType<typeof runScenario>) =>
       result.coverage.frameworks
         .filter((framework) => framework.inScope)
         .reduce((total, framework) => total + framework.coveredControls, 0);
 
-    const gapsIn = (result: typeof without) =>
+    const gapsIn = (result: ReturnType<typeof runScenario>) =>
       result.coverage.frameworks
         .filter((framework) => framework.inScope)
         .reduce((total, framework) => total + framework.gapControls, 0);
 
+    const without = runScenario(profileOf([]), retailer.inventory);
+    const with_ = runScenario(profileOf(['microsoft-defender-for-endpoint']), retailer.inventory);
     expect(coveredIn(with_)).toBeGreaterThan(coveredIn(without));
-    expect(gapsIn(with_)).toBeLessThan(gapsIn(without));
+
+    // The gap half, on a preset whose year-one stack genuinely lacks EDR.
+    const plant = presets.find((preset) => preset.id === 'manufacturer-two-plants');
+    if (plant === undefined) throw new Error('expected the manufacturer preset');
+    const plantProfile = (retainedTools: string[]) => ({
+      ...plant.profile,
+      orgName: plant.name,
+      retainedTools,
+    });
+
+    const plantWithout = runScenario(plantProfile([]), plant.inventory);
+    const plantWith = runScenario(
+      plantProfile(['microsoft-defender-for-endpoint']),
+      plant.inventory,
+    );
+
+    // The premise this half rests on, asserted rather than assumed, so it fails
+    // loudly if a future change funds EDR here too.
+    expect(plantWithout.recommended.selections.some((s) => s.category === 'edr')).toBe(false);
+    expect(gapsIn(plantWith)).toBeLessThan(gapsIn(plantWithout));
   });
 
   it('says the control is closed by a holding and not by the quote', () => {

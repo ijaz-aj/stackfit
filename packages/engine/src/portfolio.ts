@@ -652,7 +652,7 @@ interface SelectionOptions {
    * went with that bundle. Nothing else ever wanted an objective that ignores
    * what a thing costs.
    */
-  readonly objective: 'value_density' | 'cheapest' | 'lowest_tco';
+  readonly objective: 'value_density' | 'cheapest' | 'lowest_tco' | 'cheapest_setup';
   /**
    * What order the *categories* are filled in. `objective` decides which
    * candidate wins inside a category; this decides which categories get a
@@ -837,6 +837,28 @@ function select(
               annualisedMinor(a.cost, assumptions) - annualisedMinor(b.cost, assumptions) ||
               b.candidate.fitScore - a.candidate.fitScore
             );
+          case 'cheapest_setup':
+            /*
+             * Cheapest to *stand up*. The third cost dimension, and the one
+             * with no strategy of its own until a client was told to raise a
+             * one-time budget that was never the constraint.
+             *
+             * `cheapest` ranks on annual procurement and `lowest_tco` on cost
+             * of ownership; neither can see that one SKU costs four times
+             * another to implement. On the retail preset that put Keycloak
+             * (603,750 of setup, free to licence) ahead of Cisco Duo (161,000),
+             * and the difference was the whole reason a mandated EDR could not
+             * be funded.
+             *
+             * It exists to win when a one-time cap binds and to lose otherwise:
+             * the comparison in `buildRecommended` only takes it when it leaves
+             * fewer mandatory categories unfunded.
+             */
+            return (
+              a.oneTimeCost.amountMinor - b.oneTimeCost.amountMinor ||
+              a.spendCost.amountMinor - b.spendCost.amountMinor ||
+              b.candidate.fitScore - a.candidate.fitScore
+            );
           case 'value_density':
             return b.density - a.density || b.candidate.fitScore - a.candidate.fitScore;
         }
@@ -854,6 +876,11 @@ function select(
       // anything: it ran only when this `find` returned nothing, which means
       // nothing fitted both caps, which means the cheapest did not either. It
       // read like a safety net for compliance obligations and was not one.
+      /*
+       * Affordable, once what the remaining mandatory categories need is held
+       * back. `reserved*` is zero outside the mandatory pass, so this is the
+       * original test there.
+       */
       const picked = scored.find((entry) => {
         if (options.ignoreBudget) return true;
         return (
@@ -1481,6 +1508,12 @@ function buildRecommended(
     return { mandatory, total: met.size };
   };
 
+  const SETUP_RATIONALE =
+    'Built from the cheapest option to *implement* in each category rather than the cheapest to ' +
+    'buy or to own. The one-time budget was the binding constraint here: at this cap, ranking on ' +
+    'annual price alone bought a product that was free to licence and four times dearer to stand ' +
+    'up, and left a mandated category with nothing at all.';
+
   const CHEAPEST_RATIONALE =
     'Built from the cheapest acceptable option in each category rather than the highest value ' +
     'density: at this budget, ranking on value alone let one expensive product take the ' +
@@ -1495,12 +1528,25 @@ function buildRecommended(
    * The three things a stack is judged on, in the order a client would defend
    * it in:
    *
+   *   0. mandatory categories left unfunded, fewest first. A category the
+   *      frameworks demand and the bundle did not buy at all is the strongest
+   *      failure available, and it used to be absent from this comparison
+   *      entirely: a stack that skipped a mandated category could win by
+   *      claiming a couple more optional controls somewhere else. Measured on
+   *      the retail preset at a one-time cap of INR 1,600,000, where funding
+   *      every mandatory category costs 1,368,500 and is plainly affordable,
+   *      the winning strategy still left `edr` unbought and the client was told
+   *      to raise a budget that was never the constraint.
    *   1. mandates met . An obligation the analyst ticked and the framework
-   *                      marked mandatory. Nothing outranks this.
+   *                      marked mandatory.
    *   2. weighted need, how much of the estate's risk the stack addresses.
    *   3. controls met . The remaining in-scope controls, mandatory or not.
    */
-  const measure = (bundle: Bundle) => ({ ...controlsMet(bundle), weight: coveredWeight(bundle) });
+  const measure = (bundle: Bundle) => ({
+    ...controlsMet(bundle),
+    weight: coveredWeight(bundle),
+    unfunded: bundle.unfundedMandatory.length,
+  });
 
   // Density leads the list, so it wins every tie and keeps the better-product
   // bias it has always had. An unregulated client with one affordable stack
@@ -1514,8 +1560,18 @@ function buildRecommended(
     'stack this team has no capacity to operate; the figures below count the people who run ' +
     'each product, which is where most of an open-source stack’s cost actually is.';
 
+  // Cheapest to stand up. Only ever wins when a one-time cap is the thing
+  // binding, because the comparison below prefers it solely on unfunded
+  // mandatory categories, which is the failure it exists to prevent.
+  const bySetup = buildBundle('recommended', inputs, rankings, candidates, {
+    ignoreBudget: false,
+    eligible,
+    objective: 'cheapest_setup',
+  });
+
   const strategies: readonly { readonly bundle: Bundle; readonly note: string | undefined }[] = [
     { bundle: byDensity, note: undefined },
+    { bundle: bySetup, note: SETUP_RATIONALE },
     { bundle: byTco, note: TCO_RATIONALE },
     { bundle: byCheapest, note: CHEAPEST_RATIONALE },
     { bundle: byWeightPerCost, note: WEIGHT_PER_COST_RATIONALE },
@@ -1524,11 +1580,15 @@ function buildRecommended(
   const measured = strategies.map((strategy) => ({ ...strategy, score: measure(strategy.bundle) }));
 
   type Measured = (typeof measured)[number];
-  const beats = (a: Measured, b: Measured): boolean =>
-    a.score.mandatory > b.score.mandatory ||
-    (a.score.mandatory === b.score.mandatory &&
-      (a.score.weight > b.score.weight ||
-        (a.score.weight === b.score.weight && a.score.total > b.score.total)));
+  const beats = (a: Measured, b: Measured): boolean => {
+    // Fewest unfunded mandatory categories first, and it is not a tiebreak: a
+    // compliance obligation nothing was bought for outranks any amount of
+    // weighted need covered elsewhere.
+    if (a.score.unfunded !== b.score.unfunded) return a.score.unfunded < b.score.unfunded;
+    if (a.score.mandatory !== b.score.mandatory) return a.score.mandatory > b.score.mandatory;
+    if (a.score.weight !== b.score.weight) return a.score.weight > b.score.weight;
+    return a.score.total > b.score.total;
+  };
 
   const winner = measured.reduce((best, candidate) => (beats(candidate, best) ? candidate : best));
 
