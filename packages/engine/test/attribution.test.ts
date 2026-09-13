@@ -30,6 +30,17 @@ function selection(
   };
 }
 
+/**
+ * A provider side carrying no rota, for the cases that are about the boundary
+ * rather than about staffing. The rota has its own tests below and they pass
+ * one explicitly, so a case that means to exercise it cannot do so by accident.
+ */
+const noRota = { fte: 0, annual: usd(0), workingOut: 'No rota in this case.' };
+const fee = (amountMinor: number, monitoring = noRota) => ({
+  feeAnnual: usd(amountMinor),
+  monitoring,
+});
+
 const managed = responsibilitySplit(
   buildClientProfile({ deliveryModel: 'mssp_managed', serviceLevel: 'mdr' }),
   card,
@@ -51,7 +62,7 @@ describe('attributeBundle', () => {
       managed,
       card,
       'USD',
-      usd(60_000),
+      fee(60_000),
     );
 
     expect(result.bySelection[0]?.operator).toBe('provider');
@@ -67,7 +78,7 @@ describe('attributeBundle', () => {
       managed,
       card,
       'USD',
-      usd(60_000),
+      fee(60_000),
     );
 
     // No service level covers backup, so it stays theirs even on a managed deal.
@@ -88,7 +99,7 @@ describe('attributeBundle', () => {
       managed,
       card,
       'USD',
-      usd(60_000),
+      fee(60_000),
     );
 
     expect(result.bySelection[0]?.licenceInOurFee).toBe(true);
@@ -99,7 +110,7 @@ describe('attributeBundle', () => {
 
   it('leaves a client-operated engagement paying for everything, as it should', () => {
     const selections = [selection('siem', 120_000, 400_000), selection('backup', 8_000, 300_000)];
-    const result = attributeBundle(selections, selfRun, card, 'USD', usd(0));
+    const result = attributeBundle(selections, selfRun, card, 'USD', fee(0));
 
     expect(result.providerOpsAnnual).toEqual(usd(0));
     expect(result.clientTotalAnnual).toEqual(result.fullBuildAnnual);
@@ -114,8 +125,8 @@ describe('attributeBundle', () => {
   it('reports the same full build cost whoever operates it', () => {
     const selections = [selection('siem', 120_000, 400_000), selection('backup', 8_000, 300_000)];
 
-    const a = attributeBundle(selections, managed, card, 'USD', usd(60_000));
-    const b = attributeBundle(selections, selfRun, card, 'USD', usd(0));
+    const a = attributeBundle(selections, managed, card, 'USD', fee(60_000));
+    const b = attributeBundle(selections, selfRun, card, 'USD', fee(0));
 
     expect(a.fullBuildAnnual).toEqual(b.fullBuildAnnual);
   });
@@ -126,7 +137,7 @@ describe('attributeBundle', () => {
       managed,
       card,
       'USD',
-      usd(50_000),
+      fee(50_000),
     );
 
     expect(result.clientTotalAnnual).toEqual(usd(50_000));
@@ -139,7 +150,7 @@ describe('attributeBundle', () => {
       managed,
       card,
       'USD',
-      usd(60_000),
+      fee(60_000),
     );
     const prose = result.rationale.join(' ');
 
@@ -161,11 +172,20 @@ describe('attributeBundle', () => {
       managed,
       card,
       'USD',
-      usd(9_000_000),
+      fee(9_000_000),
     );
 
-    expect(result.rationale.join(' ')).toMatch(/more than the whole stack would cost/);
-    expect(result.rationale.join(' ')).toMatch(/no regional dimension/);
+    // The fact is the client's and is stated plainly to them: buying costs
+    // more than owning, which is a real input to their decision.
+    expect(result.rationale.join(' ')).toMatch(/costs more than owning and running the whole stack/);
+
+    // The diagnosis is ours. It used to sit in the client-facing list ending
+    // "check it before this figure reaches a client", which is an instruction
+    // to the analyst rendering on the screen the analyst turns toward the
+    // client — an invitation to audit our own rate card.
+    expect(result.providerRationale.join(' ')).toMatch(/no regional dimension/);
+    expect(result.rationale.join(' ')).not.toMatch(/rate card/);
+    expect(result.rationale.join(' ')).not.toMatch(/regional dimension/);
   });
 
   it('does not cry wolf when the fee is a sensible fraction of the build', () => {
@@ -174,7 +194,7 @@ describe('attributeBundle', () => {
       managed,
       card,
       'USD',
-      usd(200_000),
+      fee(200_000),
     );
 
     expect(result.rationale.join(' ')).not.toMatch(/more than the whole stack would cost/);
@@ -193,7 +213,7 @@ describe('attributeBundle', () => {
         managed,
         card,
         'USD',
-        usd(400_000),
+        fee(400_000),
       );
 
       expect(result.providerRunAnnual).toEqual(usd(250_000));
@@ -208,7 +228,7 @@ describe('attributeBundle', () => {
         managed,
         card,
         'USD',
-        usd(60_000),
+        fee(60_000),
       );
 
       // No service level covers backup, so none of it is ours to deploy or run.
@@ -222,7 +242,7 @@ describe('attributeBundle', () => {
         managed,
         card,
         'USD',
-        usd(500_000),
+        fee(500_000),
       );
 
       expect(result.providerMarginAnnual).toEqual(usd(200_000));
@@ -240,7 +260,7 @@ describe('attributeBundle', () => {
         managed,
         card,
         'USD',
-        usd(500_000),
+        fee(500_000),
       );
 
       expect(Number(result.providerMarginAnnual.amountMinor)).toBeLessThan(0);
@@ -253,7 +273,7 @@ describe('attributeBundle', () => {
         managed,
         card,
         'USD',
-        usd(500_000),
+        fee(500_000),
       );
 
       expect(Number(result.providerMarginAnnual.amountMinor)).toBeGreaterThan(0);
@@ -263,22 +283,109 @@ describe('attributeBundle', () => {
     });
 
     /**
-     * Measured across the six presets, the margin comes out at 92-97%, which is
-     * not a managed-service margin. The cost side counts tool administration
-     * and not the monitoring rota, which is the product. The figure has to say
-     * so wherever it appears.
+     * The margin comes out at 92-97% across the six presets, which is not a
+     * managed-service margin, and the figure has to say why wherever it
+     * appears.
+     *
+     * The reason it gives changed, and the old one was wrong. This test used to
+     * pin the claim that the margin "excludes the monitoring rota", an upper
+     * bound overstated "by an order of magnitude". The rota is now costed and
+     * the difference was measured: 0.6 to 1.6 percentage points. The cause is
+     * the two rate cards, not the missing rota, and that is what is asserted
+     * now. `test/provider-margin.test.ts` holds the measurement.
      */
-    it('refuses to present the margin as a real one', () => {
+    it('says why the margin is not a real one, and names the right cause', () => {
       const result = attributeBundle(
         [selection('edr', 0, 0, { delivery: 10_000, run: 50_000 })],
         managed,
         card,
         'USD',
-        usd(900_000),
+        fee(900_000),
       );
 
-      expect(result.providerRationale.join(' ')).toMatch(/excludes the monitoring rota/);
-      expect(result.providerRationale.join(' ')).toMatch(/upper bound/);
+      const blob = result.providerRationale.join(' ');
+      expect(blob).toMatch(/two rate cards that were not written about the same market/);
+      expect(blob).toMatch(/actual charge-out rate/);
+      // The disproved explanation must not come back by being written again.
+      expect(blob).not.toMatch(/excludes the monitoring rota/);
+      expect(blob).not.toMatch(/order of magnitude/);
+    });
+
+    /**
+     * The rota is per client and the administration is per tool, so widening
+     * the boundary must move one and not the other. Getting this wrong in the
+     * other direction would charge a rota once per category we operate.
+     */
+    it('charges the rota once for the client, not once per category we operate', () => {
+      const rota = { fte: 0.4, annual: usd(20_000), workingOut: '0.4 FTE of a 24/7 seat.' };
+      const one = attributeBundle(
+        [selection('edr', 0, 0, { run: 50_000 })],
+        managed,
+        card,
+        'USD',
+        fee(900_000, rota),
+      );
+      const three = attributeBundle(
+        [
+          selection('edr', 0, 0, { run: 50_000 }),
+          selection('siem', 0, 0, { run: 50_000 }),
+          // `mdr` and not `ndr`: the fixture's mdr level covers three
+          // categories, and picking one outside it would have tested the
+          // boundary instead of the rota.
+          selection('mdr', 0, 0, { run: 50_000 }),
+        ],
+        managed,
+        card,
+        'USD',
+        fee(900_000, rota),
+      );
+
+      expect(one.providerMonitoringAnnual).toEqual(usd(20_000));
+      expect(three.providerMonitoringAnnual).toEqual(usd(20_000));
+      // Administration does scale with the boundary; that is the difference.
+      expect(one.providerAdministrationAnnual).toEqual(usd(50_000));
+      expect(three.providerAdministrationAnnual).toEqual(usd(150_000));
+      expect(three.providerRunAnnual).toEqual(usd(170_000));
+    });
+
+    /**
+     * A category outside every service level is one we do not watch. Charging
+     * ourselves a rota for a client whose whole stack they run would invent a
+     * cost, and on `client_operated` it would invent it against a zero fee.
+     */
+    it('charges no rota where we operate nothing', () => {
+      const rota = { fte: 0.4, annual: usd(20_000), workingOut: '0.4 FTE of a 24/7 seat.' };
+      const result = attributeBundle(
+        [selection('siem', 120_000, 400_000)],
+        selfRun,
+        card,
+        'USD',
+        fee(0, rota),
+      );
+
+      expect(result.providerMonitoringAnnual).toEqual(usd(0));
+      expect(result.providerMonitoringFte).toBe(0);
+      expect(result.providerRunAnnual).toEqual(usd(0));
+      expect(result.providerMarginRate).toBeNull();
+    });
+
+    /**
+     * The rate is what makes the problem visible; the absolute figure does not.
+     * Null rather than zero on a client-operated engagement, because "no
+     * margin" and "no fee to take a margin on" are different statements.
+     */
+    it('reports the margin as a share of the fee', () => {
+      const result = attributeBundle(
+        [selection('edr', 0, 0, { run: 50_000 })],
+        managed,
+        card,
+        'USD',
+        fee(1_000_000, { fte: 0.1, annual: usd(50_000), workingOut: '0.1 FTE.' }),
+      );
+
+      // Fee 10,000; run cost 1,000 of it. 90%.
+      expect(result.providerMarginRate).toBe(0.9);
+      expect(result.providerMarginAnnual).toEqual(usd(900_000));
     });
 
     /**
@@ -293,7 +400,7 @@ describe('attributeBundle', () => {
         managed,
         card,
         'USD',
-        usd(900_000),
+        fee(900_000),
       );
       const clientSafe = result.rationale.join(' ');
 
@@ -309,7 +416,7 @@ describe('attributeBundle', () => {
         managed,
         card,
         'USD',
-        usd(60_000),
+        fee(60_000),
       );
 
       expect(result.clientTotalAnnual).toEqual(usd(70_000));
@@ -326,7 +433,7 @@ describe('attributeBundle', () => {
       managed,
       card,
       'USD',
-      usd(75_000),
+      fee(75_000),
     );
 
     const parts =

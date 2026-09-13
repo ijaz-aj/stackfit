@@ -47,6 +47,37 @@ export interface SelectionAttribution {
   readonly licenceInOurFee: boolean;
 }
 
+/**
+ * The rota, as a cost to us.
+ *
+ * Separate from the per-selection effort above because it is a different
+ * quantity: administration is per product and scales with the estate, the rota
+ * is per client and scales with shift coverage. `staffing.ts` keeps them apart
+ * for that reason and this module must not be the place they get added up
+ * without saying so.
+ */
+export interface ProviderMonitoring {
+  /** FTE of round-the-clock coverage this client consumes. Zero if we monitor nothing. */
+  readonly fte: number;
+  /** That rota at our own loaded cost, already in the bundle currency. */
+  readonly annual: Money;
+  /** The arithmetic behind the FTE, as `monitoringFte` worked it out. */
+  readonly workingOut: string;
+}
+
+/**
+ * Everything about our side of the deal that this module cannot derive.
+ *
+ * One object rather than two more positional arguments: both are Money-shaped
+ * and both are ours, and a caller that swapped a fee for a rota cost would get
+ * an answer rather than an error.
+ */
+export interface ProviderSide {
+  /** Already converted; see the note on `attributeBundle`. */
+  readonly feeAnnual: Money;
+  readonly monitoring: ProviderMonitoring;
+}
+
 export interface BundleAttribution {
   readonly currency: CurrencyCode;
   readonly bySelection: readonly SelectionAttribution[];
@@ -73,7 +104,14 @@ export interface BundleAttribution {
    * costs us to stand up and to run.
    */
   readonly providerDeliveryOneTime: Money;
+  /** Administration plus the monitoring rota: everything running it costs us. */
   readonly providerRunAnnual: Money;
+  /** The administration half of `providerRunAnnual`, at our rates. */
+  readonly providerAdministrationAnnual: Money;
+  /** The rota half. Zero when we operate nothing, and per client rather than per tool. */
+  readonly providerMonitoringAnnual: Money;
+  /** The rota in people, so the cost above can be checked against the headcount. */
+  readonly providerMonitoringFte: number;
   /**
    * Fee minus what it costs us to run, per year, once delivery is behind us.
    *
@@ -84,6 +122,16 @@ export interface BundleAttribution {
   readonly providerMarginAnnual: Money;
   /** Year one margin: the annual figure less what standing it up costs us. */
   readonly providerMarginYearOne: Money;
+  /**
+   * Margin as a share of the fee, or null when there is no fee to take a share
+   * of.
+   *
+   * Carried because the absolute figure hides the thing worth noticing. USD
+   * 677,077 of margin reads as a large engagement; 94.5% of the fee reads as a
+   * rate card and a cost base that were not written about the same market, and
+   * that is the question this number exists to raise.
+   */
+  readonly providerMarginRate: number | null;
   /**
    * The old figure, kept: what the stack costs to own and run, with no regard
    * for who bears it.
@@ -121,6 +169,12 @@ export interface AttributableSelection {
   readonly providerOpsFteAnnual: Money;
 }
 
+/** Local, because importing a rounding helper for one call site is not worth it. */
+function round(value: number, places: number): number {
+  const factor = 10 ** places;
+  return Math.round(value * factor) / factor;
+}
+
 function ownershipOf(category: ProductCategory, rateCard: MsspRateCard) {
   return (
     rateCard.licenceOwnership.byCategory.find((entry) => entry.category === category)?.ownership ??
@@ -131,18 +185,20 @@ function ownershipOf(category: ProductCategory, rateCard: MsspRateCard) {
 /**
  * Split a bundle's costs between the client and us.
  *
- * `providerFeeAnnual` arrives already converted rather than being computed
- * here: the rate card is in USD and the fee is the one figure that has to cross
- * currencies, which `msspAlternative` already does. Keeping that conversion in
- * one place leaves this module as pure arithmetic over a single currency.
+ * `provider.feeAnnual` and `provider.monitoring.annual` arrive already
+ * converted rather than being computed here: the rate card is in USD, our
+ * labour rates are in INR, and the callers that own those conversions
+ * (`msspAlternative` and `buildBundle`) already hold `fx`. Keeping them there
+ * leaves this module as pure arithmetic over a single currency.
  */
 export function attributeBundle(
   selections: readonly AttributableSelection[],
   split: ResponsibilitySplit,
   rateCard: MsspRateCard,
   currency: CurrencyCode,
-  providerFeeAnnual: Money,
+  provider: ProviderSide,
 ): BundleAttribution {
+  const providerFeeAnnual = provider.feeAnnual;
   const zero = zeroMoney(currency);
   const bySelection: SelectionAttribution[] = [];
 
@@ -199,12 +255,41 @@ export function attributeBundle(
     currency,
     oursOnly.map((entry) => entry.providerDeliveryOneTime),
   );
-  const providerRunAnnual = sumMoney(
+  const providerAdministrationAnnual = sumMoney(
     currency,
     oursOnly.map((entry) => entry.providerOpsFteAnnual),
   );
+
+  /*
+   * The rota is charged whole or not at all, and it does not follow the
+   * category list the way administration does.
+   *
+   * Administration is per tool: we carry it for the tools inside the boundary
+   * and not for the ones outside it. Monitoring is per client. We do not watch
+   * a proportion of an estate, and a service level covering five categories
+   * rather than two does not put more analysts in front of the same screens.
+   *
+   * ⚠ The gate is "we operate something", not "we operate a detection
+   * category", which holds because every service level on the committed rate
+   * card covers `siem` and `mdr`. A level that covers neither would be charged
+   * a rota it does not run. Stated rather than guarded, because the guard would
+   * have to name categories in code and the whole point of `coveredCategories`
+   * is that the analyst maintains that list in the rate card.
+   */
+  const providerMonitoringAnnual = split.providerOperatesNothing ? zero : provider.monitoring.annual;
+  const providerMonitoringFte = split.providerOperatesNothing ? 0 : provider.monitoring.fte;
+
+  const providerRunAnnual = sumMoney(currency, [
+    providerAdministrationAnnual,
+    providerMonitoringAnnual,
+  ]);
   const providerMarginAnnual = subtractMoney(providerFeeAnnual, providerRunAnnual);
   const providerMarginYearOne = subtractMoney(providerMarginAnnual, providerDeliveryOneTime);
+  const feeMinor = Number(providerFeeAnnual.amountMinor);
+  // Rounded, because an unrounded ratio of two integers is a float and this
+  // object is compared for equality in the determinism test.
+  const providerMarginRate =
+    feeMinor === 0 ? null : Math.round((Number(providerMarginAnnual.amountMinor) / feeMinor) * 10000) / 10000;
 
   const rationale: string[] = [];
   const providerRationale: string[] = [];
@@ -264,24 +349,42 @@ export function attributeBundle(
         `year, and ${moneyInWords(providerMarginYearOne)} in year one once delivery is paid for.`,
     );
 
+    providerRationale.push(
+      `That run cost is ${moneyInWords(providerAdministrationAnnual)} of tool administration ` +
+        `plus ${moneyInWords(providerMonitoringAnnual)} for the ` +
+        `${round(providerMonitoringFte, 3)} FTE of round-the-clock coverage this client ` +
+        `consumes. ${provider.monitoring.workingOut}`,
+    );
+
     /*
-     * The margin above is overstated, structurally, and saying so is not
-     * optional. `opsBurden` is the effort to *administer* a tool: deploy, tune,
-     * maintain, upgrade. It is not the rota that watches what the tool
-     * produces, and on a managed engagement that rota is the product. Published
-     * benchmarks put 24/7 in-house SIEM operation at several analysts across
-     * shifts; the figures here are a fraction of that, by design and by
-     * definition.
+     * What the margin is now, and what it still is not.
      *
-     * `msspAnalystFtePerClient` in scoring-weights.yaml is the allocation we
-     * already assume, and it is not costed here because it reaches the scoring
-     * stage rather than this one. Until it does, this is gross margin on tool
-     * administration, not on the service.
+     * This used to say the figure excluded the monitoring rota and was
+     * therefore an upper bound "by an order of magnitude". The rota is now in
+     * it, and measuring the difference showed that claim was wrong: across the
+     * six committed presets the rota moves the margin by 0.6 to 1.6 percentage
+     * points, not by an order of magnitude. It is small because an MSSP seat is
+     * spread across a published 50 to 100 clients, so a reference client
+     * consumes about 0.065 FTE of it.
+     *
+     * The margin stayed above 90% anyway, which means the rota was never the
+     * explanation. The explanation is below, and it is about the two rate cards
+     * rather than about anything this module computes.
      */
     providerRationale.push(
-      '⚠ That margin counts only what it costs us to administer the tools. It excludes the ' +
-        'monitoring rota, which is the thing a managed engagement actually sells and the larger ' +
-        'figure by an order of magnitude. Treat it as an upper bound, not as a margin.',
+      `⚠ ${providerMarginRate === null ? 'This margin' : `${Math.round(providerMarginRate * 100)}% margin`} ` +
+        'is a ratio between two rate cards that were not written about the same market, and it ' +
+        'should be read as that before it is read as profit. The fee above comes from a card ' +
+        'synthesised from published US and global MDR ranges. The cost under it is our own ' +
+        'people at an Indian payroll. What is missing is our actual charge-out rate, which is a ' +
+        'commercial fact this engine cannot derive and must be given.',
+    );
+
+    providerRationale.push(
+      '⚠ Still excluded: every `opsBurden` coefficient behind the administration figure is an ' +
+        'analyst estimate, 65 of 65, and the administration total is a straight sum with no ' +
+        'overlap between tools run by the same engineer. Both understate margin rather than ' +
+        'flatter it.',
     );
 
     if (Number(providerMarginAnnual.amountMinor) <= 0) {
@@ -312,12 +415,30 @@ export function attributeBundle(
      * to be invented here.
      */
     if (Number(providerFeeAnnual.amountMinor) > Number(fullBuildAnnual.amountMinor)) {
+      /*
+       * Split in two, because one sentence was doing two jobs and only one of
+       * them was the client's.
+       *
+       * The fact is theirs and they are entitled to it: buying this as a
+       * service costs more than owning it would, which is a real input to
+       * their decision and stating it is what keeps the build-versus-buy
+       * comparison honest. The diagnosis is ours. "Check it before this figure
+       * reaches a client" was written to the analyst and was rendering on the
+       * screen the analyst turns toward the client, which is an instruction to
+       * the reader to audit our own rate card.
+       */
       rationale.push(
-        `⚠ Our fee is more than the whole stack would cost the client to own and run. Either ` +
-          'this engagement is genuinely not worth buying as a managed service, or the rate ' +
-          'card does not apply here: it is in USD, is synthesised from published US and ' +
-          'global ranges, and has no regional dimension, while the labour rates it is being ' +
-          'compared against do. Check it before this figure reaches a client.',
+        `Buying this as a managed service costs more than owning and running the whole stack ` +
+          `would: ${moneyInWords(providerFeeAnnual)} a year against ` +
+          `${moneyInWords(fullBuildAnnual)}. That is worth weighing before choosing the ` +
+          'managed option.',
+      );
+      providerRationale.push(
+        '⚠ Our fee exceeds what the whole stack would cost this client to own and run. Either ' +
+          'the engagement is genuinely not worth buying as a service at this size, or the rate ' +
+          'card does not apply: it is in USD, synthesised from published US and global ranges, ' +
+          'and carries no regional dimension, while the labour rates it is being compared ' +
+          'against do. Settle which before the fee reaches a client.',
       );
     }
   }
@@ -332,8 +453,12 @@ export function attributeBundle(
     providerOpsAnnual,
     providerDeliveryOneTime,
     providerRunAnnual,
+    providerAdministrationAnnual,
+    providerMonitoringAnnual,
+    providerMonitoringFte,
     providerMarginAnnual,
     providerMarginYearOne,
+    providerMarginRate,
     fullBuildAnnual,
     rationale,
     providerRationale,

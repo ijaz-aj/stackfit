@@ -53,6 +53,7 @@ import {
 } from './money';
 import { responsibilitySplit } from './responsibility';
 import type { ProductScore } from './scoring';
+import { monitoringFte } from './staffing';
 import type { SizingResult } from './sizing';
 
 /*
@@ -1148,6 +1149,30 @@ export function msspAlternative(
   };
 }
 
+/**
+ * The monitoring rota this client consumes, costed at our own rate.
+ *
+ * Here rather than in `attribution.ts` because this is where `fx` and the
+ * labour rates already are, and one place converting our loaded cost is one
+ * place to get it wrong. `attributeBundle` decides whether the rota applies at
+ * all; this only says what it would cost if it does.
+ *
+ * `labourRates.provider` and not `byRegion[client]`: the rota is our people.
+ * Pricing them at the client's regional rate is the defect Phase 13 removed
+ * from the administration figure, and it would be the same defect here.
+ */
+function providerMonitoring(inputs: PortfolioInputs, currency: CurrencyCode) {
+  const { sizing, costInputs, fx } = inputs;
+  const monitoring = monitoringFte(sizing.monitoredAssetCount, costInputs.staffingModel);
+  const loadedAnnual = convertMoney(costInputs.labourRates.provider.loadedAnnualCost, currency, fx);
+
+  return {
+    fte: monitoring.fte,
+    annual: scaleMoney(loadedAnnual, monitoring.fte),
+    workingOut: monitoring.workingOut,
+  };
+}
+
 function buildBundle(
   kind: BundleKind,
   inputs: PortfolioInputs,
@@ -1255,7 +1280,7 @@ function buildBundle(
       break;
     case 'phase2':
       rationale.push(
-        'Phase 2: real, worth buying, and not this year. Everything here ranked below the ' +
+        'Deferred: real, worth buying, and not this year. Everything here ranked below the ' +
           'year-one line for this estate or could not be funded inside the stated budget, so it ' +
           'is priced and deferred rather than dropped. Not constrained by this year’s cap, ' +
           'because this is next year’s money.',
@@ -1391,12 +1416,17 @@ function buildBundle(
       responsibilitySplit(profile, inputs.mssp),
       inputs.mssp,
       currency,
-      /*
-       * The fee only applies where we are actually the operator. On a
-       * `client_operated` engagement the same figure is a quote from a provider
-       * they have not hired, so charging it to them here would invent a cost.
-       */
-      profile.deliveryModel === 'client_operated' ? zeroMoney(currency) : mssp.annual,
+      {
+        /*
+         * The fee only applies where we are actually the operator. On a
+         * `client_operated` engagement the same figure is a quote from a
+         * provider they have not hired, so charging it to them here would
+         * invent a cost.
+         */
+        feeAnnual:
+          profile.deliveryModel === 'client_operated' ? zeroMoney(currency) : mssp.annual,
+        monitoring: providerMonitoring(inputs, currency),
+      },
     ),
     rationale,
   };
