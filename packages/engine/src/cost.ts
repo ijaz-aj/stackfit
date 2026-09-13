@@ -23,6 +23,7 @@ import type {
   ProductTier,
 } from '@stackfit/schema';
 
+import { chooseDeployment, type DeploymentDecision } from './deployment';
 import { assessTierFreshness, needsRecheck, type PriceFreshness } from './freshness';
 import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money';
 import type { SizingResult } from './sizing';
@@ -63,6 +64,15 @@ export interface ProductCost {
   readonly licenceAnnual: Money;
   readonly supportAnnual: Money;
   readonly infraAnnual: Money;
+  /**
+   * How this product will be deployed for this client, and whether that means
+   * the client stands up infrastructure.
+   *
+   * Carried on the cost rather than derived again downstream: the figure above
+   * depends on it, and two places deciding it separately is how they come to
+   * disagree.
+   */
+  readonly deployment: DeploymentDecision;
   readonly opsFteAnnual: Money;
   /** FTE this product consumes, from opsBurden and the monitored asset count. */
   readonly opsFte: number;
@@ -273,10 +283,17 @@ function infraAnnualFor(
   product: Product,
   sizing: SizingResult,
   assumptions: CostAssumptions,
+  /*
+   * Whether this client will actually self-host it, not whether the product
+   * could be self-hosted by somebody.
+   *
+   * It used to be the latter, read straight off `deploymentModes`, which
+   * charged a cloud-only client for the infrastructure to run a product they
+   * would consume as SaaS. 42 of 65 catalog tiers declare every mode, so that
+   * was most of the catalog.
+   */
+  selfHosted: boolean,
 ): { amount: Money; vcpu: number; explanation: string | undefined } {
-  const selfHosted = product.supports.deploymentModes.some(
-    (mode) => mode === 'on_prem' || mode === 'air_gapped',
-  );
 
   const infra = assumptions.infra;
   const currency = infra.vcpuMonth.currency;
@@ -399,10 +416,21 @@ export function computeProductCost(
   const supportAnnual = scaleMoney(licenceAnnual, costAssumptions.supportRateOfLicence);
 
   // ---- Infrastructure.
-  const infra = infraAnnualFor(product, sizing, costAssumptions);
+  const deployment = chooseDeployment(product, profile);
+  const infra = infraAnnualFor(product, sizing, costAssumptions, deployment.selfHosted);
   const infraAnnual = convertMoney(infra.amount, currency, fx);
+
+  // Hard rule 5. The deployment decision moves the infrastructure line to or
+  // from zero, so the figure is indefensible without it stated alongside.
+  rationale.push(deployment.rationale);
+
   if (infra.explanation !== undefined && infraAnnual.amountMinor > 0) {
     rationale.push(`Self-hosted infrastructure: ${infra.explanation}`);
+  } else if (!deployment.selfHosted) {
+    rationale.push(
+      'No infrastructure line: the vendor runs it at this deployment mode, and is already ' +
+        'charging for theirs in the licence.',
+    );
   }
 
   // ---- Operational people. The line that makes open source comparable.
@@ -520,6 +548,7 @@ export function computeProductCost(
     licenceAnnual,
     supportAnnual,
     infraAnnual,
+    deployment,
     opsFteAnnual,
     opsFte,
     opsBurdenConfidence: product.opsBurden.confidence,

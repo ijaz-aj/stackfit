@@ -88,6 +88,12 @@ function bundleOf(
     tierId: 'standard',
     currency: 'USD' as const,
     licenceListAnnual: zero,
+    deployment: {
+      mode: 'on_prem' as const,
+      selfHosted: true,
+      assumed: false,
+      rationale: 'test fixture',
+    },
     discountRate: 0,
     discountLabel: '',
     licenceAnnual: zero,

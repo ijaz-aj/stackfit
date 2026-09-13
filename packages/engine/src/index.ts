@@ -15,6 +15,7 @@ export * from './freshness';
 export * from './claims';
 export * from './cost';
 export * from './infrastructure';
+export * from './deployment';
 export * from './responsibility';
 export * from './attribution';
 export * from './scoring';
