@@ -52,9 +52,20 @@ export function DeleteSession({ id, name }: { id: string; name: string }) {
     );
   }
 
+  /*
+    Wraps, because it has to.
+
+    Measured at 390px: the confirmation is ~435px of content, and it used to
+    sit in a `shrink-0` container that could neither shrink nor wrap. The row
+    is ~308px, so the page's scrollWidth went from 390 to 575 the instant
+    somebody tapped Delete: "Yes, delete" and "Cancel" left the screen
+    sideways, on the one interaction where the two choices must both be
+    reachable. `min-w-0` lets the name give up its width first, and the buttons
+    drop to a second line before anything leaves the viewport.
+  */
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-bad max-w-[28ch] truncate text-xs" title={name}>
+    <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+      <span className="text-bad min-w-0 max-w-[28ch] truncate text-xs" title={name}>
         Delete “{name}”?
       </span>
       <form action={deleteScenario}>

@@ -144,7 +144,7 @@ export default async function ScenariosPage() {
               */
               <li
                 key={scenario.id}
-                className="group hover:bg-panel-raised/60 flex items-center gap-3 rounded-(--radius-control) px-2 py-2.5 transition-colors duration-(--duration-instant)"
+                className="group hover:bg-panel-raised/60 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-(--radius-control) px-2 py-2.5 transition-colors duration-(--duration-instant)"
               >
                 <div className="min-w-0 flex-1">
                   <Link
@@ -174,7 +174,13 @@ export default async function ScenariosPage() {
 
                 <When iso={scenario.updatedAt} />
 
-                <div className="flex shrink-0 items-center gap-1">
+                {/*
+                  `ml-auto` and wrapping so this cluster drops to its own line
+                  rather than off the side of a phone. Delete's confirmation
+                  expands this to roughly 435px, which does not fit a 390px
+                  screen on the same line as the name.
+                */}
+                <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
                   <form action={cloneScenario}>
                     <input type="hidden" name="id" value={scenario.id} />
                     <Button type="submit" variant="ghost" className="px-2 py-1 text-xs">
