@@ -7,6 +7,7 @@ import { BundleComparison } from '@/components/results/bundle-comparison';
 import { CategoryCards } from '@/components/results/category-cards';
 import { CostBreakdown } from '@/components/results/cost-breakdown';
 import { Engagement } from '@/components/results/engagement';
+import { Staffing } from '@/components/results/staffing';
 import { CoverageMatrix } from '@/components/results/coverage-matrix';
 import { GapAnalysis } from '@/components/results/gap-analysis';
 import { SectionNav } from '@/components/results/section-nav';
@@ -33,6 +34,7 @@ const RESULTS_SECTIONS = [
   { id: 'bundles', label: 'Bundles' },
   { id: 'categories', label: 'By category' },
   { id: 'engagement', label: 'Who pays' },
+  { id: 'staffing', label: 'People' },
   { id: 'cost', label: 'Cost' },
   { id: 'coverage', label: 'Coverage' },
   { id: 'gaps', label: 'Gaps' },
@@ -224,6 +226,15 @@ export default async function ResultsPage({
           */}
           <div id="engagement" className="scroll-mt-20">
             <Engagement bundle={bundle} profile={scenario.profile} />
+          </div>
+
+          {/*
+            After "who pays" and before the cost breakdown. The people question
+            is the one a client asks straight after the money question, and the
+            answer has to be next to it rather than buried under the charts.
+          */}
+          <div id="staffing" className="scroll-mt-20">
+            <Staffing result={result} profile={scenario.profile} />
           </div>
 
           <div id="cost" className="scroll-mt-20">

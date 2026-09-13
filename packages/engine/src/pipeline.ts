@@ -21,6 +21,8 @@ import type {
   MsspRateCard,
   PortfolioAssumptions,
   Product,
+  DeploymentMode,
+  ProductCategory,
   ScoringWeights,
   SizingAssumptions,
   SizingOverrides,
@@ -36,6 +38,7 @@ import {
 } from './infrastructure';
 import { buildPortfolio, type Bundle, type Candidate, type CategoryRanking } from './portfolio';
 import { scoreProducts, type ProductScore } from './scoring';
+import { monitoringFte, type MonitoringFte } from './staffing';
 import { applySizingOverrides, computeSizing, type SizingResult } from './sizing';
 
 /**
@@ -73,8 +76,40 @@ export interface PipelineInputs {
   readonly costInputs: CostInputs;
 }
 
+/** Who it takes to run this client, split by the two questions that differ. */
+export interface ClientStaffing {
+  /** Our people watching their estate around the clock, with the working. */
+  readonly monitoring: MonitoringFte;
+  /**
+   * Total administration effort across the recommended bundle.
+   *
+   * ⚠ A straight sum across products with no overlap, so it overstates what one
+   * team really carries: two tools administered by the same engineer share
+   * context, tooling and on-call. The figure is honest per product and
+   * pessimistic in aggregate, and is the reason a thirteen-tool stack reads as
+   * needing more people than any real team would put on it.
+   */
+  readonly administrationFte: number;
+  readonly administrationByProduct: readonly {
+    readonly productId: string;
+    readonly category: ProductCategory;
+    readonly fte: number;
+    readonly deploymentMode: DeploymentMode;
+  }[];
+}
+
 export interface PipelineResult {
   readonly sizing: SizingResult;
+  /**
+   * How many people this client takes to run, with the working.
+   *
+   * Two separate answers, and they are separate on purpose: administration is
+   * a fraction of an FTE per tool and scales with the estate, monitoring is a
+   * share of a round-the-clock rota and scales with shift coverage. Reading one
+   * as the other understates by an order of magnitude, and always in that
+   * direction. See `staffing.ts`.
+   */
+  readonly staffing: ClientStaffing;
   /** The coefficients this run actually used, overrides folded in. */
   readonly sizingAssumptions: SizingAssumptions;
   /** The catalog this run considered, so callers can name what was on offer. */
@@ -168,6 +203,8 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
     estateShape: infrastructure.shape,
   });
 
+  const monitoring = monitoringFte(sizing.monitoredAssetCount, costInputs.staffingModel);
+
   const portfolio = buildPortfolio({
     profile,
     sizing,
@@ -201,6 +238,16 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
 
   return {
     sizing,
+    staffing: {
+      monitoring,
+      administrationFte: portfolio.recommended.totalOpsFte,
+      administrationByProduct: portfolio.recommended.selections.map((selection) => ({
+        productId: selection.productId,
+        category: selection.category,
+        fte: selection.cost.opsFte,
+        deploymentMode: selection.cost.deployment.mode,
+      })),
+    },
     sizingAssumptions: effectiveAssumptions,
     products,
     infrastructure,
