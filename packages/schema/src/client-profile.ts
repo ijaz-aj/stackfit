@@ -11,6 +11,7 @@ import {
   DeploymentConstraint,
   FrameworkId,
   Industry,
+  MsspServiceLevel,
   ProcurementBias,
   Region,
   RiskTolerance,
@@ -43,7 +44,7 @@ export const Budget = z
   });
 export type Budget = z.infer<typeof Budget>;
 
-export const ClientProfile = z
+export const ClientProfileFields = z
   .object({
     orgName: z.string().min(1),
     industry: Industry,
@@ -59,6 +60,19 @@ export const ClientProfile = z
     securityStaffFte: z.number().nonnegative(),
     /** How much of the stack we operate. See `DeliveryModel`. */
     deliveryModel: DeliveryModel,
+    /**
+     * How far our operation reaches, and therefore which categories are ours to
+     * run rather than theirs to staff.
+     *
+     * `null` is not "unanswered". It is the positive statement that we operate
+     * nothing, and it is the only valid value when `deliveryModel` is
+     * `client_operated`; the refinement below enforces the pair in both
+     * directions. Splitting "who operates" from "how far" is what stops
+     * `co_managed` being a word with no boundary attached: the boundary is the
+     * service level's `coveredCategories`, and it is what a client is actually
+     * asking about when they ask what they are buying.
+     */
+    serviceLevel: MsspServiceLevel.nullable(),
     riskTolerance: RiskTolerance,
     dataSensitivity: DataSensitivity,
     /** Ticked by the analyst. These are what promote a category to mandatory. */
@@ -87,6 +101,47 @@ export const ClientProfile = z
     excludedProducts: z.array(Slug).default([]),
   })
   .strict();
+
+/**
+ * The `deliveryModel` / `serviceLevel` invariant, as a reusable check.
+ *
+ * Exported because `ScenarioPreset` omits `orgName` and therefore needs its own
+ * object schema; a copy of this rule living there would be the second place
+ * that has to be right, and the one that gets forgotten.
+ */
+export function checkDeliveryServiceLevel(
+  profile: { deliveryModel: DeliveryModel; serviceLevel: MsspServiceLevel | null },
+  ctx: z.RefinementCtx,
+): void {
+  {
+    /*
+     * The pair has to agree, and the failure is worth catching here rather than
+     * downstream. A `client_operated` engagement carrying a service level would
+     * hand the cost attribution a set of categories we are supposed to be
+     * operating on a model where we operate nothing, and a managed engagement
+     * with no service level has no boundary at all, so every category would
+     * fall to the client and the model would be indistinguishable from the one
+     * this field exists to separate it from.
+     */
+    if (profile.deliveryModel === 'client_operated' && profile.serviceLevel !== null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['serviceLevel'],
+        message:
+          'A client_operated engagement must have serviceLevel null: we operate nothing on it.',
+      });
+    }
+    if (profile.deliveryModel !== 'client_operated' && profile.serviceLevel === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['serviceLevel'],
+        message: `A ${profile.deliveryModel} engagement needs a serviceLevel: it is what decides which categories we operate.`,
+      });
+    }
+  }
+}
+
+export const ClientProfile = ClientProfileFields.superRefine(checkDeliveryServiceLevel);
 
 /**
  * Scoping sessions saved before the environment split still parse.
@@ -164,6 +219,29 @@ export const StoredClientProfile = z.preprocess((value) => {
     const { hasSoc, ...rest } = row;
     const migrated = typeof hasSoc === 'string' ? LEGACY_DELIVERY[hasSoc] : undefined;
     row = migrated === undefined ? rest : { ...rest, deliveryModel: migrated };
+  }
+
+  /*
+   * `serviceLevel` postdates every stored row, so absence here is genuinely
+   * "never asked" rather than an answer, and the invariant on ClientProfile
+   * will reject the row unless something supplies one.
+   *
+   * This is a stated default and not a reading of what the client said, which
+   * is the difference between it and the two migrations above: those translate
+   * an old answer, this one admits there was no question. The defaults are the
+   * conservative end of each model, `monitoring` for co-managed rather than
+   * `mdr`, because the alternative is a migration that quietly widens the scope
+   * of engagements already on the books. An analyst re-opening the session sees
+   * the field and can correct it; a row that silently claimed we run their
+   * endpoints would not announce itself at all.
+   */
+  if (!('serviceLevel' in row)) {
+    const delivery = row.deliveryModel;
+    row = {
+      ...row,
+      serviceLevel:
+        delivery === 'mssp_managed' ? 'mdr' : delivery === 'co_managed' ? 'monitoring' : null,
+    };
   }
 
   return row;

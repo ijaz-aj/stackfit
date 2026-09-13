@@ -73,6 +73,8 @@ presets:
       securityStaffFte: 1
       # One security person across 40 stores cannot carry a stack. We run it.
       deliveryModel: mssp_managed
+      # PCI DSS pushes detection and response to us; store IT keeps identity, mail and backup.
+      serviceLevel: mdr
       riskTolerance: medium
       dataSensitivity: regulated
       compliance: [pci-dss-4.0, dpdp-2023]
@@ -130,6 +132,8 @@ presets:
       securityStaffFte: 1
       # Engineers who already run their own tooling and want eyes on it.
       deliveryModel: client_operated
+      # They run it; we consume the telemetry. We operate nothing, so there is no service level.
+      serviceLevel: null
       riskTolerance: medium
       dataSensitivity: regulated
       compliance: [soc-2, gdpr]
@@ -186,6 +190,8 @@ presets:
       securityStaffFte: 2
       # A real team on days. They keep the plant, we take detection and response.
       deliveryModel: co_managed
+      # Two plant engineers on business hours. We watch, they act: the split their rota can hold.
+      serviceLevel: monitoring
       riskTolerance: medium
       dataSensitivity: internal
       compliance: [nis2, iso-27001-2022]
@@ -247,6 +253,8 @@ presets:
       securityStaffFte: 2
       # Two people for 300 beds, and nothing out of hours. We run it.
       deliveryModel: mssp_managed
+      # Clinical estate with two security staff. Containment is ours; identity and backup stay theirs.
+      serviceLevel: mdr
       riskTolerance: low
       dataSensitivity: critical
       compliance: [hipaa]
@@ -310,6 +318,8 @@ presets:
       securityStaffFte: 4
       # Four staff and a regulator. They keep identity and the network.
       deliveryModel: co_managed
+      # Regulated, funded, and keeps its own identity and privileged access in house. We take detection and response.
+      serviceLevel: mdr
       riskTolerance: low
       dataSensitivity: critical
       compliance: [rbi-csf, pci-dss-4.0, dpdp-2023]
@@ -370,6 +380,8 @@ presets:
       securityStaffFte: 0
       # Nobody at all. The clearest managed case in the set.
       deliveryModel: mssp_managed
+      # Zero security staff. The widest level on the card, because anything they keep, nobody runs.
+      serviceLevel: managed_security
       riskTolerance: medium
       dataSensitivity: internal
       compliance: []

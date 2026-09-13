@@ -65,6 +65,7 @@ describe('ClientProfile', () => {
     itStaffCount: 3,
     securityStaffFte: 0,
     deliveryModel: 'client_operated',
+    serviceLevel: null,
     riskTolerance: 'medium',
     dataSensitivity: 'regulated',
     compliance: ['pci-dss-4.0'],
@@ -87,6 +88,38 @@ describe('ClientProfile', () => {
 
   it('rejects a negative headcount', () => {
     expect(ClientProfile.safeParse({ ...base, employeeCount: -1 }).success).toBe(false);
+  });
+
+  /*
+   * `deliveryModel` and `serviceLevel` are one answer in two fields, and either
+   * alone is a boundary nobody can draw. A managed engagement with no service
+   * level hands every category to the client and is indistinguishable from the
+   * model it exists to differ from; a client-operated one carrying a level
+   * claims we run categories on an engagement where we run nothing.
+   */
+  it('rejects a managed engagement with no service level', () => {
+    const result = ClientProfile.safeParse({
+      ...base,
+      deliveryModel: 'mssp_managed',
+      serviceLevel: null,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a client-operated engagement that claims a service level', () => {
+    const result = ClientProfile.safeParse({ ...base, serviceLevel: 'mdr' });
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts each delivery model with a service level that suits it', () => {
+    for (const [deliveryModel, serviceLevel] of [
+      ['mssp_managed', 'managed_security'],
+      ['co_managed', 'monitoring'],
+      ['client_operated', null],
+    ] as const) {
+      const result = ClientProfile.safeParse({ ...base, deliveryModel, serviceLevel });
+      expect(result.success, `${deliveryModel} / ${serviceLevel}`).toBe(true);
+    }
   });
 });
 
@@ -301,7 +334,61 @@ describe('profiles saved before hasSoc became deliveryModel', () => {
   });
 
   it('leaves a current profile completely alone', () => {
-    const parsed = StoredClientProfile.parse({ ...legacy, deliveryModel: 'co_managed' });
+    const parsed = StoredClientProfile.parse({
+      ...legacy,
+      deliveryModel: 'co_managed',
+      serviceLevel: 'monitoring',
+    });
     expect((parsed as ClientProfile).deliveryModel).toBe('co_managed');
+    expect((parsed as ClientProfile).serviceLevel).toBe('monitoring');
+  });
+});
+
+describe('profiles saved before the service level existed', () => {
+  /*
+   * Unlike the two migrations above, this one is not a reading of an old
+   * answer: the question was never asked. So the defaults are deliberately the
+   * conservative end of each model. Widening an engagement already on the books
+   * is the failure that would not announce itself, and a row silently claiming
+   * we run the client's endpoints is worse than one an analyst has to look at.
+   */
+  const stored = {
+    orgName: 'Acme Retail',
+    industry: 'retail',
+    region: 'in',
+    employeeCount: 60,
+    itStaffCount: 3,
+    securityStaffFte: 0,
+    riskTolerance: 'medium',
+    dataSensitivity: 'regulated',
+    compliance: ['pci-dss-4.0'],
+    budget: { annualCap: null, oneTimeCap: null, currency: 'INR' },
+    environment: 'not_asked',
+    deploymentConstraint: 'none',
+    procurementBias: 'open_source_first',
+  } as const;
+
+  it('gives a stored managed engagement the response level', () => {
+    const parsed = StoredClientProfile.parse({ ...stored, deliveryModel: 'mssp_managed' });
+    expect((parsed as ClientProfile).serviceLevel).toBe('mdr');
+  });
+
+  it('gives a stored co-managed engagement the narrowest level, not the widest', () => {
+    const parsed = StoredClientProfile.parse({ ...stored, deliveryModel: 'co_managed' });
+    expect((parsed as ClientProfile).serviceLevel).toBe('monitoring');
+  });
+
+  it('leaves a stored client-operated engagement operating everything itself', () => {
+    const parsed = StoredClientProfile.parse({ ...stored, deliveryModel: 'client_operated' });
+    expect((parsed as ClientProfile).serviceLevel).toBeNull();
+  });
+
+  it('does not overwrite a service level the row already carries', () => {
+    const parsed = StoredClientProfile.parse({
+      ...stored,
+      deliveryModel: 'mssp_managed',
+      serviceLevel: 'managed_security',
+    });
+    expect((parsed as ClientProfile).serviceLevel).toBe('managed_security');
   });
 });

@@ -178,6 +178,26 @@ export const DeliveryModel = z.enum([
 ]);
 export type DeliveryModel = z.infer<typeof DeliveryModel>;
 
+/**
+ * What we actually deliver on a managed engagement, and therefore which
+ * categories we operate rather than merely recommend.
+ *
+ * It lives here rather than beside the rate card because it is now an intake
+ * answer, not only a pricing input. `deliveryModel` says whether we operate;
+ * this says how far that reaches. Without the pair, "co-managed" is a word with
+ * no boundary attached, and the boundary is the whole question a client is
+ * asking when they ask what they are buying.
+ */
+export const MsspServiceLevel = z.enum([
+  /** Monitoring and alerting; the client still responds. */
+  'monitoring',
+  /** Monitoring plus active containment and response. */
+  'mdr',
+  /** MDR plus management of the underlying security devices. */
+  'managed_security',
+]);
+export type MsspServiceLevel = z.infer<typeof MsspServiceLevel>;
+
 export const ProcurementBias = z.enum(['commercial', 'open_source_first', 'no_preference']);
 export type ProcurementBias = z.infer<typeof ProcurementBias>;
 

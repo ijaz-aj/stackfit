@@ -12,7 +12,7 @@
 import { z } from 'zod';
 
 import { AssetInventory } from './asset-inventory';
-import { ClientProfile } from './client-profile';
+import { ClientProfileFields, checkDeliveryServiceLevel } from './client-profile';
 import { Slug } from './product';
 
 export const ScenarioPreset = z
@@ -27,7 +27,7 @@ export const ScenarioPreset = z
      * deliberately absent. The analyst types the client's actual name, and a
      * preset filling it in would be the one field guaranteed to be wrong.
      */
-    profile: ClientProfile.omit({ orgName: true }),
+    profile: ClientProfileFields.omit({ orgName: true }).superRefine(checkDeliveryServiceLevel),
     inventory: AssetInventory,
     /**
      * Where the counts came from. Mandatory for the same reason every sizing

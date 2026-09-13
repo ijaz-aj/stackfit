@@ -7,7 +7,13 @@
 
 import { z } from 'zod';
 
-import { CurrencyCode, PricingConfidence, ProductCategory, ScaleClass } from './enums';
+import {
+  CurrencyCode,
+  MsspServiceLevel,
+  PricingConfidence,
+  ProductCategory,
+  ScaleClass,
+} from './enums';
 import { NonNegativeMoney } from './money';
 import { IsoDate, Source } from './pricing';
 
@@ -86,15 +92,11 @@ export type FxConfig = z.infer<typeof FxConfig>;
 // understates small engagements and overstates large ones.
 // ---------------------------------------------------------------------------
 
-export const MsspServiceLevel = z.enum([
-  /** Monitoring and alerting; the client still responds. */
-  'monitoring',
-  /** Monitoring plus active containment and response. */
-  'mdr',
-  /** MDR plus management of the underlying security devices. */
-  'managed_security',
-]);
-export type MsspServiceLevel = z.infer<typeof MsspServiceLevel>;
+// `MsspServiceLevel` moved to enums.ts when it became an intake answer as well
+// as a pricing input. Re-exported so the rate card's vocabulary is unchanged
+// for every existing importer.
+export { MsspServiceLevel };
+export type { MsspServiceLevel as MsspServiceLevelValue };
 
 export const MsspServiceLevelRate = z
   .object({

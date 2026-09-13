@@ -143,6 +143,7 @@ export function profileOf(overrides: Partial<ClientProfile> = {}): ClientProfile
     // its own security, so this is the model they mean. A scenario that is
     // about a managed engagement says so.
     deliveryModel: 'client_operated',
+    serviceLevel: null,
     riskTolerance: 'medium',
     dataSensitivity: 'internal',
     compliance: [],

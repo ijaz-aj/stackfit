@@ -75,6 +75,7 @@ export function buildClientProfile(overrides: Partial<ClientProfile> = {}): Clie
     itStaffCount: 4,
     securityStaffFte: 0,
     deliveryModel: 'client_operated',
+    serviceLevel: null,
     riskTolerance: 'medium',
     dataSensitivity: 'internal',
     compliance: [],

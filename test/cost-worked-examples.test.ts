@@ -79,6 +79,7 @@ function retailProfile(currency: CurrencyCode, region: ClientProfile['region']):
     itStaffCount: 2,
     securityStaffFte: 0,
     deliveryModel: 'client_operated',
+    serviceLevel: null,
     riskTolerance: 'medium',
     dataSensitivity: 'regulated',
     compliance: ['pci-dss-4.0'],
