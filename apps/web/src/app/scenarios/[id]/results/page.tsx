@@ -6,6 +6,7 @@ import { AssumptionsPanel } from '@/components/results/assumptions';
 import { BundleComparison } from '@/components/results/bundle-comparison';
 import { CategoryCards } from '@/components/results/category-cards';
 import { CostBreakdown } from '@/components/results/cost-breakdown';
+import { Engagement } from '@/components/results/engagement';
 import { CoverageMatrix } from '@/components/results/coverage-matrix';
 import { GapAnalysis } from '@/components/results/gap-analysis';
 import { SectionNav } from '@/components/results/section-nav';
@@ -31,6 +32,7 @@ export const dynamic = 'force-dynamic';
 const RESULTS_SECTIONS = [
   { id: 'bundles', label: 'Bundles' },
   { id: 'categories', label: 'By category' },
+  { id: 'engagement', label: 'Who pays' },
   { id: 'cost', label: 'Cost' },
   { id: 'coverage', label: 'Coverage' },
   { id: 'gaps', label: 'Gaps' },
@@ -212,6 +214,16 @@ export default async function ResultsPage({
 
           <div id="categories" className="scroll-mt-20">
             <CategoryCards result={result} bundle={bundle} />
+          </div>
+
+          {/*
+            Before the cost breakdown, deliberately. The breakdown answers what
+            the stack costs to own and run; this answers what the client is
+            asked to pay, and on a managed engagement those are different
+            questions with an order-of-magnitude between them.
+          */}
+          <div id="engagement" className="scroll-mt-20">
+            <Engagement bundle={bundle} profile={scenario.profile} />
           </div>
 
           <div id="cost" className="scroll-mt-20">

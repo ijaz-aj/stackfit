@@ -5,6 +5,7 @@ import {
   Region,
   RiskTolerance,
   DeliveryModel,
+  MsspServiceLevel,
   type ClientProfile,
   type CurrencyCode,
   type FxConfig,
@@ -18,6 +19,8 @@ import { withRegion } from '@/lib/scenario';
 import {
   DELIVERY_HINTS,
   DELIVERY_LABELS,
+  SERVICE_LEVEL_HINTS,
+  SERVICE_LEVEL_LABELS,
   INDUSTRY_LABELS,
   REGION_LABELS,
   RISK_LABELS,
@@ -144,16 +147,54 @@ export function StepOrganisation({
               id="deliveryModel"
               value={profile.deliveryModel}
               options={optionsFrom(DeliveryModel.options, DELIVERY_LABELS)}
-              onChange={(event) =>
+              onChange={(event) => {
+                const deliveryModel = event.target.value as typeof profile.deliveryModel;
+                /*
+                 * The pair has to stay valid or the profile stops parsing:
+                 * `client_operated` must carry no service level, anything else
+                 * must carry one. Defaulting to `mdr` rather than remembering a
+                 * previous answer keeps the two controls honest about each
+                 * other, and the analyst sees the level in the next field and
+                 * can change it.
+                 */
                 patchProfile({
-                  deliveryModel: event.target.value as typeof profile.deliveryModel,
-                })
-              }
+                  deliveryModel,
+                  serviceLevel: deliveryModel === 'client_operated' ? null : (profile.serviceLevel ?? 'mdr'),
+                });
+              }}
             />
             <p className="text-faint mt-1 text-xs leading-snug">
               {DELIVERY_HINTS[profile.deliveryModel]}
             </p>
           </Field>
+
+          {/*
+            How far our operation reaches. Absent on `client_operated`, where
+            the honest answer is that there is nothing to set: we operate
+            nothing, and a control offering to say otherwise would be a control
+            that contradicts the field above it.
+
+            This is what makes co-managed mean something. Before it existed the
+            two managed models differed only by a scoring nudge, and produced
+            byte-identical output on two of the six presets.
+          */}
+          {profile.deliveryModel !== 'client_operated' && profile.serviceLevel !== null && (
+            <Field label="How far it reaches" htmlFor="serviceLevel">
+              <Select
+                id="serviceLevel"
+                value={profile.serviceLevel}
+                options={optionsFrom(MsspServiceLevel.options, SERVICE_LEVEL_LABELS)}
+                onChange={(event) =>
+                  patchProfile({
+                    serviceLevel: event.target.value as typeof profile.serviceLevel,
+                  })
+                }
+              />
+              <p className="text-faint mt-1 text-xs leading-snug">
+                {SERVICE_LEVEL_HINTS[profile.serviceLevel]}
+              </p>
+            </Field>
+          )}
 
           <Field label="Risk tolerance" htmlFor="riskTolerance" className="sm:col-span-2">
             <Select

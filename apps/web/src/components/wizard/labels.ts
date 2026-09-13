@@ -151,6 +151,27 @@ export const DELIVERY_HINTS: Readonly<Record<string, string>> = {
   client_operated: 'They operate it and we consume the telemetry. Their capacity binds.',
 };
 
+/**
+ * How far our operation reaches. Paired with `deliveryModel`, which says
+ * whether we operate anything at all.
+ *
+ * The labels name what the client gets rather than what we call the tier
+ * internally, because this is the question they are really asking when they ask
+ * what they are buying.
+ */
+export const SERVICE_LEVEL_LABELS: Readonly<Record<string, string>> = {
+  monitoring: 'Monitoring: we watch, they respond',
+  mdr: 'Detection and response: we contain it',
+  managed_security: 'Fully managed: we also run the devices',
+};
+
+export const SERVICE_LEVEL_HINTS: Readonly<Record<string, string>> = {
+  monitoring: 'We operate the SIEM and alert them. Everything else stays theirs to run.',
+  mdr: 'Adds endpoint, network and automation tooling, because that is what we respond through.',
+  managed_security:
+    'Adds firewall, mail and vulnerability management. Identity, privileged access and backup stay theirs.',
+};
+
 export const SENSITIVITY_LABELS: Readonly<Record<string, string>> = {
   public: 'Public',
   internal: 'Internal',
