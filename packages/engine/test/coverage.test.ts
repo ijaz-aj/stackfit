@@ -22,6 +22,7 @@ import { computeSizing } from '../src/sizing';
 import {
   buildCategoryWeights,
   buildClientProfile,
+  buildStaffingModel,
   buildCostInputs,
   buildFramework,
   buildProduct,
@@ -246,6 +247,7 @@ function buildInputs(scenario: Scenario): CoverageInputs {
       frameworks: scenario.frameworks,
       weights: buildScoringWeights(),
       categoryWeights: weighted,
+      staffingModel: buildStaffingModel(),
     }),
     costs,
     frameworks: scenario.frameworks,

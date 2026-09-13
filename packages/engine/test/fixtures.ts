@@ -16,6 +16,7 @@ import {
   type DeploymentMode,
   Framework,
   type MsspRateCard,
+  type StaffingModel,
   type PortfolioAssumptions,
   type FreshnessPolicy,
   type FxConfig,
@@ -184,10 +185,42 @@ export function buildFreshnessPolicy(overrides: Partial<FreshnessPolicy> = {}): 
   };
 }
 
+/**
+ * Deliberately neutral: exponent 1 and every multiplier 1 reproduce the flat
+ * linear model exactly, so existing expectations keep meaning what they meant
+ * and a test that cares about scaling has to opt into it by overriding.
+ */
+export function buildStaffingModel(overrides: Partial<StaffingModel> = {}): StaffingModel {
+  return {
+    asOf: '2026-01-01',
+    administration: {
+      scaleExponent: 1,
+      referenceAssets: 1000,
+      byDeploymentMode: (['cloud', 'hybrid', 'on_prem', 'air_gapped'] as const).map((mode) => ({
+        mode,
+        multiplier: 1,
+        basis: 'test fixture',
+      })),
+      basis: 'test fixture',
+    },
+    monitoring: {
+      hoursPerYearOfCoverage: 8760,
+      productiveHoursPerFteYear: 1800,
+      referenceClientsPerSeat: 75,
+      referenceMonitoredAssets: 250,
+      scaleExponent: 0.7,
+      basis: 'test fixture',
+    },
+    sources: [{ url: 'https://example.com/staffing', asOf: '2026-01-01' }],
+    ...overrides,
+  };
+}
+
 export function buildCostInputs(overrides: Partial<CostInputs> = {}): CostInputs {
   return {
     labourRates: buildLabourRates(),
     costAssumptions: buildCostAssumptions(),
+    staffingModel: buildStaffingModel(),
     fx: buildFxConfig(),
     freshnessPolicy: buildFreshnessPolicy(),
     // Fixture prices are dated 2026-01-01, so this keeps them fresh unless a

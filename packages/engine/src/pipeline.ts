@@ -162,6 +162,9 @@ export function runPipeline(inputs: PipelineInputs): PipelineResult {
     frameworks: inScope,
     weights: scoringWeights,
     categoryWeights,
+    // The same model the cost stage used, so ops_fit scores the FTE figure the
+    // TCO actually charges for.
+    staffingModel: costInputs.staffingModel,
     estateShape: infrastructure.shape,
   });
 

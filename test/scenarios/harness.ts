@@ -33,6 +33,7 @@ import {
   loadPortfolioAssumptions,
   loadScoringWeights,
   loadSizingAssumptions,
+  loadStaffingModel,
 } from '@stackfit/data';
 import {
   buildProposal,
@@ -67,6 +68,7 @@ const config = {
   costInputs: {
     labourRates: loadLabourRates(DATA_DIR),
     costAssumptions: loadCostAssumptions(DATA_DIR),
+    staffingModel: loadStaffingModel(DATA_DIR),
     fx: loadFxConfig(DATA_DIR),
     freshnessPolicy: loadFreshnessPolicy(DATA_DIR),
     today: AS_AT,

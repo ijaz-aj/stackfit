@@ -8,6 +8,8 @@
 // Pure: no fs, no clock, no randomness. Rates and assumptions are handed in.
 
 import type {
+  DeploymentMode,
+  StaffingModel,
   ClientProfile,
   CostAssumptions,
   CurrencyCode,
@@ -24,6 +26,7 @@ import type {
 } from '@stackfit/schema';
 
 import { chooseDeployment, type DeploymentDecision } from './deployment';
+import { administrationFte } from './staffing';
 import { assessTierFreshness, needsRecheck, type PriceFreshness } from './freshness';
 import { addMoney, convertMoney, scaleMoney, subtractMoney, sumMoney, zeroMoney } from './money';
 import type { SizingResult } from './sizing';
@@ -36,6 +39,8 @@ const MONTHS_PER_YEAR = 12;
 export interface CostInputs {
   readonly labourRates: LabourRates;
   readonly costAssumptions: CostAssumptions;
+  /** How administration effort scales, and what a 24/7 rota actually costs. */
+  readonly staffingModel: StaffingModel;
   readonly fx: FxConfig;
   readonly freshnessPolicy: FreshnessPolicy;
   /**
@@ -161,11 +166,22 @@ function worstConfidence(rules: readonly PricingRule[]): PricingConfidence {
  * operable and then costed as needing twice the team would be worse than
  * either answer alone.
  */
-export function operationalFteFor(product: Product, monitoredAssetCount: number): number {
-  return (
-    product.opsBurden.baseFte +
-    (product.opsBurden.ftePerThousandAssets * monitoredAssetCount) / 1000
-  );
+/**
+ * Administration effort for one product.
+ *
+ * Delegates to `staffing.ts`, which holds the model and its working. It used to
+ * be a bare linear expression here, and a linear per-asset term asked for 15.5
+ * FTE to administer a single SIEM across 50,000 assets: a number nobody could
+ * take to a client. The scaling and the delivery-mode multiplier are tunables
+ * in `data/config/staffing-model.yaml` (hard rule 6), not literals.
+ */
+export function operationalFteFor(
+  product: Product,
+  monitoredAssetCount: number,
+  deploymentMode: DeploymentMode,
+  staffingModel: StaffingModel,
+): number {
+  return administrationFte(product, monitoredAssetCount, deploymentMode, staffingModel).fte;
 }
 
 /**
@@ -380,7 +396,7 @@ export function computeProductCost(
   extraDiscount?: { rate: number; label: string },
 ): ProductCost {
   const currency = profile.budget.currency;
-  const { labourRates, costAssumptions, fx, freshnessPolicy, today } = inputs;
+  const { labourRates, costAssumptions, fx, freshnessPolicy, staffingModel, today } = inputs;
   const horizonYears = profile.budget.horizonYears;
   const rationale: string[] = [];
 
@@ -446,11 +462,20 @@ export function computeProductCost(
 
   // ---- Operational people. The line that makes open source comparable.
   const regionRate = labourRates.byRegion[profile.region];
-  const opsFte = operationalFteFor(product, sizing.monitoredAssetCount);
+  const administration = administrationFte(
+    product,
+    sizing.monitoredAssetCount,
+    deployment.mode,
+    staffingModel,
+  );
+  const opsFte = administration.fte;
   const opsFteAnnual = scaleMoney(convertMoney(regionRate.loadedAnnualCost, currency, fx), opsFte);
 
+  // Hard rule 5, and the reason `administrationFte` returns its own arithmetic:
+  // this is the figure a client challenges in the room, so the working travels
+  // with the number rather than being written about it somewhere else.
   rationale.push(
-    `Operational effort: ${opsFte.toFixed(2)} FTE = ${product.opsBurden.baseFte} base + ${product.opsBurden.ftePerThousandAssets} per 1,000 assets × ${sizing.monitoredAssetCount} assets, at ${product.opsBurden.confidence.replace(/_/g, ' ')} confidence. This is the effort to administer the tool (deploy, tune, maintain). It excludes staffing continuous monitoring with it, which is a separate and larger question this tool does not size.`,
+    `${administration.workingOut} At ${product.opsBurden.confidence.replace(/_/g, ' ')} confidence.`,
   );
 
   if (product.opsBurden.confidence === 'placeholder') {

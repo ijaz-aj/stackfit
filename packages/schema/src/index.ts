@@ -16,6 +16,7 @@ export * from './client-profile';
 export * from './preset';
 export * from './config';
 export * from './infrastructure';
+export * from './staffing';
 export * from './sizing';
 export * from './sizing-overrides';
 export * from './cost';

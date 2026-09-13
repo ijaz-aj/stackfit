@@ -12,6 +12,7 @@ import {
   loadFxConfig,
   loadLabourRates,
   loadMsspRateCard,
+  loadStaffingModel,
   loadPortfolioAssumptions,
   loadPresets,
   loadScoringWeights,
@@ -139,6 +140,7 @@ export function engineData(): EngineData {
     fx,
     costInputsWithoutDate: {
       labourRates: loadLabourRates(DATA_DIR),
+    staffingModel: loadStaffingModel(DATA_DIR),
       costAssumptions: loadCostAssumptions(DATA_DIR),
       fx,
       freshnessPolicy: loadFreshnessPolicy(DATA_DIR),

@@ -29,6 +29,7 @@ import {
 import {
   buildCategoryWeights as buildCategoryWeightsFixture,
   buildClientProfile,
+  buildStaffingModel,
   buildFramework,
   buildProduct,
   buildScoringWeights,
@@ -63,6 +64,7 @@ function buildInputs(overrides: Partial<ScoringInputs> = {}): ScoringInputs {
     frameworks: [],
     weights: buildScoringWeights(),
     categoryWeights: buildCategoryWeightsFixture(),
+    staffingModel: buildStaffingModel(),
     ...overrides,
   };
 }
@@ -875,6 +877,7 @@ describe('regressions', () => {
         firewalls: 10,
         m365Seats: 0.15,
       }),
+      staffingModel: buildStaffingModel(),
     });
 
     const coverage = scoreAtFirstTier(siem, inputs).dimensions.find(
@@ -1006,6 +1009,7 @@ describe('delivery model: who will actually be running this', () => {
         frameworks: [],
         weights: buildScoringWeights(),
         categoryWeights: buildCategoryWeightsFixture(),
+        staffingModel: buildStaffingModel(),
       });
       return scores[0]!.dimensions.find((d) => d.dimension === 'ops_fit');
     };
@@ -1058,6 +1062,7 @@ describe('delivery model: who will actually be running this', () => {
         frameworks: [],
         weights: buildScoringWeights(),
         categoryWeights: buildCategoryWeightsFixture(),
+        staffingModel: buildStaffingModel(),
       });
       return scores[0]!.score;
     };

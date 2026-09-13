@@ -18,6 +18,7 @@ import {
   FxConfig,
   LabourRates,
   MsspRateCard,
+  StaffingModel,
   PortfolioAssumptions,
   PresetFile,
   ScoringWeights,
@@ -41,6 +42,10 @@ export function loadLabourRates(dataDir: string): LabourRates {
 
 export function loadCostAssumptions(dataDir: string): CostAssumptions {
   return CostAssumptions.parse(readYaml(join(dataDir, 'config', 'cost-assumptions.yaml')));
+}
+
+export function loadStaffingModel(dataDir: string): StaffingModel {
+  return StaffingModel.parse(readYaml(join(dataDir, 'config', 'staffing-model.yaml')));
 }
 
 export function loadFreshnessPolicy(dataDir: string): FreshnessPolicy {

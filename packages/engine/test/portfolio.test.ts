@@ -21,6 +21,7 @@ import { scoreProducts } from '../src/scoring';
 import { computeSizing } from '../src/sizing';
 import {
   buildClientProfile,
+  buildStaffingModel,
   buildCostInputs,
   buildFramework,
   buildFxConfig,
@@ -230,6 +231,7 @@ function buildInputs(scenario: Scenario): PortfolioInputs {
     frameworks: scenario.frameworks ?? [],
     weights: buildScoringWeights(),
     categoryWeights: weights,
+    staffingModel: buildStaffingModel(),
   });
 
   // Every tier, the way the pipeline costs a catalog.

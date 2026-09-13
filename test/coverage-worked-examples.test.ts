@@ -201,13 +201,13 @@ describe('Coverage for a 250-seat manufacturer on CIS v8', () => {
       ),
     ).toMatchInlineSnapshot(`
       [
-        "arctic-wolf (mdr) | 51000 USD/yr | 0.16 FTE | closes 6",
-        "greenbone-openvas (vulnerability_management) | 1080 USD/yr | 0.33 FTE | closes 3",
-        "huntress (mdr) | 10800 USD/yr | 0.11 FTE | closes 1",
-        "azure-backup (backup) | 2640 USD/yr | 0.11 FTE | closes 4",
-        "opnsense (ngfw) | 1080 USD/yr | 0.22 FTE | closes 1",
-        "proxmox-mail-gateway (email_security) | 1080 USD/yr | 0.26 FTE | closes 1",
-        "tines (soar) | 0 USD/yr | 0.16 FTE | closes 1",
+        "arctic-wolf (mdr) | 51000 USD/yr | 0.14 FTE | closes 6",
+        "greenbone-openvas (vulnerability_management) | 1080 USD/yr | 0.37 FTE | closes 3",
+        "huntress (mdr) | 10800 USD/yr | 0.07 FTE | closes 1",
+        "azure-backup (backup) | 2640 USD/yr | 0.10 FTE | closes 4",
+        "opnsense (ngfw) | 1080 USD/yr | 0.23 FTE | closes 1",
+        "proxmox-mail-gateway (email_security) | 1080 USD/yr | 0.27 FTE | closes 1",
+        "tines (soar) | 0 USD/yr | 0.14 FTE | closes 1",
       ]
     `);
 

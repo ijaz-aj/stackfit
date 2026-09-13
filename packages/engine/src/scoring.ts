@@ -22,6 +22,7 @@ import type {
   ProductTier,
   ScoringDimension,
   ScoringWeights,
+  StaffingModel,
   TierCapUnit,
 } from '@stackfit/schema';
 import {
@@ -31,6 +32,7 @@ import {
 } from '@stackfit/schema';
 
 import { controlsClaimedBy } from './claims';
+import { chooseDeployment } from './deployment';
 import { operationalFteFor } from './cost';
 import { CATEGORY_LABELS, formatCount, plural, skuName } from './labels';
 import type { SizingResult } from './sizing';
@@ -52,6 +54,12 @@ export interface ScoringInputs {
    * mailbox-heavy estate, on the heaviest-weighted dimension there is.
    */
   readonly categoryWeights: CategoryWeights;
+  /**
+   * How administration effort scales. Shared with the cost stage on purpose:
+   * `ops_fit` scores the same FTE figure the TCO charges for, and two stages
+   * computing it separately is how they come to disagree about the same tool.
+   */
+  readonly staffingModel: StaffingModel;
   /**
    * The estate's shape, from the infrastructure stage.
    *
@@ -694,9 +702,15 @@ export function scoreProduct(
   tier: ProductTier,
   inputs: ScoringInputs,
 ): ProductScore {
-  const { profile, inventory, sizing, frameworks, weights, categoryWeights } = inputs;
+  const { profile, inventory, sizing, frameworks, weights, categoryWeights, staffingModel } =
+    inputs;
 
-  const opsFte = operationalFteFor(product, sizing.monitoredAssetCount);
+  const opsFte = operationalFteFor(
+    product,
+    sizing.monitoredAssetCount,
+    chooseDeployment(product, profile).mode,
+    staffingModel,
+  );
   const eliminationReasons = [
     ...hardFilter(product, inputs),
     ...tierLimitReasons(tier, product, inputs),

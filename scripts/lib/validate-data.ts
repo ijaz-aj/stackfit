@@ -18,6 +18,7 @@ import {
   FxConfig,
   LabourRates,
   MsspRateCard,
+  StaffingModel,
   PortfolioAssumptions,
   PresetFile,
   ScoringWeights,
@@ -227,6 +228,8 @@ export function validateDataTree(dataDir: string): DataValidationResult {
       validate(file, CategoryWeights, raw);
     } else if (file.endsWith('mssp-rate-card.yaml')) {
       validate(file, MsspRateCard, raw);
+    } else if (file.endsWith('staffing-model.yaml')) {
+      validate(file, StaffingModel, raw);
     } else if (file.endsWith('scoring-weights.yaml')) {
       validate(file, ScoringWeights, raw);
     } else if (file.endsWith('portfolio-assumptions.yaml')) {
