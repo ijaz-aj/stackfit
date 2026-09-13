@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 12: who operates it, and therefore who pays (in review).
+**Current phase:** 13: the project's actual goal, checked against the code (in review).
 Deployed and in client demo throughout.
 **Last updated:** 2026-09-13
 
@@ -2144,6 +2144,95 @@ service level covers backup. `responsibilitySplit` makes that a one-line change
 and it will move recommendations, so it is deliberately a separate step to be
 measured on its own rather than folded into a commit that already changes what
 a client is quoted.
+
+### Phase 13. The project's actual goal, checked against the code
+
+Restated by the reviewer 2026-09-13: "the primary idea was to calculate the
+running cost of the tool we are using. if a client have a set of infra (onprem,
+SaaS, hybrid, Cloud etc..) for that in the set security tools what is the best
+set of tool for their infra and how much cost will take **us** for deploying
+that particular tools for the client and why that particular tools are selected
+instead of others."
+
+Four questions. Measured against the code, one was answered well, one was
+answered wrongly, one was not answered at all, and one is still weak.
+
+**Why this tool and not others: answered, and well.** `justification.ts` lists
+every SKU considered, ranked, each with the specific fact that decided it,
+eliminated by a named hard filter, lower fit with the dimension and the margin,
+costs more compared all-in rather than on licence, or not preferred. Untouched
+by this phase.
+
+**What it costs to run on their infra: was wrong, now fixed.** `cost.ts` decided
+self-hosting from `deploymentModes.some(on_prem | air_gapped)`, a *capability*
+and not a decision, true for 42 of the 65 catalog tiers. A cloud-only client was
+charged the infrastructure to rack a product they would consume as SaaS.
+`deployment.ts` makes the decision per product per client from the estate and
+the stated procurement policy, and infrastructure follows it. Infrastructure per
+year for a stated cloud estate: hospital USD 19,729 to 2,160, bank INR 7,215,168
+to 409,722, manufacturer EUR 13,572 to 929, retail INR 1,959,669 to nil.
+`not_asked` leads its preference order with self-hosting, so it reproduces the
+old figure exactly, says it is the dearer reading, and says the number usually
+falls once the question is asked.
+
+**What it costs us: was not modelled at all, now is.** Our effort was priced
+through `labourRates.byRegion[client]`, so our own delivery team cost a
+different amount for every client. `labour-rates.yaml` gains a `provider` block,
+deliberately not a byRegion entry: those price the client's people to find what
+the stack costs *them*, this prices ours to find what an engagement costs *us*.
+`cost.ts` costs the same effort at both rates; `attribution.ts` sums ours over
+the categories inside the boundary only and reports delivery, annual run cost
+and margin at year one and steady state.
+
+- ⚠ **The margin is structurally overstated and says so.** 92-97% across the
+  six presets, which is not a managed-service margin. `opsBurden` is the effort
+  to *administer* a tool, not the rota that watches what it produces, and on a
+  managed engagement that rota is the product. `msspAnalystFtePerClient` is the
+  allocation we already assume and it reaches the scoring stage rather than the
+  attribution one, so it is not costed yet. Every margin figure carries the
+  caveat, pinned by a test. Underneath it the fee still comes from a USD rate
+  card with no regional dimension.
+- **Our numbers are in their own field, not their own sentence.**
+  `providerRationale` is separate from `rationale` because the results page is
+  the screen an analyst turns toward the client, and "remember not to print
+  these two lines" is an intention rather than a guarantee. A test asserts the
+  client-safe list carries no margin, no "costs us" and no "our own rates".
+  `buildProposal` never receives `attribution` at all, so none of it can reach
+  the DOCX, PDF or XLSX.
+
+### ⚠ The weak one: the estate barely changes *which* tools are chosen
+
+Found by running all six presets through every environment. For the SaaS
+scale-up and the manufacturer, `on_prem`, `cloud`, `hybrid` and `not_asked`
+produced **byte-identical stacks**. Only `air_gapped` differed, and that is the
+hard filter rather than the scoring.
+
+Four causes compounding, none of them a bug on its own:
+
+- `deployment_fit` is weighted **10 of 100**, joint-smallest with
+  `integration_fit` and `scale_fit` and above only `maturity`.
+- **27 of 65 catalog tiers declare all four modes**, and 42 declare a
+  self-hostable one, so `modes.includes(environment)` is true for most of the
+  catalog and everything scores `statedMatch` together.
+- Phase 11 decided deliberately that the environment marks a product down but
+  never eliminates it; only `deploymentConstraint` eliminates. That decision is
+  still right (a SaaS EDR protects on-premises endpoints perfectly well) and it
+  does mean the dimension cannot be decisive on its own.
+- The presets are `open_source_first`, which favours exactly the self-hostable
+  tools that declare every mode.
+
+The deployment decision closes part of it indirectly: infrastructure now moves
+with the estate, so affordability does, and the retail preset already drops from
+six funded categories to five on a cloud estate. But that is cost feedback, not
+fit. **Not acted on further**, because the obvious lever, raising the weight, is
+the one change here that cannot be justified from evidence: it would reshape
+every recommendation to make one dimension louder rather than because the
+dimension is more informative. The honest fix is upstream, in the catalog:
+`deploymentModes` as a flat capability set cannot express that running Elastic
+self-hosted and buying Elastic Cloud are different products with different
+prices, efforts and operational burdens. Splitting those into per-mode tiers is
+the change that would make the estate decisive, and it needs real per-mode
+prices rather than a weighting decision.
 
 ## Open defects
 

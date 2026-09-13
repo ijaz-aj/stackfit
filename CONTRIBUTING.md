@@ -349,6 +349,27 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   results page was written, shipped and never once rendered. The layout that
   was being tuned was the stacked fallback. Check `innerWidth` in the browser
   before reaching past `lg:`, and treat `xl:` as a rule for external monitors.
+- **`deploymentModes` is a capability set; `cost.deployment` is the decision.**
+  `chooseDeployment` picks one mode per product per client from the estate and
+  the procurement policy, and the infrastructure line follows *that*, not the
+  capability. It used to follow the capability, which charged a cloud-only
+  client to rack a product they would buy as SaaS: 42 of 65 tiers declare a
+  self-hostable mode. `not_asked` deliberately assumes self-hosting, so it
+  reproduces the pre-decision figure and is the dearer reading.
+- **`labourRates.provider` is our cost base and is not a `byRegion` entry.**
+  `byRegion` prices the *client's* people, to find what the stack costs them to
+  run. `provider` prices ours, to find what an engagement costs us to deliver.
+  They differ even in the same region, and using the client's region for our
+  team (which is what happened before it existed) prices our delivery
+  differently for every client and makes any margin figure meaningless.
+- **`attribution.providerRationale` is not client-safe and `attribution.rationale`
+  is.** Our cost and our margin live in their own field because the results page
+  is the screen an analyst turns toward the client. Never merge the two lists,
+  and never render `providerRationale` on anything a client can see;
+  `buildProposal` does not receive `attribution` at all, which is why none of it
+  can reach the exports. ⚠ The margin it reports counts tool administration
+  only, not the monitoring rota, so it runs 92-97% on the committed presets and
+  is an upper bound rather than a margin.
 - **`deliveryModel` and `serviceLevel` are one answer in two fields, and the
   schema enforces the pair in both directions.** The first says whether we
   operate any of the stack, the second how far that reaches;
