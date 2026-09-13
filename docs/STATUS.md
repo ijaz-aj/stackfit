@@ -2348,6 +2348,63 @@ visible on the charts, which is how they surfaced.
   it looks sloppy in a client-facing table. Showing cents, or a footnote, would
   settle it. Left alone deliberately.
 
+## A mandated category went unbought while the budget to buy it sat unspent
+
+Found 2026-09-13 from the wizard readout: *"Unfunded mandatory: edr. Stopped by
+the one-time budget, not the annual one."* The message was correctly worded and
+the advice behind it was wrong.
+
+On the retail preset at a 2,000,000 one-time cap, funding **every** mandatory
+category costs 1,368,500 of setup. The engine spent 1,972,250, funded five of
+six plus a discretionary category, and told the client to raise a budget that
+was never the constraint. Worse than a wrong number: this file already records
+that naming the wrong cap sends the analyst into the wrong negotiation, and this
+sent them to ask for money they did not need.
+
+**Two faults, and both had to be fixed for either to help.**
+
+- **No objective ranked on implementation cost.** `cheapest` ranks on annual
+  licence, `lowest_tco` on ownership, `value_density` on fit per pound owned.
+  None of them can see that one SKU costs four times another to stand up, so
+  `iam` took Keycloak at 603,750 of setup because it is free to licence, and
+  left 27,750 for an EDR needing 175,000. `cheapest_setup` is the third cost
+  dimension finally getting a strategy.
+- **The strategy comparison never counted unfunded mandatory categories.** It
+  ranked on mandates met, weighted need and controls met, so a bundle skipping a
+  mandated category outright could win by claiming a couple more optional
+  controls elsewhere. It is now the *first* criterion and not a tiebreak.
+
+One generates a good allocation; the other picks it. Neither works alone.
+
+| one-time cap | unfunded before | after |
+|---|---|---|
+| 3,000,000 | none | none |
+| **2,000,000** | **edr** | **none** |
+| 1,600,000 | edr | none |
+| 1,500,000 | edr | none |
+| 1,000,000 | ngfw, vm, iam | backup, edr (infeasible either way; spend rose 885,500 to 966,000) |
+
+**Budget monotonicity now holds in the one-time dimension** for all six presets
+and is pinned by `test/one-time-allocation.test.ts`. The annual dimension has
+been pinned since Phase 4. This cap was never checked, and it was the one that
+broke.
+
+⚠ **A lookahead reservation was built, measured, and removed**, and the reasoning
+is worth more than the code was. Holding budget back for mandatory categories
+not yet reached fixed the reported case on its own. But once the comparison
+criterion existed it was a third mechanism doing what two already did, and it
+needed a fallback path of its own to stop it starving the infeasible case by
+reserving for something that could never be bought. Sabotage confirmed the
+remaining pair is minimal: removing either turns tests red, and results are
+byte-identical with the reservation gone.
+
+**`test/retained-tools.test.ts` moved its premise, not its property**, for the
+second time. It relied on retail deferring EDR to Phase 2, which this change
+ends, leaving retail with zero gaps and nothing for a holding to close. Retail
+still shows a holding covering more (7 to 9); the gap half moved to the
+manufacturer preset, which genuinely has no EDR in year one (9 gaps to 3), and
+that premise is now asserted rather than assumed so it fails loudly next time.
+
 ## Known placeholders
 
 <!-- every catalog entry still on placeholder pricing, so they can be chased down before any client sees output -->

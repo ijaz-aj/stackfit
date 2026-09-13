@@ -349,6 +349,16 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   results page was written, shipped and never once rendered. The layout that
   was being tuned was the stacked fallback. Check `innerWidth` in the browser
   before reaching past `lg:`, and treat `xl:` as a rule for external monitors.
+- **The one-time cap is a second knapsack, and `buildRecommended` is what stops
+  both of them being filled greedily.** Each strategy fills categories greedily
+  by its own objective; the guard is running several and keeping the best, and
+  the comparison ranks **unfunded mandatory categories first**, ahead of
+  mandates met, weighted need and controls met. `cheapest_setup` exists because
+  no other objective can see implementation cost: `cheapest` ranks on annual
+  licence, so it happily takes a free-to-licence tool that costs four times as
+  much to stand up and starves a mandated category of the setup budget. Adding
+  a new objective without adding it to `strategies` does nothing; changing the
+  comparison order can silently un-fund a compliance obligation.
 - **`DATABASE_URL` uses `sslmode=verify-full`, and the difference is not
   cosmetic.** `pg` 8 treats `require` as an alias for `verify-full` and warns at
   startup that this is changing; in `pg` 9 it adopts libpq semantics, where
