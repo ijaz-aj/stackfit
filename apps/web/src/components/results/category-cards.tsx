@@ -42,7 +42,15 @@ function FitBreakdown({ score }: { score: ProductScore }) {
       <ul className="mt-2 flex flex-col gap-2">
         {score.dimensions.map((dimension) => (
           <li key={dimension.dimension} className="text-xs leading-snug">
-            <div className="flex items-baseline gap-2">
+            {/*
+              Three fixed-width columns come to 280px with their gaps, which is
+              wider than this card's content box on a 320px phone, and the
+              contribution on the end was clipped mid-figure. They wrap instead:
+              the widths still line the columns up wherever there is room, and
+              where there is not the working folds onto a second line rather
+              than losing its last character.
+            */}
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <span className="text-muted w-32 shrink-0">
                 {DIMENSION_LABELS[dimension.dimension] ?? dimension.dimension}
               </span>

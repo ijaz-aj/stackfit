@@ -63,10 +63,17 @@ export function CostBreakdown({ bundle }: { bundle: Bundle }) {
   // empty panel under the shorter card.
   const chartHeight = categoryChartHeight(byCategory.length);
 
+  // `min-w-0` on every card is load bearing below `lg:`, where this grid is a
+  // single column. A grid item's default `min-width: auto` refuses to shrink
+  // below its content's min-content width, and the table below carries
+  // `min-w-[560px]`, so the track was forced to 560 and both charts stretched to
+  // match it: 245px of the results page hung off the side of a 390px phone. The
+  // table's `overflow-x-auto` wrapper cannot help until something lets it be
+  // narrower than the table it wraps.
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <Card
-        className="lg:col-span-2"
+        className="min-w-0 lg:col-span-2"
         title="Annual cost by category"
         hint="Licence, support, infrastructure and people: the four lines that make up a year."
       >
@@ -74,13 +81,14 @@ export function CostBreakdown({ bundle }: { bundle: Bundle }) {
       </Card>
 
       <Card
+        className="min-w-0"
         title="Cash flow over the horizon"
         hint="Year one carries implementation and training. Later years carry the subscription uplift."
       >
         <CashflowChart data={cashflow} currency={currency} height={chartHeight} />
       </Card>
 
-      <Card title="The same figures, as a table" className="lg:col-span-3">
+      <Card title="The same figures, as a table" className="min-w-0 lg:col-span-3">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] border-collapse text-sm">
             <thead>

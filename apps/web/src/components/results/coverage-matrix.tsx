@@ -37,7 +37,12 @@ function ControlCell({ control }: { control: ControlCoverage }) {
 
   return (
     <li
-      className={cn('flex items-center gap-2 rounded border px-2 py-1 text-xs', cell.tone)}
+      // `min-w-0` is what makes the `truncate` below actually truncate. This is a
+      // grid item, and `min-width: auto` holds it at its content's min-content
+      // width; `truncate` sets `white-space: nowrap`, so that min-content is the
+      // *whole* untruncated control title. Without this the chip states its full
+      // width as a floor and the single-column mobile grid widens to suit it.
+      className={cn('flex min-w-0 items-center gap-2 rounded border px-2 py-1 text-xs', cell.tone)}
       title={`${control.localId} ${control.title}: ${cell.label}${covered}`}
     >
       <span aria-hidden className="tabular w-3 shrink-0 text-center font-semibold">

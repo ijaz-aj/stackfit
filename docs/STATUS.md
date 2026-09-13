@@ -1976,12 +1976,51 @@ most.
   rather than a thing to fix, and the wizard's three-column layout is `lg:`-gated
   and collapses on its own.
 
-⚠ **The rest of the app below `lg:` is unexamined, not verified.** One screen
-was looked at because one defect was reported on it. The results dashboard and
-the six-step wizard are the two surfaces an analyst would actually turn toward a
-client, and neither has been opened on a phone. Related and already recorded:
-this machine reports 1254 CSS pixels, so every `xl:` rule on the results page
-has never rendered here either.
+~~⚠ **The rest of the app below `lg:` is unexamined, not verified.**~~
+**Closed 2026-09-13, and the results dashboard was broken.** Every route was
+measured at 390, 360 and 320 CSS pixels by driving headless Chrome over CDP and
+reading `getBoundingClientRect()` for every element on the page, which reports
+the offender by name rather than leaving a screenshot to be squinted at. No new
+dependency: Node 24 has a global `WebSocket`, so the driver is about eighty
+lines in a scratch directory.
+
+- 2026-09-13: **The results dashboard hung 245px off the side of a 390px
+  phone**, and it is the screen an analyst turns toward a client. `min-width:
+  auto` is a grid item's default and refuses to shrink the item below its
+  content's min-content width, so the `min-w-[560px]` table in `cost-breakdown`
+  forced the single mobile column to 560 and *both charts stretched to match
+  it*. `min-w-0` on the three cards is the fix.
+- 2026-09-13: **The same cause again in the coverage matrix, worth 83px more.**
+  Each control chip is a grid item carrying `truncate`, and `truncate` sets
+  `white-space: nowrap`, which makes the chip's min-content the **whole
+  untruncated control title**. The chip therefore published its full width as a
+  floor and the grid widened to suit it. `min-w-0` is what lets a `truncate`
+  actually truncate.
+- 2026-09-13: **A third at 320 only**: the fit-score working (`x 22% = 7.4`) is
+  three fixed-width columns totalling 280px inside a 246px content box, and the
+  contribution on the end was clipped mid-figure. It wraps now, the same answer
+  the delete confirmation got.
+
+**Why the previous sweep missed the first two, which is the part worth
+keeping.** It checked that every wide table sat inside an `overflow-x-auto`
+wrapper, and all seven did. That check is necessary and not sufficient: a scroll
+wrapper cannot clip anything until some ancestor lets it be *narrower than its
+own content*, and inside a grid item nothing does. Both defects were sitting
+behind a guard that was correctly applied and inert. The measurement to trust is
+`documentElement.scrollWidth` against the viewport, not the presence of the
+class that is supposed to control it.
+
+Desktop is unchanged, and was checked rather than assumed: the same measurements
+at 1280 and 1254 are byte-identical with the three fixes stashed and restored.
+All six wizard steps, `/compare`, both proposal pages and all three saved
+scenarios' results now measure clean at 390, 360 and 320.
+
+⚠ **Nothing pins this.** These are the first defects found here that no test in
+the repo could have caught, because layout needs a browser and there is no
+browser-test infrastructure. A `scrollWidth` assertion over every route at three
+widths is a genuinely small Playwright suite, and it is also a new dependency and
+a CI change, so it is recorded rather than taken. Until it exists, the phone
+layout is verified as of this commit and not defended.
 
 ## Open defects
 
