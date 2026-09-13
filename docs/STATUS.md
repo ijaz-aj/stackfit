@@ -1910,6 +1910,16 @@ this machine and what a host does.
 and a serverless function reading the traced `data/` tree. Both were called out
 in `docs/DEPLOY.md` in advance as exactly that, and both hold.
 
+- 2026-09-13: **Hard rule 10 verified on the deployed artefact, not only in the
+  test suite.** `security-headers.test.ts` pins twelve assertions against the app;
+  it cannot say what a CDN in front of the app actually serves. Checked against
+  production: all six headers present, and the CSP nonce is **different on every
+  request** (three requests, three nonces) under `Cache-Control: private,
+  no-cache, no-store` with `X-Vercel-Cache: MISS`. That last part is the one only
+  production could answer. A cached HTML response would freeze the nonce, and a
+  frozen nonce is worth no more than `unsafe-inline` while still passing every
+  test in the repo. Unauthenticated requests to `/` still 307 to `/signin`.
+
 ### Password sign-in, 2026-09-13
 
 Added on request, to demonstrate the deployed portal to a client for approval.
