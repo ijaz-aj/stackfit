@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 14: the FTE figure, made defensible and made to show its working (in review).
+**Current phase:** 17: the web application audited as a consultant, not an engineer (in review).
 Deployed and in client demo throughout.
 **Last updated:** 2026-09-13
 
@@ -2191,7 +2191,12 @@ and margin at year one and steady state.
   allocation we already assume and it reaches the scoring stage rather than the
   attribution one, so it is not costed yet. Every margin figure carries the
   caveat, pinned by a test. Underneath it the fee still comes from a USD rate
-  card with no regional dimension.
+  card with no regional dimension.: **⚠ The diagnosis here was wrong, and Phase
+  16 measured it.** The rota is now costed and moves the margin by 0.6-1.6
+  percentage points, not by an order of magnitude, because an MSSP seat is
+  spread across 50-100 clients. The cause is the last sentence of this bullet,
+  not the first four: a USD rate card divided by an Indian payroll. The margin
+  is still 80-96%.
 - **Our numbers are in their own field, not their own sentence.**
   `providerRationale` is separate from `rationale` because the results page is
   the screen an analyst turns toward the client, and "remember not to print
@@ -2310,7 +2315,280 @@ page renders it, on the committed hospital scenario: monitoring 0.41 FTE =
   range; 250 is the analyst reading of what that guidance calls a "small
   customer". Both want our own rota and client book, which is the one place the
   real figures exist. So does `msspAnalystFtePerClient` (0.6), which now sits
-  next to a derived figure it was never reconciled against.
+  next to a derived figure it was never reconciled against.: **Examined in Phase
+  16 and deliberately left alone.** The two measure different quantities
+  (administration capacity against a monitoring share), so 0.6 is not simply
+  wrong, but nothing ties it to anything and it is a scoring denominator: moving
+  it reshapes every recommendation.
+
+### Phase 15. A coverage badge you can interrogate
+
+Raised 2026-09-13: "what is coverage 61.5% and gap 9 and critical 4, when I
+click on it it should display what exactly the gap is, what is the coverage
+issue and how could it be solved, and there should be a button that auto
+remediates".
+
+Recorded after the fact; the phase shipped in 8a159ac without its STATUS entry,
+which is the working agreement's one standing requirement and the one thing a
+reviewer reads first.
+
+The badges are links. Coverage goes to the matrix, both gap counts to the gap
+table. A figure a reader wants to interrogate and cannot is worse than no
+figure.
+
+**Each gap now says what is holding it open**, which is a different question
+from whether anything in the catalog closes it. Three answers: the closing
+category is not in year one; the category *is* funded but with a product that
+does not claim the control, so it is a swap and not money; or nothing claims it
+at all, and the control is closed by policy, process and evidence rather than by
+a purchase.
+
+⚠ **The first version conflated "a product exists that closes this" with "more
+budget closes this", and a test caught it before it shipped.** On the SaaS
+preset it offered to close seven gaps and closed none: five needed a category
+the year-one weight gate defers, two were inside categories already funded. The
+panel would have run, reported success and changed nothing.
+
+**So the button does not guess.** Budget and scope cannot be told apart
+statically, because `phase2` holds both the categories the budget blocked and
+the ones the weight gate deferred. It raises the caps, re-runs the pipeline, and
+keeps the change only if coverage or the mandate count actually improved;
+otherwise it leaves the scenario untouched and says the gaps are held by scope
+rather than by money. Dry run, then commit. Before and after are read from two
+real runs, because raising a cap re-runs the whole selection and the engine can
+reach a different stack.
+
+Also fixed: `category-cards.tsx` put `shrink-0` on the fit-score and badge
+cluster, so three badges at once pushed 35px off a 390px phone and 104px off a
+320px one. Third instance of that exact defect, after the delete confirmation
+and the cost grid.
+
+### Phase 16. The margin, measured instead of explained away
+
+The Phase 13 ⚠ said the 92-97% margin was overstated because the cost side
+excluded the monitoring rota, "the larger figure by an order of magnitude", and
+that it should be treated as an upper bound. `attribution.ts` said it in prose,
+a unit test pinned the wording, and this file repeated it. Phase 14 then derived
+the rota properly, which made the claim checkable for the first time.
+
+**It was wrong.** The rota is now costed into what an engagement costs us, and
+the difference it makes was measured across all six presets:
+
+| preset | rota FTE | rota cost/yr | our admin cost/yr | fee/yr | margin before | after |
+|---|---|---|---|---|---|---|
+| retail-chain-40-stores | 0.173 | INR 302,972 | INR 1,866,290 | INR 48,154,707 | 96.1% | **95.5%** |
+| manufacturer-two-plants | 0.274 | EUR 4,345 | EUR 14,490 | EUR 282,337 | 94.9% | **93.3%** |
+| hospital-300-beds | 0.409 | USD 7,535 | USD 39,126 | USD 716,203 | 94.5% | **93.5%** |
+| bank-60-branches | 0.402 | INR 702,586 | INR 4,234,253 | INR 127,143,831 | 96.7% | **96.1%** |
+| professional-services-45 | 0.023 | USD 425 | USD 9,494 | USD 49,253 | 80.7% | **79.9%** |
+| saas-scale-up-120 | — | — | — | — | n/a | n/a (client-operated) |
+
+**0.6 to 1.6 percentage points, not an order of magnitude.** The rota is small
+per client for a reason that was already in the file and nobody carried
+forward: an MSSP seat is spread across a published 50-100 clients, so a
+reference client consumes about 0.065 FTE of one. 4.87 FTE a seat is the
+in-house figure, and the whole point of `referenceClientsPerSeat` is that we are
+not in-house.
+
+So the rota was never the explanation, and the margin it was explaining is still
+there.
+
+**What the margin actually is: a ratio between two rate cards written about
+different markets.** The fee comes from `mssp-rate-card.yaml`, synthesised from
+published US and global MDR ranges. The cost under it is `labourRates.provider`,
+an Indian payroll at INR 1,748,500 loaded. The hospital's USD 716,203 fee
+against USD 46,661 of our people is not a finding about that engagement; it is
+those two files being divided by each other. The missing input is our actual
+charge-out rate, which is a commercial fact hard rule 2 does not let this engine
+invent. Every managed engagement now says so, unconditionally, in the same way
+the pricing and coverage disclaimers are unconditional, and for the same reason:
+the threshold version would have needed a number nobody sourced.
+
+**Measured on the way, and worth its own line: the fee itself leaves the range
+the rate card was calibrated in.** The card's three worked checks all pair
+ingest with endpoints proportionally. Retail does not: 240 endpoints and 206.5
+GB/day, so the per-GB component is **59% of a INR 48.2M fee**, and the existing
+"our fee is more than the whole stack would cost" warning fires on both INR
+presets at ~9x. Not acted on, because correcting it means real per-region and
+per-ingest MDR pricing rather than a coefficient chosen to make the presets
+look better.
+
+**What is on the page.** The internal panel breaks the run cost into tool
+administration and the 24/7 rota, with the rota's FTE beside it, and puts the
+margin *rate* next to the margin amount. USD 677,077 reads as a large
+engagement; 94% reads as the problem it is.
+
+**How this is kept honest.** `test/provider-margin.test.ts` asserts the shape of
+the evidence rather than a target: the rota is real and non-zero, it is under
+two points of the fee, the margin is *still* above 75%, and the rationale names
+the rate cards rather than the rota. It is written to go red and be rewritten if
+a later change makes the margin plausible, not to be relaxed. Sabotage
+confirmed both halves bite: charging the rota per operated category turns the
+unit test and the preset measurement red together.
+
+⚠ **Still not fixed, and now the only remaining explanations.**
+
+- **Our charge-out rate does not exist in this repo.** Until it does, every
+  margin figure is the US card over the Indian payroll.
+- **`msspAnalystFtePerClient` (0.6) is still unreconciled.** Phase 14 flagged
+  that it sits next to a derived figure it was never checked against. It is
+  administration capacity and the derived 0.065 is a monitoring share, so they
+  are not the same quantity and 0.6 is not simply wrong. But nothing ties it to
+  anything, and it is a scoring denominator, so changing it reshapes every
+  recommendation. Left alone deliberately, exactly as the deployment weight was
+  in Phase 13.
+- **`opsBurden` is 65 analyst estimates** and the administration total is a
+  straight sum with no overlap between tools one engineer runs. Both understate
+  our cost, so both flatter the margin.
+
+### Phase 17. The web application, audited as a consultant rather than an engineer
+
+Asked for 2026-09-13: inspect the whole web application, note what is
+inconsistent or confusing "at management level, C-suite, not technical", then
+fix it.
+
+The audit is `docs/WEB-AUDIT.md`, written before anything was changed and kept
+with a status column. Sixteen findings, four of them blocking. The lens was
+deliberately not the engineer's: the engine is in good order and the audit
+barely touches it. The question throughout was whether a CFO could reach a
+decision from these screens without an analyst beside them translating.
+
+**Three findings were structural and none of them was subtle.**
+
+- **The proposal was unreachable.** The document this product exists to produce
+  had no link from the results page, the wizard, the scenario list or the
+  command palette. Searching every `href`, `Link` and `router.push` in the app
+  returned nothing pointing at `/scenarios/[id]/proposal`. Four export formats,
+  all finished, all tested, and no user could find them.
+- **The results page had no executive summary.** It opened on a six-column
+  comparison table. Nowhere on nine panels did a sentence say what we recommend,
+  what it costs and what needs deciding — the page was ordered the way the
+  engine derives the answer, which is the wrong order to read it in.
+- **The proposal's executive summary had no money in it.** Estate size,
+  headcount, control count, coverage, FTE, warnings. The first cost figure was
+  in section 4.
+
+**And one was a live commercial risk.** Our fee, cost base and margin rendered
+on the results page inside a collapsed `<details>` labelled "not for the
+client". That is a convention, not a guarantee, on the screen an analyst turns
+toward the client; on the retail preset the triangle hides a 95.5% margin. The
+exports already had the real guarantee — `buildProposal` never receives
+`attribution` — and the screen now matches it: `?view=internal` or the figures
+are not in the DOM at all, pinned by a test that asserts their absence.
+
+**Two more surfaced while fixing the others, and both were found by a test
+rather than by reading.**
+
+- **An analyst-voice instruction was rendering in client-facing copy.** The
+  "our fee exceeds the build cost" warning ended "check it before this figure
+  reaches a client" — addressed to the analyst, rendered to the client, inviting
+  them to audit our rate card. It fires on both INR presets. Split: the fact
+  (buying costs more than owning) stays client-facing, the rate-card diagnosis
+  moves to `providerRationale`.
+- **"Required" was amber on met requirements and silent on unmet ones.** The
+  badge sits on a selection, so it only ever appeared on requirements that were
+  *bought*; a mandated category the budget could not fund had no row at all. On
+  retail's Essential column: four amber badges on satisfied requirements, and
+  `backup` and `edr` invisible. Exactly backwards.
+
+**Also fixed:** one noun for one thing (54 uses of "session" for the object the
+URL, the database and the code all call a scenario), plain-English section
+navigation, the priced-on date moved from the last line of the ninth panel into
+the header, and a print treatment — the app is dark by design and that is right
+for the screen, wrong for the paper somebody will produce mid-meeting.
+
+**Then the vocabulary, which the first pass held back** because B3 and B4 are
+naming decisions rather than substitutions. Decided and applied: a saved piece
+of work is a **scenario**, the three things a client chooses between are
+**options**, the one we would put off is **deferred**, a step in the delivery
+sequence is a **phase**, the client's assets are their **estate**, and the
+separate question of where those assets run is **where their systems run**.
+"Deferred" because the roadmap's own column is headed *Phase*, so one word was
+carrying a delivery step and a budget-year deferral in the same document.
+Nothing in the engine was renamed: `phase2` is still the `BundleKind` and still
+in the URL.
+
+**`apps/web/test/vocabulary.test.ts` enforces it**, by reading every page and
+component, extracting the strings a user can actually see (JSX text and the
+props that render as words) and failing on a banned one. Comments are stripped
+first, because this repo explains its own history and the prose recording why a
+word was replaced necessarily contains that word. It earned its place on its
+first run: the phrase-by-phrase pass before it had missed eleven more, including
+every error page and four panels still calling an option a bundle.
+
+⚠ **Two things left, deliberately, and recorded in the audit.** The rupee
+equivalent is on the totals and not on the thirteen category rows above them,
+because a second line on every row would double the table's height to restate
+the order of magnitude thirteen times. And the print rules are reasoned rather
+than verified: `@media print` cannot be asserted in jsdom, so print one page
+before trusting it. Nothing in this phase has been opened in a browser.
+
+**Then the page was fetched and read, which found two more.** Both were
+introduced by this phase's own fixes, both survived typecheck, lint and the
+whole suite, and both are the same mistake: an all-in figure set beside a
+procurement-only one.
+
+- The executive summary rendered *"Year one ₹5,28,77,686 · Every year after
+  ₹7,98,959"* on the SaaS preset. A sixty-six-fold collapse a year later, which
+  does not happen — the people were in one figure and not the other. The label
+  underneath said "Not salaries" and was never going to carry it: **two figures
+  side by side are read as comparable whatever is written under them.**
+- The same pairing in the proposal's new investment table, where it is printed
+  into a Word document a CFO reads unaccompanied: ₹70.6 lakh and ₹26.6 lakh
+  under a ₹1.74 crore three-year total that the two of them cannot produce
+  (70.6 + 26.6 + 26.6 = 1.24 crore). Wrong arithmetic on page one, in the
+  section written to establish confidence.
+
+Both now all-in, with procurement stated as a component rather than as the
+comparison. Both reconcile: 5.29 + 3.39 + 3.39 = 12.07 crore against a stated
+12.07, and 70.6 + 51.3 + 51.3 = 173.2 against 174.2, the remainder being the
+licence uplift. `proposal.test.ts` asserts the *reconciliation*, and asserts
+that the broken pairing cannot reach the total — a test on the labels would
+have passed against both versions.
+
+**Verified on the wire, not in a browser.** The Chrome extension was not
+connected again. But the executive summary is a *server* component, unlike the
+charts, so fetching the page proves it renders — which is the first time
+anything on this dashboard has been verified by looking at what the server
+actually sent. Confirmed against real saved scenarios: the summary renders, both
+columns reconcile, the proposal is linked, all five internal figures are absent
+by default and present on `?view=internal`, a client-operated scenario shows
+none of them at all, and the `@media print` block reaches the stylesheet. What
+HTTP still cannot show is what a printed page *looks* like.
+
+**Then the Chrome extension connected, which closes the oldest open question in
+this file.** "The dashboard as a whole has never been looked at in a browser",
+and specifically "the two Recharts figures are the only part of this application
+that has never been observed working", carried across five sessions.
+
+They work. Both charts render, six category labels sit clear of one another over
+a distinct axis, and **the cash-flow bar labels paint** — ₹70.6L, ₹51.6L, ₹52L —
+which is the assertion `charts.test.tsx` has carried as a deliberately skipped
+test because `<LabelList>` needs geometry jsdom never supplies. No longer
+unknown. Also confirmed by eye: the summary and its four figures, the
+plain-English nav, the `Proposal →` button, the engagement panel showing only
+client-facing figures, and the amber internal block under `?view=internal`
+carrying "96% of the fee" and the rota's working.
+
+**One console error, and it is not ours.** A hydration mismatch whose every diff
+line is `fdprocessedid` — an attribute a form-filler extension writes onto
+inputs before React loads, which is the last cause React's own message lists.
+Nothing else logged.
+
+**And a third figure defect, found by looking at two panels at once.** The
+summary said "each year after ₹51,31,276" while the cash-flow chart showed Year
+2 at ₹51.6L and Year 3 at ₹52L. Both correct — one is the steady rate, the other
+carries the compounding licence uplift — and under a percent apart. A reader who
+finds two answers to one question stops trusting both. Fixed in copy, not in
+figures: the note names the uplift and points at the chart. Changing the figure
+would have undone the like-for-like property.
+
+⚠ **Two things still unverified**: what a *printed* page looks like (the tooling
+cannot emulate print media, though the `@media print` block is confirmed to
+reach the stylesheet), and the phone layout, because window resizing would not
+move the rendering viewport after two attempts.
+
+18 new tests. typecheck, lint green. 747 passed, 1 skipped.
 
 ## Open defects
 

@@ -420,6 +420,38 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   without checking which question it answers. `fullBuildAnnual` deliberately
   does not move with the boundary, because it is the build-versus-buy
   denominator and a figure that moved would make the comparison circular.
+- **The provider margin is a ratio between two rate cards written about
+  different markets, and nothing in the engine can fix that.** The fee comes
+  from `mssp-rate-card.yaml`, synthesised from published US and global MDR
+  ranges; the cost under it is `labourRates.provider`, an Indian payroll. 80-96%
+  across the presets is what dividing one by the other produces, and it is not a
+  finding about any engagement. The missing input is our own charge-out rate,
+  which hard rule 2 does not allow to be invented here. The caveat is
+  unconditional on every managed engagement, like the pricing and coverage
+  disclaimers, because a threshold version needs a number nobody sourced.
+- **The monitoring rota is *not* why that margin is high, and the file used to
+  say it was.** `attribution.ts`, `docs/STATUS.md` and a unit test all carried
+  the claim that the cost side excluded the rota and was an upper bound "by an
+  order of magnitude". Measured once the rota was costed: 0.6 to 1.6 percentage
+  points across six presets. It is small because an MSSP seat is spread over a
+  published 50-100 clients, so a reference client consumes about 0.065 FTE, and
+  4.87 FTE a seat is the in-house figure that does not apply to us.
+  `test/provider-margin.test.ts` pins the measurement and is written to go red
+  and be rewritten rather than relaxed.
+- **The rota is charged per client; administration is charged per tool.**
+  Widening the service level adds administration and must not add rota: nobody
+  puts more analysts in front of the same screens because the contract covers
+  five categories instead of two. The gate is "we operate something", which
+  holds only because every service level on the committed rate card covers
+  `siem` and `mdr`. A level covering neither would be charged a rota it does not
+  run.
+- **The MSSP rate card's worked checks all pair ingest with endpoints
+  proportionally, and real estates do not.** The retail preset has 240 endpoints
+  against 206.5 GB/day, so `perGbDayMonthly` alone is 59% of its fee and the
+  "our fee exceeds the whole stack" warning fires at about 9x on both INR
+  presets. The card is not calibrated for ingest-heavy, endpoint-light estates.
+  Do not tune the coefficient to make the presets look better; that needs real
+  per-region pricing.
 - **A `tsx scripts/…` run and a live `pnpm dev` are two database connections, and
   they disagreed about what the database contained.** Recorded from the SQLite
   era; whether it survives the move to Postgres is untested, and Postgres has no
