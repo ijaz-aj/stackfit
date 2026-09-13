@@ -1,4 +1,4 @@
-import { coverageOfBundle, type Bundle } from '@stackfit/engine';
+import { coverageOfBundle, planGapClosure, type Bundle } from '@stackfit/engine';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -9,6 +9,7 @@ import { CostBreakdown } from '@/components/results/cost-breakdown';
 import { Engagement } from '@/components/results/engagement';
 import { Staffing } from '@/components/results/staffing';
 import { CoverageMatrix } from '@/components/results/coverage-matrix';
+import { CloseGaps } from '@/components/results/close-gaps';
 import { GapAnalysis } from '@/components/results/gap-analysis';
 import { SectionNav } from '@/components/results/section-nav';
 import { SizingWorksheet } from '@/components/results/sizing-worksheet';
@@ -245,8 +246,18 @@ export default async function ResultsPage({
             <CoverageMatrix coverage={coverage} />
           </div>
 
-          <div id="gaps" className="scroll-mt-20">
+          <div id="gaps" className="scroll-mt-20 flex flex-col gap-3">
             <GapAnalysis coverage={coverage} />
+            {/*
+              Under the gap table, not above it. The plan is only meaningful
+              once the reader has seen what is open and why, and a remediation
+              button offered before the diagnosis invites clicking it instead of
+              reading it.
+            */}
+            <CloseGaps
+              scenarioId={id}
+              plan={planGapClosure(bundle, coverage, scenario.profile.budget, result.phase2)}
+            />
           </div>
 
           <div id="sizing" className="scroll-mt-20">

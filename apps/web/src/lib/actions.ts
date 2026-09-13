@@ -6,9 +6,10 @@ import { redirect } from 'next/navigation';
 
 import { INDUSTRY_SHORT } from '@/components/wizard/labels';
 import { engineData } from './config.server';
-import { formatNumber } from './format';
+import { formatMoney, formatNumber } from './format';
 import { prisma } from './db';
 import { summariseEstimate, type EstimateSummary } from './estimate';
+import { planGapClosure } from '@stackfit/engine';
 import { resultsFor } from './results.server';
 import { requireAnalyst } from './session.server';
 import {
@@ -208,6 +209,144 @@ export async function saveSizingOverrides(input: unknown): Promise<SaveResult> {
 
   revalidatePath(`/scenarios/${parsed.data.id}/results`);
   return { ok: true, savedAt: new Date().toISOString() };
+}
+
+/**
+ * Raise the budget to what closes the addressable gaps, and report what
+ * actually happened.
+ *
+ * The verification is the point, and it is why this does not simply write the
+ * caps and redirect. Raising a cap re-runs the whole selection, and the engine
+ * can reach a different stack at the larger budget. A button that promised
+ * "gaps closed" and left the client to discover otherwise would be exactly the
+ * kind of confident wrongness this product cannot afford, so the plan states a
+ * budget, the action applies it, and the result is read back off a real run.
+ *
+ * Controls no product claims are never counted as closed, at any budget. They
+ * are reported before and after and the figures below exclude them.
+ */
+export interface GapClosureResult {
+  readonly ok: boolean;
+  readonly problem?: string;
+  /** Coverage before and after, read from two real pipeline runs. */
+  readonly before?: { readonly coveragePercent: number | null; readonly gaps: number };
+  readonly after?: { readonly coveragePercent: number | null; readonly gaps: number };
+  readonly appliedAnnualCap?: string;
+  readonly appliedOneTimeCap?: string;
+  /** Gaps that remain because no purchase closes them. */
+  readonly stillOpen?: readonly string[];
+}
+
+const GapClosureInput = z.object({ id: z.string().min(1) }).strict();
+
+export async function applyGapClosure(input: unknown): Promise<GapClosureResult> {
+  await requireAnalyst();
+
+  const parsed = GapClosureInput.safeParse(input);
+  if (!parsed.success) return { ok: false, problem: 'invalid request' };
+
+  const row = await prisma.scenario.findUnique({ where: { id: parsed.data.id } });
+  if (row === null) return { ok: false, problem: 'no such scenario' };
+
+  const scenario = parseScenarioRow(row);
+  if ('problem' in scenario) return { ok: false, problem: scenario.problem };
+
+  const before = resultsFor(scenario.profile, scenario.inventory, scenario.overrides);
+  const plan = planGapClosure(
+    before.recommended,
+    before.coverage,
+    scenario.profile.budget,
+    before.phase2,
+  );
+
+  /*
+   * Only ever claims the budget-blocked subset. A gap needing a deferred
+   * category or a product swap does not move for money, and offering to fix it
+   * here would be a button that runs, reports success, and changes nothing.
+   */
+  if (plan.closeableByBudget === 0) {
+    return {
+      ok: false,
+      problem:
+        plan.needDeferredCategory > 0 || plan.needProductSwap > 0
+          ? `No gap here is blocked by budget. ${plan.needDeferredCategory} need a category year one deferred on weight, and ${plan.needProductSwap} need a different product inside a category already funded. Neither moves for money.`
+          : plan.unclosableGaps.length > 0
+            ? 'Nothing here can be closed by a purchase. These controls need policy, process or evidence.'
+            : 'There are no gaps to close.',
+    };
+  }
+
+  /*
+   * Only ever raises. A plan cheaper than the stated budget must not quietly
+   * cut what the client told us they had to spend: the budget is their
+   * statement, not ours, and lowering it would change the recommendation on a
+   * fact we were not given.
+   */
+  const raised = {
+    ...scenario.profile.budget,
+    annualCap:
+      scenario.profile.budget.annualCap === null ||
+      plan.requiredAnnualCap.amountMinor > scenario.profile.budget.annualCap.amountMinor
+        ? plan.requiredAnnualCap
+        : scenario.profile.budget.annualCap,
+    oneTimeCap:
+      scenario.profile.budget.oneTimeCap === null ||
+      plan.requiredOneTimeCap.amountMinor > scenario.profile.budget.oneTimeCap.amountMinor
+        ? plan.requiredOneTimeCap
+        : scenario.profile.budget.oneTimeCap,
+  };
+
+  const profile = { ...scenario.profile, budget: raised };
+  const after = resultsFor(profile, scenario.inventory, scenario.overrides);
+
+  /*
+   * Dry run first, and only commit if it demonstrably helped.
+   *
+   * Whether a gap is held open by the budget or by the year-one scope cannot
+   * be known before running it: `phase2` holds both the categories the budget
+   * blocked and the ones the weight gate deferred. So this runs the larger
+   * budget, checks it actually bought something, and leaves the scenario
+   * untouched when it did not. A button that raised a client's budget and
+   * changed nothing would be worse than one that refused.
+   */
+  const closedGaps = after.coverage.gaps.length < before.coverage.gaps.length;
+  const fundedMandates =
+    after.recommended.unfundedMandatory.length < before.recommended.unfundedMandatory.length;
+
+  if (!closedGaps && !fundedMandates) {
+    return {
+      ok: false,
+      problem:
+        `Raising the budget to ${formatMoney(raised.annualCap)}/yr changes nothing: the same ` +
+        `${before.coverage.gaps.length} controls stay open. These gaps are held by the year-one ` +
+        'scope rather than by money, so the budget has been left alone. Pulling a Phase 2 ' +
+        'category forward, or choosing a different product inside a funded category, is what ' +
+        'moves them.',
+    };
+  }
+
+  await prisma.scenario.update({
+    where: { id: parsed.data.id },
+    data: { profile: JSON.stringify(profile) },
+  });
+
+  revalidatePath(`/scenarios/${parsed.data.id}/results`);
+  revalidatePath(`/scenarios/${parsed.data.id}`);
+
+  return {
+    ok: true,
+    before: {
+      coveragePercent: before.coverage.summary.coveragePercent,
+      gaps: before.coverage.gaps.length,
+    },
+    after: {
+      coveragePercent: after.coverage.summary.coveragePercent,
+      gaps: after.coverage.gaps.length,
+    },
+    appliedAnnualCap: formatMoney(raised.annualCap),
+    appliedOneTimeCap: formatMoney(raised.oneTimeCap),
+    stillOpen: after.coverage.unclosableGaps,
+  };
 }
 
 export interface EstimateResult {

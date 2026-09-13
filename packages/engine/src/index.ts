@@ -22,6 +22,7 @@ export * from './attribution';
 export * from './scoring';
 export * from './portfolio';
 export * from './coverage';
+export * from './gap-closure';
 export * from './proposal';
 export * from './justification';
 export * from './compare';

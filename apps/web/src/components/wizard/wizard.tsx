@@ -296,7 +296,12 @@ function WizardBody({
         </div>
 
         <div className="lg:sticky lg:top-16 lg:self-start">
-          <LiveReadout sizing={sizing} estimate={estimate} estimating={estimating} />
+          <LiveReadout
+            sizing={sizing}
+            estimate={estimate}
+            estimating={estimating}
+            scenarioId={scenarioId}
+          />
           {estimateProblem !== null && (
             <p className="text-bad mt-2 text-xs leading-snug">Estimate failed: {estimateProblem}</p>
           )}

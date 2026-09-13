@@ -198,7 +198,17 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
                 pricing grade is a caveat, so the score reads as a figure and
                 only the things that qualify it stay as badges.
               */}
-              <div className="flex shrink-0 flex-col items-end gap-2">
+              {/*
+                `min-w-0` rather than `shrink-0`. The header wraps, so this
+                cluster reaching a second line is already the intended
+                behaviour; `shrink-0` stopped the *badges inside it* giving up
+                any width, and three of them at once (mandated, suite discount,
+                pricing grade) pushed 35px off a 390px phone and 104px off a
+                320px one. Same defect as the delete confirmation and the cost
+                grid: a cluster told it may never shrink, inside a container
+                that assumed it would.
+              */}
+              <div className="flex min-w-0 flex-col items-end gap-2">
                 <span className="tabular text-accent text-xl leading-none font-medium">
                   {formatNumber(selection.fitScore, 1)}
                   <span className="text-faint ml-1 text-2xs">/100 fit</span>

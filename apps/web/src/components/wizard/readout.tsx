@@ -1,6 +1,7 @@
 'use client';
 
 import type { SizingResult, UnfundedCategory } from '@stackfit/engine';
+import Link from 'next/link';
 
 import { Badge, RationaleList, Stat } from '@/components/ui';
 import type { EstimateSummary } from '@/lib/estimate';
@@ -61,10 +62,17 @@ export function LiveReadout({
   sizing,
   estimate,
   estimating,
+  scenarioId,
 }: {
   sizing: SizingResult | null;
   estimate: EstimateSummary | null;
   estimating: boolean;
+  /**
+   * Present once the scenario is saved, which it always is here: the wizard
+   * autosaves. It turns the three summary badges into links, because a number
+   * a reader wants to interrogate and cannot is worse than no number.
+   */
+  scenarioId: string;
 }) {
   return (
     <aside className="border-line bg-panel flex flex-col gap-4 rounded border p-4">
@@ -204,13 +212,43 @@ export function LiveReadout({
               </p>
             )}
 
+            {/*
+              Each badge is a question, so each one is a link to where that
+              question is answered. Coverage goes to the matrix, which shows the
+              per-control verdict and the denominator; both gap counts go to the
+              gap table and the remediation plan beneath it.
+
+              The alternative, which is what this was, is three figures a
+              reader can neither interrogate nor act on: "9 gaps" tells an
+              analyst nothing they can take to a client.
+            */}
             <div className="flex flex-wrap gap-2">
               {estimate.recommended.coveragePercent !== null && (
-                <Badge tone="accent">{estimate.recommended.coveragePercent}% covered</Badge>
+                <Link
+                  href={`/scenarios/${scenarioId}/results#coverage`}
+                  className="rounded-(--radius-control) focus-visible:outline-accent focus-visible:outline-2"
+                  title="Which controls are covered, which are partial, and what the percentage is out of"
+                >
+                  <Badge tone="accent">{estimate.recommended.coveragePercent}% covered</Badge>
+                </Link>
               )}
-              {estimate.gapCount > 0 && <Badge tone="warn">{estimate.gapCount} gaps</Badge>}
+              {estimate.gapCount > 0 && (
+                <Link
+                  href={`/scenarios/${scenarioId}/results#gaps`}
+                  className="rounded-(--radius-control) focus-visible:outline-accent focus-visible:outline-2"
+                  title="Every open control, what would close it, and what that costs"
+                >
+                  <Badge tone="warn">{estimate.gapCount} gaps</Badge>
+                </Link>
+              )}
               {estimate.criticalGaps.length > 0 && (
-                <Badge tone="bad">{estimate.criticalGaps.length} critical</Badge>
+                <Link
+                  href={`/scenarios/${scenarioId}/results#gaps`}
+                  className="rounded-(--radius-control) focus-visible:outline-accent focus-visible:outline-2"
+                  title="The gaps graded critical, worst first"
+                >
+                  <Badge tone="bad">{estimate.criticalGaps.length} critical</Badge>
+                </Link>
               )}
             </div>
           </>
