@@ -18,6 +18,18 @@ import { defineConfig } from 'prisma/config';
 function databaseUrl(): string {
   const url = process.env.DATABASE_URL;
   if (url === undefined || url === '') {
+    // `generate` is the one command here that never opens a connection: it
+    // reads the schema and writes TypeScript. It has to run on the deployment
+    // host, because the generated client is gitignored and so is absent from a
+    // fresh checkout, and it runs as part of `next build`. Demanding a URL for
+    // it would make building the app require a database, which docs/DEPLOY.md
+    // records as deliberately untrue and which the lazy client exists to avoid.
+    //
+    // Narrow on purpose. Every command that does connect still gets the error
+    // below rather than a placeholder pointing at nothing, which is the failure
+    // the comment above this function is about.
+    if (process.argv.includes('generate')) return 'postgresql://generate-only';
+
     throw new Error(
       'DATABASE_URL is not set, and apps/web/.env.local and apps/web/.env were both checked. ' +
         'Copy apps/web/.env.example to apps/web/.env.local and point it at a Postgres instance: ' +
