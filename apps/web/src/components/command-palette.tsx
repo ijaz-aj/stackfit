@@ -100,11 +100,22 @@ export function CommandPalette() {
       detail: 'Open the dashboard',
       run: () => go(`/scenarios/${session.id}/results`),
     })),
+    /*
+     * The proposal, which the palette offered no route to at all. Neither did
+     * anything else in the application: the document this product exists to
+     * produce could only be reached by typing its URL.
+     */
+    ...sessions.slice(0, 3).map((session) => ({
+      id: `proposal:${session.id}`,
+      label: `${session.name}: proposal`,
+      detail: 'Preview, then download as Word, PDF or spreadsheet',
+      run: () => go(`/scenarios/${session.id}/proposal`),
+    })),
     ...[
-      { id: 'nav:home', label: 'All scoping sessions', detail: 'Go to the list', href: '/' },
+      { id: 'nav:home', label: 'All scoping scenarios', detail: 'Go to the list', href: '/' },
       {
         id: 'nav:compare',
-        label: 'Compare two sessions',
+        label: 'Compare two scenarios',
         detail: 'Side by side',
         href: '/compare',
       },
@@ -160,7 +171,7 @@ export function CommandPalette() {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Search sessions and actions"
+        aria-label="Search scenarios and actions"
         className="fixed inset-x-0 top-[12vh] z-50 mx-auto w-[min(620px,92vw)]"
       >
         <div className="surface overflow-hidden shadow-(--shadow-lifted)">
@@ -170,7 +181,7 @@ export function CommandPalette() {
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={onInputKey}
             placeholder="Find a client, or jump somewhere"
-            aria-label="Search sessions and actions"
+            aria-label="Search scenarios and actions"
             className="border-line text-ink placeholder:text-faint w-full border-b bg-transparent px-4 py-3.5 text-base outline-none"
           />
 

@@ -20,14 +20,14 @@ export default async function ScenarioPage({ params }: { params: Promise<{ id: s
   if (isUnreadable(scenario)) {
     return (
       <main className="mx-auto w-full max-w-[700px] px-6 py-10">
-        <h1 className="text-ink text-lg font-semibold">This session cannot be opened</h1>
+        <h1 className="text-ink text-lg font-semibold">This scenario cannot be opened</h1>
         <p className="text-muted mt-2 text-sm">{scenario.problem}</p>
         <p className="text-faint mt-4 text-xs">
           It was almost certainly saved before a schema change. The row is still in the database and
           nothing has been discarded.
         </p>
         <Link href="/" className="text-accent mt-4 inline-block text-sm">
-          ← back to sessions
+          ← back to scenarios
         </Link>
       </main>
     );

@@ -299,7 +299,7 @@ export function CategoryCards({ result, bundle }: { result: PipelineResult; bund
       {bundle.selections.length === 0 && (
         <Card title="Nothing selected">
           <p className="text-muted text-sm">
-            This bundle funds no products. The shortfall and the categories that went unfunded are
+            This option funds no products. The shortfall and the categories that went unfunded are
             in the gap analysis below.
           </p>
         </Card>

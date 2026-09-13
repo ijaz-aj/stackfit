@@ -67,7 +67,7 @@ export function StepPreferences({ products }: { products: readonly ProductOption
           </Field>
 
           <Field
-            label="Environment they run"
+            label="Where their systems run"
             htmlFor="environment"
             hint="What the client already has, not what they would prefer."
           >

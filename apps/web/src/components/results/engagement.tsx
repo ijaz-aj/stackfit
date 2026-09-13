@@ -1,9 +1,10 @@
 import type { Bundle } from '@stackfit/engine';
 import { CATEGORY_LABELS, SERVICE_LEVEL_LABELS } from '@stackfit/engine';
 import type { ClientProfile } from '@stackfit/schema';
+import Link from 'next/link';
 
 import { Card } from '@/components/ui';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, formatNumber } from '@/lib/format';
 
 /**
  * Who pays for what, on this engagement.
@@ -18,7 +19,27 @@ import { formatMoney } from '@/lib/format';
  * Everything here is read off `bundle.attribution`; nothing is computed in the
  * component (hard rule 4).
  */
-export function Engagement({ bundle, profile }: { bundle: Bundle; profile: ClientProfile }) {
+export function Engagement({
+  bundle,
+  profile,
+  scenarioId,
+  /**
+   * Render our fee, our cost base and our margin.
+   *
+   * Off by default and driven by `?view=internal` on the URL, so on the screen
+   * an analyst turns toward a client those figures are not in the document at
+   * all. They were previously always rendered and merely collapsed inside a
+   * `<details>`, which is a convention rather than a guarantee; the exports
+   * have the real one (`buildProposal` never receives `attribution`) and this
+   * brings the screen into line with it.
+   */
+  showInternal,
+}: {
+  bundle: Bundle;
+  profile: ClientProfile;
+  scenarioId: string;
+  showInternal: boolean;
+}) {
   const { attribution } = bundle;
   const weOperate = !attribution.bySelection.every((entry) => entry.operator === 'client');
 
@@ -101,16 +122,58 @@ export function Engagement({ bundle, profile }: { bundle: Bundle; profile: Clien
         The client-facing exports never receive `attribution` at all, which is
         the stronger guarantee; this is the weaker one that covers the screen.
       */}
-      {weOperate && (
-        <details className="border-line mt-4 border-t pt-3">
-          <summary className="text-faint cursor-pointer text-xs select-none">
-            Internal: what this engagement costs us. Not for the client.
-          </summary>
+      {/*
+        A door rather than the room. Switching views is a deliberate act with a
+        visible URL change, which is what makes it safe to do on a shared
+        screen: the analyst can see, from the address bar, which mode they are
+        in before they turn the laptop round.
+      */}
+      {weOperate && !showInternal && (
+        <p className="border-line text-faint mt-4 border-t pt-3 text-xs print:hidden">
+          <Link href={`/scenarios/${scenarioId}/results?view=internal`} className="text-muted hover:text-ink underline underline-offset-2">
+            Show what this engagement costs us
+          </Link>{' '}
+          — our fee, cost base and margin. Not on this screen by default, and never in the
+          exports.
+        </p>
+      )}
+
+      {weOperate && showInternal && (
+        <div className="border-warn/40 bg-warn/10 mt-4 rounded-(--radius-card) border p-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="text-warn text-xs font-medium tracking-wide uppercase">
+              Internal view · do not show the client
+            </p>
+            <Link
+              href={`/scenarios/${scenarioId}/results`}
+              className="text-muted hover:text-ink text-xs underline underline-offset-2 print:hidden"
+            >
+              Hide
+            </Link>
+          </div>
           <dl className="mt-2 flex flex-col gap-2 text-sm">
             <Row label="Our fee" value={formatMoney(attribution.providerFeeAnnual)} />
             <Row
               label="Costs us to run, per year"
               value={formatMoney(attribution.providerRunAnnual)}
+            />
+            {/*
+              The two halves of that run cost, indented under it. They are
+              different quantities measured different ways: administration is
+              per tool and scales with the estate, the rota is per client and
+              scales with shift coverage. Showing only the total is how they
+              come to be read as one number, which is the order-of-magnitude
+              mistake `staffing.ts` exists to prevent.
+            */}
+            <Row
+              label="— tool administration"
+              value={formatMoney(attribution.providerAdministrationAnnual)}
+              muted
+            />
+            <Row
+              label={`— 24/7 rota (${formatNumber(attribution.providerMonitoringFte, 2)} FTE)`}
+              value={formatMoney(attribution.providerMonitoringAnnual)}
+              muted
             />
             <Row
               label="Costs us to stand up, once"
@@ -122,6 +185,17 @@ export function Engagement({ bundle, profile }: { bundle: Bundle; profile: Clien
                 value={
                   <span className="text-ink font-semibold">
                     {formatMoney(attribution.providerMarginAnnual)}
+                    {attribution.providerMarginRate !== null && (
+                      /*
+                       * The rate, not just the amount. USD 677,077 reads as a
+                       * large engagement; 94% reads as a rate card and a cost
+                       * base written about different markets, which is what it
+                       * actually is. The caveat underneath says so.
+                       */
+                      <span className="text-faint ml-1.5 font-normal">
+                        {formatNumber(attribution.providerMarginRate * 100, 0)}% of the fee
+                      </span>
+                    )}
                   </span>
                 }
               />
@@ -136,7 +210,7 @@ export function Engagement({ bundle, profile }: { bundle: Bundle; profile: Clien
               <li key={line}>{line}</li>
             ))}
           </ul>
-        </details>
+        </div>
       )}
 
       {attribution.rationale.length > 0 && (
@@ -150,11 +224,20 @@ export function Engagement({ bundle, profile }: { bundle: Bundle; profile: Clien
   );
 }
 
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
+function Row({
+  label,
+  value,
+  /** A component of the row above it, rather than a figure in its own right. */
+  muted = false,
+}: {
+  label: string;
+  value: React.ReactNode;
+  muted?: boolean;
+}) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-      <dt className="text-muted min-w-0">{label}</dt>
-      <dd className="tabular shrink-0">{value}</dd>
+      <dt className={`min-w-0 ${muted ? 'text-faint pl-3 text-xs' : 'text-muted'}`}>{label}</dt>
+      <dd className={`tabular shrink-0 ${muted ? 'text-faint text-xs' : ''}`}>{value}</dd>
     </div>
   );
 }

@@ -374,3 +374,69 @@ body {
   background-size: 12px 12px;
   padding-right: 2rem;
 }
+
+/*
+ * Printing.
+ *
+ * The application is dark by design (PROJECT_SPEC §9) and that is right for the
+ * screen it is used on. It is wrong for paper: a dark slab costs a cartridge,
+ * and on most printers the light-on-dark text comes out muddy or blank.
+ *
+ * Somebody will press Ctrl-P on the results dashboard during a meeting. Before
+ * this they got fourteen thousand pixels of charcoal with a sticky navigation
+ * column down the side. This inverts the surfaces to paper, drops the chrome
+ * that has no meaning off-screen, and keeps panels from being split across a
+ * page break mid-figure.
+ *
+ * Deliberately a print treatment rather than a light theme: the screen design
+ * is a decision, and this changes only what leaves the building on paper.
+ */
+@media print {
+  :root {
+    --color-ground: #ffffff;
+    --color-panel: #ffffff;
+    --color-panel-raised: #f5f5f5;
+    --color-ink: #000000;
+    --color-muted: #333333;
+    --color-faint: #555555;
+    --color-line: #cccccc;
+    --color-line-strong: #999999;
+    --color-accent: #14506b;
+  }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  /* Sticky anything is meaningless on paper and repeats on every page. */
+  header.sticky,
+  nav.sticky,
+  [class*='sticky'] {
+    position: static !important;
+  }
+
+  /* Controls that cannot be operated from a sheet of paper. */
+  button,
+  [role='button'],
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* A figure split across a page break is a figure nobody can check. */
+  section,
+  table,
+  dl,
+  li {
+    break-inside: avoid;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  /* A link whose destination the reader cannot see is a dead end on paper. */
+  main a[href^='/']::after {
+    content: '';
+  }
+}

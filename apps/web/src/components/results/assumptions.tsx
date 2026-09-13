@@ -203,12 +203,12 @@ export function AssumptionsPanel({
           hint="Source and age, both graded. Neither is inferred."
         >
           {bundle.selections.length === 0 ? (
-            <p className="text-faint text-sm">Nothing priced in this bundle.</p>
+            <p className="text-faint text-sm">Nothing priced in this option.</p>
           ) : (
             <>
               {pricesNeedingAttention.length === 0 ? (
                 <p className="text-muted measure text-sm leading-relaxed">
-                  Every price in this bundle is a vendor quote or a published list price, and all of
+                  Every price in this option is a vendor quote or a published list price, and all of
                   them are inside their re-check window. Nothing here needs qualifying to a client.
                 </p>
               ) : (
@@ -261,7 +261,7 @@ export function AssumptionsPanel({
           hint="Almost all analyst estimates, and they decide whether a zero-licence tool is cheap or expensive."
         >
           {bundle.selections.length === 0 ? (
-            <p className="text-faint text-sm">Nothing costed in this bundle.</p>
+            <p className="text-faint text-sm">Nothing costed in this option.</p>
           ) : (
             <Expandable summary="Effort, per product" count={bundle.selections.length}>
               <div className="overflow-x-auto">

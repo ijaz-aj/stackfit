@@ -29,7 +29,7 @@ export function SiteHeader({ analystEmail }: { analystEmail: string | null }) {
         <Link
           href="/"
           className="flex items-baseline gap-2 rounded"
-          aria-label="StackFit, back to sessions"
+          aria-label="StackFit, back to scenarios"
         >
           <span className="text-ink text-lg font-semibold tracking-tight">StackFit</span>
           <span className="text-faint hidden text-xs sm:inline">security solution advisor</span>

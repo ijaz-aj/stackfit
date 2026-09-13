@@ -1,5 +1,7 @@
 import type { Bundle } from '@stackfit/engine';
+import type { FxConfig } from '@stackfit/schema';
 
+import { MoneyWithRupees } from '@/components/money';
 import { Card } from '@/components/ui';
 import { CATEGORY_LABELS } from '@/components/wizard/labels';
 import { formatMoney } from '@/lib/format';
@@ -16,7 +18,7 @@ import { CashflowChart, CostByCategoryChart } from './cost-charts';
  * value. It is also the thing an analyst copies into a spreadsheet, which is
  * what usually happens next.
  */
-export function CostBreakdown({ bundle }: { bundle: Bundle }) {
+export function CostBreakdown({ bundle, fx }: { bundle: Bundle; fx: FxConfig }) {
   const currency = bundle.currency;
 
   const byCategory = bundle.selections.map((selection) => ({
@@ -41,7 +43,7 @@ export function CostBreakdown({ bundle }: { bundle: Bundle }) {
     return (
       <Card title="Cost breakdown">
         <p className="text-muted text-sm">
-          Nothing is funded in this bundle, so there is nothing to break down.
+          Nothing is funded in this option, so there is nothing to break down.
         </p>
       </Card>
     );
@@ -125,11 +127,23 @@ export function CostBreakdown({ bundle }: { bundle: Bundle }) {
                   </td>
                 </tr>
               ))}
+              {/*
+                The rupee equivalent on the total, and deliberately not on the
+                thirteen rows above it.
+
+                This tool's primary region is India and a scenario priced in USD
+                or EUR gives an Indian reader nothing to judge the size of a
+                number against. But `MoneyWithRupees` renders a second line, and
+                thirteen of those would double the height of the table to
+                restate, thirteen times, something the reader only needs once:
+                the order of magnitude. The total is where scale is actually
+                read, so the total is where it goes.
+              */}
               <tr className="border-line text-ink border-t-2">
                 <td className="py-2 pr-3 font-medium">Total</td>
                 <td colSpan={4} />
-                <td className="tabular py-2 text-right font-medium">
-                  {formatMoney(bundle.annualRecurring)}
+                <td className="py-2 text-right font-medium">
+                  <MoneyWithRupees money={bundle.annualRecurring} fx={fx} />
                 </td>
               </tr>
             </tbody>

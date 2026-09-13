@@ -10,7 +10,7 @@ import { deleteScenario } from '@/lib/actions';
  *
  * This sat one click away from Clone, on a row whose only distinguishing
  * feature is often a timestamp, two sessions can share a client's name, and
- * it destroys a scoping session containing a prospective client's whole asset
+ * it destroys a scoping scenario containing a prospective client's whole asset
  * inventory. There is no undo, no trash, and nothing to re-import from.
  *
  * The confirmation is inline rather than a `window.confirm` or a modal. A

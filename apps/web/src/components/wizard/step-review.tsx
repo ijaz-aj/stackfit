@@ -55,10 +55,41 @@ function BundleColumn({
               {CATEGORY_LABELS[selection.category] ?? selection.category}
             </span>
             <span className="text-ink truncate">{selection.productName}</span>
-            {selection.mandatory && <Badge tone="warn">required</Badge>}
+            {/*
+              Neutral, not amber. This badge sits on a category that compliance
+              requires *and that was bought* — the line only exists because a
+              product was selected. In warning colours, on a met requirement,
+              it reads as an outstanding item, and it was: the first question
+              asked of this screen was "required means required but not met?".
+            */}
+            {selection.mandatory && <Badge tone="accent">required</Badge>}
           </li>
         ))}
-        {bundle.selections.length === 0 && (
+
+        {/*
+          The ones that are actually unmet, which this column used to show by
+          absence.
+
+          A mandated category the budget could not fund had no row at all here,
+          so the only mandatory categories visible were the satisfied ones —
+          in amber — while the unsatisfied ones were invisible. Exactly
+          backwards. The engine has always known; only the readout said so, and
+          only for the recommended tier.
+        */}
+        {bundle.unfundedMandatory.map((category) => (
+          <li
+            key={`unfunded:${category}`}
+            className="text-faint flex items-baseline gap-2 text-xs"
+          >
+            <span className="w-24 shrink-0 truncate">
+              {CATEGORY_LABELS[category] ?? category}
+            </span>
+            <span className="text-warn truncate line-through decoration-1">not funded</span>
+            <Badge tone="bad">required</Badge>
+          </li>
+        ))}
+
+        {bundle.selections.length === 0 && bundle.unfundedMandatory.length === 0 && (
           <li className="text-faint text-xs">Nothing selected.</li>
         )}
       </ul>
@@ -70,6 +101,9 @@ function BundleColumn({
         <Badge tone={bundle.withinAnnualCap ? 'good' : 'bad'}>
           {bundle.withinAnnualCap ? 'within cap' : 'over cap'}
         </Badge>
+        {bundle.unfundedMandatory.length > 0 && (
+          <Badge tone="bad">{bundle.unfundedMandatory.length} required unfunded</Badge>
+        )}
       </div>
     </div>
   );
@@ -127,8 +161,8 @@ export function StepReview({
       {estimate !== null && (
         <>
           <Card
-            title="Indicative bundles"
-            hint="Essential is the floor. Recommended is year one. Phase 2 is what we would defer, priced."
+            title="Indicative options"
+            hint="Essential is the floor. Recommended is year one. Deferred is what we would put off, priced so the decision is on the record."
           >
             <div className="grid gap-3 lg:grid-cols-3">
               <BundleColumn
@@ -143,8 +177,8 @@ export function StepReview({
               />
               <BundleColumn
                 bundle={estimate.phase2}
-                label="Phase 2"
-                hint="Deferred on purpose, and priced."
+                label="Deferred"
+                hint="Put off on purpose, and priced."
               />
             </div>
           </Card>

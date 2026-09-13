@@ -23,7 +23,7 @@ export default async function ScenariosPage() {
   return (
     <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-5 px-6 py-8">
       <section className="flex flex-col gap-1">
-        <h1 className="text-ink text-xl font-semibold">Scoping sessions</h1>
+        <h1 className="text-ink text-xl font-semibold">Scoping scenarios</h1>
         <p className="text-muted text-sm">
           Start from a preset and edit it on the call, or start blank. Everything saves as you type.
         </p>
@@ -104,7 +104,7 @@ export default async function ScenariosPage() {
       </Card>
 
       <Card
-        title="Saved sessions"
+        title="Saved scenarios"
         hint={
           scenarios.length === 0
             ? undefined

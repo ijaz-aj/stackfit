@@ -24,7 +24,7 @@ export async function GET(
 
   const scenario = parseScenarioRow(row);
   if (isUnreadable(scenario)) {
-    return new Response(`This session cannot be opened: ${scenario.problem}`, {
+    return new Response(`This scenario cannot be opened: ${scenario.problem}`, {
       status: 422,
       headers: { 'content-type': 'text/plain; charset=utf-8' },
     });

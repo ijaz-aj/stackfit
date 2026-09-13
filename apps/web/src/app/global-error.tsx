@@ -41,7 +41,7 @@ export default function GlobalError({
         <main style={{ maxWidth: '32rem', padding: '1.25rem' }}>
           <h1 style={{ fontSize: '15px', fontWeight: 600, margin: 0 }}>StackFit could not start</h1>
           <p style={{ fontSize: '12px', lineHeight: 1.5, color: '#9aa1ad' }}>
-            The application failed before any page could be rendered. No scoping session was
+            The application failed before any page could be rendered. No scoping scenario was
             changed.
           </p>
           {error.digest !== undefined && (

@@ -113,15 +113,15 @@ export default async function ComparePage({
       <main className="mx-auto flex w-full max-w-[900px] flex-col gap-4 px-6 py-6">
         <header className="flex items-baseline gap-3">
           <Link href="/" className="text-faint hover:text-ink text-sm">
-            ← sessions
+            ← scenarios
           </Link>
           <h1 className="text-ink text-lg font-semibold tracking-tight">Compare</h1>
         </header>
 
-        <Card title="Pick two sessions" hint="Clone a session, change one thing, compare the two.">
+        <Card title="Pick two scenarios" hint="Clone a scenario, change one thing, compare the two.">
           {readable.length < 2 ? (
             <p className="text-faint text-sm">
-              At least two readable sessions are needed. Clone one from the sessions list.
+              At least two readable scenarios are needed. Clone one from the scenarios list.
             </p>
           ) : (
             <form className="flex flex-wrap items-end gap-2" method="get">
@@ -193,7 +193,7 @@ export default async function ComparePage({
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex flex-wrap items-baseline gap-3">
           <Link href="/" className="text-faint hover:text-ink text-sm">
-            ← sessions
+            ← scenarios
           </Link>
           <h1 className="text-ink text-lg font-semibold tracking-tight">
             {comparison.leftName} vs {comparison.rightName}

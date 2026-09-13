@@ -190,7 +190,7 @@ export const ENVIRONMENT_LABELS: Readonly<Record<string, string>> = {
   on_prem: 'On premises: they run their own infrastructure',
   hybrid: 'Hybrid: materially both',
   air_gapped: 'Air-gapped: no internet path at all',
-  not_asked: 'Not asked: infer it from the estate',
+  not_asked: 'Not asked: work it out from the asset list',
 };
 
 /** The separate question: what procurement will not sign off on. */

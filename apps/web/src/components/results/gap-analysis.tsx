@@ -27,11 +27,11 @@ export function GapAnalysis({ coverage }: { coverage: CoverageResult }) {
     <div className="flex flex-col gap-3">
       <Card
         title="Gap analysis"
-        hint={`${gaps.length} ${gaps.length === 1 ? 'control' : 'controls'} a purchase could satisfy that this bundle does not. Worst first.`}
+        hint={`${gaps.length} ${gaps.length === 1 ? 'control' : 'controls'} a purchase could satisfy that this option does not. Worst first.`}
       >
         {gaps.length === 0 ? (
           <p className="text-good text-sm">
-            Every control a purchase could satisfy is covered by this bundle.
+            Every control a purchase could satisfy is covered by this option.
           </p>
         ) : (
           <div className="overflow-x-auto">

@@ -41,7 +41,7 @@ export default function RouteError({
       <h1 className="text-ink text-lg font-semibold tracking-tight">Something broke</h1>
       <p className="text-muted mt-2 text-sm leading-snug">
         This page could not be built. Nothing was saved or changed by the attempt. The scoping
-        session is intact and the intake it was derived from is untouched.
+        scenario is intact and the intake it was derived from is untouched.
       </p>
 
       {error.digest !== undefined && (
@@ -60,7 +60,7 @@ export default function RouteError({
           Try again
         </button>
         <Link href="/" className="text-accent text-sm">
-          ← back to sessions
+          ← back to scenarios
         </Link>
       </div>
     </main>

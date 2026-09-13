@@ -7,6 +7,7 @@ import { BundleComparison } from '@/components/results/bundle-comparison';
 import { CategoryCards } from '@/components/results/category-cards';
 import { CostBreakdown } from '@/components/results/cost-breakdown';
 import { Engagement } from '@/components/results/engagement';
+import { ExecutiveSummary } from '@/components/results/executive-summary';
 import { Staffing } from '@/components/results/staffing';
 import { CoverageMatrix } from '@/components/results/coverage-matrix';
 import { CloseGaps } from '@/components/results/close-gaps';
@@ -32,14 +33,15 @@ export const dynamic = 'force-dynamic';
  * nav that scraped headings would silently pick up whatever was rendered.
  */
 const RESULTS_SECTIONS = [
-  { id: 'bundles', label: 'Bundles' },
-  { id: 'categories', label: 'By category' },
-  { id: 'engagement', label: 'Who pays' },
-  { id: 'staffing', label: 'People' },
-  { id: 'cost', label: 'Cost' },
-  { id: 'coverage', label: 'Coverage' },
-  { id: 'gaps', label: 'Gaps' },
-  { id: 'sizing', label: 'Sizing' },
+  { id: 'summary', label: 'Summary' },
+  { id: 'bundles', label: 'Options' },
+  { id: 'categories', label: 'What we chose' },
+  { id: 'engagement', label: 'What you pay' },
+  { id: 'staffing', label: 'Staffing' },
+  { id: 'cost', label: 'Cost detail' },
+  { id: 'coverage', label: 'Compliance' },
+  { id: 'gaps', label: "What's not covered" },
+  { id: 'sizing', label: 'How we sized it' },
   { id: 'assumptions', label: 'Assumptions' },
 ] as const;
 
@@ -66,11 +68,24 @@ export default async function ResultsPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ bundle?: string }>;
+  searchParams: Promise<{ bundle?: string; view?: string }>;
 }) {
   await requireAnalyst();
   const { id } = await params;
-  const { bundle: requested } = await searchParams;
+  const { bundle: requested, view } = await searchParams;
+
+  /*
+   * Our fee, our cost base and our margin render only when asked for by name.
+   *
+   * They used to sit on this page inside a collapsed `<details>` labelled "not
+   * for the client", which is a convention rather than a guarantee: this is the
+   * screen an analyst turns toward the person across the table, and one stray
+   * click during a screen-share puts a 95% margin on it. The exports already
+   * have the stronger guarantee — `buildProposal` never receives `attribution`,
+   * so no renderer can leak it — and this makes the screen match: off the URL,
+   * the figures are not in the DOM at all.
+   */
+  const showInternal = view === 'internal';
 
   const row = await prisma.scenario.findUnique({ where: { id } });
   if (row === null) notFound();
@@ -79,10 +94,10 @@ export default async function ResultsPage({
   if (isUnreadable(scenario)) {
     return (
       <main className="mx-auto w-full max-w-[700px] px-6 py-10">
-        <h1 className="text-ink text-lg font-semibold">This session cannot be opened</h1>
+        <h1 className="text-ink text-lg font-semibold">This scenario cannot be opened</h1>
         <p className="text-muted mt-2 text-sm">{scenario.problem}</p>
         <Link href="/" className="text-accent mt-4 inline-block text-sm">
-          ← back to sessions
+          ← back to scenarios
         </Link>
       </main>
     );
@@ -115,9 +130,13 @@ export default async function ResultsPage({
             {scenario.profile.budget.currency}
             {scenario.profile.compliance.length > 0 &&
               ` · ${scenario.profile.compliance.map(frameworkLabel).join(', ')}`}
+            {/* The as-at date used to appear once, in the last line of the
+                ninth panel. For a page whose whole value rests on price
+                freshness it belongs where the figures are first read. */}
+            {` · priced ${today()}`}
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 print:hidden">
           {bundle.unfundedMandatory.length > 0 && (
             <Badge tone="bad">{bundle.unfundedMandatory.length} mandatory unfunded</Badge>
           )}
@@ -134,6 +153,19 @@ export default async function ResultsPage({
               It was computed and never shown, so a stack blocked by it looked
               simply unaffordable. */}
           {!bundle.withinOneTimeCap && <Badge tone="warn">over setup budget</Badge>}
+
+          {/*
+            The way out of this page, and previously absent entirely: the
+            proposal route had no link from anywhere in the application, so the
+            document this product exists to produce could only be reached by
+            typing its URL.
+          */}
+          <Link
+            href={`/scenarios/${id}/proposal`}
+            className="bg-accent text-ground hover:bg-accent/90 ml-1 inline-flex items-center rounded-(--radius-control) px-3 py-1.5 text-sm font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.25)] transition-colors"
+          >
+            Proposal →
+          </Link>
         </div>
       </header>
 
@@ -211,6 +243,22 @@ export default async function ResultsPage({
       */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_180px]">
         <div className="flex min-w-0 flex-col gap-4">
+          {/*
+            The answer first. Everything below is the working, in the order the
+            engine derives it, which is not the order a reader needs it in.
+          */}
+          <div id="summary" className="scroll-mt-20">
+            <ExecutiveSummary
+              result={result}
+              bundle={bundle}
+              coverage={coverage}
+              profile={scenario.profile}
+              scenarioId={id}
+              fx={data.fx}
+              pricedAsOf={today()}
+            />
+          </div>
+
           <div id="bundles" className="scroll-mt-20">
             <BundleComparison result={result} selectedKind={kind} scenarioId={id} fx={data.fx} />
           </div>
@@ -226,7 +274,12 @@ export default async function ResultsPage({
             questions with an order-of-magnitude between them.
           */}
           <div id="engagement" className="scroll-mt-20">
-            <Engagement bundle={bundle} profile={scenario.profile} />
+            <Engagement
+              bundle={bundle}
+              profile={scenario.profile}
+              scenarioId={id}
+              showInternal={showInternal}
+            />
           </div>
 
           {/*
@@ -239,7 +292,7 @@ export default async function ResultsPage({
           </div>
 
           <div id="cost" className="scroll-mt-20">
-            <CostBreakdown bundle={bundle} />
+            <CostBreakdown bundle={bundle} fx={data.fx} />
           </div>
 
           <div id="coverage" className="scroll-mt-20">

@@ -81,7 +81,7 @@ export function BundleComparison({
   const label = {
     essential: 'Essential',
     recommended: 'Recommended',
-    phase2: 'Phase 2',
+    phase2: 'Deferred',
   } as const;
   const hint = {
     essential: 'Minimum defensible posture, plus everything compliance mandates.',
@@ -91,8 +91,8 @@ export function BundleComparison({
 
   return (
     <Card
-      title="Bundle comparison"
-      hint="Click a bundle for its detail. Phase 2 is priced so deferring it is a decision, not a silence."
+      title="Your three options"
+      hint="Click an option for its detail. The deferred one is priced too, so putting it off is a decision on the record rather than a silence."
     >
       <div className="overflow-x-auto">
         {/*
@@ -111,7 +111,7 @@ export function BundleComparison({
         <table className="w-full min-w-[720px] table-fixed border-collapse text-sm">
           <thead>
             <tr className="text-faint text-left text-2xs tracking-wide uppercase">
-              <th className="w-[300px] py-2 pr-3 font-medium">Tier</th>
+              <th className="w-[300px] py-2 pr-3 font-medium">Option</th>
               <th className="py-2 pr-3 text-right font-medium">Year 1</th>
               <th className="py-2 pr-3 text-right font-medium">Procurement / yr</th>
               <th className="py-2 pr-3 text-right font-medium">All-in / yr</th>
