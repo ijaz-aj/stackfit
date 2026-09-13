@@ -166,4 +166,41 @@ describe('refusing to start a hosted instance with the door open', () => {
     expect(() => assertAuthConfiguredInProduction({ NODE_ENV: 'development' })).not.toThrow();
     expect(() => assertAuthConfiguredInProduction({})).not.toThrow();
   });
+
+  /*
+   * Password sign-in changes what "configured" means, so the boundary is
+   * re-tested rather than assumed. A provisioned credential is its own grant,
+   * which means an empty allowlist is no longer automatically a half-finished
+   * deployment, and that is exactly the loosening worth pinning down.
+   */
+  it('accepts credentials as the provider and as the grant', () => {
+    expect(() =>
+      assertAuthConfiguredInProduction({
+        NODE_ENV: 'production',
+        NEXTAUTH_SECRET: 'a-secret',
+        STACKFIT_CREDENTIAL_USERS: 'demo@example.com:pw',
+      }),
+    ).not.toThrow();
+  });
+
+  it('still throws when the credential list is present but unusable', () => {
+    // A truncated entry parses to no accounts. That must read as "nothing
+    // configured", not as "credentials are on".
+    expect(() =>
+      assertAuthConfiguredInProduction({
+        NODE_ENV: 'production',
+        NEXTAUTH_SECRET: 'a-secret',
+        STACKFIT_CREDENTIAL_USERS: 'demo@example.com:',
+      }),
+    ).toThrow(/Refusing to start/);
+  });
+
+  it('still throws for credentials with no secret to sign the cookie', () => {
+    expect(() =>
+      assertAuthConfiguredInProduction({
+        NODE_ENV: 'production',
+        STACKFIT_CREDENTIAL_USERS: 'demo@example.com:pw',
+      }),
+    ).toThrow(/Refusing to start/);
+  });
 });

@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { AnalystMenu } from '@/components/analyst-menu';
-import { CommandPalette } from '@/components/command-palette';
+import { SiteHeader } from '@/components/site-header';
 import { currentAnalyst } from '@/lib/session.server';
 
 import './globals.css';
@@ -74,31 +72,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           Skip to content
         </a>
 
-        <header className="border-line bg-panel/90 sticky top-0 z-20 border-b backdrop-blur-sm">
-          <div className="flex items-center gap-4 px-6 py-3">
-            <Link
-              href="/"
-              className="flex items-baseline gap-2 rounded"
-              aria-label="StackFit, back to sessions"
-            >
-              <span className="text-ink text-lg font-semibold tracking-tight">StackFit</span>
-              <span className="text-faint hidden text-xs sm:inline">security solution advisor</span>
-            </Link>
-
-            <div className="ml-auto flex items-center gap-3">
-              <CommandPalette />
-              {/*
-                Load-bearing, not decoration. This is what stops a screenshot of
-                indicative figures being read as a quote, so it stays visible at
-                every width rather than being the thing that drops on mobile.
-              */}
-              <span className="border-line text-faint rounded border px-2 py-1 text-xs">
-                Indicative figures, not a quote
-              </span>
-              {analyst !== null && analyst.email !== null && <AnalystMenu email={analyst.email} />}
-            </div>
-          </div>
-        </header>
+        <SiteHeader analystEmail={analyst?.email ?? null} />
 
         {/* The skip link's target, and the landmark a screen reader jumps to. */}
         <div id="main">{children}</div>

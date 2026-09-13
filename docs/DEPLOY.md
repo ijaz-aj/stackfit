@@ -92,6 +92,25 @@ STACKFIT_ALLOWED_EMAILS  you@example.com,colleague@example.com
 this grants it. An empty or missing list admits **nobody**, deliberately: a
 configuration failure reads as "no" and never as "everyone".
 
+### Showing it to a client, without handing them an SSO account
+
+One optional variable adds an email-and-password form beside the OAuth buttons:
+
+```
+STACKFIT_CREDENTIAL_USERS  demo@example.com:choose-something-long
+```
+
+`email:password`, comma or newline separated. Unset means no password sign-in
+exists and no form is drawn. These accounts do **not** need to be in
+`STACKFIT_ALLOWED_EMAILS`: whoever writes this variable is the person who would
+otherwise have written that one.
+
+It is the weakest way in and it is deliberately opt-in. The passwords are in
+the deployment's configuration in the clear, not hashed in a database, so
+anyone who can read the configuration can read them, and there is no rotation,
+lockout or second factor. Delete the variable and redeploy when the demo is
+over. See `apps/web/src/lib/credentials.ts`.
+
 ## Changing the app after it is live
 
 Push to `main`. Vercel rebuilds and the live URL updates, usually inside two

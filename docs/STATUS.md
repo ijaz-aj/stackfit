@@ -1833,6 +1833,49 @@ read and delete any scenario. For five or six colleagues sharing a scoping
 tool that is the intended behaviour, and `ownerId` now carries the data a
 per-owner rule would need if that changes.
 
+### Password sign-in, 2026-09-13
+
+Added on request, to demonstrate the deployed portal to a client for approval.
+A demo cannot begin with "now sign in to my GitHub account", and that is the
+whole reason this exists.
+
+It reverses nothing above. OAuth and the allowlist are untouched and still the
+intended path; `STACKFIT_CREDENTIAL_USERS` is unset by default, and an instance
+that leaves it unset behaves exactly as it did before.
+
+**Decisions.**
+
+- 2026-09-13: **Accounts live in one environment variable, not a table.**
+  `email:password`, comma or newline separated, parsed by `credentials.ts`.
+  A `User` model would have meant a schema the design deliberately does not
+  have, a migration, and a provisioning command, for a feature whose reason to
+  exist is a single client demo. Turning it off again is deleting one variable.
+- 2026-09-13: **A credential is the identity and the grant, so it does not
+  need an allowlist entry.** The allowlist exists because an OAuth provider
+  proves identity and nothing more; there is no third party here, and the
+  person writing the credential variable is the person who would otherwise
+  have written the allowlist. `authEnabled` and
+  `assertAuthConfiguredInProduction` accept either grant, and still refuse
+  both being absent.
+- 2026-09-13: **Comparison is constant-time and the error never says which
+  half was wrong.** Passwords are SHA-256'd before `timingSafeEqual` because it
+  throws on a length mismatch, and the throw would report the length. A
+  non-existent address burns the same comparison as a wrong password. 27 tests,
+  written against what it refuses, as `allowlist.ts` was.
+- 2026-09-13: **The sign-in screen no longer renders the application header.**
+  A nav bar above a login form offers a wordmark the card already carries, a
+  command palette over sessions the visitor cannot read, and a link that
+  bounces straight back. `SiteHeader` is a client component that returns null
+  on `/signin`; a route group is the more idiomatic answer and would have meant
+  moving every other page to get one page out.
+
+**Known cost, accepted.** The passwords sit in the deployment's configuration
+in the clear rather than as verifier hashes in a database, so anyone who can
+read the configuration can read them, and there is no rotation, no lockout and
+no second factor. That is strictly weaker than the OAuth path it sits beside,
+which is why it is opt-in, documented as the weakest door in
+`apps/web/src/lib/credentials.ts`, and why both providers stay configured.
+
 ## Open defects
 
 Found on 2026-09-12 while fixing the charts. Neither is a chart bug; both are

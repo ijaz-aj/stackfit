@@ -1,3 +1,5 @@
+import { credentialsConfigured } from './credentials';
+
 /**
  * Who is allowed in (docs/STATUS.md Q3, Q4).
  *
@@ -72,7 +74,7 @@ export function isAuthConfigured(env: Record<string, string | undefined>): boole
   const hasGithub =
     (env.GITHUB_CLIENT_ID ?? '').length > 0 && (env.GITHUB_CLIENT_SECRET ?? '').length > 0;
 
-  return hasSecret && (hasGoogle || hasGithub);
+  return hasSecret && (hasGoogle || hasGithub || credentialsConfigured(env));
 }
 
 /**
@@ -85,13 +87,20 @@ export function isAuthConfigured(env: Record<string, string | undefined>): boole
  */
 export function assertAuthConfiguredInProduction(env: Record<string, string | undefined>): void {
   if (env.NODE_ENV !== 'production') return;
-  if (isAuthConfigured(env) && parseAllowlist(env.STACKFIT_ALLOWED_EMAILS).length > 0) return;
+
+  // Either gate is enough, because they grant access to different things. The
+  // allowlist is what admits an OAuth identity; a provisioned credential is
+  // its own grant. What must never pass is *neither*, which is the state a
+  // missing variable produces.
+  const hasGrant =
+    parseAllowlist(env.STACKFIT_ALLOWED_EMAILS).length > 0 || credentialsConfigured(env);
+  if (isAuthConfigured(env) && hasGrant) return;
 
   throw new Error(
     'Refusing to start: authentication is not configured. This build is production, and an ' +
       'unauthenticated instance would expose every saved scoping session, including client ' +
       'asset inventories, to anyone with the URL. Set NEXTAUTH_SECRET, at least one OAuth ' +
-      'provider (GOOGLE_CLIENT_ID/SECRET or GITHUB_CLIENT_ID/SECRET), and a non-empty ' +
-      'STACKFIT_ALLOWED_EMAILS.',
+      'provider (GOOGLE_CLIENT_ID/SECRET, GITHUB_CLIENT_ID/SECRET, or STACKFIT_CREDENTIAL_USERS), ' +
+      'and a non-empty STACKFIT_ALLOWED_EMAILS unless STACKFIT_CREDENTIAL_USERS carries the grant.',
   );
 }

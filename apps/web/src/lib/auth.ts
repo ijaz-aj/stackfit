@@ -1,8 +1,11 @@
 import type { NextAuthOptions } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import GithubProvider from 'next-auth/providers/github';
 import GoogleProvider from 'next-auth/providers/google';
+import { z } from 'zod';
 
 import { isAllowed, isAuthConfigured, parseAllowlist } from './allowlist';
+import { parseCredentialUsers, verifyCredentials } from './credentials';
 
 /**
  * Sign-in for the hosted portal (docs/STATUS.md Q3, Q4).
@@ -17,6 +20,12 @@ import { isAllowed, isAuthConfigured, parseAllowlist } from './allowlist';
  * they are and nothing whatsoever about whether they should be reading a
  * prospective client's asset inventory.
  *
+ * The one exception is `STACKFIT_CREDENTIAL_USERS`, added so the portal can be
+ * demonstrated to a client without handing them somebody's SSO. A credential
+ * there is both halves at once, because the person who wrote the variable is
+ * the person who would otherwise have written the allowlist. It is off unless
+ * set, and `./credentials` is blunt about what it costs.
+ *
  * Sessions are JWTs rather than database rows. No adapter, no schema change,
  * and nothing to migrate when the database moves from SQLite to Postgres,
  * which matters because the alternative would put an auth migration in the
@@ -30,6 +39,19 @@ import { isAllowed, isAuthConfigured, parseAllowlist } from './allowlist';
  */
 
 const allowlist = parseAllowlist(process.env.STACKFIT_ALLOWED_EMAILS);
+const credentialUsers = parseCredentialUsers(process.env.STACKFIT_CREDENTIAL_USERS);
+
+/**
+ * What the login form is allowed to send.
+ *
+ * Hard rule 10: every external input is Zod-validated, and a login form is the
+ * most external input there is. `authorize` receives whatever was posted, so
+ * this is the boundary that turns it into two strings or into nothing.
+ */
+const CredentialsInput = z.object({
+  email: z.string().min(1).max(320),
+  password: z.string().min(1).max(1024),
+});
 
 /** Only the providers that are actually configured, so a partial setup is not a crash. */
 function configuredProviders(): NextAuthOptions['providers'] {
@@ -59,6 +81,32 @@ function configuredProviders(): NextAuthOptions['providers'] {
     );
   }
 
+  // Last, and only if accounts were provisioned. See `./credentials` for why
+  // this is the weakest door in the building and why it is still here.
+  if (credentialUsers.length > 0) {
+    providers.push(
+      CredentialsProvider({
+        name: 'Email and password',
+        credentials: {
+          email: { label: 'Email', type: 'email' },
+          password: { label: 'Password', type: 'password' },
+        },
+        authorize(raw) {
+          const parsed = CredentialsInput.safeParse(raw);
+          if (!parsed.success) return null;
+
+          const user = verifyCredentials(parsed.data.email, parsed.data.password, credentialUsers);
+          if (user === null) return null;
+
+          // `id` becomes `providerAccountId`, which the jwt callback below
+          // turns into the analyst id stored against a saved session. The
+          // address is the only stable identifier a credential has.
+          return { id: user.email, email: user.email, name: user.email };
+        },
+      }),
+    );
+  }
+
   return providers;
 }
 
@@ -76,7 +124,14 @@ export const authOptions: NextAuthOptions = {
      * the providers in use verify addresses themselves. What matters is that
      * the address is on the list, checked exactly.
      */
-    signIn({ user }) {
+    signIn({ user, account }) {
+      // A credential is created by whoever administers the instance, so it is
+      // the identity *and* the grant; there is no third party to distrust.
+      // `authorize` already refused everything that did not match, and running
+      // the allowlist again here would mean every demo account had to be
+      // written into two environment variables to work.
+      if (account?.provider === 'credentials') return true;
+
       return isAllowed(user.email, allowlist);
     },
 
@@ -108,7 +163,10 @@ export const authOptions: NextAuthOptions = {
  * configuration on every request before it consults this.
  */
 export function authEnabled(): boolean {
-  return isAuthConfigured(process.env) && allowlist.length > 0;
+  // Either grant counts. An instance with credentials and no allowlist still
+  // enforces sign-in; reading only the allowlist here would have made such an
+  // instance redirect the sign-in page away and serve everything unauthenticated.
+  return isAuthConfigured(process.env) && (allowlist.length > 0 || credentialUsers.length > 0);
 }
 
 /**
@@ -135,4 +193,14 @@ export function configuredProviderIds(): readonly ('google' | 'github')[] {
     ids.push('github');
   }
   return ids;
+}
+
+/**
+ * Whether to draw the email-and-password form.
+ *
+ * Separate from `configuredProviderIds` because it is not a button: it is a
+ * form with its own inputs, its own errors and its own place in the layout.
+ */
+export function credentialsEnabled(): boolean {
+  return credentialUsers.length > 0;
 }
