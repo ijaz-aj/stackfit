@@ -116,6 +116,14 @@ export function buildLabourRates(): LabourRates {
     byRegion: Object.fromEntries(
       Region.options.map((region) => [region, rate]),
     ) as LabourRates['byRegion'],
+    // Deliberately half the client rate, so a test that confuses the two fails
+    // rather than quietly agreeing with itself.
+    provider: {
+      region: 'in' as const,
+      loadedAnnualCost: usd(5_000_000), // USD 50,000
+      implementationDayRate: usd(50_000), // USD 500
+      basis: 'test fixture',
+    },
     sources: [{ url: 'https://example.com/labour', asOf: '2026-01-01' }],
   };
 }

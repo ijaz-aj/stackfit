@@ -27,6 +27,36 @@ sources:
   - url: https://www.payscale.com/research/UK/Job=Security_Engineer/Salary
     asOf: '2026-09-09'
 
+# Our own cost base. What a day and a year of *our* delivery team costs us,
+# wherever the client is.
+#
+# Deliberately not one of the byRegion entries. Those price the client's people,
+# to work out what the stack costs them to run; this prices ours, to work out
+# what an engagement costs us to deliver. Even for a client in our own region
+# the two differ: a delivery business carries bench time, tooling, management
+# and utilisation that a single in-house engineer's salary does not.
+#
+# ⚠ ANALYST ESTIMATE, and the one number in this file we could actually know.
+# It is set at the Indian security-engineer loaded cost uplifted by 1.3 for the
+# overheads above; the day rate is that annual cost over roughly 220 billable
+# days, which already assumes a utilisation nobody has measured. Replace both
+# with figures from our own payroll and utilisation data before any margin
+# figure derived from them is shown to anyone.
+provider:
+  region: in
+  loadedAnnualCost:
+    amountMinor: 174850000 # INR 1,748,500
+    currency: INR
+  implementationDayRate:
+    amountMinor: 795000 # INR 7,950/day
+    currency: INR
+  basis: >-
+    The `in` loaded cost of INR 1,345,000 uplifted x1.3 for bench time, tooling,
+    management and the gap between headcount and billable capacity. The day rate
+    is that figure over about 220 billable days a year. Both are analyst
+    estimates standing in for our own payroll and utilisation data, which is the
+    only place the real numbers exist.
+
 byRegion:
   in:
     loadedAnnualCost:

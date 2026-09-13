@@ -1358,6 +1358,8 @@ function buildBundle(
         procurementAnnual: selection.cost.procurementAnnual,
         opsFteAnnual: selection.cost.opsFteAnnual,
         licenceAnnual: selection.cost.licenceAnnual,
+        providerDeliveryOneTime: selection.cost.providerDeliveryOneTime,
+        providerOpsFteAnnual: selection.cost.providerOpsFteAnnual,
       })),
       responsibilitySplit(profile, inputs.mssp),
       inputs.mssp,

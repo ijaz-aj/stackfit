@@ -25,6 +25,25 @@ export const RegionLabourRate = z
   .strict();
 export type RegionLabourRate = z.infer<typeof RegionLabourRate>;
 
+/**
+ * What our own delivery team costs, as opposed to the client's.
+ *
+ * `region` is recorded so the figure can be sanity-checked against the matching
+ * `byRegion` entry, and so a reader can see which market it is drawn from. It
+ * is documentation, not a lookup key: the rates below are used directly.
+ */
+export const ProviderCostBase = z
+  .object({
+    region: Region,
+    /** Fully-loaded annual cost of one of our analysts or engineers. */
+    loadedAnnualCost: NonNegativeMoney,
+    /** What a day of our implementation effort costs us to supply. */
+    implementationDayRate: NonNegativeMoney,
+    basis: z.string().min(1),
+  })
+  .strict();
+export type ProviderCostBase = z.infer<typeof ProviderCostBase>;
+
 const regionRateShape = Object.fromEntries(
   Region.options.map((region) => [region, RegionLabourRate]),
 ) as { [K in Region]: typeof RegionLabourRate };
@@ -34,6 +53,22 @@ export const LabourRates = z
     asOf: IsoDate,
     /** Every region needs a rate; a missing one must fail, not default to zero. */
     byRegion: z.object(regionRateShape).strict(),
+    /**
+     * Our own cost base: what an hour of *our* delivery team costs, wherever
+     * the client happens to be.
+     *
+     * Separate from `byRegion` and not one of its entries, because it answers a
+     * different question. `byRegion` prices the client's people, to work out
+     * what the stack costs them to run. This prices ours, to work out what an
+     * engagement costs us to deliver, and the two are not the same number even
+     * when the client is in our own region: a rate card for a delivery business
+     * is not the market salary of the client's engineer.
+     *
+     * Without it, "what does it cost us" was answered at the client's regional
+     * rate, which prices our team differently for every client and makes any
+     * margin figure derived from it meaningless.
+     */
+    provider: ProviderCostBase,
     sources: z.array(Source).min(1),
   })
   .strict();

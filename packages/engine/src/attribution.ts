@@ -22,7 +22,7 @@
 
 import type { CurrencyCode, Money, MsspRateCard, ProductCategory } from '@stackfit/schema';
 
-import { moneyInWords, sumMoney, zeroMoney } from './money';
+import { moneyInWords, subtractMoney, sumMoney, zeroMoney } from './money';
 import type { Operator, ResponsibilitySplit } from './responsibility';
 
 /** One selection's cost, split across the two parties. */
@@ -64,6 +64,27 @@ export interface BundleAttribution {
   /** Our people, across the categories we operate. Never billed to the client. */
   readonly providerOpsAnnual: Money;
   /**
+   * What this engagement costs *us*, at our own rates rather than the client's.
+   *
+   * `providerOpsAnnual` above is the same effort priced at the client's
+   * regional rate, which is the right number for a build-versus-buy comparison
+   * and the wrong one for our own books: it prices our delivery team
+   * differently for every client. These two are what an engagement actually
+   * costs us to stand up and to run.
+   */
+  readonly providerDeliveryOneTime: Money;
+  readonly providerRunAnnual: Money;
+  /**
+   * Fee minus what it costs us to run, per year, once delivery is behind us.
+   *
+   * Negative is a real and useful answer: it says this engagement loses money
+   * at this service level, which is a thing to know before quoting rather than
+   * after. Year one is separately below, because delivery lands in it.
+   */
+  readonly providerMarginAnnual: Money;
+  /** Year one margin: the annual figure less what standing it up costs us. */
+  readonly providerMarginYearOne: Money;
+  /**
    * The old figure, kept: what the stack costs to own and run, with no regard
    * for who bears it.
    *
@@ -82,6 +103,10 @@ export interface AttributableSelection {
   readonly procurementAnnual: Money;
   readonly opsFteAnnual: Money;
   readonly licenceAnnual: Money;
+  /** Standing it up, at our day rate. Ours only if we are the ones deploying. */
+  readonly providerDeliveryOneTime: Money;
+  /** Running it for a year, at our loaded analyst cost. */
+  readonly providerOpsFteAnnual: Money;
 }
 
 function ownershipOf(category: ProductCategory, rateCard: MsspRateCard) {
@@ -152,6 +177,23 @@ export function attributeBundle(
     providerFeeAnnual,
   ]);
 
+  /*
+   * Our side of the boundary, at our rates. Only the categories we operate:
+   * deploying a tool the client runs themselves is not our cost, however much
+   * we may have advised on it.
+   */
+  const oursOnly = selections.filter((entry) => split.operatorOf(entry.category) === 'provider');
+  const providerDeliveryOneTime = sumMoney(
+    currency,
+    oursOnly.map((entry) => entry.providerDeliveryOneTime),
+  );
+  const providerRunAnnual = sumMoney(
+    currency,
+    oursOnly.map((entry) => entry.providerOpsFteAnnual),
+  );
+  const providerMarginAnnual = subtractMoney(providerFeeAnnual, providerRunAnnual);
+  const providerMarginYearOne = subtractMoney(providerMarginAnnual, providerDeliveryOneTime);
+
   const rationale: string[] = [];
   const plural = (count: number) => (count === 1 ? 'category' : 'categories');
 
@@ -198,6 +240,52 @@ export function attributeBundle(
     );
 
     /*
+     * Our own books. Nothing here is client-facing, and it is the question the
+     * engagement is actually being judged on internally: what it costs us to
+     * stand up, what it costs us to run, and whether the fee covers both.
+     */
+    rationale.push(
+      `Costs us ${moneyInWords(providerDeliveryOneTime)} to stand up and ` +
+        `${moneyInWords(providerRunAnnual)} a year to run, at our own rates. Against a ` +
+        `${moneyInWords(providerFeeAnnual)} fee that is ${moneyInWords(providerMarginAnnual)} a ` +
+        `year, and ${moneyInWords(providerMarginYearOne)} in year one once delivery is paid for.`,
+    );
+
+    /*
+     * The margin above is overstated, structurally, and saying so is not
+     * optional. `opsBurden` is the effort to *administer* a tool: deploy, tune,
+     * maintain, upgrade. It is not the rota that watches what the tool
+     * produces, and on a managed engagement that rota is the product. Published
+     * benchmarks put 24/7 in-house SIEM operation at several analysts across
+     * shifts; the figures here are a fraction of that, by design and by
+     * definition.
+     *
+     * `msspAnalystFtePerClient` in scoring-weights.yaml is the allocation we
+     * already assume, and it is not costed here because it reaches the scoring
+     * stage rather than this one. Until it does, this is gross margin on tool
+     * administration, not on the service.
+     */
+    rationale.push(
+      '⚠ That margin counts only what it costs us to administer the tools. It excludes the ' +
+        'monitoring rota, which is the thing a managed engagement actually sells and the larger ' +
+        'figure by an order of magnitude. Treat it as an upper bound, not as a margin.',
+    );
+
+    if (Number(providerMarginAnnual.amountMinor) <= 0) {
+      rationale.push(
+        '⚠ This engagement does not cover its own running cost at this service level. Widen ' +
+          'what we operate, reprice it, or decline it: the fee is below what the people on it ' +
+          'cost us before any delivery effort is counted.',
+      );
+    } else if (Number(providerMarginYearOne.amountMinor) <= 0) {
+      rationale.push(
+        'Year one does not pay for itself: delivery costs more than the first year of margin. ' +
+          'That is normal on a multi-year engagement and is worth saying out loud before the ' +
+          'term is negotiated down to one.',
+      );
+    }
+
+    /*
      * A fee above the total cost of building the same thing is a signal, not a
      * quote. It happens most readily outside the currency the rate card was
      * written in: the card is USD, synthesised from published US and global MDR
@@ -229,6 +317,10 @@ export function attributeBundle(
     providerFeeAnnual,
     clientTotalAnnual,
     providerOpsAnnual,
+    providerDeliveryOneTime,
+    providerRunAnnual,
+    providerMarginAnnual,
+    providerMarginYearOne,
     fullBuildAnnual,
     rationale,
   };

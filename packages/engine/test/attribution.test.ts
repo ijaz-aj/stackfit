@@ -15,6 +15,7 @@ function selection(
   category: AttributableSelection['category'],
   procurement: number,
   ops: number,
+  provider: { delivery?: number; run?: number } = {},
 ): AttributableSelection {
   return {
     category,
@@ -22,6 +23,10 @@ function selection(
     procurementAnnual: usd(procurement),
     opsFteAnnual: usd(ops),
     licenceAnnual: usd(procurement),
+    // Our rates are half the client's in the fixture, so a test that confuses
+    // the two fails rather than quietly agreeing with itself.
+    providerDeliveryOneTime: usd(provider.delivery ?? 0),
+    providerOpsFteAnnual: usd(provider.run ?? Math.round(ops / 2)),
   };
 }
 
@@ -173,6 +178,120 @@ describe('attributeBundle', () => {
     );
 
     expect(result.rationale.join(' ')).not.toMatch(/more than the whole stack would cost/);
+  });
+
+  describe('what the engagement costs us', () => {
+    /**
+     * The question the project exists to answer and that nothing answered:
+     * "how much cost will it take us for deploying that particular tool for
+     * the client". Our effort was only ever priced at the *client's* regional
+     * rate, which prices our own delivery team differently for every client.
+     */
+    it('costs our side at our rates, not the client regional rate', () => {
+      const result = attributeBundle(
+        [selection('edr', 10_000, 500_000, { delivery: 80_000, run: 250_000 })],
+        managed,
+        card,
+        'USD',
+        usd(400_000),
+      );
+
+      expect(result.providerRunAnnual).toEqual(usd(250_000));
+      expect(result.providerDeliveryOneTime).toEqual(usd(80_000));
+      // The same effort at the client rate, kept for build-versus-buy.
+      expect(result.providerOpsAnnual).toEqual(usd(500_000));
+    });
+
+    it('does not charge us for deploying what the client operates', () => {
+      const result = attributeBundle(
+        [selection('backup', 8_000, 300_000, { delivery: 90_000, run: 150_000 })],
+        managed,
+        card,
+        'USD',
+        usd(60_000),
+      );
+
+      // No service level covers backup, so none of it is ours to deploy or run.
+      expect(result.providerDeliveryOneTime).toEqual(usd(0));
+      expect(result.providerRunAnnual).toEqual(usd(0));
+    });
+
+    it('reports margin as fee less what it costs us to run', () => {
+      const result = attributeBundle(
+        [selection('edr', 0, 0, { delivery: 100_000, run: 300_000 })],
+        managed,
+        card,
+        'USD',
+        usd(500_000),
+      );
+
+      expect(result.providerMarginAnnual).toEqual(usd(200_000));
+      expect(result.providerMarginYearOne).toEqual(usd(100_000));
+    });
+
+    /**
+     * Negative margin is a real answer, not an error. It says the engagement
+     * loses money at this service level, which is worth knowing before quoting
+     * rather than after.
+     */
+    it('says so when the fee does not cover what the people cost us', () => {
+      const result = attributeBundle(
+        [selection('edr', 0, 0, { delivery: 10_000, run: 600_000 })],
+        managed,
+        card,
+        'USD',
+        usd(500_000),
+      );
+
+      expect(Number(result.providerMarginAnnual.amountMinor)).toBeLessThan(0);
+      expect(result.rationale.join(' ')).toMatch(/does not cover its own running cost/);
+    });
+
+    it('flags a year one that delivery swallows, without crying loss', () => {
+      const result = attributeBundle(
+        [selection('edr', 0, 0, { delivery: 400_000, run: 300_000 })],
+        managed,
+        card,
+        'USD',
+        usd(500_000),
+      );
+
+      expect(Number(result.providerMarginAnnual.amountMinor)).toBeGreaterThan(0);
+      expect(Number(result.providerMarginYearOne.amountMinor)).toBeLessThan(0);
+      expect(result.rationale.join(' ')).toMatch(/Year one does not pay for itself/);
+      expect(result.rationale.join(' ')).not.toMatch(/does not cover its own running cost/);
+    });
+
+    /**
+     * Measured across the six presets, the margin comes out at 92-97%, which is
+     * not a managed-service margin. The cost side counts tool administration
+     * and not the monitoring rota, which is the product. The figure has to say
+     * so wherever it appears.
+     */
+    it('refuses to present the margin as a real one', () => {
+      const result = attributeBundle(
+        [selection('edr', 0, 0, { delivery: 10_000, run: 50_000 })],
+        managed,
+        card,
+        'USD',
+        usd(900_000),
+      );
+
+      expect(result.rationale.join(' ')).toMatch(/excludes the monitoring rota/);
+      expect(result.rationale.join(' ')).toMatch(/upper bound/);
+    });
+
+    it('keeps our cost out of what the client pays', () => {
+      const result = attributeBundle(
+        [selection('edr', 10_000, 500_000, { delivery: 999_999, run: 999_999 })],
+        managed,
+        card,
+        'USD',
+        usd(60_000),
+      );
+
+      expect(result.clientTotalAnnual).toEqual(usd(70_000));
+    });
   });
 
   it('adds up: client total is procurement plus their ops plus our fee', () => {

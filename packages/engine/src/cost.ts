@@ -90,6 +90,17 @@ export interface ProductCost {
 
   readonly implementationOneTime: Money;
   readonly trainingOneTime: Money;
+  /**
+   * What standing this product up would cost *us*, at our own day rate, if we
+   * are the ones deploying it. Implementation plus training effort.
+   *
+   * Never added to anything the client pays. It is our delivery cost, and the
+   * difference between it and our fee is the only margin figure this tool can
+   * produce.
+   */
+  readonly providerDeliveryOneTime: Money;
+  /** What running it would cost us per year, at our loaded analyst cost. */
+  readonly providerOpsFteAnnual: Money;
 
   readonly year1: Money;
   /** Steady-state annual cost, before the year-on-year uplift compounds. */
@@ -460,6 +471,27 @@ export function computeProductCost(
   const trainingDays = product.implementation.effortDays * costAssumptions.trainingDaysRatio;
   const trainingOneTime = scaleMoney(dayRate, trainingDays);
 
+  /*
+   * The same effort, costed at our rates instead of the client's.
+   *
+   * Computed here rather than downstream because this is where `fx` lives and
+   * where the client-side figures are produced: two places converting the same
+   * effort at different rates is how they come to disagree. Whether either
+   * figure is *charged* to anyone is a question for `attribution.ts`, which
+   * knows the responsibility boundary; this only says what it costs us if it
+   * turns out to be ours.
+   */
+  const providerRate = labourRates.provider;
+  const providerDayRate = convertMoney(providerRate.implementationDayRate, currency, fx);
+  const providerDeliveryOneTime = scaleMoney(
+    providerDayRate,
+    product.implementation.effortDays + trainingDays,
+  );
+  const providerOpsFteAnnual = scaleMoney(
+    convertMoney(providerRate.loadedAnnualCost, currency, fx),
+    opsFte,
+  );
+
   rationale.push(
     `Implementation: ${plural(product.implementation.effortDays, 'day')} at the ${profile.region} ${product.implementation.skillLevel} day rate, over about ${plural(product.implementation.typicalWeeks, 'week')}.`,
   );
@@ -555,6 +587,8 @@ export function computeProductCost(
     implementationConfidence: product.implementation.confidence,
     implementationOneTime,
     trainingOneTime,
+    providerDeliveryOneTime,
+    providerOpsFteAnnual,
     year1,
     annualRecurring,
     procurementAnnual,
