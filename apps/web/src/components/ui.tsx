@@ -19,7 +19,7 @@ const BUTTON_VARIANTS = {
   primary:
     'bg-accent text-ground font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.25)] hover:bg-accent/90',
   secondary:
-    'bg-panel-raised text-ink border border-line-strong shadow-[inset_0_1px_0_rgb(255_255_255/0.03)] hover:border-line-control',
+    'bg-panel-raised text-ink border border-line-strong hover:border-line-control',
   ghost: 'text-muted hover:text-ink hover:bg-panel-raised',
   danger: 'text-bad border border-line hover:border-bad/60 hover:bg-bad/10',
 } as const;

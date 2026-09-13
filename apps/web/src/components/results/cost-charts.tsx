@@ -42,11 +42,11 @@ const SERIES = [
  * in a panel colour the panel no longer used.
  */
 /** `--color-panel`. Painted between stacked segments as a 2px gap, not a border. */
-const SURFACE = '#18212a';
+const SURFACE = '#ffffff';
 /** `--color-line`. */
-const GRID = '#27333e';
-/** `--color-faint`: 4.56:1, which an 11px axis tick needs. */
-const TEXT = '#83969f';
+const GRID = '#dfddd6';
+/** `--color-faint`: 4.50:1, which an 11px axis tick needs. */
+const TEXT = '#756f7b';
 
 export interface CategoryCost {
   readonly label: string;
@@ -157,15 +157,27 @@ export function CostByCategoryChart({
           width={132}
         />
         <Tooltip
-          cursor={{ fill: '#ffffff08' }}
+          cursor={{ fill: '#1c242c0d' }}
           content={<MoneyTooltip currency={currency} />}
           // The hit area is the whole row band, not the 14px mark.
           shared
         />
+        {/*
+          The label is neutral; the swatch carries the colour.
+
+          Recharts writes each legend entry's text in its own series colour and
+          that inline style beats `wrapperStyle`, so the four labels rendered in
+          the four series colours at 11px. Measured against white: 3.07 to 3.88,
+          all under AA, and the palette cannot be darkened to fix it without
+          changing marks that are already validated. A `formatter` is the only
+          hook that reaches the text, and colouring a label as well as its
+          swatch was redundant anyway.
+        */}
         <Legend
-          wrapperStyle={{ fontSize: 11, color: TEXT, paddingTop: 4 }}
+          wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
           iconType="square"
           iconSize={8}
+          formatter={(value: string) => <span style={{ color: TEXT }}>{value}</span>}
         />
         {SERIES.map((series, index) => (
           <Bar
@@ -221,7 +233,7 @@ export function CashflowChart({
             formatMoney({ amountMinor: value, currency }, { compact: true })
           }
         />
-        <Tooltip cursor={{ fill: '#ffffff08' }} content={<MoneyTooltip currency={currency} />} />
+        <Tooltip cursor={{ fill: '#1c242c0d' }} content={<MoneyTooltip currency={currency} />} />
         {/* One series, so no legend: the card's title already says what this is. */}
         <Bar
           dataKey="amount"

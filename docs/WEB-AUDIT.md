@@ -32,7 +32,7 @@ build.
 | C5 | No way to tell, from the interface, that exports exist at all | High | **Fixed** |
 | D1 | Nine panels, no stated reading order, no summary-first structure | High | **Fixed** |
 | D2 | The first screen after intake is a six-column comparison table | High | **Fixed** |
-| D3 | Dark-only theme, against boardroom and print reality | Low (by design) | Print fixed |
+| D3 | Dark-only theme, against boardroom and print reality | Low (by design) | **Reversed** |
 | E1 | An analyst-voice instruction was rendering in client-facing copy | **Blocking** | **Fixed** |
 | E2 | "Required" was amber on met requirements and silent on unmet ones | High | **Fixed** |
 
@@ -521,3 +521,65 @@ ground, black text, coloured bars, legible tables, and no controls.
 This is the argument for the method, not against it: the CSS was present,
 served, syntactically correct, and reviewed — and three of its rules did not
 do what they were written to do.
+
+---
+
+## G. The theme, reversed
+
+Asked for after the audit: UST's exact palette, light rather than dark.
+
+D3 recorded the dark theme as a decision (PROJECT_SPEC §9) rather than a defect,
+and noted the two places it cost us: a projector washes a dark ground out, and
+printing it is a cartridge and an unreadable page. Both of those are now the
+common case for these screens, so the decision was reversed.
+
+**The palette was sampled, not recalled.** A census of the computed styles of
+every visible element on ust.com returned, by frequency:
+
+| | |
+|---|---|
+| grounds | `#FFFFFF` dominant, `#EFEEEE`, `#F7F7F1` bone, `#F2F7F8` cyan tint |
+| brand | `#1C242C` charcoal, `#006E74` teal, `#0097AB` cyan, `#003C52` petrol |
+| neutrals | `#736D78` and `#7A7480`, warm greys with a violet cast |
+
+That violet cast is what makes the greys theirs, the way the blue in the
+charcoal does. A neutral grey would be a different and more anonymous thing.
+
+**Their bone is the page and white is the card**, not the other way round: an
+application needs its page to sit behind its cards. `#EFEEEE` was measured as
+the ground and rejected — dark enough that UST's own `#736D78` falls to 4.33:1
+and stops clearing AA, which would have meant redrawing their grey in order to
+use their grey.
+
+**Two of the three text tokens are UST's values unchanged.** Only `faint` moved,
+by 4% of lightness, because it renders at 10 and 11px where their `#7A7480`
+lands at 4.21:1. Their teal needs no adjustment at all on a light ground — the
+inverse of the dark theme, where their cyan had to be lifted to clear.
+
+**The status colours are the one part that is not theirs**, and they say so. UST
+publishes no semantic set, and the habit of not inventing what cannot be sourced
+applies to a brand as much as to a price.
+
+### Measured on the live page, not on the palette
+
+The arithmetic said the tokens cleared AA. Rendering them and measuring every
+text node against its *composited* background said otherwise — 37 failures in
+nine patterns, none of which a token-level check could see:
+
+- **The coverage matrix's status fills were tuned for a dark ground.** `bg-good/25`
+  is a subtle tint of a *bright* colour on charcoal and a heavy one of a *dark*
+  colour on white: it composites to `#C3DED4`, against which the matching text
+  manages 3.74:1 — on a 10.5px mark, in the table that panel exists to be read
+  from. Each alpha is now the strongest tint its own text survives.
+- **Recharts paints each legend label in its series colour**, and that inline
+  style beats `wrapperStyle`. Four labels at 11px, 3.07 to 3.88. The series
+  colours are already validated and cannot be darkened, so the label is now
+  neutral and the swatch carries the colour — which is all it ever needed to do.
+
+After both: **0 failures across 2,150 nodes**, SVG text included.
+
+⚠ The first measurement pass reported 126 failures and most were the script's
+fault: Tailwind v4 emits `oklab(… / 0.4)` for an opacity modifier, and a naive
+parser reads those three numbers as RGB. Resolving colours through a canvas and
+compositing the alpha stack is what makes the figure real. Worth knowing before
+trusting any contrast script written against this app.

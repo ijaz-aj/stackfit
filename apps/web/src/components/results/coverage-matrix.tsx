@@ -21,9 +21,23 @@ import { cn } from '@/lib/cn';
  * is not an encoding.
  */
 const CELL = {
-  covered: { tone: 'bg-good/25 text-good border-good/40', mark: 'C', label: 'Covered' },
-  partial: { tone: 'bg-warn/20 text-warn border-warn/40', mark: 'P', label: 'Partial' },
-  gap: { tone: 'bg-bad/20 text-bad border-bad/40', mark: 'G', label: 'Gap' },
+  /*
+   * The fills are weaker than they look like they should be, and the reason is
+   * arithmetic rather than taste.
+   *
+   * These alphas were chosen against a dark ground, where a tint of a *bright*
+   * status colour is subtle. On white the same alpha tints with a *dark*
+   * colour and lands much heavier: `bg-good/25` composites to #C3DED4, against
+   * which the matching `text-good` manages 3.74:1 — under AA, on a 10.5px
+   * mark, in the table this panel exists to be read from. Measured on the live
+   * page rather than guessed.
+   *
+   * Each alpha is now the strongest tint that keeps its own text above 4.5:1:
+   * good 4.53, partial 4.79, gap 5.10.
+   */
+  covered: { tone: 'bg-good/12 text-good border-good/40', mark: 'C', label: 'Covered' },
+  partial: { tone: 'bg-warn/15 text-warn border-warn/40', mark: 'P', label: 'Partial' },
+  gap: { tone: 'bg-bad/15 text-bad border-bad/40', mark: 'G', label: 'Gap' },
   not_addressable: {
     tone: 'bg-panel-raised text-faint border-line',
     mark: '–',

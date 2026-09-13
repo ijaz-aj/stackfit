@@ -1,35 +1,51 @@
 @import 'tailwindcss';
 
 /*
- * Dark, dense, professional (PROJECT_SPEC §9). There is no light theme: this is
- * a working tool used in a call, not a landing page, and a second palette is a
- * second thing to keep consistent for no benefit anyone asked for.
+ * Light, dense, professional. UST's own palette, sampled rather than recalled.
+ *
+ * This was a dark theme, and PROJECT_SPEC §9 asked for one. It is now light,
+ * because the screens here are turned toward a client in a meeting room and
+ * printed: a projector washes a dark ground out, and a dark dashboard on paper
+ * is a cartridge and an unreadable page. There is still only one theme, for the
+ * original reason — a second palette is a second thing to keep consistent.
+ *
+ * Every colour below was read off https://www.ust.com with a census of the
+ * computed styles of every visible element, not taken from memory or from a
+ * brand PDF. What that census returned, by frequency:
+ *
+ *   grounds   #FFFFFF (dominant), #EFEEEE, #F7F7F1 (bone), #F2F7F8 (cyan tint)
+ *   brand     #1C242C charcoal, #006E74 teal, #0097AB cyan, #003C52 petrol
+ *   neutrals  #736D78 and #7A7480, both warm greys with a violet cast
+ *
+ * That violet cast in the greys is what makes the palette theirs, in the same
+ * way the blue in the charcoal did. A neutral grey here would be a different
+ * and more anonymous thing.
  *
  * Tailwind v4 is configured in CSS, so these tokens *are* the config. Every
  * name below becomes a utility (`bg-panel`, `text-muted`, `border-line`).
  *
- * Contrast is measured, not judged by eye. Every foreground token below clears
- * WCAG AA (4.5:1) against all three surfaces, and every border a user has to
- * *aim at* clears 1.4.11's 3:1 for non-text UI. The ratios are in the comments
- * so the next person to adjust a colour can tell whether they broke it.
+ * Contrast is measured, not judged by eye. Every foreground token clears WCAG
+ * AA (4.5:1) against all three surfaces, and every border a user has to *aim
+ * at* clears 1.4.11's 3:1. The ratios are in the comments so the next person to
+ * adjust a colour can tell whether they broke it.
  */
 @theme {
   /*
-   * Surfaces, darkest to lightest, built around UST's own charcoal.
+   * Surfaces, and the choice of which of UST's four light grounds goes where.
    *
-   * Sampled from ust.com rather than guessed at: their dominant dark is
-   * #1C242C, their accents are a teal #006E74, a petrol #003C52 and a cyan
-   * #0097AB, and their light ground is a bone #F7F7F1. What makes that palette
-   * theirs is the *blue* in the charcoal. The previous surfaces here were
-   * deliberately neutral greys, which is a different and more anonymous thing.
+   * Their bone is the page and white is the card, rather than the other way
+   * round: an application needs the page to sit *behind* its cards, and a white
+   * page with white cards has to draw every edge to say so. Their pale cyan is
+   * the inner surface, which is where the brand quietly shows up in a figure
+   * tile or a hover state.
    *
-   * Their charcoal is the panel. The ground goes a step below it, because a
-   * full-dark application needs somewhere for a raised surface to be raised
-   * from, and a site with a white body does not.
+   * The alternative was #EFEEEE as the ground. It was measured and rejected:
+   * it is dark enough that UST's own #736D78 drops to 4.33:1 and stops clearing
+   * AA, which would have meant redrawing their grey to use their grey.
    */
-  --color-ground: #10161b;
-  --color-panel: #18212a;
-  --color-panel-raised: #212d38;
+  --color-ground: #f7f7f1; /* their bone */
+  --color-panel: #ffffff;
+  --color-panel-raised: #f2f7f8; /* their pale cyan */
 
   /*
    * Two border weights, and the distinction is not decorative.
@@ -39,36 +55,57 @@
    * its density.
    *
    * `line-control` outlines something you click or type into. That is a UI
-   * component under 1.4.11 and needs 3:1. The first value drawn for this
-   * palette, #5C7285, came in at 2.81:1 against the raised surface and was
-   * lifted until it cleared with room: 4.44 on ground, 3.97 on panel, 3.42 on
-   * panel-raised.
+   * component under 1.4.11 and needs 3:1; this clears at 3.36 on the worst
+   * surface. UST's #736D78 itself would also clear, at 4.64, and was too heavy
+   * for an input border on a white card — the weight of a rule is a separate
+   * question from whether it is visible enough.
    */
-  --color-line: #27333e;
-  --color-line-strong: #334250;
-  --color-line-control: #6a8093;
-
-  /* Text. Ratios are the worst case, against panel-raised. */
-  --color-ink: #eef3f4; /* 12.53:1 */
-  --color-muted: #a6b6be; /* 6.72:1 */
-  --color-faint: #83969f; /* 4.56:1, and no lower: it is used at 10 and 11px */
+  --color-line: #dfddd6; /* 1.26:1, decorative */
+  --color-line-strong: #cfccc5;
+  --color-line-control: #8a8490; /* 3.36:1 */
 
   /*
-   * The accent is UST's cyan, lifted.
+   * Text. Ratios are the worst case, against the bone ground.
    *
-   * #0097AB is their colour and it reads on white, where they use it. On this
-   * ground it manages 3.9:1, which fails AA for the small text this interface
-   * is almost entirely made of. #2FB6C5 is the same hue carried up until it
-   * clears, at 5.76:1 against the worst surface.
-   *
-   * `accent-dim` is their petrol #003C52 pulled toward the panel, for the
-   * filled backgrounds behind an accent border.
+   * `ink` and `muted` are UST's own values, unmodified. `faint` is their
+   * #7A7480 with its lightness trimmed 4%, because it is used at 10 and 11px
+   * and their value lands at 4.21:1 — under AA exactly where the type is
+   * smallest. Same hue, carried down until it clears, which is the treatment
+   * the accent got in the dark theme for the same reason.
    */
-  --color-accent: #2fb6c5; /* 5.76:1 */
-  --color-accent-dim: #0e3b45;
-  --color-good: #3dc98f; /* 6.65:1 */
-  --color-warn: #e3b24f; /* 7.18:1 */
-  --color-bad: #f4736f; /* 5.03:1 */
+  --color-ink: #1c242c; /* 14.52:1 — their charcoal */
+  --color-muted: #736d78; /* 4.64:1 — their warm grey, unchanged */
+  --color-faint: #756f7b; /* 4.50:1 — their #7A7480, lightness x0.96 */
+
+  /*
+   * The accent is UST's teal, and it needs no adjustment on a light ground.
+   *
+   * This is the inverse of the dark theme's problem. There, their cyan #0097AB
+   * managed 3.9:1 and had to be lifted; here their teal #006E74 — the colour
+   * they actually fill a primary button with — clears at 5.58:1 as it is. The
+   * cyan is kept for decoration only: at 3.02:1 it is a border or a rule, never
+   * a word.
+   *
+   * `accent-dim` is a tint of the cyan, for the filled background behind an
+   * accent border. `accent-edge` is the cyan itself.
+   */
+  --color-accent: #006e74; /* 5.58:1 — their teal */
+  --color-accent-dim: #e3f0f2;
+  --color-accent-edge: #0097ab; /* 3.02:1 — decorative only */
+
+  /*
+   * Status colours, and these are the one part of this palette that is not
+   * UST's: they do not publish a semantic set, and hard rule 2's habit of not
+   * inventing what can be sourced applies to a brand as much as to a price.
+   *
+   * So they are stated as derived. Each is the conventional hue for its
+   * meaning, darkened until it clears AA on all three surfaces, which on a
+   * light ground means they are deep rather than bright. Replace them the
+   * moment a real UST semantic palette exists.
+   */
+  --color-good: #0f7a52; /* 4.95:1 — derived */
+  --color-warn: #8a5a0b; /* 5.48:1 — derived */
+  --color-bad: #b3261e; /* 6.05:1 — derived */
 
   /*
    * The type scale, named.
@@ -127,12 +164,15 @@
    * with a 1px border, so nothing read as being in front of anything and the
    * page was a wall rather than a hierarchy.
    *
-   * The one-pixel inset highlight along a surface's top edge is what sells it:
-   * it reads as the surface catching light from above. It is the cheapest trick
-   * in dark UI and the one most often skipped.
+   * These used to carry a one-pixel inset white highlight along the top edge,
+   * which reads as a surface catching light from above and is the cheapest
+   * trick in dark UI. On a white card it is invisible, so it is gone. A light
+   * interface separates surfaces the other way: a real, soft drop shadow, and
+   * much weaker than the dark theme's — 0.35 alpha under a white card reads as
+   * dirt rather than depth.
    */
-  --shadow-surface: inset 0 1px 0 rgb(255 255 255 / 0.035), 0 1px 2px rgb(0 0 0 / 0.35);
-  --shadow-lifted: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 6px 16px -4px rgb(0 0 0 / 0.5);
+  --shadow-surface: 0 1px 2px rgb(28 36 44 / 0.06), 0 1px 1px rgb(28 36 44 / 0.04);
+  --shadow-lifted: 0 6px 16px -4px rgb(28 36 44 / 0.14), 0 2px 4px rgb(28 36 44 / 0.06);
 
   /*
    * 4px everywhere reads as a form from 2014. A card wants more curvature than
@@ -147,7 +187,7 @@
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
@@ -368,7 +408,7 @@ body {
  * drops the background colour. Both happened.
  */
 .select-chevron {
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%2393a4b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%23756f7b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
   background-size: 12px 12px;

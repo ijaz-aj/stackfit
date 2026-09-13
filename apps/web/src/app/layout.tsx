@@ -47,13 +47,17 @@ export const metadata: Metadata = {
 };
 
 /**
- * `dark` rather than relying on the CSS alone, so the browser paints its own
- * chrome (scrollbars, form controls, the address bar on mobile) to match
- * instead of flashing white on first paint.
+ * Declared rather than relying on the CSS alone, so the browser paints its own
+ * chrome (scrollbars, form controls, the address bar on mobile) to match the
+ * page instead of fighting it.
+ *
+ * `#f7f7f1` is UST's bone, which is `--color-ground`. These two must move
+ * together: a theme colour left on the old charcoal puts a dark bar above a
+ * light page on mobile, and nothing in the build would have said so.
  */
 export const viewport: Viewport = {
-  colorScheme: 'dark',
-  themeColor: '#10161b',
+  colorScheme: 'light',
+  themeColor: '#f7f7f1',
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
