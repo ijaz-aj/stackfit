@@ -31,7 +31,7 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
       <main className="mx-auto w-full max-w-[700px] px-6 py-10">
         <h1 className="text-ink text-lg font-semibold">This scenario cannot be opened</h1>
         <p className="text-muted mt-2 text-sm">{scenario.problem}</p>
-        <Link href="/" className="text-accent mt-4 inline-block text-sm">
+        <Link href="/scenarios" className="text-accent mt-4 inline-block text-sm">
           ← back to scenarios
         </Link>
       </main>

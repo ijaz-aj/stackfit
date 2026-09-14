@@ -16,7 +16,7 @@ export default function NotFound() {
         There is no page here. If you followed a link to a scoping scenario, it has probably been
         deleted since the link was made.
       </p>
-      <Link href="/" className="text-accent mt-4 inline-block text-sm">
+      <Link href="/scenarios" className="text-accent mt-4 inline-block text-sm">
         ← back to scenarios
       </Link>
     </main>

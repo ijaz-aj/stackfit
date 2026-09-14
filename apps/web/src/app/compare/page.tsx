@@ -112,7 +112,7 @@ export default async function ComparePage({
     return (
       <main className="mx-auto flex w-full max-w-[900px] flex-col gap-4 px-6 py-6">
         <header className="flex items-baseline gap-3">
-          <Link href="/" className="text-faint hover:text-ink text-sm">
+          <Link href="/scenarios" className="text-faint hover:text-ink text-sm">
             ← scenarios
           </Link>
           <h1 className="text-ink text-lg font-semibold tracking-tight">Compare</h1>
@@ -192,7 +192,7 @@ export default async function ComparePage({
     <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-4 px-6 py-6">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex flex-wrap items-baseline gap-3">
-          <Link href="/" className="text-faint hover:text-ink text-sm">
+          <Link href="/scenarios" className="text-faint hover:text-ink text-sm">
             ← scenarios
           </Link>
           <h1 className="text-ink text-lg font-semibold tracking-tight">

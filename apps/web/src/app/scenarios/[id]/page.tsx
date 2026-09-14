@@ -26,7 +26,7 @@ export default async function ScenarioPage({ params }: { params: Promise<{ id: s
           It was almost certainly saved before a schema change. The row is still in the database and
           nothing has been discarded.
         </p>
-        <Link href="/" className="text-accent mt-4 inline-block text-sm">
+        <Link href="/scenarios" className="text-accent mt-4 inline-block text-sm">
           ← back to scenarios
         </Link>
       </main>

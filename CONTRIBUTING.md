@@ -465,3 +465,66 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   really does delete something. Stop the dev server before running any script
   that reads or writes the database, and never act on a surprising row count
   without re-reading it from a quiet process.
+- **The browser viewport here cannot be narrowed, so no breakpoint below `lg`
+  has ever been observed.** `resize_window` reports success and `outerWidth`
+  follows it, but the rendering viewport stays at 1536; `window.open` with a
+  size is blocked as a popup because it is not user-initiated. Hit twice, in
+  separate sessions, three attempts each. This is *why* a phone bug survives
+  here: the wizard's step rail was `flex-col` with `overflow-x-auto` — a column
+  told to scroll sideways, a no-op — and its progress bar was `hidden lg:block`,
+  and neither could have been seen. When a responsive change cannot be rendered,
+  read the compiled rules out of the live CSSOM instead (`document.styleSheets`
+  → match the escaped class selector → report the `conditionText` of the `@media`
+  block it sits in). That proves which declarations are unconditional and which
+  are gated at `(min-width: 64rem)`, and the `lg:` half of each pair can then be
+  confirmed rendering at the width you do have. **It proves the mechanism, never
+  the appearance** — the same distinction that let three `@media print` rules be
+  present, served, syntactically correct, reviewed, and doing nothing.
+- **The automated browser tab runs with `document.visibilityState === "hidden"`,
+  so `IntersectionObserver` never fires in it.** Chrome does not deliver
+  intersection callbacks to a hidden document, and it throttles
+  `requestAnimationFrame` the same way. A hand-rolled observer with the results
+  page's own options recorded **zero** callbacks across three scroll positions,
+  and the section nav's current-section label sat frozen on the wrong entry the
+  whole time. Both look exactly like a broken scroll-spy and neither is:
+  `document.hasFocus()` returns `true` and screenshots still render, so nothing
+  warns you. **Check `document.visibilityState` before concluding that anything
+  observer-driven or animation-driven is broken.** Layout is unaffected —
+  `getBoundingClientRect`, computed styles and `grid-template-rows` are all
+  honest in a hidden tab — so position, size and CSS cascade can still be
+  measured there; scroll-spy, lazy-loading, entrance animations and anything
+  else keyed to visibility cannot.
+- **`position: sticky` travels only inside its containing block, and a grid item
+  gets a row of its own.** The results page's compact section nav was put in the
+  page's two-column grid alongside the panels. Below `xl` that grid is one
+  column, so the nav became its own 51px row: `grid-template-rows` read back
+  `50.85px 14920.2px`, and the bar's `top` went from 125 to **-10875** over a
+  scroll that should have pinned it at 52. It scrolled away like static content
+  while carrying every class needed to stick. The fix is not a `z-index` or a
+  `top` value, which is what it looks like: it is moving the element out of the
+  grid to a parent tall enough to travel in. Anything sticky that "works in
+  isolation but not on the page" is this, and `grid-template-rows` on the parent
+  is the one measurement that says so.
+- **A CSS custom property is substituted where it is *declared*, not where it
+  is used — so a `@theme` token must never reference a variable defined further
+  down the tree.** `--font-serif: var(--font-newsreader), Georgia, serif` inside
+  `@theme` looked correct and was silently broken: `@theme` emits to `:root`,
+  and `next/font`'s `--font-newsreader` is set on the landing page's wrapper
+  div, well below it. A `var()` with no fallback that resolves to nothing makes
+  the whole declaration *invalid at computed-value time*, which for a custom
+  property means it inherits as the guaranteed-invalid value — empty. Every
+  descendant then read `--font-serif` as empty, **including the ones where
+  `--font-newsreader` really was in scope**, because the value had already been
+  decided upstream. `.font-serif` resolved to nothing and every heading on the
+  landing page quietly rendered in Inter. `--font-sans` gets away with the same
+  shape only because `--font-inter` is on `<html>`, above the declaration. The
+  fix is `.display-serif` in globals.css: declare the token on the same element
+  that carries the font's variable class. Nothing catches this — it compiles,
+  ships, and renders the fallback. `getComputedStyle(el).getPropertyValue(
+  '--font-serif')` returning `""` is the tell.
+- **`.claude/` is ignored by eslint, and must stay ignored.** It holds agent
+  tooling and vendored third-party skills, which are CommonJS scripts Node runs
+  directly; every `require`, `process` and `console` in them is a `no-undef`
+  under this config. Vendoring one skill bundle took `pnpm lint` to 170 errors,
+  none of them in code that ships. `.claude/skills/` is gitignored separately in
+  `.gitignore` — reinstall with `npx ui-ux-pro-max-cli init --ai claude`.

@@ -1,8 +1,8 @@
 # Status
 
-**Current phase:** 17: the web application audited as a consultant, not an engineer (in review).
+**Current phase:** 18: a public front door — the landing page, and `/` handed to it (in review).
 Deployed and in client demo throughout.
-**Last updated:** 2026-09-13
+**Last updated:** 2026-09-14
 
 ## Phase log
 
@@ -2494,8 +2494,10 @@ rather than by reading.**
 **Also fixed:** one noun for one thing (54 uses of "session" for the object the
 URL, the database and the code all call a scenario), plain-English section
 navigation, the priced-on date moved from the last line of the ninth panel into
-the header, and a print treatment — the app is dark by design and that is right
-for the screen, wrong for the paper somebody will produce mid-meeting.
+the header, and a print treatment — what suits the screen is wrong for the paper
+somebody will produce mid-meeting. (Written when the app was dark by design;
+the palette went light two commits later and the reasoning survived the change
+unaltered, which is the point of it.)
 
 **Then the vocabulary, which the first pass held back** because B3 and B4 are
 naming decisions rather than substitutions. Decided and applied: a saved piece
@@ -2603,6 +2605,178 @@ Three attempts. The last commit's claim of "measured clean at 390 and 320" was
 made by other means and is not re-confirmed here.
 
 18 new tests. typecheck, lint green. 747 passed, 1 skipped.
+
+**Then the intake wizard was audited against an installed UI/UX checklist**
+(`.claude/skills/ui-ux-pro-max`, vendored and gitignored, 2026-09-14). The
+checklist's *style* recommendations were discarded on sight — it proposes
+glassmorphism and a "trust blue" for this product type, which is a different
+palette and the wrong surface treatment for a tool that gets projected and
+printed. Its accessibility and forms sections are the part worth having, and
+they found four defects in the one screen the audit above never reached.
+
+- **The step rail was `flex flex-col … overflow-x-auto`: a column told to scroll
+  horizontally, which is a no-op.** The intent was plainly a strip — nothing
+  else explains the `overflow-x-auto` or the `shrink-0` on every button — but
+  the `flex-col` was never qualified with a breakpoint, so a phone got six
+  stacked buttons and the first field of the form sat below the fold on every
+  step. Now `flex-row … lg:flex-col`.
+- **The progress bar was `hidden lg:block`.** The one screen that most needs a
+  finite remainder — a phone, where five of the six steps are off the edge — was
+  the only screen with no progress at all. There is nothing about a 1px bar and
+  a `3/5` that wants width. Now unconditional.
+- **Changing step never moved focus.** The rail swaps the entire middle column
+  and left focus on the button that did it, so a screen reader announced nothing
+  and the next Tab continued down the *nav* through the remaining steps before
+  reaching the fields that had just appeared. The panel is now a labelled
+  `tabIndex={-1}` landing spot: "Step 3 of 6: Compliance".
+- **The save status was invisible to a screen reader.** The only thing telling
+  an analyst their work is on disk, and it changed silently. `role="status"` on
+  the visible span would have announced "Saving…" then "Saved" on every pause in
+  typing, so the live region carries only the settled state — empty in flight,
+  one announcement on arrival. A failed save is `role="alert"`, because that is
+  the state worth interrupting for: the analyst is still typing into a form that
+  is no longer recording anything.
+
+**Two more, from reading rather than from the checklist.** The live readout drew
+its own `rounded border` — the 4px radius `globals.css` argues against by name —
+so it sat beside the wizard's `.surface` cards looking like another
+application's panel. And the "Indicative figures, not a quote" chip, whose own
+comment calls it load-bearing, was `text-faint` inside a decorative hairline:
+the one element on the page with legal consequence styled as the least visible
+thing on it. Both now carry the weight their comments claim for them.
+
+⚠ **The phone layout is still not verified in a browser, and the same wall was
+hit independently.** `resize_window` reports success, `outerWidth` follows, the
+rendering viewport stays at 1536; `window.open` with a size is blocked as a
+popup because it is not user-initiated. Three attempts, then stopped. What was
+done instead is a real measurement of a different kind: the compiled rules were
+read out of the live CSSOM, confirming `flex-row`/`overflow-x-auto`
+unconditional and `flex-col`/`overflow-visible` only inside
+`(min-width: 64rem)`, and that the progress element now carries no class that
+could hide it. The `lg:` half of every one of those pairs was then confirmed
+rendering at 1536. **That is the mechanism and not the appearance** — the same
+gap that let three print rules be "present, served, syntactically correct and
+reviewed" while doing nothing. Print one page and open one phone before
+trusting either.
+
+Focus movement, the live region settling to "Draft saved", `aria-current`,
+`aria-busy` and the readout's `.surface` were all confirmed live in the browser.
+Console clean on reload — not even the `fdprocessedid` hydration mismatch.
+
+No new dependency (the checklist wants Phosphor icons; the text arrows stay, and
+`⚠` is an engine-emitted convention `globals.css` already styles). typecheck and
+lint green, 747 passed, 1 skipped — unchanged, because nothing here changed a
+number.
+
+**Then the results page, which is where the modernisation actually was.** The
+skill's checklist was queried again and again contributed the useful half:
+`smooth-scroll` (severity High) and `active-state` for long-page orientation.
+Its style engine was ignored for the same reason as before.
+
+- **The only navigation on the longest page in the application was gated at
+  1280px.** `SectionNav` was `hidden xl:block`, and this file already records
+  what `xl:` is worth here: 125% display scaling puts a 1568-pixel panel at 1254
+  CSS px, so those rules "were written, shipped and never once rendered". A
+  fifteen-thousand-pixel page with ten panels, demoed on a laptop that never
+  drew its own table of contents. It now has a second form below `xl`: one
+  sticky row that **states the section you are in** and opens to the same list.
+  Not the horizontal strip the original comment rejected — that objection was
+  right and still holds — but a line rather than a column, earning the line by
+  answering "where am I" without being opened.
+- **`scroll-behavior: smooth` was being suppressed before it existed.** The
+  reduced-motion block carried `scroll-behavior: auto !important` — a guard
+  written for a property nothing ever set, so every section anchor teleported.
+  Now the guard guards something. ⚠ Note this machine has reduce-motion **on**
+  at OS level (`prefers-reduced-motion` matched `true` in the live page), so the
+  smooth scroll is correctly overridden here and cannot be seen locally. That
+  also means every transition in this app has been suppressed on this machine
+  throughout every session that reviewed one.
+- **Ten `scroll-mt-20` became one `.section-anchor`.** One number written ten
+  times with nowhere to change it, and the wrong number below `xl` where a
+  second sticky element now sits under the header. 6.5rem base, 5rem at `xl`.
+
+**And the fix was wrong the first time, which only looking showed.** The compact
+nav was put in the page's two-column grid with the panels. Below `xl` that grid
+is one column, so it became its own grid row — `grid-template-rows` read back
+`50.85px 14920.2px` — and `position: sticky` had 51 pixels to travel in. Its
+`top` went from 125 to **-10875** across a scroll that should have pinned it at
+52. It scrolled away like static content while carrying every class needed to
+stick. It now renders in `main`, above the grid, where the containing block is
+the document; the rail stays in the grid, which is the one place it works.
+`SectionNav` split into `SectionJump` and `SectionRail` for exactly this reason,
+sharing a `useCurrentSection` hook, at a cost of two observers over ten elements
+because the page is a server component and cannot hold the state to share.
+
+⚠ **One reported defect was retracted after checking.** The nav's current-section
+label appeared frozen on the wrong entry at every scroll position, and a
+hand-rolled observer with the same options recorded zero callbacks. Neither was
+real: `document.visibilityState` in the automated tab is `"hidden"`, and Chrome
+delivers no intersection callbacks to a hidden document. `document.hasFocus()`
+returns `true` and screenshots still render, so nothing about the tab announces
+this. Both Gotchas are now in CONTRIBUTING.md. Layout measurements taken in that
+tab stand — the sticky defect above was found there and is real, because
+`grid-template-rows` does not care whether anyone is looking.
+
+### Phase 18. A public front door
+
+Asked for 2026-09-14: a landing page, in the repository and deployed, not a
+mock-up. `/` had been the scenarios list behind `requireAnalyst()` since Phase
+5, so this is the first route in the application a stranger is meant to reach.
+
+**The routing.** `/` is now the landing page; the scenarios list moved to
+`/scenarios`. Eleven links that meant "home" were repointed, including the two
+`callbackUrl`s in the sign-in form and the command palette's `nav:home` — the
+sort of edit where the one that gets missed is found by a user, not a build.
+`SiteHeader` already declined to render on `/signin`; it now declines on `/`
+for the same stated reason, because every control it carries (a palette that
+searches a database the visitor has no right to, a caveat about figures that
+are not on the page) is for somebody already inside.
+
+**`apps/web/test/public-route.test.ts` writes the authz line down in both
+directions**, because making one route ungated is the moment "every page calls
+`requireAnalyst()`" stops being visible in the code. Public routes are an
+explicit list of three, each with its reason; every other page and route
+handler must call the gate. The second half is the one that earns its keep: it
+fails on a *new* gated route that forgot the gate. The landing page gets two
+assertions of its own — it must not import `prisma`, and it must not run the
+engine, because `runPipeline` carries `attribution` and a route a stranger can
+load is the last place that should be one destructure away. It caught itself on
+its first run: the page's header comment names all three forbidden symbols
+while explaining that it does not use them, so the test strips comments the way
+`vocabulary.test.ts` does, and for the reason that file already gives.
+
+**The counts on the page are counted, not typed.** 65 products, 13 categories,
+11 frameworks, 240 controls, read from `data/` rather than written into the
+copy — a landing page for a tool whose second hard rule is "never invent a
+number" should not contain one nobody can check. It paid for itself
+immediately: a `grep` while drafting said 246 controls, because `^  - id:`
+matches group ids as well as control ids. The page renders 240, which is what
+the parsed schema holds and what Phase 3c recorded. The two disclaimers are
+imported from the engine rather than retyped, so this page cannot make a softer
+claim than the document it advertises.
+
+⚠ **Deliberately static, and deliberately revalidated.** The page touches no
+database, so Next prerenders it — which would also freeze `today()`, a real
+clock reading, at build time. The footer disclaimer ends "as of <date>", so a
+build left alone for a season would go on asserting its prices were checked the
+morning it compiled: exactly the silent staleness `catalog:staleness` exists to
+prevent, reintroduced on the one page a stranger reads first. `revalidate =
+86_400`; a day, because `today()` has day granularity.
+
+**Newsreader is the first display face in this product**, loaded by `next/font`
+in the landing route only, so the application carries none of its weight. It
+shipped broken and looked fine: see the new Gotcha on custom-property
+substitution. `getComputedStyle` said `Inter` while the compiled CSS contained
+both the token and the utility, and the headings had been rendering in the
+fallback the whole time.
+
+6 new tests, 753 passing. typecheck, lint, production build all clean.
+
+**`eslint.config.mjs` now ignores `.claude/**`.** Vendoring those skills put
+seven CommonJS scripts into the tree and `pnpm lint` went to 170 `no-undef`
+errors on their `require`/`process`/`console`. Two of them predate the install
+(graft's own helpers), so lint had been failing quietly before this. Nothing
+under `.claude/` ships.
 
 ## Open defects
 

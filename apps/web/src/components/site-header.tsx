@@ -10,24 +10,33 @@ import { CommandPalette } from '@/components/command-palette';
  * The application header.
  *
  * A client component for one reason: it has to know which page it is on, so
- * that it can decline to render on `/signin`. A nav bar above a login form
- * offers a wordmark the card already carries, a command palette that searches
- * sessions the visitor cannot read, and a link to a page that will bounce them
- * straight back here.
+ * that it can decline to render on the two pages that are not the application.
+ *
+ * `/signin`: a nav bar above a login form offers a wordmark the card already
+ * carries, a command palette that searches scenarios the visitor cannot read,
+ * and a link to a page that will bounce them straight back here.
+ *
+ * `/`: the landing page is public, and every control in this header is for
+ * someone already inside. The palette searches a database the visitor has no
+ * right to; "Indicative figures, not a quote" is a caveat about figures that
+ * are not on that page; and the wordmark links into the gated half of the app.
+ * The landing page carries its own masthead, with its own way in.
  *
  * Done here rather than with a route group, which is the more idiomatic answer
- * but means moving every other page in the app into a second group to get one
- * page out of this one.
+ * but means moving every other page in the app into a second group to get two
+ * pages out of this one.
  */
+const BARE_PAGES = new Set(['/signin', '/']);
+
 export function SiteHeader({ analystEmail }: { analystEmail: string | null }) {
   const pathname = usePathname();
-  if (pathname === '/signin') return null;
+  if (BARE_PAGES.has(pathname)) return null;
 
   return (
     <header className="border-line bg-panel/90 sticky top-0 z-20 border-b backdrop-blur-sm">
       <div className="flex items-center gap-4 px-6 py-3">
         <Link
-          href="/"
+          href="/scenarios"
           className="flex items-baseline gap-2 rounded"
           aria-label="StackFit, back to scenarios"
         >
@@ -41,8 +50,20 @@ export function SiteHeader({ analystEmail }: { analystEmail: string | null }) {
             Load-bearing, not decoration. This is what stops a screenshot of
             indicative figures being read as a quote, so it stays visible at
             every width rather than being the thing that drops on mobile.
+
+            And it is now weighted like it. It was `text-faint` inside a
+            `border-line` hairline: 11.5px of the palette's quietest grey behind
+            its most decorative rule, which made the one element on the page
+            with legal consequence the least visible thing on it. A screenshot
+            of this header was a screenshot of some numbers.
+
+            `text-muted` is UST's own grey at 4.64:1, on their pale cyan, inside
+            the border weight WCAG reserves for things you have to be able to
+            see. Still quiet — it is a caveat, not a banner — but it now
+            survives a photograph of a laptop screen, which is the form this
+            actually leaves the room in.
           */}
-          <span className="border-line text-faint rounded border px-2 py-1 text-xs">
+          <span className="border-line-strong bg-panel-raised text-muted rounded-(--radius-control) border px-2 py-1 text-xs font-medium">
             Indicative figures, not a quote
           </span>
           {analystEmail !== null && <AnalystMenu email={analystEmail} />}

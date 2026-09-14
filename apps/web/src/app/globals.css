@@ -155,6 +155,29 @@
     var(--font-jetbrains), ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
 
   /*
+   * The display face, and the only place in this product that has one.
+   *
+   * Inter is right for the application: it was drawn for screen UI at the
+   * small sizes this tool lives in. It is not right for a 60px line on a
+   * landing page, where its neutrality reads as absence — and a landing page
+   * is the one surface here whose job is to have a voice.
+   *
+   * Newsreader is an editorial serif with real optical sizing, which is what
+   * lets one family set both a 60px headline and a 20px standfirst without
+   * either looking like the other scaled. It is loaded only by the landing
+   * route (`next/font` in `app/page.tsx`), so the application itself carries
+   * none of its weight; `--font-newsreader` is simply undefined everywhere
+   * else and this falls through to Georgia.
+   *
+   * Self-hosted like the other two, because `font-src 'self'` is the policy
+   * and a link to a font CDN would be blocked rather than slow.
+   *
+   * ⚠ This deliberately does **not** say `var(--font-newsreader)`, and the
+   * reason is the whole trick. See `.display-serif` below.
+   */
+  --font-serif: Georgia, 'Times New Roman', serif;
+
+  /*
    * One motion vocabulary. Durations short enough to feel like response rather
    * than animation. Past about 200ms a hover state stops feeling attached to
    * the pointer.
@@ -188,6 +211,22 @@
 
 html {
   color-scheme: light;
+
+  /*
+   * Smooth scrolling, which the reduced-motion block at the foot of this file
+   * has been overriding since before it existed.
+   *
+   * That block carries `scroll-behavior: auto !important` — a guard written for
+   * a behaviour nothing ever set, so following a section anchor on the results
+   * page teleported. On a fourteen-thousand-pixel document that is genuinely
+   * disorienting: the page is made of ten panels that look alike at a glance,
+   * and an instant jump gives the reader no sense of whether they moved up or
+   * down, or how far. The scroll itself is the only thing that says.
+   *
+   * Now the guard guards something, and someone who has told their computer
+   * they get motion sick from this still gets the jump.
+   */
+  scroll-behavior: smooth;
 }
 
 body {
@@ -211,6 +250,36 @@ body {
   border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-surface);
+}
+
+/*
+ * The landing page's display face, switched on for one subtree.
+ *
+ * This class goes on the same element that carries `next/font`'s generated
+ * variable class, and it must: **a custom property is substituted where it is
+ * declared, not where it is used.**
+ *
+ * `--font-serif: var(--font-newsreader), …` inside `@theme` looked right and
+ * was silently broken. `@theme` emits to `:root`, `--font-newsreader` is
+ * defined further down the tree on the landing page's wrapper, so at `:root`
+ * that `var()` referenced nothing. A `var()` with no fallback that resolves to
+ * nothing makes the whole declaration *invalid at computed-value time*, which
+ * for a custom property means it inherits as the guaranteed-invalid value —
+ * empty. Every descendant then read `--font-serif` as empty, including the ones
+ * where `--font-newsreader` genuinely was in scope, because by then the value
+ * had already been decided upstream. `.font-serif` resolved to nothing and the
+ * headings quietly rendered in Inter.
+ *
+ * `--font-sans` gets away with the same shape only because `--font-inter` is
+ * set on `<html>` by the root layout, above the declaration.
+ *
+ * Declaring it here instead puts the reference and the referent on one element,
+ * where the substitution can actually happen. The `@theme` entry above stays
+ * (it is what makes Tailwind emit the `font-serif` utility at all) and holds
+ * the fallback for everywhere this class is absent.
+ */
+.display-serif {
+  --font-serif: var(--font-newsreader), Georgia, 'Times New Roman', serif;
 }
 
 /* Numbers in a table have to line up, everywhere, without thinking about it. */
@@ -350,6 +419,29 @@ body {
 }
 
 /*
+ * The scroll offset for a results-page section anchor.
+ *
+ * Ten `scroll-mt-20` utilities, which is one number written ten times with
+ * nowhere to change it — and it was the wrong number below `xl`, where a second
+ * sticky element now sits under the header. A heading that lands behind the bar
+ * you used to reach it is the specific failure this exists to prevent.
+ *
+ * 6.5rem is the header (~3.25rem) plus the compact section nav under it
+ * (~2.25rem) plus a rem of air, so the heading arrives clear rather than flush.
+ * At `xl` the compact nav is `display:none` and the rail takes no vertical
+ * room, so the offset drops back to the header alone.
+ */
+.section-anchor {
+  scroll-margin-top: 6.5rem;
+}
+
+@media (min-width: 80rem) {
+  .section-anchor {
+    scroll-margin-top: 5rem;
+  }
+}
+
+/*
  * A rationale list.
  *
  * The engine emits `rationale: string[]` and eight components rendered it as
@@ -418,18 +510,27 @@ body {
 /*
  * Printing.
  *
- * The application is dark by design (PROJECT_SPEC §9) and that is right for the
- * screen it is used on. It is wrong for paper: a dark slab costs a cartridge,
- * and on most printers the light-on-dark text comes out muddy or blank.
+ * This block was written against a dark theme, and said so: "the application is
+ * dark by design (PROJECT_SPEC §9)". It has not been dark since the palette was
+ * resampled from UST's own site, and a comment describing the opposite of what
+ * the file does is worse than none — the next person to read it would have gone
+ * looking for a charcoal ground that is not there.
  *
- * Somebody will press Ctrl-P on the results dashboard during a meeting. Before
- * this they got fourteen thousand pixels of charcoal with a sticky navigation
- * column down the side. This inverts the surfaces to paper, drops the chrome
- * that has no meaning off-screen, and keeps panels from being split across a
- * page break mid-figure.
+ * The rules below survived the change because they were never really about
+ * darkness. Somebody presses Ctrl-P on the results dashboard during a meeting,
+ * and what a screen wants is not what paper wants at any lightness:
  *
- * Deliberately a print treatment rather than a light theme: the screen design
- * is a decision, and this changes only what leaves the building on paper.
+ *   - The bone ground and the pale cyan tint are ink. They are nearly white on
+ *     a monitor and a visible wash of toner across every page of a twelve-page
+ *     proposal, so print flattens them to #fff.
+ *   - Their charcoal is #1C242C, which is a deliberate near-black on screen and
+ *     a slightly muddy grey through a laser printer. Print takes it to #000.
+ *   - The greys carry a violet cast, which is the thing that makes the palette
+ *     UST's. A colour printer renders that cast as a faint lilac on small text;
+ *     the neutrals below drop it, on paper only.
+ *
+ * Still deliberately a print treatment rather than a second theme: the screen
+ * design is a decision, and this changes only what leaves the building on paper.
  */
 @media print {
   :root {

@@ -59,7 +59,7 @@ export default function RouteError({
         >
           Try again
         </button>
-        <Link href="/" className="text-accent text-sm">
+        <Link href="/scenarios" className="text-accent text-sm">
           ← back to scenarios
         </Link>
       </div>

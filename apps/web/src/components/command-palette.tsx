@@ -112,7 +112,7 @@ export function CommandPalette() {
       run: () => go(`/scenarios/${session.id}/proposal`),
     })),
     ...[
-      { id: 'nav:home', label: 'All scoping scenarios', detail: 'Go to the list', href: '/' },
+      { id: 'nav:home', label: 'All scoping scenarios', detail: 'Go to the list', href: '/scenarios' },
       {
         id: 'nav:compare',
         label: 'Compare two scenarios',

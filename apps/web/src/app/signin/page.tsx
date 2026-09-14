@@ -22,7 +22,7 @@ export default async function SignInPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   // Nothing to sign in to on a local install with no providers configured.
-  if (!authEnabled()) redirect('/');
+  if (!authEnabled()) redirect('/scenarios');
 
   const { error } = await searchParams;
 

@@ -54,7 +54,7 @@ export function SignInForm({
               key={provider}
               type="button"
               variant="secondary"
-              onClick={() => void signIn(provider, { callbackUrl: '/' })}
+              onClick={() => void signIn(provider, { callbackUrl: '/scenarios' })}
             >
               {LABELS[provider] ?? `Continue with ${provider}`}
             </Button>
@@ -89,7 +89,7 @@ function PasswordForm() {
       email,
       password,
       redirect: false,
-      callbackUrl: '/',
+      callbackUrl: '/scenarios',
     });
 
     if (result?.ok === true) {
