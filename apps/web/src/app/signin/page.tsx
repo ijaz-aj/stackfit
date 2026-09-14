@@ -36,18 +36,9 @@ export default async function SignInPage({
           </div>
 
           <h1 className="text-ink mt-6 text-lg font-semibold tracking-tight">Sign in</h1>
-          {/*
-            This used to name the data: "StackFit holds prospective clients'
-            asset inventories, so access is limited to named analysts." It reads
-            as a justification, and it is one — but this page is public, and on
-            a public page it is also a statement of what is worth taking,
-            addressed to whoever found the host in a Certificate Transparency
-            log rather than in an email from a colleague. The sentence still
-            does its real job, which is telling someone who cannot get in that
-            this is a closed instance rather than a broken one.
-          */}
           <p className="text-muted mt-1.5 text-sm leading-snug">
-            A closed instance. Access is limited to named analysts.
+            StackFit holds prospective clients&rsquo; asset inventories, so access is limited to
+            named analysts.
           </p>
 
           {error !== undefined && (

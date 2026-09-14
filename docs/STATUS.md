@@ -1,7 +1,7 @@
 # Status
 
-**Current phase:** 18c: the front door taken off the open web — `/` is a door,
-the landing page moved to `/about` behind the gate (in review).
+**Current phase:** 18d: the landing page restored to `/` at the user's
+direction, after 18c moved it behind the gate. `noindex` retained (in review).
 Deployed and in client demo throughout.
 **Last updated:** 2026-09-14
 
@@ -2944,6 +2944,68 @@ words, and must name no vendor, no framework and no money. Its "reads nothing"
 assertion now covers `engineData` as well as Prisma.
 
 2 new tests, 763 passing, 1 skipped. typecheck, lint, build, audit clean.
+
+#### 18d. Reverted: the landing page is public again (2026-09-14)
+
+**18c was reverted on the same day, at the user's explicit direction**, after
+they saw the door and said they preferred the earlier page. This entry stays
+rather than being deleted, because the reasoning in 18c is still correct and
+somebody will propose it again.
+
+**What went back.** `/` is the seven-band landing page from 18b. `/about` and
+`components/portal-link.tsx` are gone; `PortalLink` is local to the page again,
+which is where it belongs now that only one route draws it. `SiteHeader` no
+longer carries an About link and declines to render on `/` as before.
+`signin/page.tsx` says what it always said: "StackFit holds prospective
+clients' asset inventories, so access is limited to named analysts."
+
+**The landing page stopped mentioning sign-in**, decided separately once the
+page was back. Both CTA captions read "For named analysts. Sign-in is handled on
+the way through", which is the right thing to tell a stranger and the wrong
+thing to tell a colleague: this is the front of an internal tool, everyone
+reading it works here, and the password box appears once and then not again for
+the thirty days a session lasts. They now say what is through the door rather
+than what is in front of it. The gate is untouched — `/scenarios` runs
+`requireAnalyst()` as it always has — and `landing.test.ts` asserts the
+*absence* of `sign in` / `log in` / `password` in rendered text, the exact
+inverse of what it asserted that morning. The unbounded first draft of that
+regex failed on the intake band's "Firewalls dominate log ingest", which is
+`log in` sitting inside `log ingest`; a prose lint that fires on a sentence
+about log volumes would have been switched off within the week.
+
+**What was kept**, because none of it depends on the page being gated:
+
+- `X-Robots-Tag: noindex, nofollow` on `/:path*`, and `robots.ts` permitting the
+  crawl that lets it be read. This was the part the user asked for in the first
+  place and it is untouched.
+- The `/scenarios` redirect fix in `signin-form.tsx`. A Phase 18 leftover found
+  while doing 18c; it has nothing to do with where the landing page lives.
+- `public-route.test.ts` sweeping Next's metadata routes, and the eslint
+  override for them.
+
+⚠ **The exposure 18c was written to close is open again, deliberately and with
+the trade-off stated to the user.** `/` describes what the company scopes, which
+vendors it prices, the framework library, the catalog counts and a worked
+three-year cost, to anyone who opens the URL. That URL is discoverable
+regardless of what the page says — Vercel publishes every certificate to
+Certificate Transparency logs within minutes and bots read them continuously —
+so the choice is not between hidden and visible, it is about what a visitor
+finds once there. The user's call: this deployment exists to share progress, and
+a page nobody can read does not do that.
+
+**What is still true, and is the part that matters.** No client data is on the
+public side. Every scenario, client name, asset inventory and cost figure is
+behind `requireAnalyst()`; the landing page reads no database and never runs the
+engine, both asserted in `public-route.test.ts`. What 18d re-exposes is
+marketing copy and a written-out worked example, not records.
+
+**Still open, and now the whole of the exposure.** `/api/auth/providers` reports
+publicly that email-and-password is the only way in, and cannot be closed —
+next-auth v4's `signIn()` calls `getProviders()` before it posts. Behind it sits
+a demo credential with no rate limiting and no lockout. The user has deferred
+authentication work; it is the one thing left worth doing.
+
+763 passing, 1 skipped. typecheck, lint, build clean.
 
 ⚠ **Not verified in a browser.** The Chrome extension would not connect this
 session, so the page was checked by fetching the rendered HTML (content,

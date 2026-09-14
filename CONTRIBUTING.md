@@ -564,24 +564,33 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
 - **Certificate Transparency means the deployment hostname is public, always.**
   Vercel publishes every certificate it issues to CT logs within minutes, and
   bots read those continuously, so `stackfit-web-lake.vercel.app` is discoverable
-  no matter what any page says. Two things follow. Obscurity is not a control
-  here and must never be treated as one. And the goal for anything public is not
-  "hard to find" but **"teaches you nothing on arrival"**: `/` is a wordmark, one
-  sentence and the way in, `public-route.test.ts` holds it under a 90-word budget
-  and forbids naming a vendor, a framework or a figure, and the page that
-  explains the product lives at `/about` behind `requireAnalyst()`. Vercel's own
-  Deployment Protection cannot substitute on this plan: Hobby gets Standard
-  Protection, which leaves the *production* domain public, and protecting it
-  needs Pro plus a $150/month add-on.
+  no matter what any page says. **Obscurity is not a control here and must never
+  be treated as one**, which is also why `noindex` is worth having and is not a
+  defence: it keeps the site out of search results, not out of anyone's reach.
+  Vercel's own Deployment Protection cannot substitute on this plan either —
+  Hobby gets Standard Protection, which leaves the *production* domain public,
+  and protecting it needs Pro plus a $150/month add-on. The only real control is
+  `requireAnalyst()`, which is why hard rule 10 puts authz in one place and
+  `public-route.test.ts` keeps the list of exceptions to three.
+  This was briefly resolved the other way: `/` became a bare door and the
+  landing page moved to `/about` behind the gate. It was reverted the same day
+  on the owner's instruction — the deployment exists to share progress, and a
+  front page nobody can read does not do that. **What makes that acceptable is
+  the split**: the landing page reads no database and never runs the engine
+  (both asserted), so what is public is marketing copy and a written-out worked
+  example, never a record. Keep it that way, and keep the disclaimers on it.
 - **`/api/auth/providers` is public and cannot be closed.** It answers
   unauthenticated with the list of configured providers, which on this instance
   advertises that email-and-password is the only way in. It is tempting to block
   it in `proxy.ts`; do not. next-auth v4's `signIn()` calls `getProviders()`
   before it posts anything, so blocking it breaks every sign-in on the site. The
   answer to a weak door being advertised is a stronger door, not a quieter sign.
-- **Neither public page names the data it holds.** `/signin` used to say
-  "StackFit holds prospective clients' asset inventories, so access is limited to
-  named analysts". That sentence is right for a colleague who cannot get in and
-  wants to know why, and it is also a note about what is worth taking, on a page
-  anyone reading a CT log can reach. Say what the instance *is* — closed,
-  internal — and stop. The same rule applies to the door at `/`.
+- **The landing page does not mention signing in, and that is deliberate.** Its
+  CTA captions used to read "For named analysts. Sign-in is handled on the way
+  through", which is the right thing to tell a stranger and the wrong thing to
+  tell a colleague: this is the front of an internal tool, everyone reading it
+  works here, and the password box appears once and then not again for the
+  thirty days a session lasts. `landing.test.ts` now asserts the *absence* of
+  `sign in` / `log in` / `password` in rendered text, which is the exact inverse
+  of what it asserted before — check that test's comment before reinstating the
+  warning, because it records why the reasoning flipped.
