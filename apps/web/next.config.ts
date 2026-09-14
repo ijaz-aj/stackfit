@@ -21,6 +21,31 @@ const SECURITY_HEADERS = [
   },
   // Harmless over http, correct the moment this is hosted.
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
+  /*
+   * Keep an internal tool out of the public index.
+   *
+   * This is a security header here, not an SEO setting. StackFit holds
+   * prospective clients' asset inventories and is deployed to a public
+   * hostname; since Phase 18 it also has a landing page that describes, in
+   * detail and in plain English, what it does, which vendors it prices and
+   * where the way in is. Written for a colleague that page is documentation.
+   * Indexed, it is a reconnaissance document, and the sign-in form it points at
+   * becomes something people find without looking.
+   *
+   * Set as a *header* rather than as `metadata.robots` in the layout for one
+   * concrete reason: a `<meta>` tag needs a `<head>`, and the four export
+   * routes under `scenarios/[id]/proposal/` return a DOCX, a PDF and an XLSX.
+   * Those are precisely the responses that must never be cached by a third
+   * party, and precisely the ones a meta tag cannot reach. One header on
+   * `/:path*` covers every route in the application, including the ones nobody
+   * remembers to check.
+   *
+   * `nofollow` as well as `noindex`, so a crawler that reaches the landing page
+   * does not walk its links into the gated half of the app and collect a
+   * directory of redirects. `src/app/robots.ts` deliberately permits the fetch
+   * that lets this header be read; the reasoning is written out there.
+   */
+  { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
 ];
 
 const nextConfig: NextConfig = {

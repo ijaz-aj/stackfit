@@ -50,11 +50,14 @@ export default tseslint.config(
     },
   },
   {
-    // Next.js discovers pages, layouts, configs and middleware by default
-    // export. This is the override CONTRIBUTING.md's convention already anticipated.
+    // Next.js discovers pages, layouts, configs, metadata routes and middleware
+    // by default export. This is the override CONTRIBUTING.md's convention
+    // already anticipated. `robots`, `sitemap` and `manifest` are the metadata
+    // routes: ordinary modules by their filename, public endpoints by their
+    // behaviour, and Next will not find them under any other export name.
     files: [
-      'apps/web/src/app/**/{page,layout,loading,error,global-error,not-found,template,default,route}.tsx',
-      'apps/web/src/app/**/{page,layout,loading,error,global-error,not-found,template,default,route}.ts',
+      'apps/web/src/app/**/{page,layout,loading,error,global-error,not-found,template,default,route,robots,sitemap,manifest}.tsx',
+      'apps/web/src/app/**/{page,layout,loading,error,global-error,not-found,template,default,route,robots,sitemap,manifest}.ts',
       'apps/web/src/proxy.ts',
       'apps/web/*.config.{ts,mjs}',
       'apps/web/prisma.config.ts',

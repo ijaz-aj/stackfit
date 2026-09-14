@@ -122,4 +122,35 @@ describe('the static security headers', () => {
     const rules = (await nextConfig.headers?.()) ?? [];
     expect(rules.some((rule) => rule.source === '/:path*')).toBe(true);
   });
+
+  it('keeps an internal tool out of the public index', async () => {
+    // Not an SEO preference. This application is deployed to a public hostname
+    // and, since it grew a landing page, explains itself at length to anyone
+    // who loads `/`. The header is what stops that becoming a reconnaissance
+    // document, and it is set on `/:path*` rather than as a meta tag because
+    // the DOCX, PDF and XLSX export routes have no <head> to put one in.
+    const robots = (await headerMap()).get('X-Robots-Tag') ?? '';
+
+    expect(robots).toContain('noindex');
+    expect(robots).toContain('nofollow');
+  });
+});
+
+describe('robots.txt', () => {
+  it('permits the crawl that lets the noindex header be read', async () => {
+    // The trap this guards is a plausible-looking "harden it" edit: somebody
+    // reads `allow: '/'` on an internal tool, assumes it is a mistake, and
+    // changes it to `disallow: '/'`. That is strictly worse. A blocked page is
+    // never fetched, so the X-Robots-Tag above is never read, and the URL can
+    // still be listed from an inbound link — now with no description, and with
+    // the blocked paths published in robots.txt for anyone who asks.
+    //
+    // Full reasoning in `src/app/robots.ts`. This asserts the outcome.
+    const { default: robots } = await import('../src/app/robots');
+    const rules = robots().rules;
+    const single = Array.isArray(rules) ? rules[0] : rules;
+
+    expect(single?.allow).toBe('/');
+    expect(single?.disallow).toBeUndefined();
+  });
 });

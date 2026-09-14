@@ -42,6 +42,7 @@ const PUBLIC_ROUTES: ReadonlyMap<string, string> = new Map([
   ['page.tsx', 'the landing page: the one route a stranger is meant to reach'],
   ['signin/page.tsx', 'the sign-in form itself, which cannot require being signed in'],
   ['api/auth/[...nextauth]/route.ts', "NextAuth's own handler, which performs the sign-in"],
+  ['robots.ts', 'robots.txt, which a crawler fetches before it is anybody at all'],
 ]);
 
 /**
@@ -50,9 +51,21 @@ const PUBLIC_ROUTES: ReadonlyMap<string, string> = new Map([
  */
 const NOT_A_ROUTE = /(^|\/)(layout|error|global-error|not-found|loading|template)\.tsx$/;
 
+/*
+ * What resolves to a URL under `app/`.
+ *
+ * `page.tsx` and `route.ts` are the obvious two. Next's *metadata* routes are
+ * the ones worth naming explicitly: `robots.ts`, `sitemap.ts` and `manifest.ts`
+ * are ordinary modules by their filename and public endpoints by their
+ * behaviour, and a sweep that only looked for pages and handlers would let one
+ * be added with no gate and no entry on the list above. Listed here so that
+ * adding one is a decision, which is the whole point of this file.
+ */
+const ROUTE_FILE = /(^|\/)(page\.tsx|route\.ts|robots\.ts|sitemap\.ts|manifest\.ts)$/;
+
 const routeFiles = readdirSync(APP, { recursive: true, encoding: 'utf8' })
   .map((entry) => entry.split(path.sep).join('/'))
-  .filter((entry) => /(^|\/)(page\.tsx|route\.ts)$/.test(entry))
+  .filter((entry) => ROUTE_FILE.test(entry))
   .filter((entry) => !NOT_A_ROUTE.test(entry))
   .sort();
 

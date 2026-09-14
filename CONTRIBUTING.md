@@ -528,3 +528,36 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   under this config. Vendoring one skill bundle took `pnpm lint` to 170 errors,
   none of them in code that ships. `.claude/skills/` is gitignored separately in
   `.gitignore` — reinstall with `npx ui-ux-pro-max-cli init --ai claude`.
+- **`robots.txt` must *allow* the crawl, or the `noindex` that does the work is
+  never read.** This tool is internal, deployed to a public hostname, and its
+  landing page explains at length what we scope and which vendors we price. The
+  requirement is "not in the index" and the instinct, `Disallow: /`, is the
+  wrong control for it: `Disallow` asks a crawler not to *fetch*, not to
+  *list*, so a URL found through an inbound link is still indexed as a bare
+  address with no description — and because the page is never fetched, the
+  `X-Robots-Tag: noindex` that would have removed it is never seen. The two do
+  not stack; blocking the crawl defeats the de-indexing. A `Disallow` list also
+  publishes the paths worth hiding to anyone who asks for it. So the control is
+  the header (`next.config.ts`, on `/:path*`, a **header** rather than
+  `metadata.robots` because the DOCX/PDF/XLSX export routes have no `<head>`),
+  and `app/robots.ts` exists only to permit the fetch that lets it be read.
+  `security-headers.test.ts` asserts `allow: '/'` with no `disallow`, because
+  "harden the robots.txt" is a plausible edit that makes this strictly worse.
+- **Next's metadata routes (`robots.ts`, `sitemap.ts`, `manifest.ts`) are public
+  endpoints that look like ordinary modules.** They are named in three places
+  and each one had to be told separately: `public-route.test.ts` (its sweep
+  matched only `page.tsx`/`route.ts`, so one could have been added with no gate
+  and no entry on the public list), `eslint.config.mjs` (they must default-export,
+  which the repo otherwise forbids), and the route file's own header comment.
+  Adding a fourth metadata route means touching all three.
+- **A landing-page CTA is named in one constant, not typed at each placement.**
+  Before Phase 18b the way in was a text link reading "Sign in" in the masthead
+  and two buttons in the closing card — one saying "Open the portal", one saying
+  "Sign in", both pointing at `/scenarios`. "Sign in" is also wrong on its own
+  terms here: `authEnabled()` is false on a local install and an analyst holding
+  a session never sees a form, so the label describes a step that frequently
+  does not happen. `PORTAL.label` plus one `PortalLink` component is the fix, and
+  `test/landing.test.ts` fails on a hand-written `href="/scenarios"` or on any
+  label matching `sign in`/`log in`. Note that the natural alternative, "start a
+  scoping session", is barred by `vocabulary.test.ts`: *session* is a banned word
+  and the saved object is a **scenario**.

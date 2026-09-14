@@ -1,6 +1,7 @@
 # Status
 
-**Current phase:** 18: a public front door — the landing page, and `/` handed to it (in review).
+**Current phase:** 18b: what the front door is for, and what it is called — the
+concept bands, one named way in, and `noindex` on an internal tool (in review).
 Deployed and in client demo throughout.
 **Last updated:** 2026-09-14
 
@@ -2771,6 +2772,117 @@ both the token and the utility, and the headings had been rendering in the
 fallback the whole time.
 
 6 new tests, 753 passing. typecheck, lint, production build all clean.
+
+#### 18b. What the front door is for, and what it is called (2026-09-14)
+
+Second pass on the same page, asked for on the day it shipped: the landing page
+explains the product and should explain it harder, and "Sign in" is the wrong
+name for the way in.
+
+**The way in is called "Open the portal", and nothing on the page calls it
+anything else.** "Sign in" names the obstacle rather than the destination, and
+it is wrong here three separate ways: sign-in is not always what happens
+(`authEnabled()` is false on a local install, and an analyst holding a session
+never sees a form, so the label describes a step that frequently does not
+occur); it describes the turnstile rather than the room, when nobody walks to a
+colleague's desk to sign in; and *portal* is this product's own noun, not a
+borrowed one — PROJECT_SPEC's title is "Security Solution Advisor & Budget
+Portal" and the footer has always said so. The obvious alternative, "Start a
+scoping session", is barred by `vocabulary.test.ts`: **session** is a banned
+word in user-facing copy, because the saved object is a *scenario*. The label
+lives in one constant, rendered through one `PortalLink` component in all three
+placements, and `apps/web/test/landing.test.ts` fails if a fourth link to
+`/scenarios` is ever hand-written or if any label matches `sign in` / `log in`.
+
+The gate is not hidden, it is just not the button: both placements carry a line
+of copy saying the portal is for named analysts, and that is asserted too.
+
+**The closing card had two buttons to one destination under two names.** "Open
+the portal" beside "Sign in", and a reader had to work out they were the same
+door. One call to action now, per the one-primary-CTA rule.
+
+**The hero had no call to action at all.** The page opened with two paragraphs
+and a specimen card, and the only way in was a text link in the masthead and
+two buttons fourteen screens down: a reader who arrived convinced had nowhere
+to go. The primary CTA is now above the fold, which is where the
+hero-features-CTA pattern puts it.
+
+**Three new bands, because explaining the concept is the page's actual job.**
+It described the machinery (catalog, engine, limits, output) to a reader who
+had not yet been told what problem any of it solves:
+
+- **Scoping / the problem** — the three ways a stack scoped in a spreadsheet
+  goes wrong: the price is remembered, the people are free, and the answer
+  cannot be defended six weeks later. Hairline-divided rather than boxed, so the
+  one section describing a *problem* does not wear the same panel treatment as
+  the answers.
+- **Intake / what you do** — the six wizard steps on a drawn rail, each with
+  what it captures and why it matters, then what comes back: three options
+  (Essential, Recommended, Deferred), a coverage matrix and a proposal. The
+  connector retracts on step six, because a line continuing past the last number
+  promises a seventh question that does not exist.
+- **Vocabulary / what the words mean** — Scenario, Sizing, Ops burden, Fit,
+  Coverage, TCO. Six words in general circulation and used loosely everywhere
+  else; a figure is only as trustworthy as the reader's understanding of what it
+  counts. Terms set in the figure face, because each names a number the reader
+  meets next in a table.
+
+**Two defects found by reading the rendered page rather than the source.**
+Neither would have failed a test:
+
+- The category chips rendered the raw enum — `vulnerability_management`,
+  `asset_discovery`, `ngfw`, in monospace — directly beneath a sentence calling
+  them "categories, from SIEM to deception". `CATEGORY_LABELS` already existed
+  for exactly this and is what the wizard and the dashboard read; the front door
+  was quoting the schema at a stranger.
+- `Count` rendered its caption twice, once `sr-only` as the `<dt>` and again
+  inside the `<dd>`, so a screen reader read each of the four figures as
+  "products, at least five in every category, 65, products, at least five in
+  every category". The usual cost of reaching for `sr-only` to satisfy a `<dl>`,
+  and unnecessary: the caption is visible, so it can simply be the `<dt>`.
+  `flex-col-reverse` keeps the figure above its caption with the DOM in the
+  order a definition list requires.
+
+**Security: the tool is now out of the public index.** This is a header, not an
+SEO setting. StackFit is internal, deployed to a public hostname, and since
+Phase 18 it has a page that explains at length what the company scopes, which
+vendors it prices, what a stack costs to run and where the way in is. Written
+for a colleague that is documentation; filed by a search engine it is a
+reconnaissance document, and the sign-in form becomes something people find
+without looking.
+
+`X-Robots-Tag: noindex, nofollow` is served on `/:path*` from
+`next.config.ts`. Set as a header rather than as `metadata.robots` because the
+four export routes return a DOCX, a PDF and an XLSX — precisely the responses
+that must not be cached by a third party, and precisely the ones a meta tag
+cannot reach.
+
+⚠ **`robots.ts` deliberately does *not* disallow crawling**, and the reasoning
+is written out in the file because the "obvious" hardening edit is strictly
+worse. `Disallow` is a request not to *fetch*, not a request not to *list*: a
+URL found through an inbound link can still be indexed as a bare address with
+no description. Worse, a disallowed page is never fetched, so the `noindex`
+that would have removed it is never read — the two controls do not stack,
+blocking the crawl defeats the de-indexing. And a `Disallow` list publishes the
+paths worth hiding to anyone who asks. `security-headers.test.ts` asserts
+`allow: '/'` with no `disallow`, against exactly that edit.
+
+`public-route.test.ts` now sweeps Next's **metadata routes** too (`robots.ts`,
+`sitemap.ts`, `manifest.ts`): ordinary modules by filename, public endpoints by
+behaviour, and a sweep looking only for `page.tsx`/`route.ts` would have let one
+be added with no gate and no entry on the public list. `eslint.config.mjs`
+extends the default-export override to the same three names.
+
+8 new tests, 761 passing, 1 skipped. typecheck, lint, production build clean;
+`/` still prerenders with a 1-day revalidate and `/robots.txt` is static.
+
+⚠ **Not verified in a browser.** The Chrome extension would not connect this
+session, so the page was checked by fetching the rendered HTML (content,
+counts, heading order) and reading the compiled stylesheet to confirm every new
+utility emits a rule — including the arbitrary and variant ones
+(`left-[0.875rem]`, `sm:first:pl-0`, `sm:divide-x`). That proves the mechanism,
+never the appearance, which is the same distinction the Gotchas already draw.
+**The three new bands and the CTA have not been looked at.**
 
 **`eslint.config.mjs` now ignores `.claude/**`.** Vendoring those skills put
 seven CommonJS scripts into the tree and `pnpm lint` went to 170 `no-undef`
