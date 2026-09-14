@@ -16,6 +16,13 @@ export default tseslint.config(
       // Prisma writes its client into the app's source tree; it is generated
       // code held to the generator's standards, not this repo's.
       'apps/web/src/generated/**',
+      // Editor tooling, not this repo's source: agent helpers and vendored
+      // third-party skills. They are CommonJS scripts run by Node directly, so
+      // every `require`, `process` and `console` in them is a `no-undef` error
+      // under this config's browser/ESM assumptions — 170 of them, which is
+      // enough noise to make `pnpm lint` useless as a signal. Nothing here
+      // ships, and `.claude/skills/` is gitignored besides.
+      '.claude/**',
     ],
   },
   js.configs.recommended,

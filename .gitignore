@@ -30,3 +30,15 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+
+# vendored UI UX Pro Max skills — reinstall with
+# `npx ui-ux-pro-max-cli init --ai claude`, not committed.
+/.claude/skills/banner-design/
+/.claude/skills/brand/
+/.claude/skills/design-system/
+/.claude/skills/slides/
+/.claude/skills/ui-styling/
+/.claude/skills/ui-ux-pro-max/
