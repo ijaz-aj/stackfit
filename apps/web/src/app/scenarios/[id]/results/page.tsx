@@ -12,7 +12,7 @@ import { Staffing } from '@/components/results/staffing';
 import { CoverageMatrix } from '@/components/results/coverage-matrix';
 import { CloseGaps } from '@/components/results/close-gaps';
 import { GapAnalysis } from '@/components/results/gap-analysis';
-import { SectionNav } from '@/components/results/section-nav';
+import { SectionJump, SectionRail } from '@/components/results/section-nav';
 import { SizingWorksheet } from '@/components/results/sizing-worksheet';
 import { frameworkLabel, INDUSTRY_SHORT } from '@/components/wizard/labels';
 import { Badge } from '@/components/ui';
@@ -96,7 +96,7 @@ export default async function ResultsPage({
       <main className="mx-auto w-full max-w-[700px] px-6 py-10">
         <h1 className="text-ink text-lg font-semibold">This scenario cannot be opened</h1>
         <p className="text-muted mt-2 text-sm">{scenario.problem}</p>
-        <Link href="/" className="text-accent mt-4 inline-block text-sm">
+        <Link href="/scenarios" className="text-accent mt-4 inline-block text-sm">
           ← back to scenarios
         </Link>
       </main>
@@ -233,21 +233,49 @@ export default async function ResultsPage({
       )}
 
       {/*
-        Two columns from `xl` up: the panels, and a nav that says where in them
+        Below `xl`, the whole of this page's navigation. It renders here, as a
+        child of `main`, rather than in the grid below: `position: sticky` can
+        only travel inside its containing block, and in that grid it would get a
+        51px row of its own to travel in.
+
+        After the two warnings and not before them. A stack that cannot fund a
+        compliance obligation is the first thing an analyst has to see, and a
+        navigation aid that pushes it down the page has its priorities the wrong
+        way round. It still pins the moment it reaches the header on the way
+        down, which is the only time it is needed.
+      */}
+      <SectionJump sections={RESULTS_SECTIONS} />
+
+      {/*
+        Two columns from `xl` up: the panels, and a rail that says where in them
         you are. The page is fourteen thousand pixels tall, and before this the
         only route to the assumptions was to scroll past a 240-row coverage
         matrix and hope.
 
-        `scroll-mt` on each target clears the sticky header, so following an
-        anchor does not park the heading underneath it.
+        Below `xl`, `SectionJump` above draws one sticky row instead, because a
+        rail gated at 1280px is a rail this machine never renders (CONTRIBUTING
+        Gotcha: 125% display scaling puts a 1568-pixel panel at 1254 CSS px).
+        The longest page in the application had no navigation on the laptop it
+        is demoed from.
+
+        The jump bar sits outside this grid deliberately: inside it, it became a
+        grid row of its own and `position: sticky` had only that row's height to
+        travel in, so it scrolled away instead of pinning. The rail has the
+        opposite need and stays in the grid, whose second column is as tall as
+        the panels beside it.
+
+        `.section-anchor` on each target clears the sticky header, and the jump
+        bar underneath it at the widths where that one renders.
       */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_180px]">
-        <div className="flex min-w-0 flex-col gap-4">
+        <SectionRail sections={RESULTS_SECTIONS} />
+
+        <div className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-1">
           {/*
             The answer first. Everything below is the working, in the order the
             engine derives it, which is not the order a reader needs it in.
           */}
-          <div id="summary" className="scroll-mt-20">
+          <div id="summary" className="section-anchor">
             <ExecutiveSummary
               result={result}
               bundle={bundle}
@@ -259,11 +287,11 @@ export default async function ResultsPage({
             />
           </div>
 
-          <div id="bundles" className="scroll-mt-20">
+          <div id="bundles" className="section-anchor">
             <BundleComparison result={result} selectedKind={kind} scenarioId={id} fx={data.fx} />
           </div>
 
-          <div id="categories" className="scroll-mt-20">
+          <div id="categories" className="section-anchor">
             <CategoryCards result={result} bundle={bundle} />
           </div>
 
@@ -273,7 +301,7 @@ export default async function ResultsPage({
             asked to pay, and on a managed engagement those are different
             questions with an order-of-magnitude between them.
           */}
-          <div id="engagement" className="scroll-mt-20">
+          <div id="engagement" className="section-anchor">
             <Engagement
               bundle={bundle}
               profile={scenario.profile}
@@ -287,19 +315,19 @@ export default async function ResultsPage({
             is the one a client asks straight after the money question, and the
             answer has to be next to it rather than buried under the charts.
           */}
-          <div id="staffing" className="scroll-mt-20">
+          <div id="staffing" className="section-anchor">
             <Staffing result={result} profile={scenario.profile} />
           </div>
 
-          <div id="cost" className="scroll-mt-20">
+          <div id="cost" className="section-anchor">
             <CostBreakdown bundle={bundle} fx={data.fx} />
           </div>
 
-          <div id="coverage" className="scroll-mt-20">
+          <div id="coverage" className="section-anchor">
             <CoverageMatrix coverage={coverage} />
           </div>
 
-          <div id="gaps" className="scroll-mt-20 flex flex-col gap-3">
+          <div id="gaps" className="section-anchor flex flex-col gap-3">
             <GapAnalysis coverage={coverage} />
             {/*
               Under the gap table, not above it. The plan is only meaningful
@@ -313,7 +341,7 @@ export default async function ResultsPage({
             />
           </div>
 
-          <div id="sizing" className="scroll-mt-20">
+          <div id="sizing" className="section-anchor">
             <SizingWorksheet
               scenarioId={id}
               sizing={result.sizing}
@@ -326,7 +354,7 @@ export default async function ResultsPage({
             />
           </div>
 
-          <div id="assumptions" className="scroll-mt-20">
+          <div id="assumptions" className="section-anchor">
             <AssumptionsPanel
               result={result}
               bundle={bundle}
@@ -337,8 +365,6 @@ export default async function ResultsPage({
             />
           </div>
         </div>
-
-        <SectionNav sections={RESULTS_SECTIONS} />
       </div>
     </main>
   );

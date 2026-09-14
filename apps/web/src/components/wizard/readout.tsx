@@ -75,7 +75,20 @@ export function LiveReadout({
   scenarioId: string;
 }) {
   return (
-    <aside className="border-line bg-panel flex flex-col gap-4 rounded border p-4">
+    /*
+      `.surface`, not `rounded border`.
+
+      Every other card in the app is `.surface` — 12px corners and a soft
+      shadow. This one drew its own 4px rectangle, which is the "form from 2014"
+      radius globals.css argues against, and it sat beside the wizard's cards
+      looking like a different application's panel. One class, decided once.
+
+      `aria-busy` rather than a live region on "updating…": the estimate
+      re-runs on every pause in typing, so announcing each refresh would talk
+      over the analyst continuously. `aria-busy` lets a screen reader know the
+      figures are in flight without narrating it.
+    */
+    <aside className="surface flex flex-col gap-4 p-4" aria-busy={estimating}>
       <header className="flex items-center justify-between">
         <h2 className="text-ink text-base font-semibold tracking-tight">Live estimate</h2>
         {estimating && <span className="text-faint text-2xs">updating…</span>}
