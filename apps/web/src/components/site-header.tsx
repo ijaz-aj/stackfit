@@ -16,11 +16,14 @@ import { CommandPalette } from '@/components/command-palette';
  * carries, a command palette that searches scenarios the visitor cannot read,
  * and a link to a page that will bounce them straight back here.
  *
- * `/`: the landing page is public, and every control in this header is for
- * someone already inside. The palette searches a database the visitor has no
- * right to; "Indicative figures, not a quote" is a caveat about figures that
- * are not on that page; and the wordmark links into the gated half of the app.
- * The landing page carries its own masthead, with its own way in.
+ * `/`: public, and every control in this header is for someone already inside.
+ * The palette searches a database the visitor has no right to; "Indicative
+ * figures, not a quote" is a caveat about figures that are not on that page;
+ * the wordmark links into the gated half of the app; and the About link now
+ * points at a route that would bounce them to sign-in. `/` is a door with a
+ * card on it and needs none of that. It used to be a landing page carrying its
+ * own masthead, which is why this rule reads as if something were being
+ * replaced — nothing is any more, and that is the intent.
  *
  * Done here rather than with a route group, which is the more idiomatic answer
  * but means moving every other page in the app into a second group to get two
@@ -45,6 +48,21 @@ export function SiteHeader({ analystEmail }: { analystEmail: string | null }) {
         </Link>
 
         <div className="ml-auto flex items-center gap-3">
+          {/*
+            The only route to `/about`, which is why it is here rather than
+            left to whoever remembers the URL.
+
+            That page was `/` and public until the deployment was taken off the
+            open web; behind the gate it has no inbound link at all unless one
+            is drawn. Quiet, because it is reference material an analyst reads
+            once, not a place they work.
+          */}
+          <Link
+            href="/about"
+            className="text-muted hover:text-ink hidden text-xs transition-colors duration-(--duration-quick) sm:inline"
+          >
+            About
+          </Link>
           <CommandPalette />
           {/*
             Load-bearing, not decoration. This is what stops a screenshot of

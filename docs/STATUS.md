@@ -1,7 +1,7 @@
 # Status
 
-**Current phase:** 18b: what the front door is for, and what it is called — the
-concept bands, one named way in, and `noindex` on an internal tool (in review).
+**Current phase:** 18c: the front door taken off the open web — `/` is a door,
+the landing page moved to `/about` behind the gate (in review).
 Deployed and in client demo throughout.
 **Last updated:** 2026-09-14
 
@@ -2875,6 +2875,75 @@ extends the default-export override to the same three names.
 
 8 new tests, 761 passing, 1 skipped. typecheck, lint, production build clean;
 `/` still prerenders with a 1-day revalidate and `/robots.txt` is static.
+
+#### 18c. The front door, taken off the open web (2026-09-14)
+
+Asked for immediately after 18b shipped: *"this is making public portal, this
+is meant to internal tooling... I don't want this indexed in public or attract
+attackers."* The landing page was doing its job too well for a tool that is not
+a product.
+
+**What the probe found.** Against the live deployment, unauthenticated: `/`
+200, `/signin` 200, `/scenarios` 307 to sign-in (correct), `/compare` 200 —
+which is Next flushing `loading.tsx` before the gate resolves, not a leak;
+`prisma.scenario.findMany` runs after `requireAnalyst()`. And
+`/api/auth/providers` 200, returning `{"credentials":{"name":"Email and
+password"}}`: a public advertisement that password auth is the **only** way in.
+That endpoint cannot be blocked — next-auth v4's `signIn()` calls
+`getProviders()` internally before it posts, so removing it breaks sign-in.
+
+⚠ **Indexing was never the exposure, and this is the thing worth remembering.**
+Vercel publishes every certificate it issues to Certificate Transparency logs
+within minutes, and bots read those continuously. `stackfit-web-lake.vercel.app`
+is public knowledge whatever any page says, and no amount of quieting the copy
+changes that. `noindex` (18b) keeps it out of search results and is worth
+having; it is not what keeps anyone out. So the goal was restated: **finding
+the host should teach you nothing and give you nothing to work with.**
+
+**Vercel cannot help on this plan.** Deployment Protection on Hobby is Standard
+Protection only, which covers preview and generated deployment URLs and leaves
+the production domain public. Protecting production needs Pro; Password
+Protection is a $150/month add-on on top of that. Checked in the docs rather
+than assumed, and ruled out.
+
+**So `/` is now a door.** A wordmark, one sentence, and the way in — 2 KB of
+HTML where the landing page was 100 KB. It imports nothing that reads anything:
+the catalog counts went with it, on principle rather than because they were
+sensitive. The public surface should be a surface, not a query.
+
+**The landing page moved to `/about`, behind `requireAnalyst()`**, with its own
+masthead removed (`SiteHeader` renders there now) and both CTA captions
+rewritten: "for named analysts, sign-in is handled on the way through" is a
+sentence for a stranger, and behind the gate there are none. A quiet About link
+in `SiteHeader` is its only inbound route, because a page that used to be `/`
+has no links pointing at it once it stops being `/`.
+
+**`PortalLink` moved to `components/`.** The label is now needed on two routes
+that never render together, which is precisely the condition that produces two
+names for one destination — the thing 18b existed to fix. `landing.test.ts`
+reads all three files and still asserts the label is declared exactly once.
+
+**Both public pages stopped naming the data.** `/signin` has always said
+"StackFit holds prospective clients' asset inventories, so access is limited to
+named analysts", and the door inherited it. It is exactly right for a colleague
+who cannot get in and deserves to know why; on a page reachable by anyone
+reading a CT log it is also a note about what is worth taking. Both now say what
+the instance *is* — closed, internal — and stop.
+
+**A Phase 18 leftover, found while doing this.** `signin-form.tsx` ended a
+successful password sign-in with `window.location.assign('/')`, from when `/`
+was the scenarios list. Phase 18 repointed the two `callbackUrl`s and missed
+this one, so signing in with a password landed the analyst on the page
+advertising the product they had just signed in to. Now `/scenarios`, matching
+what the OAuth buttons have always used.
+
+**`public-route.test.ts` grew a word budget for `/`.** The failure mode here is
+not one bad commit; it is somebody helpfully restoring "just the summary", then
+"just the counts", a year apart. The door's rendered text must stay under 90
+words, and must name no vendor, no framework and no money. Its "reads nothing"
+assertion now covers `engineData` as well as Prisma.
+
+2 new tests, 763 passing, 1 skipped. typecheck, lint, build, audit clean.
 
 ⚠ **Not verified in a browser.** The Chrome extension would not connect this
 session, so the page was checked by fetching the rendered HTML (content,

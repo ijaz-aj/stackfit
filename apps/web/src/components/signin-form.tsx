@@ -97,7 +97,14 @@ function PasswordForm() {
       // which defaults to localhost:3000 when unset, so a misconfigured
       // instance answers a successful sign-in by sending the analyst to
       // another host entirely. There is one destination here and it is known.
-      window.location.assign('/');
+      //
+      // `/scenarios`, not `/`. This said `/` from when `/` *was* the scenarios
+      // list, and survived the phase that handed `/` to a landing page: signing
+      // in with a password put the analyst on the page advertising the product
+      // they had just signed in to. It matches `callbackUrl` above now, which
+      // is the value the OAuth buttons have always used, so both ways in land
+      // in the same place.
+      window.location.assign('/scenarios');
       return;
     }
 

@@ -561,3 +561,27 @@ Engine pipeline, each stage a pure function: `sizing → cost → scoring → po
   label matching `sign in`/`log in`. Note that the natural alternative, "start a
   scoping session", is barred by `vocabulary.test.ts`: *session* is a banned word
   and the saved object is a **scenario**.
+- **Certificate Transparency means the deployment hostname is public, always.**
+  Vercel publishes every certificate it issues to CT logs within minutes, and
+  bots read those continuously, so `stackfit-web-lake.vercel.app` is discoverable
+  no matter what any page says. Two things follow. Obscurity is not a control
+  here and must never be treated as one. And the goal for anything public is not
+  "hard to find" but **"teaches you nothing on arrival"**: `/` is a wordmark, one
+  sentence and the way in, `public-route.test.ts` holds it under a 90-word budget
+  and forbids naming a vendor, a framework or a figure, and the page that
+  explains the product lives at `/about` behind `requireAnalyst()`. Vercel's own
+  Deployment Protection cannot substitute on this plan: Hobby gets Standard
+  Protection, which leaves the *production* domain public, and protecting it
+  needs Pro plus a $150/month add-on.
+- **`/api/auth/providers` is public and cannot be closed.** It answers
+  unauthenticated with the list of configured providers, which on this instance
+  advertises that email-and-password is the only way in. It is tempting to block
+  it in `proxy.ts`; do not. next-auth v4's `signIn()` calls `getProviders()`
+  before it posts anything, so blocking it breaks every sign-in on the site. The
+  answer to a weak door being advertised is a stronger door, not a quieter sign.
+- **Neither public page names the data it holds.** `/signin` used to say
+  "StackFit holds prospective clients' asset inventories, so access is limited to
+  named analysts". That sentence is right for a colleague who cannot get in and
+  wants to know why, and it is also a note about what is worth taking, on a page
+  anyone reading a CT log can reach. Say what the instance *is* — closed,
+  internal — and stop. The same rule applies to the door at `/`.

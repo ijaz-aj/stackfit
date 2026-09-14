@@ -18,11 +18,14 @@
 // route that forgot the gate, which is the failure this repo has always been
 // one forgetful commit away from.
 //
-// The landing page gets two extra assertions of its own, because "public" and
-// "safe to be public" are different claims. It must not read the database, and
-// it must not run the engine: `runPipeline` returns `attribution`, which holds
-// our fee, our cost base and our margin, and a route a stranger can load is the
-// last place that should be one destructure away.
+// `/` gets extra assertions of its own, because "public" and "safe to be
+// public" are different claims. It must read nothing at all, and it must not
+// run the engine: `runPipeline` returns `attribution`, which holds our fee, our
+// cost base and our margin, and a route a stranger can load is the last place
+// that should be one destructure away.
+//
+// It was a landing page for a day. It is now a door, and the assertions below
+// grew a word budget to keep it one — see the second describe block.
 
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -39,7 +42,7 @@ const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/a
  * being a list rather than an absence.
  */
 const PUBLIC_ROUTES: ReadonlyMap<string, string> = new Map([
-  ['page.tsx', 'the landing page: the one route a stranger is meant to reach'],
+  ['page.tsx', 'the door: a wordmark, one sentence and the way in, and nothing else'],
   ['signin/page.tsx', 'the sign-in form itself, which cannot require being signed in'],
   ['api/auth/[...nextauth]/route.ts', "NextAuth's own handler, which performs the sign-in"],
   ['robots.ts', 'robots.txt, which a crawler fetches before it is anybody at all'],
@@ -120,29 +123,76 @@ describe('the authz boundary', () => {
   });
 });
 
-describe('the landing page, which is public', () => {
+// The door at `/` and the page that used to be there.
+//
+// `/` was a seven-band landing page explaining what the company scopes, which
+// vendors it prices and what a stack costs a client to run. That is
+// documentation for a colleague and reconnaissance for anybody else, so it
+// moved to `/about` behind the gate, and `/` became a wordmark, one sentence
+// and the way in.
+//
+// Obscurity was never the point and was never available: Vercel publishes every
+// certificate it issues to Certificate Transparency logs, which bots read
+// continuously, so the hostname is public whatever the page says. The point is
+// that arriving at it teaches you nothing.
+//
+// These assertions are what stop that eroding one helpful sentence at a time.
+
+describe('the door, which is public', () => {
   const source = code('page.tsx');
 
-  it('never reads the database', () => {
-    // No client name, no estate, no scenario reaches a page with no gate on it.
+  it('reads nothing at all', () => {
+    // Not just "no database". The catalog counts that used to be here were
+    // harmless in themselves, and are gone on principle: the public surface
+    // should be a surface, not a query. `engineData` is the loader they came
+    // through, and it reads the filesystem.
     expect(source).not.toMatch(/\bprisma\b/);
     expect(source).not.toMatch(/from '@\/lib\/db'/);
+    expect(source).not.toMatch(/\bengineData\b/);
   });
 
   it('never runs the engine', () => {
     // `runPipeline` carries `attribution`: our fee, our cost base, our margin.
-    // The figures on this page are a written-out worked example for exactly
-    // this reason.
     expect(source).not.toMatch(/\brunPipeline\b/);
     expect(source).not.toMatch(/\bresultsFor\b/);
     expect(source).not.toMatch(/\battribution\b/);
   });
 
+  it('stays short enough that nobody can hide a paragraph in it', () => {
+    // A budget, deliberately crude. Every sentence added to this file is a
+    // sentence published to anyone who finds the host, and the failure mode is
+    // not one bad commit — it is somebody helpfully restoring "just the
+    // summary", then "just the counts", a year apart. Rendered text only:
+    // the comments explaining all of this are long and should be.
+    const rendered = read('page.tsx')
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .replace(/^\s*\/\/.*$/gm, ' ')
+      .replace(/\{\/\*[\s\S]*?\*\/\}/g, ' ');
+    const words = (rendered.match(/>[^<>{}]*</g) ?? []).join(' ').split(/\s+/).filter(Boolean);
+
+    expect(words.length, 'the door has grown copy — is it still just a door?').toBeLessThan(90);
+  });
+
+  it('names no vendor, no framework and no figure', () => {
+    // The three things the old page said that were worth reading, and the three
+    // a stranger should not be handed.
+    const rendered = read('page.tsx');
+    for (const leak of [
+      /CrowdStrike|Wazuh|Sentinel|Nessus|Microsoft/i,
+      /HIPAA|PCI|NIST|ISO 27001/i,
+      /\$[\d,]{4,}/,
+    ]) {
+      expect(rendered, `the door mentions ${leak.source}`).not.toMatch(leak);
+    }
+  });
+});
+
+describe('the page that moved behind the gate', () => {
   it('says its example is an example', () => {
     // The specimen shows real-looking money. A reader who takes it for a live
     // quote has been misled by the page, which is the one thing this product
-    // spends its whole design avoiding. Read from the rendered source rather
-    // than `code()`: this string is content, not a comment about content.
-    expect(read('page.tsx')).toMatch(/Worked example/);
+    // spends its whole design avoiding. Still asserted after the move: being
+    // behind a login does not make an indicative figure a quote.
+    expect(read('about/page.tsx')).toMatch(/Worked example/);
   });
 });
